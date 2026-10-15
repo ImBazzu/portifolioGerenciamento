@@ -1,0 +1,468 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* =========================================================
+   DESIGN TOKENS
+   ========================================================= */
+
+:root {
+    /* Cores principais */
+    --app-primary: #0cb93a;
+    --app-primary-dark: #08942e;
+    --app-primary-light: #eafaf0;
+    --app-primary-subtle: rgba(12, 185, 58, 0.12);
+
+    --app-secondary: #0f2537;
+    --app-secondary-dark: #091a27;
+    --app-secondary-light: #1a3850;
+
+    /* Superfícies & Fundo */
+    --app-background: #f4f6f9;
+    --app-surface: #ffffff;
+    --app-surface-hover: #f8fafc;
+
+    /* Tipografia */
+    --app-text: #1e293b;
+    --app-text-muted: #64748b;
+    --app-text-light: #94a3b8;
+
+    /* Bordas */
+    --app-border: #e2e8f0;
+
+    /* Bordas / Radius */
+    --app-radius-sm: 6px;
+    --app-radius-md: 10px;
+    --app-radius-lg: 16px;
+
+    /* Sombras */
+    --app-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --app-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+    --app-shadow-md: 0 8px 20px -4px rgba(15, 23, 42, 0.08);
+    --app-shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.1);
+
+    /* Layout */
+    --sidebar-width: 260px;
+    --transition-fast: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Bootstrap */
+    --bs-primary: var(--app-primary);
+    --bs-primary-rgb: 12, 185, 58;
+    --bs-body-bg: var(--app-background);
+    --bs-body-color: var(--app-text);
+    --bs-border-color: var(--app-border);
+}
+
+
+/* =========================================================
+   BASE
+   ========================================================= */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--app-background);
+    color: var(--app-text);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+
+/* =========================================================
+   HEADER MOBILE (Apenas visível em telas menores)
+   ========================================================= */
+
+.mobile-header {
+    display: none;
+    background-color: var(--app-secondary);
+    color: #ffffff;
+    padding: 12px 20px;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--app-shadow-sm);
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
+.mobile-header .btn-toggle-sidebar {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 1.5rem;
+    padding: 4px 8px;
+    border-radius: var(--app-radius-sm);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.mobile-header .btn-toggle-sidebar:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+
+/* =========================================================
+   SIDEBAR (DESKTOP E DRAWER MOBILE)
+   ========================================================= */
+
+.sidebar {
+    width: var(--sidebar-width);
+    min-width: var(--sidebar-width);
+    min-height: 100vh;
+    background-color: var(--app-secondary);
+    box-shadow: var(--app-shadow-md);
+    z-index: 1050;
+    transition: transform var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-brand-box {
+    background-color: var(--app-surface);
+    border-radius: var(--app-radius-md);
+    padding: 12px;
+    box-shadow: var(--app-shadow-xs);
+    margin-bottom: 1rem;
+}
+
+.sidebar .nav-link {
+    border-radius: var(--app-radius-md);
+    padding: 12px 16px;
+    color: var(--app-text-light) !important;
+    font-weight: 500;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: var(--transition-fast);
+    margin-bottom: 4px;
+}
+
+.sidebar .nav-link i {
+    font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+}
+
+.sidebar .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #ffffff !important;
+    transform: translateX(4px);
+}
+
+.sidebar .nav-link.active {
+    background-color: var(--app-primary);
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(12, 185, 58, 0.35);
+}
+
+
+/* =========================================================
+   CONTEÚDO PRINCIPAL & HTMX
+   ========================================================= */
+
+#conteudo-principal {
+    flex: 1;
+    min-width: 0;
+    min-height: 100vh;
+}
+
+.htmx-request#conteudo-principal,
+.htmx-request #veiculosAtivosContainer {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   CARDS & TABELAS
+   ========================================================= */
+
+.card {
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-lg);
+    box-shadow: var(--app-shadow-sm);
+    background-color: var(--app-surface);
+}
+
+.card-header,
+.card-footer {
+    border-color: var(--app-border);
+    background-color: var(--app-surface) !important;
+    padding: 1rem 1.25rem;
+}
+
+.table-responsive {
+    border-radius: var(--app-radius-lg);
+    -webkit-overflow-scrolling: touch;
+}
+
+.table {
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+.table th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    color: var(--app-text-muted);
+    background-color: #f8fafc !important;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--app-border);
+}
+
+.table td {
+    padding: 12px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--app-border);
+}
+/* =========================================================
+   GLOBAL HTMX LOADER & BLOCKER (PREVINE DUPLO CLIQUE)
+   ========================================================= */
+
+/* Por padrão, o HTMX esconde o elemento com .htmx-indicator */
+#global-loader {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(255, 255, 255, 0.45); /* Fundo sutil */
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 9999; /* Fica acima de modais e cabeçalhos */
+    align-items: center;
+    justify-content: center;
+    pointer-events: all; /* Bloqueia todos os cliques na tela enquanto visível */
+}
+
+/* Quando qualquer requisição HTMX estiver ativa no body, exibe o loader */
+body.htmx-request #global-loader,
+.htmx-request#global-loader,
+.htmx-request #global-loader {
+    display: flex !important;
+}
+
+/* Opcional: Desabilita visualmente botões que dispararam a requisição */
+.htmx-request {
+    pointer-events: none !important;
+    opacity: 0.7;
+}
+
+/* =========================================================
+   BUSCA & BOTÕES
+   ========================================================= */
+
+.btn {
+    border-radius: var(--app-radius-md);
+    font-weight: 500;
+    padding: 0.5rem 0.9rem;
+    transition: var(--transition-fast);
+}
+
+.btn-primary {
+    background-color: var(--app-primary);
+    border-color: var(--app-primary);
+    box-shadow: 0 2px 6px rgba(12, 185, 58, 0.2);
+}
+
+.btn-primary:hover {
+    background-color: var(--app-primary-dark);
+    border-color: var(--app-primary-dark);
+}
+
+.style-search {
+    border-radius: var(--app-radius-md);
+    border: 1px solid var(--app-border);
+    max-width: 280px;
+    transition: var(--transition-fast);
+}
+
+.style-search:focus-within {
+    border-color: var(--app-primary);
+    box-shadow: 0 0 0 3px var(--app-primary-subtle);
+}
+
+.style-search .input-group-text,
+.style-search .form-control {
+    border: none !important;
+    background-color: transparent;
+}
+
+
+/* =========================================================
+   MODAIS
+   ========================================================= */
+
+.modal-content {
+    border: none;
+    border-radius: var(--app-radius-lg);
+    box-shadow: var(--app-shadow-lg);
+}
+
+#modalVeiculo .modal-body {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* =========================================================
+   ESTRUTURA GLOBAL DE MODAL PURO (SEM BOOTSTRAP JS)
+   ========================================================= */
+
+/* Backdrop: Fundo escuro fixo que cobre a tela inteira */
+.custom-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1060;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: fadeInBackdrop var(--transition-fast);
+}
+
+/* Oculta automaticamente quando a div #modal estiver vazia */
+#modal:empty,
+.custom-modal-backdrop:empty {
+    display: none !important;
+}
+
+/* Caixa/Cartão interior do Modal */
+.custom-modal-card {
+    width: 100%;
+    max-width: 1140px; /* Equivalente ao modal-xl */
+    max-height: 90vh;
+    background-color: var(--app-surface);
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-lg);
+    box-shadow: var(--app-shadow-lg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: scaleInModal var(--transition-fast);
+}
+
+/* Corpo com rolagem suave e customizada */
+.custom-modal-card .modal-body,
+.custom-modal-card > div.py-2 {
+    overflow-y: auto;
+    max-height: calc(90vh - 140px);
+    padding-right: 4px;
+}
+
+.custom-modal-card .modal-body::-webkit-scrollbar,
+.custom-modal-card > div.py-2::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-modal-card .modal-body::-webkit-scrollbar-thumb,
+.custom-modal-card > div.py-2::-webkit-scrollbar-thumb {
+    background-color: var(--app-text-light);
+    border-radius: 10px;
+}
+
+/* Animações de Entrada */
+@keyframes fadeInBackdrop {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleInModal {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+/* =========================================================
+   RESPONSIVIDADE: MEDIA QUERIES (MOBILE < 992px)
+   ========================================================= */
+
+@media (max-width: 991.98px) {
+
+    .custom-modal-card {
+        max-width: 100%;
+        max-height: 95vh;
+        border-radius: var(--app-radius-md);
+    }
+
+    /* Exibe o topo mobile */
+    .mobile-header {
+        display: flex;
+    }
+
+    .d-flex.min-vh-100 {
+        flex-direction: column;
+    }
+
+    /* Transforma a sidebar em Menu Gaveta (Drawer) */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 280px;
+        min-width: 280px;
+        transform: translateX(-100%); /* Oculta a sidebar fora da tela */
+        box-shadow: var(--app-shadow-lg);
+        padding: 1rem;
+    }
+
+    /* Classe ativada via JS ao clicar no botão hambúrguer */
+    .sidebar.show {
+        transform: translateX(0);
+    }
+
+    /* Fundo escuro atrás do menu (Overlay) */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background-color: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(2px);
+        z-index: 1040;
+    }
+
+    .sidebar-overlay.show {
+        display: block;
+    }
+
+    /* Ajustes nos cabeçalhos da página no Mobile */
+    .d-flex.justify-content-between.align-items-center.mb-4 {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 12px;
+    }
+
+    .d-flex.justify-content-between.align-items-center.mb-4 > .d-flex {
+        width: 100%;
+    }
+
+    .d-flex.justify-content-between.align-items-center.mb-4 .btn {
+        flex: 1;
+    }
+
+    .style-search {
+        max-width: 100%;
+    }
+
+    .col-md-4 {
+        width: 100%;
+    }
+}

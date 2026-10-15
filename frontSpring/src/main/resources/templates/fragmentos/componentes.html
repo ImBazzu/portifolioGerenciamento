@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!-- ① Alerta de erro geral -->
+<th:block th:fragment="alertaErro">
+    <th:block th:if="${error != null}">
+        <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0"></i>
+            <span th:text="${error}">Erro</span>
+        </div>
+    </th:block>
+</th:block>
+
+<!-- ② Campo de texto genérico -->
+<th:block th:fragment="campoTexto(label, field, valor, placeholder, autocomplete, temErro, msgErro)">
+    <div class="mb-3">
+        <label th:for="${field}" class="form-label fw-bold" th:text="${label}">Label</label>
+        <input type="text"
+               th:id="${field}"
+               th:name="${field}"
+               th:value="${valor}"
+               class="form-control"
+               th:classappend="${temErro} ? 'is-invalid'"
+               th:placeholder="${placeholder}"
+               th:attr="autocomplete=${autocomplete}">
+        <div th:if="${temErro}" class="invalid-feedback" th:text="${msgErro}"></div>
+    </div>
+</th:block>
+
+<!-- ③ Campo de senha com toggle de visibilidade e suporte a erro -->
+<th:block th:fragment="campoSenha(label, field, placeholder, temErro, msgErro)">
+    <div class="mb-4">
+        <label th:for="${field}" class="form-label fw-bold" th:text="${label}">Label</label>
+        <div class="input-group">
+            <input th:id="${field}"
+                   type="password"
+                   th:name="${field}"
+                   class="form-control"
+                   th:classappend="${temErro} ? 'is-invalid'"
+                   th:placeholder="${placeholder}"
+                   autocomplete="current-password">
+            <button class="btn btn-outline-secondary" type="button"
+                    onclick="toggleSenha()" tabindex="-1"
+                    aria-label="Mostrar ou ocultar senha">
+                <i class="bi bi-eye" id="icone-senha"></i>
+            </button>
+            <!-- Colocado dentro do input-group para seguir o padrão nativo do Bootstrap -->
+            <div th:if="${temErro}" class="invalid-feedback" th:text="${msgErro}"></div>
+        </div>
+    </div>
+</th:block>
+
+<!-- ④ Campo numérico com ícone de prefixo -->
+<th:block th:fragment="campoNumero(label, field, valor, placeholder, icone, temErro, msgErro)">
+    <div class="col-md-6 mb-3">
+        <label th:for="${field}" class="form-label fw-bold" th:text="${label}">Label</label>
+        <div class="input-group">
+            <span class="input-group-text"><i th:class="${icone}"></i></span>
+            <input type="number"
+                   th:id="${field}"
+                   th:name="${field}"
+                   th:value="${valor}"
+                   class="form-control"
+                   th:classappend="${temErro} ? 'is-invalid'"
+                   th:placeholder="${placeholder}">
+            <!-- Dentro do input-group: elimina a necessidade de d-block ou mt-2 manuais -->
+            <div th:if="${temErro}" class="invalid-feedback" th:text="${msgErro}"></div>
+        </div>
+    </div>
+</th:block>
+
+</html>

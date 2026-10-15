@@ -1,0 +1,124 @@
+<th:block th:fragment="detalhesVeiculo" xmlns:hx="http://www.w3.org/1999/xhtml">
+
+    <!-- Fundo escuro transparente e cartão único (Sem duplicação de th:insert) -->
+    <div class="custom-modal-backdrop">
+        <div class="custom-modal-card bg-white rounded shadow-lg p-4" id="conteudoModalDetalhes">
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                <div>
+                    <h5 class="fw-bold mb-0">
+                        Detalhes: <span th:text="${veiculo.nome}">Nome</span>
+                        <span th:if="${arquivado}" class="badge bg-secondary ms-2 fs-6">Arquivado</span>
+                    </h5>
+                    <p class="text-muted small mb-0">
+                        Capacidade: <span th:text="${veiculo.capacidade} + ' assentos'">0 assentos</span>
+                    </p>
+                </div>
+
+                <div class="d-flex gap-2 align-items-center">
+                    <!-- Botão Editar para Ativos -->
+                    <button th:unless="${arquivado}"
+                            class="btn btn-sm btn-light border"
+                            hx:get="@{/veiculo/abrirFormulario/{id}(id=${veiculo.id})}"
+                            hx-target="#modal"
+                            hx-swap="innerHTML"
+                            title="Editar Veículo">
+                        <i class="bi bi-pencil me-1"></i> Editar
+                    </button>
+
+                    <!-- Botão Editar para Arquivados -->
+                    <button th:if="${arquivado}"
+                            class="btn btn-sm btn-light border"
+                            hx:get="@{/veiculo/abrirFormulario/{id}(id=${veiculo.id}, arquivado=true)}"
+                            hx-target="#modal"
+                            hx-swap="innerHTML"
+                            title="Editar Veículo Arquivado">
+                        <i class="bi bi-pencil me-1"></i> Editar
+                    </button>
+
+                    <!-- Botão Voltar (Retorna para a lista de arquivados substituindo a modal inteira) -->
+                    <button th:if="${arquivado}"
+                            class="btn btn-sm btn-outline-secondary"
+                            hx:get="@{/veiculo/listarArquivado}"
+                            hx-target="#modal"
+                            hx-swap="innerHTML">
+                        <i class="bi bi-arrow-left me-1"></i> Voltar
+                    </button>
+
+                    <!-- Botão Fechar -->
+                    <button type="button"
+                            class="btn-close ms-2"
+                            hx:get="@{/veiculo/limpar-modal}"
+                            hx-trigger="fechar-formulario from:body, click"
+                            hx-target="#modal"
+                            hx-swap="innerHTML"
+                            aria-label="Fechar"
+                            title="Fechar"></button>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="py-2">
+                <h6 class="fw-bold mb-3">Histórico de Uso / Listas Vinculadas:</h6>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Data</th>
+                            <th>Veículos Utilizados</th>
+                            <th>Destinos</th>
+                            <th class="text-end">Total Passageiros</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(historico)}">
+                            <td colspan="4" class="text-center text-muted py-3">
+                                Nenhum registro de uso encontrado para este veículo.
+                            </td>
+                        </tr>
+                        <tr th:each="item : ${historico}">
+                            <td th:text="${#temporals.format(item.data, 'dd/MM/yyyy')}">00/00/0000</td>
+                            <td th:text="${item.quantidadeVeiculos}">1</td>
+                            <td th:text="${item.destinos != null ? item.destinos : '-'}">Destino</td>
+                            <td class="text-end" th:text="${item.totalPassageiro} + ' passageiros'">0 passageiros</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="border-top pt-3 mt-3 d-flex justify-content-between align-items-center">
+                <!-- Ação: Arquivar (Para Veículos Ativos) -->
+                <th:block th:unless="${arquivado}">
+                    <button class="btn btn-sm btn-warning text-dark fw-semibold"
+                            hx:patch="@{/veiculo/{id}/arquivar(id=${veiculo.id})}"
+                            title="Arquivar Veículo">
+                        <i class="bi bi-archive me-1"></i> Arquivar Veículo
+                    </button>
+                </th:block>
+
+                <!-- Ação: Excluir Permanente (Para Veículos Arquivados) -->
+                <th:block th:if="${arquivado}">
+                    <div class="w-100 d-flex justify-content-between align-items-center">
+                        <button th:if="${#lists.isEmpty(historico)}"
+                                class="btn btn-danger btn-sm"
+                                hx:delete="@{/veiculo/{id}(id=${veiculo.id})}"
+                                hx-target="#modal"
+                                hx-swap="innerHTML"
+                                >
+                            <i class="bi bi-trash me-1"></i> Excluir Definitivamente
+                        </button>
+                        <span th:unless="${#lists.isEmpty(historico)}" class="text-muted small">
+                            <i class="bi bi-lock me-1"></i> Exclusão bloqueada (existem registros vinculados).
+                        </span>
+                    </div>
+                </th:block>
+            </div>
+
+        </div>
+    </div>
+
+</th:block>

@@ -1,0 +1,82 @@
+<th:block th:fragment="tabVeiculosAtivos" xmlns:hx="http://www.w3.org/1999/xhtml">
+    <div class="card shadow-sm" id="tabela-veiculos">
+        <!-- Cabeçalho Integrado com Busca -->
+        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h5 class="mb-0 fw-bold">Frota de Veículos</h5>
+
+            <div class="col-12 col-md-4">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light border-end-0">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input type="search"
+                           id="inputBuscaVeiculo"
+                           name="busca"
+                           th:value="${busca}"
+                           class="form-control border-start-0 ps-0"
+                           placeholder="Buscar por nome..."
+                           hx:get="@{/veiculo/listar}"
+                           hx-trigger="load, keyup changed delay:300ms, listar-ativos from:body"
+                           hx-target="#veiculosAtivosContainer"
+                           hx-swap="innerHTML"
+                           hx-preserve="true">
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Tipo Veículo</th>
+                    <th>Capacidade</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(veiculos)}">
+                    <td colspan="3" class="text-center text-muted py-3">Nenhum veículo encontrado.</td>
+                </tr>
+
+                <tr th:each="veiculo : ${veiculos}" th:data-id="${veiculo.id}">
+                    <td class="fw-bold" th:text="${veiculo.nome}">Veículo</td>
+                    <td>
+                        <i class="bi bi-person-fill text-muted me-1"></i>
+                        <span th:text="${veiculo.capacidade} + ' assentos'">0 assentos</span>
+                    </td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary"
+                                hx:get="@{/veiculo/{id}/detalhes(id=${veiculo.id})}"
+                                hx-target="#modal"
+                                hx-swap="innerHTML"
+                                title="Ver Detalhes">
+                            <i class="bi bi-info-circle me-1"></i> Detalhes
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pager -->
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2"
+             th:if="${totalPaginas > 1}">
+            <span class="text-muted small"
+                  th:text="'Página ' + (${paginaAtual} + 1) + ' de ' + ${totalPaginas}">Página 1 de 1</span>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" th:classappend="${paginaAtual == 0} ? 'disabled'">
+                    <button class="page-link"
+                            hx:get="@{/veiculo/listar(busca=${busca}, pagina=${paginaAtual - 1})}"
+                            hx-target="#veiculosAtivosContainer"
+                            hx-swap="innerHTML">Anterior</button>
+                </li>
+                <li class="page-item" th:classappend="${paginaAtual + 1 >= totalPaginas} ? 'disabled'">
+                    <button class="page-link"
+                            hx:get="@{/veiculo/listar(busca=${busca}, pagina=${paginaAtual + 1})}"
+                            hx-target="#veiculosAtivosContainer"
+                            hx-swap="innerHTML">Próxima</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</th:block>

@@ -1,0 +1,117 @@
+<th:block th:fragment="tabVeiculosArquivados" xmlns:hx="http://www.w3.org/1999/xhtml">
+
+    <!-- Backdrop escuro fixo -->
+    <div class="custom-modal-backdrop">
+        <!-- Cartão / Caixa do Modal -->
+        <div class="custom-modal-card bg-white rounded shadow-lg p-4" id="conteudoModalArquivados">
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                <h5 class="fw-bold m-0">
+                    <i class="bi bi-archive me-2"></i>Veículos Arquivados
+                </h5>
+                <button type="button"
+                        class="btn-close"
+                        hx-get="veiculo/limpar-modal"
+                        hx-target="#modal"
+                        hx-swap="innerHTML"
+                        aria-label="Fechar"
+                        title="Fechar"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="py-2">
+                <!-- Input de Pesquisa -->
+                <div class="mb-3">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="search"
+                               id="inputBuscaVeiculoArquivado"
+                               name="busca"
+                               th:value="${busca}"
+                               class="form-control"
+                               placeholder="Buscar veículo arquivado..."
+                               hx:get="@{/veiculo/listarArquivado}"
+                               hx-trigger="keyup changed delay:300ms, listar-arquivados from:body"
+                               hx-target="#modal"
+                               hx-swap="innerHTML"
+                               hx-preserve="true">
+                    </div>
+                </div>
+
+                <div class="table-responsive" id="tabela-veiculos-arquivados">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Tipo Veículo</th>
+                            <th>Capacidade</th>
+                            <th>Data Arquivado</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(veiculosArquivados)}">
+                            <td colspan="4" class="text-center text-muted py-3">Nenhum veículo arquivado encontrado.</td>
+                        </tr>
+
+                        <tr th:each="veiculo : ${veiculosArquivados}" th:attr="data-id=${veiculo.id}">
+                            <td class="fw-bold" th:text="${veiculo.nome}">Nome do Veículo</td>
+                            <td>
+                                <i class="bi bi-person-fill text-muted me-1"></i>
+                                <span th:text="${veiculo.capacidade} + ' assentos'">0 assentos</span>
+                            </td>
+                            <td>
+                                <i class="bi bi-calendar-event text-muted me-1"></i>
+                                <span th:text="${veiculo.dataArquivado != null ? #temporals.format(veiculo.dataArquivado, 'dd/MM/yyyy') : '-'}">00/00/0000</span>
+                            </td>
+                            <td class="text-end">
+                                <!-- Desarquivar atualiza a listagem de arquivados inteira no modal -->
+                                <button class="btn btn-sm btn-outline-success me-1"
+                                        hx:patch="@{/veiculo/{id}/desarquivar(id=${veiculo.id})}"
+                                        hx-swap="none"
+                                        title="Desarquivar">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i> Desarquivar
+                                </button>
+
+                                <!-- Detalhes substitui o conteúdo interno (#conteudoModalArquivados) pelo fragmento de detalhes -->
+                                <button class="btn btn-sm btn-outline-primary"
+                                        hx:get="@{/veiculo/{id}/detalhes(id=${veiculo.id}, arquivado=true)}"
+                                        hx-target="#modal"
+                                        hx-swap="innerHTML"
+                                        title="Ver Detalhes">
+                                    <i class="bi bi-info-circle me-1"></i> Detalhes
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Paginação no Footer -->
+            <div class="border-top pt-3 mt-3 d-flex justify-content-between align-items-center" th:if="${totalPaginasArquivados > 1}">
+                <span class="text-muted small"
+                      th:text="'Página ' + (${paginaAtualArquivados} + 1) + ' de ' + ${totalPaginasArquivados}">Página 1 de 1</span>
+
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" th:classappend="${paginaAtualArquivados == 0} ? 'disabled'">
+                        <button class="page-link"
+                                hx:get="@{/veiculo/listarArquivado(busca=${busca}, pagina=${paginaAtualArquivados - 1})}"
+                                hx-target="#modal"
+                                hx-swap="innerHTML">Anterior</button>
+                    </li>
+                    <li class="page-item" th:classappend="${paginaAtualArquivados + 1 >= totalPaginasArquivados} ? 'disabled'">
+                        <button class="page-link"
+                                hx:get="@{/veiculo/listarArquivado(busca=${busca}, pagina=${paginaAtualArquivados + 1})}"
+                                hx-target="#modal"
+                                hx-swap="innerHTML">Próxima</button>
+                    </li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+
+</th:block>

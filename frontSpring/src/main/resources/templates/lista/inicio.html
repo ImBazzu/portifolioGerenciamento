@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/head :: head('Agendamentos')}">
+</head>
+
+<body>
+
+    <div class="d-flex min-vh-100">
+
+        <aside th:replace="~{layout/sidebar :: sidebar}">
+        </aside>
+
+
+        <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
+            <div th:fragment="conteudo" class="container-fluid py-4">
+
+                <!-- Cabeçalho -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="fw-bold mb-1">Definições / Listas</h2>
+                        <p class="text-muted small mb-0">Gerencie as listas de transporte ativas e arquivadas.</p>
+                    </div>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovaLista">
+                        <i class="bi bi-plus-lg me-1"></i> Nova Lista
+                    </button>
+                </div>
+
+                <!-- Navegação por Abas (Ativas vs Arquivadas) -->
+                <ul class="nav nav-tabs mb-4" id="listasTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-bold" id="ativas-tab" data-bs-toggle="tab" data-bs-target="#ativas" type="button" role="tab">
+                            <i class="bi bi-check-circle me-1"></i> Listas Ativas
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold text-secondary" id="arquivadas-tab" data-bs-toggle="tab" data-bs-target="#arquivadas" type="button" role="tab">
+                            <i class="bi bi-archive me-1"></i> Arquivadas <span class="badge bg-secondary rounded-pill ms-1">1</span>
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="listasTabContent">
+
+                    <!-- ABA: LISTAS ATIVAS -->
+                    <div class="tab-pane fade show active" id="ativas" role="tabpanel">
+                        <div class="row g-4">
+                            <div class="col-md-3">
+                                <div class="card shadow-sm">
+                                    <div class="card-header bg-white font-weight-bold">Listas Cadastradas</div>
+                                    <div class="list-group list-group-flush">
+                                        <a href="#" class="list-group-item list-group-item-action active d-flex justify-content-between align-items-center">
+                                            <span>Lista 01: Restrições Centro</span>
+                                            <span class="badge bg-light text-dark rounded-pill">1 regra</span>
+                                        </a>
+                                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                            <span>Lista 02: Rotas Rurais</span>
+                                            <span class="badge bg-secondary rounded-pill">0 regras</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-9">
+                                <div class="card shadow-sm mb-4">
+                                    <div class="card-body d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h4 class="card-title fw-bold mb-1">Lista 01: Restrições Centro</h4>
+                                            <p class="card-text text-muted mb-0">Regras aplicadas para controle de tráfego de frotas na zona central.</p>
+                                        </div>
+                                        <button class="btn btn-outline-secondary btn-sm" title="Arquivar esta lista">
+                                            <i class="bi bi-archive me-1"></i> Arquivar Lista
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Tabela de Regras -->
+                                <div class="card shadow-sm mb-4">
+                                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0 fw-bold">Regras da Lista</h5>
+                                        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#formRegra">
+                                            <i class="bi bi-plus-circle me-1"></i> Adicionar Regra
+                                        </button>
+                                    </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="table-light">
+                                            <tr>
+                                                <th>Nome</th>
+                                                <th>Veículos</th>
+                                                <th>Condições</th>
+                                                <th>Dias</th>
+                                                <th>Horário</th>
+                                                <th>Cidades</th>
+                                                <th class="text-end">Ações</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr>
+                                                <td class="fw-bold">Horário de Pico</td>
+                                                <td><span class="badge bg-secondary">Ônibus</span></td>
+                                                <td><span class="badge bg-danger">Grave</span></td>
+                                                <td><span class="badge bg-info text-dark">Seg-Sex</span></td>
+                                                <td>06:00 - 09:00</td>
+                                                <td>São Paulo</td>
+                                                <td class="text-end">
+                                                    <button class="btn btn-sm btn-light" data-bs-toggle="collapse" data-bs-target="#formRegra"><i class="bi bi-pencil"></i></button>
+                                                    <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- FORMULÁRIO DE CRIAÇÃO / EDIÇÃO DE REGRA (RESTAURADO) -->
+                                <div class="collapse" id="formRegra">
+                                    <div class="card shadow-sm border-primary">
+                                        <div class="card-header bg-primary text-white font-weight-bold">
+                                            Configurar Nova Regra
+                                        </div>
+                                        <div class="card-body">
+                                            <form th:action="@{/definicoes/listas/regra/salvar}" method="POST">
+
+                                                <div class="mb-3">
+                                                    <label for="nomeRegra" class="form-label font-weight-bold">Nome da Regra</label>
+                                                    <input type="text" class="form-control" id="nomeRegra" placeholder="Ex: Restrição de Carga Manhã">
+                                                </div>
+
+                                                <div class="row g-3 mb-3">
+                                                    <!-- Veículos -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label font-weight-bold">Veículos Aplicáveis</label>
+                                                        <div class="border rounded p-2 style-scroll" style="max-height: 120px; overflow-y: auto;">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" value="1" id="v1">
+                                                                <label class="form-check-label" for="v1">Ônibus Urbano</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" value="2" id="v2">
+                                                                <label class="form-check-label" for="v2">Micro-ônibus</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" value="3" id="v3">
+                                                                <label class="form-check-label" for="v3">Vans</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Níveis de Condição -->
+                                                    <div class="col-md-6">
+                                                        <label class="form-label font-weight-bold">Níveis de Condição</label>
+                                                        <div class="border rounded p-2 style-scroll" style="max-height: 120px; overflow-y: auto;">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" value="alerta" id="c1">
+                                                                <label class="form-check-label text-warning fw-bold" for="c1">Alerta</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" value="critica" id="c2">
+                                                                <label class="form-check-label text-danger fw-bold" for="c2">Crítica</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" value="grave" id="c3">
+                                                                <label class="form-check-label text-dark fw-bold" for="c3">Grave</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Dias da Semana -->
+                                                <div class="mb-3">
+                                                    <label class="form-label font-weight-bold">Dias da Semana</label>
+                                                    <div class="btn-group d-flex" role="group">
+                                                        <input type="checkbox" class="btn-check" id="d1" autocomplete="off">
+                                                        <label class="btn btn-outline-primary" for="d1">Seg</label>
+
+                                                        <input type="checkbox" class="btn-check" id="d2" autocomplete="off">
+                                                        <label class="btn btn-outline-primary" for="d2">Ter</label>
+
+                                                        <input type="checkbox" class="btn-check" id="d3" autocomplete="off">
+                                                        <label class="btn btn-outline-primary" for="d3">Qua</label>
+
+                                                        <input type="checkbox" class="btn-check" id="d4" autocomplete="off">
+                                                        <label class="btn btn-outline-primary" for="d4">Qui</label>
+
+                                                        <input type="checkbox" class="btn-check" id="d5" autocomplete="off">
+                                                        <label class="btn btn-outline-primary" for="d5">Sex</label>
+
+                                                        <input type="checkbox" class="btn-check" id="d6" autocomplete="off">
+                                                        <label class="btn btn-outline-primary" for="d6">Sáb</label>
+
+                                                        <input type="checkbox" class="btn-check" id="d7" autocomplete="off">
+                                                        <label class="btn btn-outline-primary" for="d7">Dom</label>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Horários e Cidades -->
+                                                <div class="row g-3 mb-4">
+                                                    <div class="col-md-3">
+                                                        <label for="horaInicio" class="form-label font-weight-bold">Início</label>
+                                                        <input type="time" class="form-control" id="horaInicio">
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <label for="horaFim" class="form-label font-weight-bold">Fim</label>
+                                                        <input type="time" class="form-control" id="horaFim">
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label for="cidades" class="form-label font-weight-bold">Cidades Aplicáveis</label>
+                                                        <input type="text" class="form-control" id="cidades" placeholder="Ex: São Paulo, Diadema, Mauá">
+                                                    </div>
+                                                </div>
+
+                                                <div class="d-flex justify-content-end gap-2">
+                                                    <button type="button" class="btn btn-light" data-bs-toggle="collapse" data-bs-target="#formRegra">Cancelar</button>
+                                                    <button type="submit" class="btn btn-success">Salvar Regra</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ABA: LISTAS ARQUIVADAS -->
+                    <div class="tab-pane fade" id="arquivadas" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h5 class="fw-bold mb-3">Listas Arquivadas</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                        <tr>
+                                            <th>Nome da Lista</th>
+                                            <th>Descrição</th>
+                                            <th>Data de Arquivamento</th>
+                                            <th class="text-end">Ações</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                            <td class="fw-bold">Lista 2023 - Escolar Antiga</td>
+                                            <td>Listagem descontinuada de linhas escolares urbanas.</td>
+                                            <td>15/01/2024</td>
+                                            <td class="text-end">
+                                                <button class="btn btn-sm btn-outline-success me-1">
+                                                    <i class="bi bi-arrow-counterclockwise me-1"></i> Desarquivar
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i> Excluir
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+
+    <script src="https://unpkg.com/htmx.org@2.0.8">
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+</body>
+
+</html>

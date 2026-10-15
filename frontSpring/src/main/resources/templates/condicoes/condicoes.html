@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/head :: head('Agendamentos')}">
+</head>
+
+<body>
+
+    <div class="d-flex min-vh-100">
+
+        <aside th:replace="~{layout/sidebar :: sidebar}">
+        </aside>
+
+
+        <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
+            <div th:fragment="conteudo" class="container-fluid py-4">
+
+                <!-- Cabeçalho -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="fw-bold mb-1">Definições / Condições</h2>
+                        <p class="text-muted small mb-0">Gerencie os Níveis de Condições e cadastre as especificações de cada nível.</p>
+                    </div>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovoNivel">
+                        <i class="bi bi-plus-lg me-1"></i> Novo Nível
+                    </button>
+                </div>
+
+                <!-- Barra de Filtros e Abas -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body py-3">
+                        <div class="row g-3 align-items-center justify-content-between">
+
+                            <!-- Abas Ativas / Arquivadas -->
+                            <div class="col-md-4">
+                                <ul class="nav nav-pills" id="condicoesTab" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active btn-sm fw-bold" id="cond-ativas-tab" data-bs-toggle="tab" data-bs-target="#cond-ativas" type="button" role="tab">
+                                            Ativas
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link btn-sm fw-bold text-secondary" id="cond-arquivadas-tab" data-bs-toggle="tab" data-bs-target="#cond-arquivadas" type="button" role="tab">
+                                            Arquivadas <span class="badge bg-secondary rounded-pill ms-1">2</span>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- Campo de Pesquisa e Filtro por Nível -->
+                            <div class="col-md-8">
+                                <form class="d-flex gap-2 justify-content-md-end"
+                                      hx-get="/definicoes/condicoes/filtrar"
+                                      hx-target="#cond-ativas"
+                                      hx-trigger="keyup from:#inputBusca delay:300ms, change from:#selectFiltroNivel">
+
+                                    <div class="input-group input-group-sm style-search" style="max-width: 280px;">
+                                        <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                                        <input type="text" id="inputBusca" name="busca" class="form-control" placeholder="Buscar condição (ex: Autista)...">
+                                    </div>
+
+                                    <select class="form-select form-select-sm" id="selectFiltroNivel" name="nivel" style="max-width: 180px;">
+                                        <option value="">Todos os Níveis</option>
+                                        <option value="Grave">Grave</option>
+                                        <option value="Média">Média</option>
+                                        <option value="Normal">Normal</option>
+                                    </select>
+                                </form>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Conteúdo das Abas -->
+                <div class="tab-content" id="condicoesTabContent">
+
+                    <!-- ABA: CONDIÇÕES ATIVAS -->
+                    <div class="tab-pane fade show active" id="cond-ativas" role="tabpanel">
+                        <div class="row g-4">
+
+                            <!-- Nível: Grave -->
+                            <div class="col-md-4">
+                                <div class="card border-danger shadow-sm h-100">
+                                    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center py-3">
+                                        <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-octagon-fill me-2"></i>Grave</h5>
+                                        <span class="badge bg-white text-danger font-weight-bold">Alta Prioridade</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="list-group list-group-flush">
+                                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                <span><i class="bi bi-dot text-danger fs-4 align-middle"></i> Oncológica</span>
+                                                <div>
+                                                    <button class="btn btn-sm text-secondary p-1" title="Arquivar"><i class="bi bi-archive"></i></button>
+                                                    <button class="btn btn-sm text-secondary p-1" title="Excluir"><i class="bi bi-x-lg"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-white border-0 pt-0 pb-3">
+                                        <button class="btn btn-outline-danger btn-sm w-100" data-bs-toggle="modal" data-bs-target="#modalAddCondicao" data-nivel="Grave">
+                                            <i class="bi bi-plus-circle me-1"></i> Adicionar Condição
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Nível: Média -->
+                            <div class="col-md-4">
+                                <div class="card border-warning shadow-sm h-100">
+                                    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center py-3">
+                                        <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Média</h5>
+                                        <span class="badge bg-dark text-white font-weight-bold">Média Prioridade</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="list-group list-group-flush">
+                                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                <span><i class="bi bi-dot text-warning fs-4 align-middle"></i> Autista (TEA)</span>
+                                                <div>
+                                                    <button class="btn btn-sm text-secondary p-1" title="Arquivar"><i class="bi bi-archive"></i></button>
+                                                    <button class="btn btn-sm text-secondary p-1" title="Excluir"><i class="bi bi-x-lg"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-white border-0 pt-0 pb-3">
+                                        <button class="btn btn-outline-warning text-dark btn-sm w-100" data-bs-toggle="modal" data-bs-target="#modalAddCondicao" data-nivel="Média">
+                                            <i class="bi bi-plus-circle me-1"></i> Adicionar Condição
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Nível: Normal -->
+                            <div class="col-md-4">
+                                <div class="card border-secondary shadow-sm h-100">
+                                    <div class="card-header bg-light text-dark d-flex justify-content-between align-items-center py-3">
+                                        <h5 class="mb-0 fw-bold"><i class="bi bi-info-circle-fill me-2 text-secondary"></i>Normal</h5>
+                                        <span class="badge bg-secondary font-weight-bold">Padrão</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="list-group list-group-flush">
+                                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                                <span><i class="bi bi-dot text-secondary fs-4 align-middle"></i> Passe Geral</span>
+                                                <div>
+                                                    <button class="btn btn-sm text-secondary p-1" title="Arquivar"><i class="bi bi-archive"></i></button>
+                                                    <button class="btn btn-sm text-secondary p-1" title="Excluir"><i class="bi bi-x-lg"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-white border-0 pt-0 pb-3">
+                                        <button class="btn btn-outline-secondary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#modalAddCondicao" data-nivel="Normal">
+                                            <i class="bi bi-plus-circle me-1"></i> Adicionar Condição
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- ABA: CONDIÇÕES ARQUIVADAS -->
+                    <div class="tab-pane fade" id="cond-arquivadas" role="tabpanel">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h5 class="fw-bold mb-3">Condições Arquivadas</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                        <tr>
+                                            <th>Nome da Condição</th>
+                                            <th>Nível Vinculado</th>
+                                            <th>Data Arquivamento</th>
+                                            <th class="text-end">Ações</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                            <td class="fw-bold">Gestante de Risco (Antigo)</td>
+                                            <td><span class="badge bg-danger">Grave</span></td>
+                                            <td>02/02/2024</td>
+                                            <td class="text-end">
+                                                <button class="btn btn-sm btn-outline-success me-1">
+                                                    <i class="bi bi-arrow-counterclockwise me-1"></i> Desarquivar
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i> Excluir
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Passe Temporário Covid</td>
+                                            <td><span class="badge bg-secondary">Normal</span></td>
+                                            <td>10/11/2023</td>
+                                            <td class="text-end">
+                                                <button class="btn btn-sm btn-outline-success me-1">
+                                                    <i class="bi bi-arrow-counterclockwise me-1"></i> Desarquivar
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i> Excluir
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+
+    <script src="https://unpkg.com/htmx.org@2.0.8">
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+</body>
+
+</html>

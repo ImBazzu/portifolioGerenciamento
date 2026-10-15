@@ -1,0 +1,68 @@
+/* =========================================================
+   ESTILOS ESPECÍFICOS DO MÓDULO DE VEÍCULOS
+   ========================================================= */
+
+/* Campo de Busca Integrado */
+.style-search {
+    border-radius: var(--app-radius-md);
+    border: 1px solid var(--app-border);
+    max-width: 320px;
+    width: 100%;
+    background-color: var(--app-surface);
+    transition: var(--transition-fast);
+}
+
+.style-search:focus-within {
+    border-color: var(--app-primary);
+    box-shadow: 0 0 0 3px var(--app-primary-subtle);
+}
+
+.style-search .input-group-text {
+    border: none !important;
+    background-color: transparent;
+    color: var(--app-text-muted);
+    padding-left: 14px;
+}
+
+.style-search .form-control {
+    border: none !important;
+    background-color: transparent;
+    color: var(--app-text);
+    padding-left: 6px;
+}
+
+.style-search .form-control:focus {
+    box-shadow: none;
+    outline: none;
+}
+
+/* Modal de Formulário e Rolagem Suave */
+#modalVeiculo .modal-body,
+#modalArquivados .modal-body {
+    max-height: 75vh;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+
+/* Customização da barra de rolagem dos modais */
+#modalVeiculo .modal-body::-webkit-scrollbar,
+#modalArquivados .modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+#modalVeiculo .modal-body::-webkit-scrollbar-thumb,
+#modalArquivados .modal-body::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+}
+
+/* =========================================================
+   RESPONSIVIDADE DO MÓDULO DE VEÍCULOS
+   ========================================================= */
+
+
+@media (max-width: 991.98px) {
+    .style-search {
+        max-width: 100%;
+    }
+}

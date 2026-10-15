@@ -1,0 +1,92 @@
+<th:block th:fragment="formVeiculo"
+          th:with="edicao=${id != null}"
+          xmlns:hx="http://www.w3.org/1999/xhtml">
+
+    <!-- Backdrop escuro fixo -->
+    <div class="custom-modal-backdrop">
+        <!-- Cartão / Caixa do Modal -->
+        <div class="custom-modal-card bg-white rounded shadow-lg p-4">
+
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                <h5 class="fw-bold m-0" id="modalVeiculoLabel"
+                    th:text="${edicao ? 'Editar Veículo' : 'Cadastrar Veículo'}">Título</h5>
+
+                <!-- Botão de Fechar que limpa o modal via HTMX -->
+                <button type="button"
+                        class="btn-close"
+                        hx:get="@{/veiculo/limpar-modal}"
+                        hx-target="#modal"
+                        hx-swap="innerHTML"
+                        aria-label="Close"
+                        title="Fechar"></button>
+            </div>
+
+            <!-- Formulário -->
+            <form th:object="${veiculo}"
+                  hx:post="${!edicao} ? @{/veiculo} : null"
+                  hx:put="${edicao} ? @{/veiculo/{id}(id=${id}, arquivado=${arquivado != null ? arquivado : false})} : null"
+                  hx-target="#modal"
+                  hx-swap="innerHTML">
+
+                <div class="py-2">
+
+                    <th:block th:replace="~{fragmentos/componentes :: campoTexto(
+                        'Nome',
+                        'nome',
+                        *{nome},
+                        'Ex: Ônibus Urbano, Micro-ônibus, Van',
+                        null,
+                        ${#fields.hasErrors('nome')},
+                        ${#fields.hasErrors('nome') ? #strings.listJoin(#fields.errors('nome'), ' ') : ''}
+                    )}"></th:block>
+
+                    <div class="row g-3 mt-1">
+                        <th:block th:replace="~{fragmentos/componentes :: campoNumero(
+                            'Passageiros Sentados',
+                            'capacidade',
+                            *{capacidade},
+                            '0',
+                            'bi bi-person-badge',
+                            ${#fields.hasErrors('capacidade')},
+                            ${#fields.hasErrors('capacidade') ? #strings.listJoin(#fields.errors('capacidade'), ' ') : ''}
+                        )}"></th:block>
+                    </div>
+
+                    <th:block th:replace="~{fragmentos/componentes :: alertaErro}"></th:block>
+
+                </div>
+
+                <!-- Footer -->
+                <div class="border-top pt-3 mt-3 d-flex justify-content-end gap-2">
+
+                    <!-- Cancelar em edição: volta para os detalhes -->
+                    <button th:if="${edicao}"
+                            type="button"
+                            class="btn btn-light border"
+                            hx:get="@{/veiculo/{id}/detalhes(id=${id}, arquivado=${arquivado != null ? arquivado : false})}"
+                            hx-target="#modal"
+                            hx-swap="innerHTML">
+                        Cancelar
+                    </button>
+
+                    <!-- Cancelar em criação: fecha o modal limpando a div -->
+                    <button th:unless="${edicao}"
+                            type="button"
+                            class="btn btn-light border"
+                            hx-get="veiculo/limpar-modal"
+                            hx-target="#modal"
+                            hx-swap="innerHTML">
+                        Cancelar
+                    </button>
+
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg me-1"></i> Salvar Veículo
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+</th:block>
