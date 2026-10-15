@@ -1,6 +1,8 @@
 package br.com.imbazzu.secretariaTransporte.localidades.adapters.in;
 
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
+import br.com.imbazzu.secretariaTransporte.localidades.adapters.in.dto.DestinoRequestDto;
+import br.com.imbazzu.secretariaTransporte.localidades.adapters.in.dto.DestinoResponseDto;
 import br.com.imbazzu.secretariaTransporte.localidades.application.command.destino.arquivar.DestinoCommandArquivar;
 import br.com.imbazzu.secretariaTransporte.localidades.application.command.destino.arquivar.DestinoCommandArquivarHandler;
 import br.com.imbazzu.secretariaTransporte.localidades.application.command.destino.desarquivar.DestinoCommandDesarquivar;
@@ -17,8 +19,6 @@ import br.com.imbazzu.secretariaTransporte.localidades.application.query.destino
 import br.com.imbazzu.secretariaTransporte.localidades.application.query.destino.listar.DestinoQueryListarHandler;
 import br.com.imbazzu.secretariaTransporte.localidades.application.query.destino.listarArquivado.DestinoQueryListarArquivado;
 import br.com.imbazzu.secretariaTransporte.localidades.application.query.destino.listarArquivado.DestinoQueryListarArquivadoHandler;
-import br.com.imbazzu.secretariaTransporte.cadastrais.adapter.in.controller.dto.DestinoRequestDto;
-import br.com.imbazzu.secretariaTransporte.cadastrais.adapter.in.controller.dto.DestinoResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

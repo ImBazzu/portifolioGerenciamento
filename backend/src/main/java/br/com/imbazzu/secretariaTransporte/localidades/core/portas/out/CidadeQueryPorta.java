@@ -24,7 +24,7 @@ public interface CidadeQueryPorta {
 
     boolean verificarCidadeCadastradaIgnorandoId(UUID idCidade, String nomeCidade, CidadeEstadoEnum estado);
 
-    record CidadeOutput(UUID id, String nome, String estado, Duration tempoViagem, Integer totalDestinos) {
+    record CidadeOutput(UUID id, String nome, String estado, String tempoViagem, Integer totalDestinos) {
     }
     record CidadeOutputArquivado(UUID id, String nome, String estado, Duration tempoViagem, Integer totalDestinos, LocalDate dataArquivamento) {
     }

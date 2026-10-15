@@ -19,7 +19,7 @@ public class CidadeCommandEditarHandler {
         var cidade = porta.buscarPorId(command.id()).orElseThrow(
                 () -> new RuntimeException("Cidade não encontrada"));
         cidade.editar(new Nome(command.nome()), CidadeEstadoEnum.valueOf(command.estado()),
-                new TempoViagem(command.tempoViagem().toHoursPart(), command.tempoViagem().toMinutesPart()));
+                new TempoViagem(command.horas(), command.minutos()));
         porta.salvar(cidade);
     }
 }

@@ -1,0 +1,17 @@
+package br.com.imbazzu.secretariaTransporte.localidades.adapters.in.dto;
+import jakarta.validation.constraints.Min;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+public record CidadeRequestDto(
+@NotBlank(message = "Nome do Cidade é obrigatório") String nome,
+
+@NotNull(message = "Estado é obrigatório") String estado,
+
+@NotNull(message = "Hora da viagem é obrigatório") @Min(value = 0, message =
+"Hora de viagem inválido") Integer horas,
+
+@NotNull(message = "Minuto da viagem é obrigatório") @Min(value = 0, message
+= "Minuto de viagem inválido") Integer minutos) {
+}

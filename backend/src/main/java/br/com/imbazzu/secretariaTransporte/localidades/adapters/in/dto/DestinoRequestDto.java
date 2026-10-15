@@ -1,4 +1,4 @@
-package br.com.imbazzu.secretariaTransporte.cadastrais.adapter.in.controller.dto;
+package br.com.imbazzu.secretariaTransporte.localidades.adapters.in.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
