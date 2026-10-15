@@ -59,4 +59,9 @@ public class CidadeCommandAdapter implements CidadeCommandPorta {
         return repo.findById(id).map(CidadeBancoMapper::paraDomainCidade);
     }
 
+    @Override
+    public void deletar(UUID cidade) {
+        repo.deleteById(cidade);
+    }
+
 }
