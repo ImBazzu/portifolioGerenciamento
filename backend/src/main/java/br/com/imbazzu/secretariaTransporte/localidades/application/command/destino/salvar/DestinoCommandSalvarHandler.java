@@ -3,6 +3,7 @@ package br.com.imbazzu.secretariaTransporte.localidades.application.command.dest
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.imbazzu.secretariaTransporte.compartilhados.valueObjects.Nome;
 import br.com.imbazzu.secretariaTransporte.localidades.core.domain.Destino;
@@ -23,6 +24,7 @@ public class DestinoCommandSalvarHandler {
 
     private final CidadeQueryPorta cidadeQuery;
 
+    @Transactional
     public UUID handler(DestinoCommandSalvar command) {
 
         var existeCidade = cidadeQuery.existeCidade(command.idCidade());

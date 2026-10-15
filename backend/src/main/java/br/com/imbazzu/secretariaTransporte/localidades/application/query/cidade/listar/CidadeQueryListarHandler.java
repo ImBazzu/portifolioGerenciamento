@@ -14,6 +14,6 @@ public class CidadeQueryListarHandler {
     private final CidadeQueryPorta porta;
 
     public ResultadoPaginado<CidadeOutput> handler(CidadeQueryListar query) {
-        return porta.listar(query.nome(), query.pagina(), query.tamanhoPagina());
+        return porta.listar(query.nome(), query.pagina(), query.tamanhoPagina(), query.ordenacao());
     }
 }

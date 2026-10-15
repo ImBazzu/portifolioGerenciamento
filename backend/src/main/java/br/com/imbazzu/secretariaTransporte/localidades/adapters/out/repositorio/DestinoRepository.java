@@ -22,13 +22,13 @@ public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
                 count(p.id) as qtdPassageiros
             FROM
                 DestinoJpa d
-            JOIN
+            LEFT JOIN
                 Passageiro p ON d.id = p.destinoId
             WHERE
                 d.nome like CONCAT('%',:nome,'%')
                 AND d.cidadeId = :idCidade
                 AND d.dataArquivado is null
-            GROUP BY d.id""", countQuery = """
+            GROUP BY d.id, d.nome""", countQuery = """
             SELECT
                 COUNT(d)
             FROM
@@ -49,14 +49,14 @@ public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
                     count(p.id) as qtdPassageiros
             FROM
                 DestinoJpa d
-            JOIN
+            LEFT JOIN
                 Passageiro p ON d.id = p.destinoId
             WHERE d.nome like CONCAT('%',:nome,'%')
                 AND
                 d.cidadeId = :idCidade
                 AND
                 d.dataArquivado is not null
-            GROUP BY d.id""", countQuery = """
+            GROUP BY d.id, d.nome, d.dataArquivado""", countQuery = """
             SELECT
                 COUNT(d)
             FROM
@@ -96,11 +96,12 @@ public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
                 count(p.id) as qtdPassageiros
             FROM
                 DestinoJpa d
-            JOIN
+            LEFT JOIN
                 Passageiro p ON d.id = p.destinoId
             WHERE
                 d.id = :id
-            GROUP BY d.id""")
+                AND d.dataArquivado IS NULL
+            GROUP BY d.id, d.nome""")
     Optional<DestinoProjecoes> buscarPorId(@Param("id") UUID id);
 
     @Query("""
@@ -111,15 +112,16 @@ public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
                 count(p.id) as qtdViagens
             FROM
                 DestinoJpa d
-            JOIN
+            LEFT JOIN
                 Passageiro p ON d.id = p.destinoId
             WHERE
                 d.id = :id
-            GROUP BY d.id""")
+                AND d.dataArquivado IS NOT NULL
+            GROUP BY d.id, d.nome, d.dataArquivado""")
     Optional<DestinoProjecoesArquivado> buscarPorIdArquivado(@Param("id") UUID id);
 
     boolean existsByCidadeIdAndNome(@Param("idCidade") UUID idCidade, @Param("nome") String nome);
 
-    boolean existsByCidadeIdAndNomeAndId(@Param("cidadeId") UUID cidadeId, @Param("nome") String nome,
+    boolean existsByCidadeIdAndNomeAndIdNot(@Param("cidadeId") UUID cidadeId, @Param("nome") String nome,
             @Param("id") UUID id);
 }

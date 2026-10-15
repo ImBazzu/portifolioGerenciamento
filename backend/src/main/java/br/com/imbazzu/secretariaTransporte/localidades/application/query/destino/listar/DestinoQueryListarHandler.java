@@ -25,7 +25,7 @@ public class DestinoQueryListarHandler {
                 }
 
                 return porta.listarPorCidade(query.idCidade(), query.nomeDestino(), query.pagina(),
-                                query.tamanho());
+                                query.tamanho(), query.ordenacao());
 
         }
 }

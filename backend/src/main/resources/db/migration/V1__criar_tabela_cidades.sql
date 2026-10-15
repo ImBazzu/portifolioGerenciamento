@@ -2,8 +2,9 @@ CREATE TABLE cidades (
     id          BINARY(16)   NOT NULL,
     nome        VARCHAR(100) NOT NULL,
     estado      VARCHAR(2)   NOT NULL,
-    arquivado   TINYINT(1)   NOT NULL DEFAULT 0,
+    tempo_viagem BIGINT      NOT NULL,
+    data_arquivado DATE      NULL,
 
     CONSTRAINT pk_cidades PRIMARY KEY (id),
-    CONSTRAINT uk_cidades_nome_estado UNIQUE (nome, estado)
+    CONSTRAINT uk_cidade_nome_estado UNIQUE (nome, estado)
 );

@@ -22,6 +22,7 @@ public class DestinoQueryListarArquivadoHandler {
         if (!existeCidade) {
             throw new CidadeNaoEncontradaException(query.idCidade());
         }
-        return porta.listarPorCidadeArquivado(query.idCidade(), query.nome(), query.pagina(), query.tamanho());
+        return porta.listarPorCidadeArquivado(
+                query.idCidade(), query.nome(), query.pagina(), query.tamanho(), query.ordenacao());
     }
 }

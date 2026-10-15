@@ -3,6 +3,7 @@ package br.com.imbazzu.secretariaTransporte.localidades.application.command.cida
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.imbazzu.secretariaTransporte.compartilhados.valueObjects.Nome;
 import br.com.imbazzu.secretariaTransporte.localidades.core.domain.Cidade;
@@ -20,6 +21,7 @@ public class CidadeCommandSalvarHandler {
     private final CidadeCommandPorta porta;
     private final CidadeQueryPorta queryPorta;
 
+    @Transactional
     public UUID handler(CidadeCommandSalvar command) {
          var cidade = Cidade.criar(new Nome(command.nome()),
          CidadeEstadoEnum.valueOf(command.estado()),

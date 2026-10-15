@@ -1,7 +1,9 @@
 package br.com.imbazzu.secretariaTransporte.localidades.adapters.out.jpaAdapter;
 
 import br.com.imbazzu.secretariaTransporte.compartilhados.adapter.outbound.persistence.mapper.PageMapper;
+import br.com.imbazzu.secretariaTransporte.compartilhados.adapter.outbound.persistence.mapper.PageRequestMapper;
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
+import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.OrdemPaginacao;
 import br.com.imbazzu.secretariaTransporte.compartilhados.valueObjects.Nome;
 import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.DestinoRepository;
 import br.com.imbazzu.secretariaTransporte.localidades.core.portas.out.DestinoQueryPorta;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
@@ -20,9 +23,10 @@ public class DestinoQueryAdapter implements DestinoQueryPorta {
     private final DestinoRepository destinoRepository;
 
     @Override
-    public ResultadoPaginado<DestinoOutputArquivado> listarPorCidadeArquivado(UUID idCidade, String nome, int pagina,
-            int tamanho) {
-        var pageable = PageRequest.of(pagina, tamanho);
+    public ResultadoPaginado<DestinoOutputArquivado> listarPorCidadeArquivado(
+            UUID idCidade, String nome, int pagina, int tamanho,
+            List<OrdemPaginacao> ordenacao) {
+        var pageable = PageRequestMapper.toPageRequest(pagina, tamanho, ordenacao);
         var projecoesDestino = destinoRepository.listarPorCidadeArquivado(idCidade, nome, pageable);
         var resultadoPaginado = projecoesDestino.map(
                 destino -> {
@@ -33,8 +37,10 @@ public class DestinoQueryAdapter implements DestinoQueryPorta {
     }
 
     @Override
-    public ResultadoPaginado<DestinoOutput> listarPorCidade(UUID idCidade, String nome, int pagina, int tamanho) {
-        var pageable = PageRequest.of(pagina, tamanho);
+    public ResultadoPaginado<DestinoOutput> listarPorCidade(
+            UUID idCidade, String nome, int pagina, int tamanho,
+            List<OrdemPaginacao> ordenacao) {
+        var pageable = PageRequestMapper.toPageRequest(pagina, tamanho, ordenacao);
         var paginaDestinoProjecao = destinoRepository.listarPorCidade(idCidade, nome, pageable);
         var resultadoPaginado = paginaDestinoProjecao.map(
                 destino -> {
@@ -50,7 +56,7 @@ public class DestinoQueryAdapter implements DestinoQueryPorta {
 
     @Override
     public boolean verificarDuplicidadeIgnorandoIdDestino(UUID idCidade, Nome nome, UUID idDestino) {
-        return destinoRepository.existsByCidadeIdAndNomeAndId(idCidade, nome.valor(), idDestino);
+        return destinoRepository.existsByCidadeIdAndNomeAndIdNot(idCidade, nome.valor(), idDestino);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package br.com.imbazzu.secretariaTransporte.localidades.application.command.destino.editar;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.imbazzu.secretariaTransporte.compartilhados.valueObjects.Nome;
 import br.com.imbazzu.secretariaTransporte.localidades.core.excecoes.DestinoDuplicadoException;
@@ -17,6 +18,7 @@ public class DestinoCommandEditarHandler {
 
     private final DestinoQueryPorta query;
 
+    @Transactional
     public void handler(DestinoCommandEditar command) {
         var destino = porta.buscarPorId(command.id()).orElseThrow(
                 () -> new DestinoNaoEncontradoException(command.id()));

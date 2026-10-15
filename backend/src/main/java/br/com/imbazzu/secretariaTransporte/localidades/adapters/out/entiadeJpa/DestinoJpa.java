@@ -38,6 +38,6 @@ public class DestinoJpa {
     @Column(name = "cidade_id", nullable = false, updatable = false)
     private UUID cidadeId;
 
-    @Column(name = "dataArquivado", nullable = false)
+    @Column(name = "data_arquivado")
     private LocalDate dataArquivado;
 }

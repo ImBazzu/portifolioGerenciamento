@@ -2,14 +2,16 @@ package br.com.imbazzu.secretariaTransporte.localidades.adapters.out.jpaAdapter;
 
 import lombok.RequiredArgsConstructor;
 import br.com.imbazzu.secretariaTransporte.compartilhados.adapter.outbound.persistence.mapper.PageMapper;
+import br.com.imbazzu.secretariaTransporte.compartilhados.adapter.outbound.persistence.mapper.PageRequestMapper;
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
+import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.OrdemPaginacao;
 import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.CidadeRepository;
 import br.com.imbazzu.secretariaTransporte.localidades.core.domain.CidadeEstadoEnum;
 import br.com.imbazzu.secretariaTransporte.localidades.core.portas.out.CidadeQueryPorta;
 
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,10 +32,9 @@ public class CidadeQueryAdapter implements CidadeQueryPorta {
      * @return lista paginada de cidade compatível com a busca
      */
     @Override
-    public ResultadoPaginado<CidadeOutput> listar(String nome, int pagina, int tamanho) {
-        // Cria o objeto de paginação
-        var pageable = PageRequest.of(pagina, tamanho);
-
+    public ResultadoPaginado<CidadeOutput> listar(
+            String nome, int pagina, int tamanho, List<OrdemPaginacao> ordenacao) {
+        var pageable = PageRequestMapper.toPageRequest(pagina, tamanho, ordenacao);
         var pageCidade =
                 // procura a cidade com o objeto paginado
                 repo.listarCidades(nome, pageable)
@@ -43,7 +44,7 @@ public class CidadeQueryAdapter implements CidadeQueryPorta {
                                     c.getId(),
                                     c.getNome(),
                                     c.getEstado(),
-                                    c.getTempoViagem(),
+                                    String.format("%s:%s",c.getTempoViagem().toHoursPart(),c.getTempoViagem().toMinutesPart()),
                                     c.getTotalDestinos()
                             );
                         });
@@ -71,9 +72,9 @@ public class CidadeQueryAdapter implements CidadeQueryPorta {
 
 
     @Override
-    public ResultadoPaginado<CidadeOutputArquivado> listarArquivados(String nome, int pagina, int tamanho) {
-         // Cria o objeto de paginação
-        var pageable = PageRequest.of(pagina, tamanho);
+    public ResultadoPaginado<CidadeOutputArquivado> listarArquivados(
+            String nome, int pagina, int tamanho, List<OrdemPaginacao> ordenacao) {
+        var pageable = PageRequestMapper.toPageRequest(pagina, tamanho, ordenacao);
 
         var pageCidade =
                 // procura a cidade com o objeto paginado
@@ -101,7 +102,7 @@ public class CidadeQueryAdapter implements CidadeQueryPorta {
                         c.getId(),
                         c.getNome(),
                         c.getEstado(),
-                        c.getTempoViagem(),
+                        "%s:%s".formatted(c.getTempoViagem().toHoursPart(),c.getTempoViagem().toMinutesPart()),
                         c.getTotalDestinos()
                 ));
     }

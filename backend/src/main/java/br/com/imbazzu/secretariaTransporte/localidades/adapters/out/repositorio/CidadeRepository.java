@@ -28,8 +28,8 @@ public interface CidadeRepository extends JpaRepository<CidadeJpa, UUID> {
                 c.tempoViagem AS tempoViagem, 
                 COUNT(d) AS totalDestinos
             FROM CidadeJpa c 
-            LEFT JOIN DestinoJpa d ON c.id = d.cidade.id
-            WHERE c.id = :id
+            LEFT JOIN DestinoJpa d ON c.id = d.cidadeId
+            WHERE c.id = :id AND c.dataArquivado IS NULL
             GROUP BY c.id, c.nome, c.estado, c.tempoViagem""")
     Optional<CidadeProjecoes>  buscarPorId(@Param("id") UUID id);
 
@@ -40,11 +40,11 @@ public interface CidadeRepository extends JpaRepository<CidadeJpa, UUID> {
                 c.estado AS estado, 
                 c.tempoViagem AS tempoViagem, 
                 COUNT(d) AS totalDestinos,
-                c.dataArquivamento AS dataArquivamento
+                c.dataArquivado AS dataArquivamento
             FROM CidadeJpa c 
-            LEFT JOIN DestinoJpa d ON c.id = d.cidade.id
-            WHERE c.id = :id AND c.dataArquivamento IS NOT NULL
-            GROUP BY c.id, c.nome, c.estado, c.tempoViagem, c.dataArquivamento""")
+            LEFT JOIN DestinoJpa d ON c.id = d.cidadeId
+            WHERE c.id = :id AND c.dataArquivado IS NOT NULL
+            GROUP BY c.id, c.nome, c.estado, c.tempoViagem, c.dataArquivado""")
     Optional<CidadeProjecoesArquivado> buscarPorIdArquivado(@Param("id") UUID id);
 
 
@@ -56,12 +56,14 @@ public interface CidadeRepository extends JpaRepository<CidadeJpa, UUID> {
                 c.tempoViagem AS tempoViagem, 
                 COUNT(d) AS totalDestinos
             FROM CidadeJpa c 
-            LEFT JOIN DestinoJpa d ON c.id = d.cidade.id
-            WHERE (:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%')))
+            LEFT JOIN DestinoJpa d ON c.id = d.cidadeId
+            WHERE c.dataArquivado IS NULL
+                AND (:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%')))
             GROUP BY c.id, c.nome, c.estado, c.tempoViagem""",
             countQuery = """
-            SELECT COUNT(*) FROM CidadeJpa c LEFT JOIN DestinoJpa d ON c.id = d.cidade.id
-            WHERE (:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%')))
+            SELECT COUNT(c) FROM CidadeJpa c
+            WHERE c.dataArquivado IS NULL
+                AND (:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%')))
             """)
     Page<CidadeProjecoes> listarCidades(@Param("nome") String nome, Pageable pageable);
 
@@ -72,14 +74,14 @@ public interface CidadeRepository extends JpaRepository<CidadeJpa, UUID> {
                 c.estado AS estado, 
                 c.tempoViagem AS tempoViagem, 
                 COUNT(d) AS totalDestinos,
-                c.dataArquivamento AS dataArquivamento
+                c.dataArquivado AS dataArquivamento
             FROM CidadeJpa c 
-            LEFT JOIN DestinoJpa d ON c.id = d.cidade.id
-            WHERE (:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%'))) AND c.dataArquivamento IS NOT NULL
-            GROUP BY c.id, c.nome, c.estado, c.tempoViagem, c.dataArquivamento""",
+            LEFT JOIN DestinoJpa d ON c.id = d.cidadeId
+            WHERE (:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%'))) AND c.dataArquivado IS NOT NULL
+            GROUP BY c.id, c.nome, c.estado, c.tempoViagem, c.dataArquivado""",
             countQuery = """
-            SELECT COUNT(*) FROM CidadeJpa c LEFT JOIN DestinoJpa d ON c.id = d.cidade.id
-            WHERE (:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%'))) AND c.dataArquivamento IS NOT NULL
+            SELECT COUNT(c) FROM CidadeJpa c
+            WHERE (:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%'))) AND c.dataArquivado IS NOT NULL
             """)
     Page<CidadeProjecoesArquivado> listarCidadesArquivadas(@Param("nome") String nome, Pageable pageable);
 

@@ -1,6 +1,7 @@
 package br.com.imbazzu.secretariaTransporte.localidades.application.command.cidade.deletar;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.imbazzu.secretariaTransporte.localidades.core.portas.out.CidadeCommandPorta;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ public class CidadeCommandDeletarHandler {
 
     private final CidadeCommandPorta porta;
 
+    @Transactional
     public void handler(CidadeCommandDeletar command) {
 
         porta.deletar(command.id());

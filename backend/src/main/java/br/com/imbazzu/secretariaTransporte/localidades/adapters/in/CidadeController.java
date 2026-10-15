@@ -1,6 +1,7 @@
 package br.com.imbazzu.secretariaTransporte.localidades.adapters.in;
 
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
+import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.OrdemPaginacao;
 import br.com.imbazzu.secretariaTransporte.localidades.adapters.in.dto.CidadeRequestDto;
 import br.com.imbazzu.secretariaTransporte.localidades.adapters.in.dto.CidadeResponseDto;
 import br.com.imbazzu.secretariaTransporte.localidades.application.command.cidade.arquivar.CidadeCommandArquivar;
@@ -82,7 +83,11 @@ public ResponseEntity<ResultadoPaginado<CidadeResponseDto>> buscarPorNome(
 @RequestParam(name = "nome", defaultValue = "") String nome,
 @PageableDefault(size = 20, sort = "nome") Pageable pageable) {
 
-var result = listarHandler.handler(new CidadeQueryListar(nome,  pageable.getPageNumber(), pageable.getPageSize()));
+var ordenacao = pageable.getSort().stream()
+        .map(order -> new OrdemPaginacao(order.getProperty(), order.isAscending()))
+        .toList();
+var result = listarHandler.handler(new CidadeQueryListar(
+        nome, pageable.getPageNumber(), pageable.getPageSize(), ordenacao));
 
 ResultadoPaginado<CidadeResponseDto> response = result.map(c-> new CidadeResponseDto(c.id(), c.nome(), c.estado(), c.tempoViagem(), c.totalDestinos())
 );

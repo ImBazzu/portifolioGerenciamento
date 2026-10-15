@@ -4,15 +4,18 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
+import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.OrdemPaginacao;
 import br.com.imbazzu.secretariaTransporte.localidades.core.domain.CidadeEstadoEnum;
 
 public interface CidadeQueryPorta {
 
-    ResultadoPaginado<CidadeOutput> listar(String nome, int pagina, int tamanho);
+    ResultadoPaginado<CidadeOutput> listar(String nome, int pagina, int tamanho, List<OrdemPaginacao> ordenacao);
 
-    ResultadoPaginado<CidadeOutputArquivado> listarArquivados(String nome, int pagina, int tamanho);
+    ResultadoPaginado<CidadeOutputArquivado> listarArquivados(
+            String nome, int pagina, int tamanho, List<OrdemPaginacao> ordenacao);
 
     Optional<CidadeOutput> buscar(UUID idCidade);
 

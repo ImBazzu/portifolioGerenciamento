@@ -51,7 +51,7 @@ public class CidadeJpa {
     /**
      * Exclusão lógica para preservar o histórico
      */
-    @Column(name = "dataArquivado", nullable = false)
+    @Column(name = "data_arquivado")
     private LocalDate dataArquivado;
 
 }

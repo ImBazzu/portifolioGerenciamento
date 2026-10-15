@@ -1,8 +1,8 @@
 CREATE TABLE destinos (
     id          BINARY(16)   NOT NULL,
-    nome        VARCHAR(150) NOT NULL,
+    nome        VARCHAR(100) NOT NULL,
     cidade_id   BINARY(16)   NOT NULL,
-    arquivado   TINYINT(1)   NOT NULL DEFAULT 0,
+    data_arquivado DATE      NULL,
 
     CONSTRAINT pk_destinos PRIMARY KEY (id),
     CONSTRAINT uk_destinos_nome_cidade UNIQUE (nome, cidade_id),

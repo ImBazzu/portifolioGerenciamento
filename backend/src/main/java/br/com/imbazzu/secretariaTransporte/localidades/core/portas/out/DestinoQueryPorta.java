@@ -3,16 +3,19 @@ package br.com.imbazzu.secretariaTransporte.localidades.core.portas.out;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
+import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.OrdemPaginacao;
 import br.com.imbazzu.secretariaTransporte.compartilhados.valueObjects.Nome;
 
 public interface DestinoQueryPorta {
 
-        ResultadoPaginado<DestinoOutput> listarPorCidade(UUID idCidade, String nome, int pagina, int tamanho);
+        ResultadoPaginado<DestinoOutput> listarPorCidade(
+                        UUID idCidade, String nome, int pagina, int tamanho, List<OrdemPaginacao> ordenacao);
 
         ResultadoPaginado<DestinoOutputArquivado> listarPorCidadeArquivado(UUID idCidade, String nome, int pagina,
-                        int tamanho);
+                        int tamanho, List<OrdemPaginacao> ordenacao);
 
         ResultadoPaginado<DestinoHistoricoOutput> buscarHistorico(UUID id, int pagina, int tamanho);
 

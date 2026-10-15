@@ -1,6 +1,7 @@
 package br.com.imbazzu.secretariaTransporte.localidades.application.command.destino.desarquivar;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.imbazzu.secretariaTransporte.localidades.core.excecoes.DestinoNaoEncontradoException;
 import br.com.imbazzu.secretariaTransporte.localidades.core.portas.out.DestinoCommandPorta;
@@ -12,6 +13,7 @@ public class DestinoCommandDesarquivarHandler {
 
     private final DestinoCommandPorta porta;
 
+    @Transactional
     public void handler(DestinoCommandDesarquivar command) {
         var destino = porta.buscarPorId(command.id()).orElseThrow(
                 () -> new DestinoNaoEncontradoException(command.id()));

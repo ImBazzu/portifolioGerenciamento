@@ -1,6 +1,7 @@
 package br.com.imbazzu.secretariaTransporte.localidades.adapters.in;
 
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
+import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.OrdemPaginacao;
 import br.com.imbazzu.secretariaTransporte.localidades.adapters.in.dto.DestinoRequestDto;
 import br.com.imbazzu.secretariaTransporte.localidades.adapters.in.dto.DestinoResponseDto;
 import br.com.imbazzu.secretariaTransporte.localidades.application.command.destino.arquivar.DestinoCommandArquivar;
@@ -107,8 +108,11 @@ public class DestinoController {
                         @RequestParam(name = "nome", defaultValue = "") String nome,
                         @PageableDefault(size = 20, sort = "nome") Pageable pageable) {
 
+                var ordenacao = pageable.getSort().stream()
+                                .map(order -> new OrdemPaginacao(order.getProperty(), order.isAscending()))
+                                .toList();
                 var result = listarHandler.handler(new DestinoQueryListar(idCidade, nome, pageable.getPageNumber(),
-                                pageable.getPageSize()));
+                                pageable.getPageSize(), ordenacao));
                 var retorno = result.map(destino -> new DestinoResponseDto(
                                 destino.id(),
                                 destino.nome(),
@@ -128,9 +132,12 @@ public class DestinoController {
                         @RequestParam(name = "nome", defaultValue = "") String nome,
                         @PageableDefault(size = 20, sort = "nome") Pageable pageable) {
 
+                var ordenacao = pageable.getSort().stream()
+                                .map(order -> new OrdemPaginacao(order.getProperty(), order.isAscending()))
+                                .toList();
                 var result = listarArquivadoHandler
                                 .handler(new DestinoQueryListarArquivado(idCidade, nome, pageable.getPageNumber(),
-                                                pageable.getPageSize()));
+                                                pageable.getPageSize(), ordenacao));
                 var retorno = result.map(destino -> new DestinoResponseDto(
                                 destino.id(),
                                 destino.nome(),

@@ -15,6 +15,7 @@ public class CidadeQueryListarArquivadoHandler {
     private final CidadeQueryPorta porta;
 
     public ResultadoPaginado<CidadeOutputArquivado> handler(CidadeQueryListarArquivado query) {
-        return porta.listarArquivados(query.nome(), query.pagina(), query.tamanhoPagina());
+        return porta.listarArquivados(
+                query.nome(), query.pagina(), query.tamanhoPagina(), query.ordenacao());
     }
 }
