@@ -7,8 +7,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.entiadeJpa.CidadeJpa;
+import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.projecoes.cidade.CidadeProjecoes;
+import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.projecoes.cidade.CidadeProjecoesArquivado;
 import br.com.imbazzu.secretariaTransporte.localidades.core.domain.CidadeEstadoEnum;
 
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -16,16 +19,69 @@ import java.util.UUID;
  */
 public interface CidadeRepository extends JpaRepository<CidadeJpa, UUID> {
 
-    /**
-     * Procurado no banco de dados pelo nome
-     * 
-     * @param nome     nome procurado
-     * @param pageable config da pagina
-     * @return retorna a lista da correspondente da cidade
-     */
+   
     @Query("""
-            SELECT c FROM CidadeJpa c WHERE c.nome LIKE CONCAT('%',:nome,'%')""")
-    Page<CidadeJpa> findByNome(@Param("nome") String nome, Pageable pageable);
+            SELECT 
+                c.id AS id, 
+                c.nome AS nome, 
+                c.estado AS estado, 
+                c.tempoViagem AS tempoViagem, 
+                COUNT(d) AS totalDestinos
+            FROM CidadeJpa c 
+            LEFT JOIN DestinoJpa d ON c.id = d.cidade.id
+            WHERE c.id = :id
+            GROUP BY c.id, c.nome, c.estado, c.tempoViagem""")
+    Optional<CidadeProjecoes>  buscarPorId(@Param("id") UUID id);
+
+    @Query ("""
+            SELECT 
+                c.id AS id, 
+                c.nome AS nome, 
+                c.estado AS estado, 
+                c.tempoViagem AS tempoViagem, 
+                COUNT(d) AS totalDestinos,
+                c.dataArquivamento AS dataArquivamento
+            FROM CidadeJpa c 
+            LEFT JOIN DestinoJpa d ON c.id = d.cidade.id
+            WHERE c.id = :id AND c.dataArquivamento IS NOT NULL
+            GROUP BY c.id, c.nome, c.estado, c.tempoViagem, c.dataArquivamento""")
+    Optional<CidadeProjecoesArquivado> buscarPorIdArquivado(@Param("id") UUID id);
+
+
+    @Query(value = """
+        SELECT 
+                c.id AS id, 
+                c.nome AS nome, 
+                c.estado AS estado, 
+                c.tempoViagem AS tempoViagem, 
+                COUNT(d) AS totalDestinos
+            FROM CidadeJpa c 
+            LEFT JOIN DestinoJpa d ON c.id = d.cidade.id
+            WHERE (:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%')))
+            GROUP BY c.id, c.nome, c.estado, c.tempoViagem""",
+            countQuery = """
+            SELECT COUNT(*) FROM CidadeJpa c LEFT JOIN DestinoJpa d ON c.id = d.cidade.id
+            WHERE (:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%')))
+            """)
+    Page<CidadeProjecoes> listarCidades(@Param("nome") String nome, Pageable pageable);
+
+    @Query(value="""
+        SELECT 
+                c.id AS id, 
+                c.nome AS nome, 
+                c.estado AS estado, 
+                c.tempoViagem AS tempoViagem, 
+                COUNT(d) AS totalDestinos,
+                c.dataArquivamento AS dataArquivamento
+            FROM CidadeJpa c 
+            LEFT JOIN DestinoJpa d ON c.id = d.cidade.id
+            WHERE (:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%'))) AND c.dataArquivamento IS NOT NULL
+            GROUP BY c.id, c.nome, c.estado, c.tempoViagem, c.dataArquivamento""",
+            countQuery = """
+            SELECT COUNT(*) FROM CidadeJpa c LEFT JOIN DestinoJpa d ON c.id = d.cidade.id
+            WHERE (:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%'))) AND c.dataArquivamento IS NOT NULL
+            """)
+    Page<CidadeProjecoesArquivado> listarCidadesArquivadas(@Param("nome") String nome, Pageable pageable);
 
     boolean existsByNomeAndEstadoAndIdNot(String nome, CidadeEstadoEnum estado, UUID id);
 

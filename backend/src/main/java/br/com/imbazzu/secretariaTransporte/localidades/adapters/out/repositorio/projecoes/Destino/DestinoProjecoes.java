@@ -1,4 +1,4 @@
-package br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.projecoes;
+package br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.projecoes.Destino;
 
 import java.util.UUID;
 

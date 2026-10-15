@@ -7,9 +7,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.entiadeJpa.DestinoJpa;
-import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.projecoes.DestinoProjecoes;
-import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.projecoes.DestinoProjecoesArquivado;
-import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.projecoes.DestinoProjecoesHistorico;
+import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.projecoes.Destino.DestinoProjecoes;
+import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.projecoes.Destino.DestinoProjecoesArquivado;
+import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.projecoes.Destino.DestinoProjecoesHistorico;
 
 import java.util.Optional;
 import java.util.UUID;
