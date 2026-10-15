@@ -3,9 +3,7 @@ package br.com.imbazzu.secretariaTransporte.localidades.adapters.out.jpaAdapter;
 import lombok.RequiredArgsConstructor;
 import br.com.imbazzu.secretariaTransporte.compartilhados.adapter.outbound.persistence.mapper.PageMapper;
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
-import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.mapper.CidadeBancoMapper;
 import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.CidadeRepository;
-import br.com.imbazzu.secretariaTransporte.localidades.core.domain.Cidade;
 import br.com.imbazzu.secretariaTransporte.localidades.core.domain.CidadeEstadoEnum;
 import br.com.imbazzu.secretariaTransporte.localidades.core.portas.out.CidadeQueryPorta;
 
@@ -31,19 +29,29 @@ public class CidadeQueryAdapter implements CidadeQueryPorta {
      * @return lista paginada de cidade compatível com a busca
      */
     @Override
-    public ResultadoPaginado<Cidade> listar(String nome, int pagina, int tamanho) {
+    public ResultadoPaginado<CidadeOutput> listar(String nome, int pagina, int tamanho) {
         // Cria o objeto de paginação
         var pageable = PageRequest.of(pagina, tamanho);
 
         var pageCidade =
                 // procura a cidade com o objeto paginado
-                repo.findByNome(nome, pageable)
+                repo.listarCidades(nome, pageable)
                         // Mapeia o JpaEntity para o Model
-                        .map(CidadeBancoMapper::paraDomainCidade);
+                        .map(c->{
+                            return new CidadeOutput(
+                                    c.getId(),
+                                    c.getNome(),
+                                    c.getEstado(),
+                                    c.getTempoViagem(),
+                                    c.getTotalDestinos()
+                            );
+                        });
         // retorna a lista da cidade paginada
         return PageMapper.toDomain(pageCidade);
     }
 
+
+    
     @Override
     public boolean verificarCidadeCadastrada(String nome, CidadeEstadoEnum estado) {
         return repo.existsByNomeAndEstado(nome, estado);
@@ -58,5 +66,30 @@ public class CidadeQueryAdapter implements CidadeQueryPorta {
     public boolean existeCidade(UUID idCidade) {
         return repo.existsById(idCidade);
     }
+
+
+
+    @Override
+    public ResultadoPaginado<CidadeOutputArquivado> listarArquivadas(String nome, int pagina, int tamanho) {
+         // Cria o objeto de paginação
+        var pageable = PageRequest.of(pagina, tamanho);
+
+        var pageCidade =
+                // procura a cidade com o objeto paginado
+                repo.listarCidadesArquivadas(nome, pageable)
+                        // Mapeia o JpaEntity para o Model
+                        .map(c->{
+                            return new CidadeOutputArquivado(
+                                    c.getId(),
+                                    c.getNome(),
+                                    c.getEstado(),
+                                    c.getTempoViagem(),
+                                    c.getTotalDestinos(),
+                                    c.getDataArquivamento()
+                            );
+                        });
+        // retorna a lista da cidade paginada
+        return PageMapper.toDomain(pageCidade);    }
+
 
 }
