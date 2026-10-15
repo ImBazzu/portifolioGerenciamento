@@ -2,6 +2,7 @@ package br.com.imbazzu.secretariaTransporte.localidades.core.portas.out;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
@@ -11,7 +12,11 @@ public interface CidadeQueryPorta {
 
     ResultadoPaginado<CidadeOutput> listar(String nome, int pagina, int tamanho);
 
-    ResultadoPaginado<CidadeOutputArquivado> listarArquivadas(String nome, int pagina, int tamanho);
+    ResultadoPaginado<CidadeOutputArquivado> listarArquivados(String nome, int pagina, int tamanho);
+
+    Optional<CidadeOutput> buscar(UUID idCidade);
+
+    Optional<CidadeOutputArquivado> buscarArquivado(UUID idCidade);
 
     boolean existeCidade(UUID idCidade);
 

@@ -10,6 +10,7 @@ import br.com.imbazzu.secretariaTransporte.localidades.core.portas.out.CidadeQue
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 //Adaptador da porta de persistência
@@ -70,7 +71,7 @@ public class CidadeQueryAdapter implements CidadeQueryPorta {
 
 
     @Override
-    public ResultadoPaginado<CidadeOutputArquivado> listarArquivadas(String nome, int pagina, int tamanho) {
+    public ResultadoPaginado<CidadeOutputArquivado> listarArquivados(String nome, int pagina, int tamanho) {
          // Cria o objeto de paginação
         var pageable = PageRequest.of(pagina, tamanho);
 
@@ -90,6 +91,35 @@ public class CidadeQueryAdapter implements CidadeQueryPorta {
                         });
         // retorna a lista da cidade paginada
         return PageMapper.toDomain(pageCidade);    }
+
+
+
+    @Override
+    public Optional<CidadeOutput> buscar(UUID idCidade) {
+        return repo.buscarPorId(idCidade)
+                .map(c -> new CidadeOutput(
+                        c.getId(),
+                        c.getNome(),
+                        c.getEstado(),
+                        c.getTempoViagem(),
+                        c.getTotalDestinos()
+                ));
+    }
+
+
+
+    @Override
+    public Optional<CidadeOutputArquivado> buscarArquivado(UUID idCidade) {
+        return repo.buscarPorIdArquivado(idCidade)
+                .map(c -> new CidadeOutputArquivado(
+                        c.getId(),
+                        c.getNome(),
+                        c.getEstado(),
+                        c.getTempoViagem(),
+                        c.getTotalDestinos(),
+                        c.getDataArquivamento()
+                ));
+    }
 
 
 }
