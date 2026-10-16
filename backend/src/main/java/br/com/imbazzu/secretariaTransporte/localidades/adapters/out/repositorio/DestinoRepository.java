@@ -75,7 +75,7 @@ public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
     @Query(value = """
                 SELECT
                     v.dataSaida as data,
-                    COUNT (UNIQUE p.id) as quantidade
+                    COUNT(DISTINCT p.id) as quantidade
                 FROM DestinoJpa d
                 JOIN PassageiroJpa p ON d.id = p.destinoId
                 JOIN VeiculoJpa v ON p.veiculoId = v.id
@@ -84,7 +84,9 @@ public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
                 ORDER BY v.dataSaida DESC
             """, countQuery = """
                 SELECT COUNT(DISTINCT v.dataSaida)
-                FROM DestinoJpa d JOIN d.passageiros p JOIN p.veiculo v
+                FROM DestinoJpa d 
+                JOIN PassageiroJpa p ON d.id = p.destinoId 
+                JOIN VeiculoJpa v on p.veiculoId = v.id
                 WHERE d.id = :id
             """)
     Page<DestinoProjecoesHistorico> buscarHistorico(@Param("id") UUID id, Pageable pageable);

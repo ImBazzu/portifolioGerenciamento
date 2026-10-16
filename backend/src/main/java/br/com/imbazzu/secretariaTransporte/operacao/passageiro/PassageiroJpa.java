@@ -8,8 +8,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -25,14 +23,16 @@ import lombok.Setter;
 public class PassageiroJpa {
 
 @Id
-@GeneratedValue(strategy = GenerationType.UUID)
 @Column(name = "id", columnDefinition = "BINARY(16)", updatable = false,
 nullable = false)
 private UUID id;
 
-@Column(name = "destino_id", columnDefinition = "INT", nullable = false)
+@Column(name = "destino_id", nullable = false)
 @Setter
 private UUID destinoId;
+
+@Column (name="veiculo_id", nullable=false)
+private UUID veiculoId;
 
 
 @Column(name = "acompanhantes", columnDefinition = "INT", nullable = false)
