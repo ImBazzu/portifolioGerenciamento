@@ -1,9 +1,9 @@
 package br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.out.persistencia;
 
-import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.model.Usuario;
-import br.com.imbazzu.secretariaTransporte.cadastrais.core.porta.out.UsuarioRepositorioPorta;
-
 import java.util.Optional;
+
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.model.Usuario;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.UsuarioRepositorioPorta;
 
 public class UsuarioRepositorioAdapter implements UsuarioRepositorioPorta {
 

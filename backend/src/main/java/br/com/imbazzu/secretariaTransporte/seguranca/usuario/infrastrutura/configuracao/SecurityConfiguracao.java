@@ -1,14 +1,5 @@
 package br.com.imbazzu.secretariaTransporte.seguranca.usuario.infrastrutura.configuracao;
 
-import br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.out.seguranca.BcriptVerificadorSenhaAdapter;
-import br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.out.seguranca.CriptografarSenhaAdapter;
-import br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.out.seguranca.SecurityFiltroToken;
-import br.com.imbazzu.secretariaTransporte.seguranca.usuario.application.UsuarioCadastroService;
-import br.com.imbazzu.secretariaTransporte.cadastrais.core.porta.in.UsuarioApplicationPorta;
-import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.CriptografiaSenhaPorta;
-import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.TokenPorta;
-import br.com.imbazzu.secretariaTransporte.cadastrais.core.porta.out.UsuarioRepositorioPorta;
-import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.VerificadorSenhaPorta;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,6 +12,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.out.seguranca.BcriptVerificadorSenhaAdapter;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.out.seguranca.CriptografarSenhaAdapter;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.out.seguranca.SecurityFiltroToken;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.application.UsuarioApplicationPorta;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.application.UsuarioCadastroService;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.CriptografiaSenhaPorta;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.TokenPorta;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.UsuarioRepositorioPorta;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.VerificadorSenhaPorta;
 
 @Configuration
 @EnableWebSecurity

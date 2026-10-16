@@ -4,7 +4,7 @@ import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.excecoes.Usu
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.in.AutenticarUsuarioUseCase;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.LoginTentativasPorta;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.TokenPorta;
-import br.com.imbazzu.secretariaTransporte.cadastrais.core.porta.out.UsuarioRepositorioPorta;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.UsuarioRepositorioPorta;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.VerificadorSenhaPorta;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.dto.TokenResponseDto;
 

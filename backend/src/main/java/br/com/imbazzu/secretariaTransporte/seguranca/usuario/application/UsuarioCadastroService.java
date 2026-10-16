@@ -3,9 +3,8 @@ package br.com.imbazzu.secretariaTransporte.seguranca.usuario.application;
 import br.com.imbazzu.secretariaTransporte.compartilhados.valueObjects.Nome;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.model.Usuario;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.model.UsuarioRoleEnum;
-import br.com.imbazzu.secretariaTransporte.cadastrais.core.porta.in.UsuarioApplicationPorta;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.CriptografiaSenhaPorta;
-import br.com.imbazzu.secretariaTransporte.cadastrais.core.porta.out.UsuarioRepositorioPorta;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.UsuarioRepositorioPorta;
 
 public class UsuarioCadastroService implements UsuarioApplicationPorta {
 

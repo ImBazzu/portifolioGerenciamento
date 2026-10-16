@@ -1,18 +1,21 @@
 package br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.in.web;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.application.UsuarioApplicationPorta;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.in.AtualizarTokenUseCase;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.in.AutenticarUsuarioUseCase;
-import br.com.imbazzu.secretariaTransporte.cadastrais.core.porta.in.UsuarioApplicationPorta;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.dto.TokenRequestDto;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.dto.TokenResponseDto;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.dto.UsuarioRequestDto;
 import jakarta.annotation.security.PermitAll;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("auth")

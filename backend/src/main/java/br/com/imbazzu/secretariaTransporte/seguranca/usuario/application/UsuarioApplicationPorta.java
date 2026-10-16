@@ -1,4 +1,4 @@
-package br.com.imbazzu.secretariaTransporte.cadastrais.core.porta.in;
+package br.com.imbazzu.secretariaTransporte.seguranca.usuario.application;
 
 
 public interface UsuarioApplicationPorta {

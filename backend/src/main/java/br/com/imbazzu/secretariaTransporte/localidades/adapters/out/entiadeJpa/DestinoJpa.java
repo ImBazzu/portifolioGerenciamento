@@ -21,7 +21,6 @@ public class DestinoJpa {
      * Identificador único
      */
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false, updatable = false)
     @Setter(AccessLevel.PRIVATE)
     private UUID id;

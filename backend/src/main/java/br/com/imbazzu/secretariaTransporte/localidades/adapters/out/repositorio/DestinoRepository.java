@@ -1,5 +1,8 @@
 package br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,9 +14,6 @@ import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.
 import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.projecoes.Destino.DestinoProjecoesArquivado;
 import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.projecoes.Destino.DestinoProjecoesHistorico;
 
-import java.util.Optional;
-import java.util.UUID;
-
 public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
     @Query(value = """
             SELECT
@@ -23,7 +23,7 @@ public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
             FROM
                 DestinoJpa d
             LEFT JOIN
-                Passageiro p ON d.id = p.destinoId
+                PassageiroJpa p ON d.id = p.destinoId
             WHERE
                 d.nome like CONCAT('%',:nome,'%')
                 AND d.cidadeId = :idCidade
@@ -50,7 +50,7 @@ public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
             FROM
                 DestinoJpa d
             LEFT JOIN
-                Passageiro p ON d.id = p.destinoId
+                PassageiroJpa p ON d.id = p.destinoId
             WHERE d.nome like CONCAT('%',:nome,'%')
                 AND
                 d.cidadeId = :idCidade
@@ -97,7 +97,7 @@ public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
             FROM
                 DestinoJpa d
             LEFT JOIN
-                Passageiro p ON d.id = p.destinoId
+                PassageiroJpa p ON d.id = p.destinoId
             WHERE
                 d.id = :id
                 AND d.dataArquivado IS NULL
@@ -113,7 +113,7 @@ public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
             FROM
                 DestinoJpa d
             LEFT JOIN
-                Passageiro p ON d.id = p.destinoId
+                PassageiroJpa p ON d.id = p.destinoId
             WHERE
                 d.id = :id
                 AND d.dataArquivado IS NOT NULL

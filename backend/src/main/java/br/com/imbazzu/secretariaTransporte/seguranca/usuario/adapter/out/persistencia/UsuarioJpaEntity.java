@@ -35,7 +35,7 @@ public class UsuarioJpaEntity {
     protected UsuarioJpaEntity() {}
 
     public static UsuarioJpaEntity fromDomain(Usuario usuario) {
-        var entity = new UsuarioJpaEntity();
+        UsuarioJpaEntity entity = new UsuarioJpaEntity();
         entity.id = usuario.getId();
         entity.nome = usuario.getNome().valor();
         entity.senha = usuario.getSenha();
