@@ -1,11 +1,11 @@
-package br.com.imbazzu.frontspring.autenticacao.adapter.out.retry;
+package br.com.imbazzu.frontSpring.autenticacao.adapter.out.retry;
 
 import java.util.function.Supplier;
 
-import br.com.imbazzu.frontspring.autenticacao.core.exception.TokenInvalidadoException;
+import br.com.imbazzu.frontSpring.autenticacao.core.exception.TokenInvalidadoException;
 
-import br.com.imbazzu.frontspring.autenticacao.core.porta.in.LoginApplicationPorta;
-import br.com.imbazzu.frontspring.autenticacao.core.porta.out.RetryComRefreshPorta;
+import br.com.imbazzu.frontSpring.autenticacao.core.porta.in.LoginApplicationPorta;
+import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
 
 public class RetryComRefresh implements RetryComRefreshPorta {
 

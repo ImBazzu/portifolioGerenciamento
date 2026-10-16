@@ -1,4 +1,4 @@
-package br.com.imbazzu.frontspring.autenticacao.core.dto;
+package br.com.imbazzu.frontSpring.autenticacao.core.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

@@ -1,4 +1,4 @@
-package br.com.imbazzu.frontspring.autenticacao.infraestrutura.seguranca;
+package br.com.imbazzu.frontSpring.autenticacao.infraestrutura.seguranca;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,7 +11,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import br.com.imbazzu.frontspring.autenticacao.core.porta.out.SessionAuthPorta;
+import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.SessionAuthPorta;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration

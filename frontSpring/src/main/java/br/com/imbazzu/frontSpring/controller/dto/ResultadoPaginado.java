@@ -1,4 +1,4 @@
-package br.com.imbazzu.frontspring.controller.dto;
+package br.com.imbazzu.frontSpring.controller.dto;
 
 import java.util.List;
 import java.util.function.Function;

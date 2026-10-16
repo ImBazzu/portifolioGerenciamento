@@ -1,4 +1,4 @@
-package br.com.imbazzu.frontspring.veiculo.core.excecoes;
+package br.com.imbazzu.frontSpring.veiculo.core.excecoes;
 
 import java.util.UUID;
 

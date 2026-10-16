@@ -1,4 +1,4 @@
-package br.com.imbazzu.frontspring.veiculo.core.dto;
+package br.com.imbazzu.frontSpring.veiculo.core.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;

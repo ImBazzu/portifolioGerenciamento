@@ -1,22 +1,21 @@
-package br.com.imbazzu.frontspring.destino.cidadedestino;
+package br.com.imbazzu.frontSpring.destino.cidadedestino;
 
 import java.util.UUID;
 
-import br.com.imbazzu.frontspring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
+import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
-import br.com.imbazzu.frontspring.destino.cidadedestino.dto.CidadeDestinoRequestDto;
-import br.com.imbazzu.frontspring.destino.cidadedestino.dto.CidadeDestinoResponseDto;
-import br.com.imbazzu.frontspring.controller.dto.ResultadoPaginado;
+import br.com.imbazzu.frontSpring.destino.cidadedestino.dto.CidadeDestinoRequestDto;
+import br.com.imbazzu.frontSpring.destino.cidadedestino.dto.CidadeDestinoResponseDto;
+import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 
 /**
  * CidadeDestinoFrontService
  */
 @Service
-
 public class CidadeDestinoFrontService {
 
     private final RestClient backendRestClient;

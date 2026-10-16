@@ -1,14 +1,13 @@
-package br.com.imbazzu.frontspring.veiculo.adpter.out.api;
+package br.com.imbazzu.frontSpring.veiculo.adpter.out.api;
 
-import br.com.imbazzu.frontspring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
-import br.com.imbazzu.frontspring.controller.dto.ResultadoPaginado;
-import br.com.imbazzu.frontspring.veiculo.core.dto.TipoVeiculoArquivadoResponseDto;
-import br.com.imbazzu.frontspring.veiculo.core.dto.TipoVeiculoRequestDto;
-import br.com.imbazzu.frontspring.veiculo.core.dto.TipoVeiculoResponseDto;
-import br.com.imbazzu.frontspring.veiculo.core.excecoes.VeiculoDuplicadoException;
-import br.com.imbazzu.frontspring.veiculo.core.excecoes.VeiculoNaoEncontradoException;
-import br.com.imbazzu.frontspring.veiculo.core.porta.out.VeiculoApiPorta;
-import lombok.RequiredArgsConstructor;
+import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
+import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
+import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoArquivadoResponseDto;
+import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoRequestDto;
+import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
+import br.com.imbazzu.frontSpring.veiculo.core.excecoes.VeiculoDuplicadoException;
+import br.com.imbazzu.frontSpring.veiculo.core.excecoes.VeiculoNaoEncontradoException;
+import br.com.imbazzu.frontSpring.veiculo.core.porta.out.VeiculoApiPorta;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;

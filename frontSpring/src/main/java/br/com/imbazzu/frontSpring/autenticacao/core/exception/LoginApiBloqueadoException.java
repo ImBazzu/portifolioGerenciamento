@@ -1,4 +1,4 @@
-package br.com.imbazzu.frontspring.autenticacao.core.exception;
+package br.com.imbazzu.frontSpring.autenticacao.core.exception;
 
 public class LoginApiBloqueadoException extends RuntimeException {
     public LoginApiBloqueadoException() {

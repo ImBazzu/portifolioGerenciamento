@@ -1,4 +1,4 @@
-package br.com.imbazzu.frontspring.veiculo.core.dto;
+package br.com.imbazzu.frontSpring.veiculo.core.dto;
 
 import java.time.LocalDate;
 import java.util.UUID;

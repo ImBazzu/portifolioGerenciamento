@@ -1,4 +1,4 @@
-package br.com.imbazzu.frontspring.autenticacao.infraestrutura.seguranca;
+package br.com.imbazzu.frontSpring.autenticacao.infraestrutura.seguranca;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,7 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import br.com.imbazzu.frontspring.autenticacao.core.porta.out.SessionAuthPorta;
+import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.SessionAuthPorta;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

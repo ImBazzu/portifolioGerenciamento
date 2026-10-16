@@ -1,32 +1,25 @@
-package br.com.imbazzu.frontspring.veiculo.adpter.in.controller;
+package br.com.imbazzu.frontSpring.veiculo.adpter.in.controller;
 
-import br.com.imbazzu.frontspring.controller.dto.ResultadoPaginado;
-import br.com.imbazzu.frontspring.veiculo.core.dto.TipoVeiculoArquivadoResponseDto;
-import br.com.imbazzu.frontspring.veiculo.core.dto.TipoVeiculoHistoricoResponseDto;
-import br.com.imbazzu.frontspring.veiculo.core.dto.TipoVeiculoRequestDto;
-import br.com.imbazzu.frontspring.veiculo.core.dto.TipoVeiculoResponseDto;
-import br.com.imbazzu.frontspring.veiculo.core.excecoes.VeiculoDuplicadoException;
-import br.com.imbazzu.frontspring.veiculo.core.excecoes.VeiculoNaoEncontradoException;
-import br.com.imbazzu.frontspring.veiculo.core.porta.in.VeiculoApplicationPorta;
-import io.github.wimdeblauwe.htmx.spring.boot.mvc.HtmxResponse;
+import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
+import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
+import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxRequest;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxTriggerAfterSettle;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @Controller
 @RequestMapping("veiculo")
-@RequiredArgsConstructor
 public class VeiculoController {
 
     private final VeiculoApplicationPorta application;
+
+    public VeiculoController(VeiculoApplicationPorta application){
+        this.application = application;
+    }
 
     @GetMapping
     public String inicio(Model model) {

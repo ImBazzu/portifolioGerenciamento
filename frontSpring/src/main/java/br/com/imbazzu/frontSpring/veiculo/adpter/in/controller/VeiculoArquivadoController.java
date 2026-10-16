@@ -1,21 +1,24 @@
-package br.com.imbazzu.frontspring.veiculo.adpter.in.controller;
+package br.com.imbazzu.frontSpring.veiculo.adpter.in.controller;
 
-import br.com.imbazzu.frontspring.veiculo.core.porta.in.VeiculoApplicationPorta;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxRequest;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxTriggerAfterSettle;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+
+import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
 
 import java.util.UUID;
 
 @Controller
 @RequestMapping("/veiculo")
-@RequiredArgsConstructor
 public class VeiculoArquivadoController {
 
     private final VeiculoApplicationPorta application;
+
+    public VeiculoArquivadoController(VeiculoApplicationPorta application){
+        this.application = application;
+    }
 
     @GetMapping("/listarArquivado")
     @HxRequest

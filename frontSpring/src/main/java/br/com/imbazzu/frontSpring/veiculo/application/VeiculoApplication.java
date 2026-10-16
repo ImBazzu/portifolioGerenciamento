@@ -1,24 +1,26 @@
-package br.com.imbazzu.frontspring.veiculo.application;
+package br.com.imbazzu.frontSpring.veiculo.application;
 
-import br.com.imbazzu.frontspring.controller.dto.ResultadoPaginado;
-import br.com.imbazzu.frontspring.veiculo.core.dto.TipoVeiculoArquivadoResponseDto;
-import br.com.imbazzu.frontspring.veiculo.core.dto.TipoVeiculoHistoricoResponseDto;
-import br.com.imbazzu.frontspring.veiculo.core.dto.TipoVeiculoRequestDto;
-import br.com.imbazzu.frontspring.veiculo.core.dto.TipoVeiculoResponseDto;
-import br.com.imbazzu.frontspring.veiculo.core.porta.in.VeiculoApplicationPorta;
-import br.com.imbazzu.frontspring.veiculo.core.porta.out.VeiculoApiPorta;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
+import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoArquivadoResponseDto;
+import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoHistoricoResponseDto;
+import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoRequestDto;
+import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
+import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
+import br.com.imbazzu.frontSpring.veiculo.core.porta.out.VeiculoApiPorta;
+
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class VeiculoApplication implements VeiculoApplicationPorta{
 
     private final VeiculoApiPorta api;
+
+    public VeiculoApplication(VeiculoApiPorta api){
+        this.api = api;
+    }
 
     @Override
     public void arquivar(UUID id) {

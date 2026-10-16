@@ -1,4 +1,4 @@
-package br.com.imbazzu.frontspring.destino.cidadedestino.dto;
+package br.com.imbazzu.frontSpring.destino.cidadedestino.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

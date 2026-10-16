@@ -1,15 +1,15 @@
-package br.com.imbazzu.frontspring.autenticacao.infraestrutura.httpConfig;
+package br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig;
 
-import br.com.imbazzu.frontspring.autenticacao.adapter.out.retry.RetryComRefresh;
-import br.com.imbazzu.frontspring.autenticacao.core.exception.TokenInvalidadoException;
+import br.com.imbazzu.frontSpring.autenticacao.adapter.out.retry.RetryComRefresh;
+import br.com.imbazzu.frontSpring.autenticacao.core.exception.TokenInvalidadoException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClient;
 
-import br.com.imbazzu.frontspring.autenticacao.core.porta.in.LoginApplicationPorta;
-import br.com.imbazzu.frontspring.autenticacao.core.porta.out.RetryComRefreshPorta;
+import br.com.imbazzu.frontSpring.autenticacao.core.porta.in.LoginApplicationPorta;
+import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
 
 @Configuration
 public class ApiClientConfig {

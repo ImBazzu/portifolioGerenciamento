@@ -1,4 +1,4 @@
-package br.com.imbazzu.frontspring.autenticacao.core.porta.out;
+package br.com.imbazzu.frontSpring.autenticacao.core.porta.out;
 
 public interface SessionAuthPorta {
     void store(String accessToken, String refreshToken);

@@ -1,4 +1,4 @@
-package br.com.imbazzu.frontspring.autenticacao.core.porta.out;
+package br.com.imbazzu.frontSpring.autenticacao.core.porta.out;
 
 import java.util.function.Supplier;
 

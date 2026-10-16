@@ -1,16 +1,16 @@
-package br.com.imbazzu.frontspring.autenticacao.adapter.out.api;
+package br.com.imbazzu.frontSpring.autenticacao.adapter.out.api;
 
-import br.com.imbazzu.frontspring.autenticacao.core.exception.LoginApiBloqueadoException;
-import br.com.imbazzu.frontspring.autenticacao.core.exception.RefreshTokenInvalidoException;
-import br.com.imbazzu.frontspring.autenticacao.infraestrutura.httpConfig.RestClientDesprotegido;
+import br.com.imbazzu.frontSpring.autenticacao.core.exception.LoginApiBloqueadoException;
+import br.com.imbazzu.frontSpring.autenticacao.core.exception.RefreshTokenInvalidoException;
+import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientDesprotegido;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClient;
 
-import br.com.imbazzu.frontspring.autenticacao.core.dto.LoginRefreshDto;
-import br.com.imbazzu.frontspring.autenticacao.core.dto.LoginRequestDto;
-import br.com.imbazzu.frontspring.autenticacao.core.dto.LoginResponseDto;
-import br.com.imbazzu.frontspring.autenticacao.core.porta.out.LoginApiPorta;
-import br.com.imbazzu.frontspring.autenticacao.core.exception.LoginApiException;
+import br.com.imbazzu.frontSpring.autenticacao.core.dto.LoginRefreshDto;
+import br.com.imbazzu.frontSpring.autenticacao.core.dto.LoginRequestDto;
+import br.com.imbazzu.frontSpring.autenticacao.core.dto.LoginResponseDto;
+import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.LoginApiPorta;
+import br.com.imbazzu.frontSpring.autenticacao.core.exception.LoginApiException;
 
 public class LoginApi implements LoginApiPorta {
 

@@ -1,4 +1,4 @@
-package br.com.imbazzu.frontspring.autenticacao.infraestrutura.httpConfig;
+package br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig;
 
 import java.io.IOException;
 
@@ -7,7 +7,7 @@ import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 
-import br.com.imbazzu.frontspring.autenticacao.core.porta.out.SessionAuthPorta;
+import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.SessionAuthPorta;
 
 /**
  * ApiAuthenticationFilter

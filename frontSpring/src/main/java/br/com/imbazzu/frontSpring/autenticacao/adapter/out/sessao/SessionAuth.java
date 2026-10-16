@@ -1,9 +1,9 @@
-package br.com.imbazzu.frontspring.autenticacao.adapter.out.sessao;
+package br.com.imbazzu.frontSpring.autenticacao.adapter.out.sessao;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
-import br.com.imbazzu.frontspring.autenticacao.core.porta.out.SessionAuthPorta;
+import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.SessionAuthPorta;
 
 public class SessionAuth implements SessionAuthPorta {
 

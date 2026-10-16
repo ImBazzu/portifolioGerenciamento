@@ -1,21 +1,23 @@
-package br.com.imbazzu.frontspring.destino.adapter.in.controller;
+package br.com.imbazzu.frontSpring.destino.adapter.in.controller;
 
-import br.com.imbazzu.frontspring.destino.cidadedestino.CidadeDestinoFrontService;
-import lombok.RequiredArgsConstructor;
+import br.com.imbazzu.frontSpring.destino.cidadedestino.CidadeDestinoFrontService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import br.com.imbazzu.frontspring.destino.cidadedestino.dto.CidadeDestinoRequestDto;
+import br.com.imbazzu.frontSpring.destino.cidadedestino.dto.CidadeDestinoRequestDto;
 
 import java.util.UUID;
 
 @Controller
 @RequestMapping("/cidade")
-@RequiredArgsConstructor
 public class CidadeDestinoUIController {
 
     private final CidadeDestinoFrontService cidadeDestinoFrontService;
+
+    public CidadeDestinoUIController(CidadeDestinoFrontService cidadeService){
+        this.cidadeDestinoFrontService = cidadeService;
+    }
 
     @GetMapping
     public String inicio(Model model){
