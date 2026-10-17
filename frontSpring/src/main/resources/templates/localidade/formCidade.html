@@ -1,0 +1,63 @@
+<th:block th:fragment="formCidade" th:with="edicao=${id != null}" xmlns:hx="http://www.w3.org/1999/xhtml">
+    <div class="custom-modal-backdrop">
+        <div class="custom-modal-card bg-white rounded shadow-lg p-4">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                <h5 class="fw-bold m-0" th:text="${edicao ? 'Editar cidade' : 'Cadastrar cidade'}">Cidade</h5>
+                <button type="button" class="btn-close"
+                        hx:get="@{/localidade/limpar-modal}" hx-target="#modal" hx-swap="innerHTML"
+                        aria-label="Fechar"></button>
+            </div>
+            <form th:object="${cidade}"
+                  hx:post="${!edicao} ? @{/localidade} : null"
+                  hx:put="${edicao} ? @{/localidade/{id}(id=${id}, arquivado=${arquivado})} : null"
+                  hx-target="#modal" hx-swap="innerHTML">
+                <div th:if="${erroGlobal != null}" class="alert alert-danger" role="alert" th:text="${erroGlobal}"></div>
+                <div class="mb-3">
+                    <label for="nomeCidade" class="form-label fw-bold">Nome da cidade</label>
+                    <input id="nomeCidade" type="text" th:field="*{nome}" class="form-control"
+                           th:classappend="${#fields.hasErrors('nome')} ? 'is-invalid'"
+                           placeholder="Ex.: Campinas">
+                    <div th:if="${#fields.hasErrors('nome')}" class="invalid-feedback"
+                         th:errors="*{nome}"></div>
+                </div>
+                <div class="mb-3">
+                    <label for="estadoCidade" class="form-label fw-bold">Estado</label>
+                    <select id="estadoCidade" th:field="*{estado}" class="form-select"
+                            th:classappend="${#fields.hasErrors('estado')} ? 'is-invalid'">
+                        <option value="">Selecione o estado</option>
+                        <option th:each="estado : ${estados}" th:value="${estado.sigla}"
+                                th:text="${estado.nome + ' (' + estado.sigla + ')'}">Estado</option>
+                    </select>
+                    <div th:if="${#fields.hasErrors('estado')}" class="invalid-feedback"
+                         th:errors="*{estado}"></div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-sm-6 mb-3">
+                        <label for="horasViagem" class="form-label fw-bold">Horas de viagem</label>
+                        <input id="horasViagem" type="number" min="0" th:field="*{horas}" class="form-control"
+                               th:classappend="${#fields.hasErrors('horas')} ? 'is-invalid'">
+                        <div th:if="${#fields.hasErrors('horas')}" class="invalid-feedback"
+                             th:errors="*{horas}"></div>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                        <label for="minutosViagem" class="form-label fw-bold">Minutos de viagem</label>
+                        <input id="minutosViagem" type="number" min="0" max="59" th:field="*{minutos}" class="form-control"
+                               th:classappend="${#fields.hasErrors('minutos')} ? 'is-invalid'">
+                        <div th:if="${#fields.hasErrors('minutos')}" class="invalid-feedback"
+                             th:errors="*{minutos}"></div>
+                    </div>
+                </div>
+                <div class="border-top pt-3 mt-2 d-flex justify-content-end gap-2">
+                    <button th:if="${edicao}" type="button" class="btn btn-light border"
+                            hx:get="@{/localidade/{id}/detalhes(id=${id}, arquivado=${arquivado})}"
+                            hx-target="#modal" hx-swap="innerHTML">Cancelar</button>
+                    <button th:unless="${edicao}" type="button" class="btn btn-light border"
+                            hx:get="@{/localidade/limpar-modal}" hx-target="#modal" hx-swap="innerHTML">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg me-1"></i> Salvar cidade
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</th:block>

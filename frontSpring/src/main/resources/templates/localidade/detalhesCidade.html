@@ -1,0 +1,58 @@
+<th:block th:fragment="detalhesCidade" xmlns:hx="http://www.w3.org/1999/xhtml">
+    <div class="custom-modal-backdrop">
+        <div class="custom-modal-card bg-white rounded shadow-lg p-4" id="detalhesLocalidade">
+            <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1">
+                        <span th:text="${cidade.nome}">Cidade</span>
+                        <span th:if="${arquivado}" class="badge bg-secondary ms-2">Arquivada</span>
+                    </h5>
+                    <div class="text-muted small">
+                        <span th:text="${cidade.estado}">UF</span>
+                        <span class="mx-1">·</span>
+                        <span th:text="${#strings.replace(cidade.tempoViagem, ':', 'h ')} + 'm de viagem'">0h 0m de viagem</span>
+                        <span class="mx-1">·</span>
+                        <span th:text="${cidade.totalDestinos} + ' destinos'">0 destinos</span>
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap justify-content-end gap-2">
+                    <button class="btn btn-sm btn-light border"
+                            hx:get="@{/localidade/abrirFormulario/{id}(id=${cidade.id}, arquivado=${arquivado})}"
+                            hx-target="#modal" hx-swap="innerHTML">
+                        <i class="bi bi-pencil me-1"></i> Editar
+                    </button>
+                    <button th:if="${arquivado}" class="btn btn-sm btn-outline-secondary"
+                            hx:get="@{/localidade/listarArquivado}" hx-target="#modal" hx-swap="innerHTML">
+                        <i class="bi bi-arrow-left me-1"></i> Voltar
+                    </button>
+                    <button type="button" class="btn-close"
+                            hx:get="@{/localidade/limpar-modal}"
+                            hx-trigger="fechar-formulario from:body, click"
+                            hx-target="#modal" hx-swap="innerHTML"
+                            aria-label="Fechar"></button>
+                </div>
+            </div>
+
+            <div th:if="${!arquivado}" id="destinosContainer"
+                 hx:get="@{/localidade/{id}/destinos(id=${cidade.id})}"
+                 hx-trigger="load"
+                 hx-swap="innerHTML">
+            </div>
+            <div th:if="${arquivado}" class="alert alert-secondary mb-0">
+                Esta cidade está arquivada. Desarquive-a para gerenciar seus destinos.
+            </div>
+
+            <div class="border-top pt-3 mt-3 d-flex justify-content-between align-items-center">
+                <button th:unless="${arquivado}" class="btn btn-sm btn-warning text-dark"
+                        hx:patch="@{/localidade/{id}/arquivar(id=${cidade.id})}" hx-swap="none">
+                    <i class="bi bi-archive me-1"></i> Arquivar cidade
+                </button>
+                <button th:if="${arquivado}" class="btn btn-sm btn-danger"
+                        hx:delete="@{/localidade/{id}(id=${cidade.id})}"
+                        hx-target="#modal" hx-swap="innerHTML">
+                    <i class="bi bi-trash me-1"></i> Excluir definitivamente
+                </button>
+            </div>
+        </div>
+    </div>
+</th:block>

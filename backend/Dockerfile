@@ -1,5 +1,5 @@
-# Etapa 1: Build com Maven + Java 25
-FROM maven:3.9.16-eclipse-temurin-25 AS builder
+# Etapa 1: Build com Maven + Java 27
+FROM maven:3.10.0-eclipse-temurin-27 AS builder
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ COPY . .
 
 RUN mvn clean install -DskipTests
 
-FROM eclipse-temurin:25-jdk-alpine
+FROM eclipse-temurin:27-jdk-alpine
 
 WORKDIR /app
 

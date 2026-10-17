@@ -1,0 +1,79 @@
+<th:block th:fragment="tabDestinosAtivos" xmlns:hx="http://www.w3.org/1999/xhtml">
+    <div class="border-top pt-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h6 class="fw-bold mb-0">Destinos desta cidade</h6>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary"
+                        hx:get="@{/localidade/{id}/destinos/arquivados(id=${idCidade})}"
+                        hx-target="#destinosContainer" hx-swap="innerHTML">
+                    <i class="bi bi-archive me-1"></i> Arquivados
+                </button>
+                <button class="btn btn-sm btn-primary"
+                        hx:get="@{/localidade/{id}/destinos/abrirFormulario(id=${idCidade})}"
+                        hx-target="#modal" hx-swap="innerHTML">
+                    <i class="bi bi-plus-lg me-1"></i> Novo destino
+                </button>
+            </div>
+        </div>
+        <div class="style-search mb-3">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="search" id="inputBuscaDestino" name="busca"
+                       th:value="${busca}" class="form-control"
+                       placeholder="Buscar destino..."
+                       hx:get="@{/localidade/{id}/destinos(id=${idCidade})}"
+                       hx-trigger="keyup changed delay:300ms, listar-destinos from:body"
+                       hx-target="#destinosContainer" hx-swap="innerHTML" hx-preserve="true">
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Destino</th>
+                    <th>Passageiros</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(destinos)}">
+                    <td colspan="3" class="text-center text-muted py-3">Nenhum destino cadastrado para esta cidade.</td>
+                </tr>
+                <tr th:each="destino : ${destinos}" th:attr="data-id=${destino.id}">
+                    <td class="fw-semibold" th:text="${destino.nome}">Destino</td>
+                    <td th:text="${destino.qtdPassageiros != null ? destino.qtdPassageiros : 0}">0</td>
+                    <td class="text-end text-nowrap">
+                        <button class="btn btn-sm btn-outline-primary"
+                                hx:get="@{/localidade/destinos/abrirFormulario/{id}(id=${destino.id}, idCidade=${idCidade})}"
+                                hx-target="#modal" hx-swap="innerHTML" title="Editar destino">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning"
+                                hx:patch="@{/localidade/destinos/arquivar/{id}(id=${destino.id})}"
+                                hx-swap="none" title="Arquivar destino">
+                            <i class="bi bi-archive"></i>
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="d-flex justify-content-between align-items-center pt-3"
+             th:if="${totalPaginas > 1}">
+            <span class="text-muted small"
+                  th:text="'Página ' + (${paginaAtual} + 1) + ' de ' + ${totalPaginas}">Página 1 de 1</span>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" th:classappend="${paginaAtual == 0} ? 'disabled'">
+                    <button class="page-link"
+                            hx:get="@{/localidade/{id}/destinos(id=${idCidade}, busca=${busca}, pagina=${paginaAtual - 1})}"
+                            hx-target="#destinosContainer" hx-swap="innerHTML">Anterior</button>
+                </li>
+                <li class="page-item" th:classappend="${paginaAtual + 1 >= totalPaginas} ? 'disabled'">
+                    <button class="page-link"
+                            hx:get="@{/localidade/{id}/destinos(id=${idCidade}, busca=${busca}, pagina=${paginaAtual + 1})}"
+                            hx-target="#destinosContainer" hx-swap="innerHTML">Próxima</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</th:block>

@@ -1,10 +1,27 @@
 package br.com.imbazzu.secretariaTransporte.localidades.adapters.in;
 
-import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
+import java.net.URI;
+import java.util.UUID;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.OrdemPaginacao;
+import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
+import br.com.imbazzu.secretariaTransporte.localidades.adapters.in.dto.CidadeArquivadoResponseDto;
 import br.com.imbazzu.secretariaTransporte.localidades.adapters.in.dto.CidadeRequestDto;
 import br.com.imbazzu.secretariaTransporte.localidades.adapters.in.dto.CidadeResponseDto;
-import br.com.imbazzu.secretariaTransporte.localidades.adapters.in.dto.CidadeArquivadoResponseDto;
 import br.com.imbazzu.secretariaTransporte.localidades.application.command.cidade.arquivar.CidadeCommandArquivar;
 import br.com.imbazzu.secretariaTransporte.localidades.application.command.cidade.arquivar.CidadeCommandArquivarHandler;
 import br.com.imbazzu.secretariaTransporte.localidades.application.command.cidade.deletar.CidadeCommandDeletar;
@@ -25,16 +42,9 @@ import br.com.imbazzu.secretariaTransporte.localidades.application.query.cidade.
 import br.com.imbazzu.secretariaTransporte.localidades.application.query.cidade.listarArquivado.CidadeQueryListarArquivadoHandler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.tags.Tag;
-
-import java.net.URI;
-import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor

@@ -1,0 +1,36 @@
+<th:block th:fragment="formDestino" th:with="edicao=${id != null}" xmlns:hx="http://www.w3.org/1999/xhtml">
+    <div class="custom-modal-backdrop">
+        <div class="custom-modal-card bg-white rounded shadow-lg p-4">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                <h5 class="fw-bold m-0" th:text="${edicao ? 'Editar destino' : 'Cadastrar destino'}">Destino</h5>
+                <button type="button" class="btn-close"
+                        hx:get="@{/localidade/limpar-modal}" hx-target="#modal" hx-swap="innerHTML"
+                        aria-label="Fechar"></button>
+            </div>
+            <form th:object="${destino}"
+                  hx:post="${!edicao} ? @{/localidade/destinos} : null"
+                  hx:put="${edicao} ? @{/localidade/destinos/{id}(id=${id}, idCidade=${idCidade})} : null"
+                  hx-target="#modal" hx-swap="innerHTML">
+                <input type="hidden" th:field="*{idCidade}">
+                <div th:if="${erroGlobal != null}" class="alert alert-danger" role="alert"
+                     th:text="${erroGlobal}"></div>
+                <div class="mb-3">
+                    <label for="nomeDestino" class="form-label fw-bold">Nome do destino</label>
+                    <input id="nomeDestino" type="text" th:field="*{nome}" class="form-control"
+                           th:classappend="${#fields.hasErrors('nome')} ? 'is-invalid'"
+                           placeholder="Ex.: Hospital Municipal">
+                    <div th:if="${#fields.hasErrors('nome')}" class="invalid-feedback"
+                         th:errors="*{nome}"></div>
+                </div>
+                <div class="border-top pt-3 mt-3 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-light border"
+                            hx:get="@{/localidade/{id}/detalhes(id=${idCidade})}"
+                            hx-target="#modal" hx-swap="innerHTML">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg me-1"></i> Salvar destino
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</th:block>

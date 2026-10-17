@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org" xmlns:hx="http://www.w3.org/1999/xhtml">
+
+<head th:replace="~{layout/head :: head('Localidades')}"></head>
+
+<body>
+<div class="d-flex min-vh-100">
+    <aside th:replace="~{layout/sidebar :: sidebar}"></aside>
+
+    <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
+        <div th:fragment="conteudo" class="container-fluid py-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+                <div>
+                    <h2 class="fw-bold mb-1">Cidades e destinos</h2>
+                    <p class="text-muted small mb-0">Gerencie as cidades e os destinos disponíveis.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary"
+                            hx:get="@{/localidade/listarArquivado}"
+                            hx-target="#modal"
+                            hx-swap="innerHTML">
+                        <i class="bi bi-archive me-1"></i> Cidades arquivadas
+                    </button>
+                    <button class="btn btn-primary"
+                            hx:get="@{/localidade/abrirFormulario}"
+                            hx-target="#modal"
+                            hx-swap="innerHTML">
+                        <i class="bi bi-plus-lg me-1"></i> Nova cidade
+                    </button>
+                </div>
+            </div>
+
+            <div id="cidadesAtivasContainer"
+                 hx:get="@{/localidade/listar}"
+                 hx-swap="innerHTML">
+                <div th:replace="~{localidade/tabCidadesAtivas :: tabCidadesAtivas}"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<link rel="stylesheet" th:href="@{/css/localidade.css}">
+</body>
+</html>

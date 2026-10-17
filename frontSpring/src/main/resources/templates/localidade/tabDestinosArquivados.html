@@ -1,0 +1,72 @@
+<th:block th:fragment="tabDestinosArquivados" xmlns:hx="http://www.w3.org/1999/xhtml">
+    <div class="border-top pt-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h6 class="fw-bold mb-0">Destinos arquivados</h6>
+            <button class="btn btn-sm btn-outline-secondary"
+                    hx:get="@{/localidade/{id}/destinos(id=${idCidade})}"
+                    hx-target="#destinosContainer" hx-swap="innerHTML">
+                <i class="bi bi-arrow-left me-1"></i> Voltar aos destinos ativos
+            </button>
+        </div>
+        <div class="style-search mb-3">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="search" id="inputBuscaDestinoArquivado" name="busca"
+                       th:value="${busca}" class="form-control"
+                       placeholder="Buscar destino arquivado..."
+                       hx:get="@{/localidade/{id}/destinos/arquivados(id=${idCidade})}"
+                       hx-trigger="keyup changed delay:300ms, listar-destinos-arquivados from:body"
+                       hx-target="#destinosContainer" hx-swap="innerHTML" hx-preserve="true">
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Destino</th>
+                    <th>Passageiros</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(destinosArquivados)}">
+                    <td colspan="3" class="text-center text-muted py-3">Nenhum destino arquivado encontrado.</td>
+                </tr>
+                <tr th:each="destino : ${destinosArquivados}" th:attr="data-id=${destino.id}">
+                    <td class="fw-semibold" th:text="${destino.nome}">Destino</td>
+                    <td th:text="${destino.qtdPassageiros != null ? destino.qtdPassageiros : 0}">0</td>
+                    <td class="text-end text-nowrap">
+                        <button class="btn btn-sm btn-outline-primary"
+                                hx:get="@{/localidade/destinos/abrirFormulario/{id}(id=${destino.id}, idCidade=${idCidade}, arquivado=true)}"
+                                hx-target="#modal" hx-swap="innerHTML" title="Editar destino arquivado">
+                            <i class="bi bi-pencil me-1"></i> Editar
+                        </button>
+                        <button class="btn btn-sm btn-outline-success"
+                                hx:patch="@{/localidade/destinos/desarquivar/{id}(id=${destino.id})}"
+                                hx-swap="none" title="Desarquivar destino">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Desarquivar
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="d-flex justify-content-between align-items-center pt-3"
+             th:if="${totalPaginas > 1}">
+            <span class="text-muted small"
+                  th:text="'Página ' + (${paginaAtual} + 1) + ' de ' + ${totalPaginas}">Página 1 de 1</span>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" th:classappend="${paginaAtual == 0} ? 'disabled'">
+                    <button class="page-link"
+                            hx:get="@{/localidade/{id}/destinos/arquivados(id=${idCidade}, busca=${busca}, pagina=${paginaAtual - 1})}"
+                            hx-target="#destinosContainer" hx-swap="innerHTML">Anterior</button>
+                </li>
+                <li class="page-item" th:classappend="${paginaAtual + 1 >= totalPaginas} ? 'disabled'">
+                    <button class="page-link"
+                            hx:get="@{/localidade/{id}/destinos/arquivados(id=${idCidade}, busca=${busca}, pagina=${paginaAtual + 1})}"
+                            hx-target="#destinosContainer" hx-swap="innerHTML">Próxima</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</th:block>

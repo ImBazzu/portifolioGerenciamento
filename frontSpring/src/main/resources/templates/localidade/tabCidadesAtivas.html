@@ -1,0 +1,81 @@
+<th:block th:fragment="tabCidadesAtivas" xmlns:hx="http://www.w3.org/1999/xhtml">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h5 class="mb-0 fw-bold">Cidades cadastradas</h5>
+            <div class="style-search">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="search"
+                           id="inputBuscaCidade"
+                           name="busca"
+                           th:value="${busca}"
+                           class="form-control"
+                           placeholder="Buscar cidade..."
+                           hx:get="@{/localidade/listar}"
+                           hx-trigger="load, keyup changed delay:300ms, listar-ativos from:body"
+                           hx-target="#cidadesAtivasContainer"
+                           hx-swap="innerHTML"
+                           hx-preserve="true">
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Cidade</th>
+                    <th>Estado</th>
+                    <th>Tempo de viagem</th>
+                    <th>Destinos</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(cidades)}">
+                    <td colspan="5" class="text-center text-muted py-4">Nenhuma cidade encontrada.</td>
+                </tr>
+                <tr th:each="cidade : ${cidades}" th:attr="data-id=${cidade.id}">
+                    <td class="fw-semibold" th:text="${cidade.nome}">Cidade</td>
+                    <td th:text="${cidade.estado}">UF</td>
+                    <td th:text="${#strings.replace(cidade.tempoViagem, ':', 'h ')} + 'm'">0h 0m</td>
+                    <td th:text="${cidade.totalDestinos}">0</td>
+                    <td class="text-end text-nowrap">
+                        <button class="btn btn-sm btn-outline-primary"
+                                hx:get="@{/localidade/{id}/detalhes(id=${cidade.id})}"
+                                hx-target="#modal"
+                                hx-swap="innerHTML"
+                                title="Ver cidade e destinos">
+                            <i class="bi bi-info-circle me-1"></i> Detalhes
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning"
+                                hx:patch="@{/localidade/{id}/arquivar(id=${cidade.id})}"
+                                hx-swap="none"
+                                title="Arquivar cidade">
+                            <i class="bi bi-archive me-1"></i> Arquivar
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2"
+             th:if="${totalPaginas > 1}">
+            <span class="text-muted small"
+                  th:text="'Página ' + (${paginaAtual} + 1) + ' de ' + ${totalPaginas}">Página 1 de 1</span>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" th:classappend="${paginaAtual == 0} ? 'disabled'">
+                    <button class="page-link"
+                            hx:get="@{/localidade/listar(busca=${busca}, pagina=${paginaAtual - 1})}"
+                            hx-target="#cidadesAtivasContainer"
+                            hx-swap="innerHTML">Anterior</button>
+                </li>
+                <li class="page-item" th:classappend="${paginaAtual + 1 >= totalPaginas} ? 'disabled'">
+                    <button class="page-link"
+                            hx:get="@{/localidade/listar(busca=${busca}, pagina=${paginaAtual + 1})}"
+                            hx-target="#cidadesAtivasContainer"
+                            hx-swap="innerHTML">Próxima</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</th:block>
