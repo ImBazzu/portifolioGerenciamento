@@ -9,13 +9,13 @@ import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.Ob
 
 public class RegraDaLista {
     
-    private UUID id;
+    private final UUID id;
     
-    private UUID idLista;
+    private final UUID idLista;
 
-    private EnumPrioridade prioridade;
+    private List<EnumPrioridade> prioridades;
 
-    private UUID idVeiculo;
+    private List<UUID> idsVeiculos;
 
     private List<UUID> idCidades;
 
@@ -27,41 +27,39 @@ public class RegraDaLista {
 
     private LocalTime finalHorario;
 
-    private RegraDaLista(UUID id, UUID idLista, UUID idVeiculo, List<UUID> idCidades, EnumPrioridade prioridade,
+    private RegraDaLista(UUID id, UUID idLista, List<UUID> idsVeiculos, List<UUID> idCidades,
+        List<EnumPrioridade> prioridades,
         boolean obrigacaoAnexo, LocalTime inicioHorario, LocalTime finalHorario, Observacao descricao
-    ){
+    ) {
         Objects.requireNonNull(id, "ID é obrigatório");
         Objects.requireNonNull(idLista, "Id da lista é obrigatório");
-        Objects.requireNonNull(idVeiculo,"Id do veículo é obrigatório");
-        Objects.requireNonNull(prioridade,"Prioridade é obrigatório");
-
-      
-
         this.id = id;
         this.idLista = idLista;
-        this.idVeiculo = idVeiculo;
-        this.prioridade = prioridade;
-        this.idCidades = idCidades;
-
+        this.idsVeiculos = copiarListaObrigatoria(idsVeiculos, "Ao menos um veículo é obrigatório");
+        this.prioridades = copiarListaObrigatoria(prioridades, "Ao menos uma prioridade é obrigatória");
+        this.idCidades = idCidades == null ? List.of() : List.copyOf(idCidades);
         definirHorario(inicioHorario, finalHorario);
 
         this.obrigacaoAnexo = obrigacaoAnexo;
         this.descricao = descricao;
-
     }
 
     //=====================
     //Metodos staticos
     //=====================
     
-    public static RegraDaLista criar(UUID idLista, UUID idVeiculo, List<UUID> idCidades, EnumPrioridade prioridade, LocalTime inicioHorario, LocalTime finalHorario, 
-        boolean obrigacaoAnexo, Observacao descricao){
-            return new RegraDaLista(UUID.randomUUID(), idLista, idVeiculo, idCidades, prioridade, obrigacaoAnexo, inicioHorario, finalHorario, descricao);
+        public static RegraDaLista criar(UUID idLista, List<UUID> idsVeiculos, List<UUID> idCidades,
+            List<EnumPrioridade> prioridades, LocalTime inicioHorario, LocalTime finalHorario,
+            boolean obrigacaoAnexo, Observacao descricao) {
+            return new RegraDaLista(UUID.randomUUID(), idLista, idsVeiculos, idCidades, prioridades,
+                obrigacaoAnexo, inicioHorario, finalHorario, descricao);
         }
 
-    public static RegraDaLista recriar(UUID id, UUID idLista, UUID idVeiculo, List<UUID> idCidades, EnumPrioridade prioridade, boolean obrigacaoAnexo,
-        Observacao descricao, LocalTime InicioHorario, LocalTime finalHorario){
-            return new RegraDaLista(id, idLista, idVeiculo,idCidades, prioridade, obrigacaoAnexo, InicioHorario, finalHorario, descricao);
+        public static RegraDaLista recriar(UUID id, UUID idLista, List<UUID> idsVeiculos, List<UUID> idCidades,
+            List<EnumPrioridade> prioridades, boolean obrigacaoAnexo, Observacao descricao,
+            LocalTime inicioHorario, LocalTime finalHorario) {
+            return new RegraDaLista(id, idLista, idsVeiculos, idCidades, prioridades, obrigacaoAnexo,
+                inicioHorario, finalHorario, descricao);
         }
     
          
@@ -69,64 +67,67 @@ public class RegraDaLista {
     //Regras
     //===================== 
     
-    public void editar(LocalTime inicioHorario, LocalTime finalHorario, boolean obrigacaoAnexo, Observacao descricao){
+    public void editar(LocalTime inicioHorario, LocalTime finalHorario, boolean obrigacaoAnexo, Observacao descricao) {
         definirHorario(inicioHorario, finalHorario);
-
         editarObrigacaoAnexo(obrigacaoAnexo);
-
         editarDescricao(descricao);
     } 
 
-    public boolean verificacaoDasRegras(EnumPrioridade prioridade, UUID idCidade, LocalTime horarioChegada, 
-        boolean possuiAnexo, UUID idVeiculo){
-        var verificarPrioridade = verificarPrioridade(prioridade);
-        var verificarObrigacaoAnexo = verificarObrigacaoAnexo(possuiAnexo);
-        var verificarHorario = verificarHorario(horarioChegada);
-        var verificarVeiculo = verificarVeiculo(idVeiculo);
-        var verificarCidade = verificarCidade(idCidade);
-        return verificarHorario && verificarObrigacaoAnexo && verificarPrioridade && verificarVeiculo && verificarCidade;
+    public void editarPrioridades(List<EnumPrioridade> prioridades) {
+        this.prioridades = copiarListaObrigatoria(prioridades, "Ao menos uma prioridade é obrigatória");
     }
 
-    private boolean verificarVeiculo(UUID idVeiculo){
-        return this.idVeiculo.equals(idVeiculo);
+    public void editarVeiculos(List<UUID> idsVeiculos) {
+        this.idsVeiculos = copiarListaObrigatoria(idsVeiculos, "Ao menos um veículo é obrigatório");
+    }
+
+    public void editarCidades(List<UUID> idCidades) {
+        this.idCidades = idCidades == null ? List.of() : List.copyOf(idCidades);
+    }
+
+    public boolean verificacaoDasRegras(EnumPrioridade prioridade, UUID idCidade, LocalTime horarioChegada,
+        boolean possuiAnexo, UUID idVeiculo) {
+        return verificarHorario(horarioChegada)
+            && verificarObrigacaoAnexo(possuiAnexo)
+            && verificarPrioridade(prioridade)
+            && verificarVeiculo(idVeiculo)
+            && verificarCidade(idCidade);
+    }
+
+    private boolean verificarVeiculo(UUID idVeiculo) {
+        return idsVeiculos.contains(idVeiculo);
     }
 
     //Verifica se o horario passado está entre os horarios permitidos
-    private boolean verificarHorario(LocalTime horario){
+    private boolean verificarHorario(LocalTime horario) {
+        Objects.requireNonNull(horario, "Horário é obrigatório");
 
-        Objects.requireNonNull(horario,"Horário é obrigatório");
-
-        //Caso não a regra nao possuo horario definido, retorna true
-        if(inicioHorario == null && finalHorario == null){
+        //Sem horário configurado, não há restrição de horário.
+        if (inicioHorario == null && finalHorario == null) {
             return true;
         }
 
-
-        boolean depoisOuIgualAoInicio = horario.compareTo(inicioHorario) >=0;
-        boolean antesOuIgualAoFinal = horario.compareTo(finalHorario)<=0;
+        boolean depoisOuIgualAoInicio = horario.compareTo(inicioHorario) >= 0;
+        boolean antesOuIgualAoFinal = horario.compareTo(finalHorario) <= 0;
         
-        //Caso o horario de inicio definido na regra seja mais tarde que o horario final
-        //Exemplo: inicio=19:00 e final: 06:00
-        //Então os horarios permitido são de 19:00 -> 00:00 e  00:01 -> 06:00
-        if(inicioHorario.compareTo(finalHorario)<=0){
+        //Quando início e fim estão no mesmo dia, ambos os limites são inclusivos.
+        if (inicioHorario.compareTo(finalHorario) <= 0) {
             return depoisOuIgualAoInicio && antesOuIgualAoFinal;
         }
 
-        //Caso o horario de inicio definido na regra seja mais cedo que o horario final
-        //Exemplo: inicio: 07:00 e final: 16:00
-        //Então os horário permitidos são de 07:00 -> 16:00
+        //Quando o intervalo cruza a meia-noite, o horário está após o início ou antes do fim.
         return depoisOuIgualAoInicio || antesOuIgualAoFinal;
     }
 
-    private boolean verificarPrioridade(EnumPrioridade prioridade){
-        return this.prioridade == prioridade;
+    private boolean verificarPrioridade(EnumPrioridade prioridade) {
+        return prioridades.contains(prioridade);
     }
 
-    private boolean verificarObrigacaoAnexo(boolean anexo){
+    private boolean verificarObrigacaoAnexo(boolean anexo) {
         return this.obrigacaoAnexo == anexo;
     }
 
-    private boolean verificarCidade(UUID idCidade){
+    private boolean verificarCidade(UUID idCidade) {
         return this.idCidades.isEmpty() || this.idCidades.contains(idCidade);
     }
 
@@ -151,20 +152,20 @@ public class RegraDaLista {
         return idLista;
     }
 
-    public UUID getIdVeiculo() {
-        return idVeiculo;
+    public List<UUID> getIdsVeiculos() {
+        return idsVeiculos;
     }
 
     public LocalTime getInicioHorario() {
         return inicioHorario;
     }
 
-    public List<UUID> listaCidades(){
-        return List.copyOf(this.idCidades);
+    public List<UUID> listaCidades() {
+        return idCidades;
     }
 
-    public EnumPrioridade getPrioridade() {
-        return prioridade;
+    public List<EnumPrioridade> getPrioridades() {
+        return prioridades;
     }
 
     public boolean isObrigacaoAnexo() {
@@ -175,24 +176,35 @@ public class RegraDaLista {
     //Metodos para alteração
     //=====================
 
-    private void definirHorario(LocalTime inicioHorario, LocalTime finalHorario){
-        if((inicioHorario ==null)&&(finalHorario == null)){   
-                this.inicioHorario = null;
-                this.finalHorario = null;
-        }else if ((inicioHorario != null)&& (finalHorario != null)){
+    private void definirHorario(LocalTime inicioHorario, LocalTime finalHorario) {
+        if (inicioHorario == null && finalHorario == null) {
+            this.inicioHorario = null;
+            this.finalHorario = null;
+        } else if (inicioHorario != null && finalHorario != null) {
+            if(inicioHorario.compareTo(finalHorario)==0){
+                throw new IllegalArgumentException("Os dois horários informados devem ser diferentes");
+            }
             this.inicioHorario = inicioHorario;
             this.finalHorario = finalHorario;
-        }else{
+        } else {
             throw new IllegalArgumentException("Informe os dois horários ou deixe ambos vazio");
         }
     }
 
-    private void editarDescricao(Observacao descricao){
+    private void editarDescricao(Observacao descricao) {
         this.descricao = descricao;
     }
 
-    private void editarObrigacaoAnexo(boolean obrigacaoAnexo){
+    private void editarObrigacaoAnexo(boolean obrigacaoAnexo) {
         this.obrigacaoAnexo = obrigacaoAnexo;
     }
 
+    private static <T> List<T> copiarListaObrigatoria(List<T> valores, String mensagem) {
+        Objects.requireNonNull(valores, mensagem);
+        List<T> copia = List.copyOf(valores);
+        if (copia.isEmpty()) {
+            throw new IllegalArgumentException(mensagem);
+        }
+        return copia;
+    }
 }
