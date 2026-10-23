@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.Observacao;
+import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.RegraDeNegocioException;
 import br.com.imbazzu.secretariaTransporte.compartilhados.valueObjects.Nome;
 
 public final class TipoLista {
@@ -59,7 +60,7 @@ public final class TipoLista {
         Objects.requireNonNull(regra, "Regra de cadastro é obrigatória");
         validarPertencimento(regra.getIdLista());
         if (listaRegrasCadastro.stream().anyMatch(atual -> atual.getId().equals(regra.getId()))) {
-            throw new IllegalArgumentException("Regra de cadastro já adicionada");
+            throw new RegraDeNegocioException("Regra de cadastro já adicionada");
         }
         listaRegrasCadastro.add(regra);
     }
@@ -77,7 +78,7 @@ public final class TipoLista {
         Objects.requireNonNull(idRegra, "ID da regra de cadastro é obrigatório");
         boolean removida = listaRegrasCadastro.removeIf(regra -> regra.getId().equals(idRegra));
         if (!removida) {
-            throw new IllegalArgumentException("Regra de cadastro não pertence a este tipo de lista");
+            throw new RegraDeNegocioException("Regra de cadastro não pertence a este tipo de lista");
         }
     }
 
@@ -85,7 +86,7 @@ public final class TipoLista {
         Objects.requireNonNull(regra, "Regra de separação é obrigatória");
         validarPertencimento(regra.getIdLista());
         if (listaRegraSeparacao.stream().anyMatch(atual -> atual.getId().equals(regra.getId()))) {
-            throw new IllegalArgumentException("Regra de separação já adicionada");
+            throw new RegraDeNegocioException("Regra de separação já adicionada");
         }
         listaRegraSeparacao.add(regra);
     }
@@ -100,7 +101,7 @@ public final class TipoLista {
         Objects.requireNonNull(idRegra, "ID da regra de separação é obrigatório");
         boolean removida = listaRegraSeparacao.removeIf(regra -> regra.getId().equals(idRegra));
         if (!removida) {
-            throw new IllegalArgumentException("Regra de separação não pertence a este tipo de lista");
+            throw new RegraDeNegocioException("Regra de separação não pertence a este tipo de lista");
         }
     }
 
@@ -144,7 +145,7 @@ public final class TipoLista {
 
     private void validarPertencimento(UUID idLista) {
         if (!id.equals(idLista)) {
-            throw new IllegalArgumentException("A regra deve pertencer a este tipo de lista");
+            throw new RegraDeNegocioException("A regra deve pertencer a este tipo de lista");
         }
     }
 }

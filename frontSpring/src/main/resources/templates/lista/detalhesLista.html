@@ -1,0 +1,82 @@
+<th:block th:fragment="detalhesLista" xmlns:hx="http://www.w3.org/1999/xhtml">
+    <div class="custom-modal-backdrop">
+        <section class="custom-modal-card lista-modal lista-detail-modal" role="dialog" aria-modal="true" aria-labelledby="listaDetalheTitulo">
+            <header class="lista-modal-header">
+                <div class="lista-modal-heading">
+                    <span class="lista-modal-icon"><i class="bi bi-list-check"></i></span>
+                    <div>
+                        <span class="lista-panel-kicker">Detalhes da lista</span>
+                        <h2 id="listaDetalheTitulo" th:text="${lista.nome}">Lista</h2>
+                        <p th:text="${#strings.isEmpty(lista.descricao) ? 'Nenhuma descrição informada.' : lista.descricao}">Descrição</p>
+                    </div>
+                </div>
+                <div class="lista-modal-actions">
+                    <button type="button" class="btn btn-sm btn-outline-primary"
+                            hx:get="@{/listas/abrirFormulario/{id}(id=${lista.id})}"
+                            hx-target="#modal"
+                            hx-swap="innerHTML">
+                        <i class="bi bi-pencil me-1"></i>Editar
+                    </button>
+                    <button type="button" class="btn-close ms-2"
+                            hx:get="@{/listas/limpar-modal}"
+                            hx-target="#modal"
+                            hx-swap="innerHTML"
+                            aria-label="Fechar"></button>
+                </div>
+            </header>
+
+            <div class="modal-body lista-detail-body">
+                <div class="lista-detail-stats">
+                    <article>
+                        <span class="lista-stat-icon"><i class="bi bi-diagram-3"></i></span>
+                        <div><strong th:text="${lista.totalRegras}">0</strong><span>Regras</span></div>
+                    </article>
+                    <article>
+                        <span class="lista-stat-icon lista-stat-icon-blue"><i class="bi bi-geo-alt"></i></span>
+                        <div><strong th:text="${lista.totalCidades}">0</strong><span>Cidades atendidas</span></div>
+                    </article>
+                </div>
+
+                <section class="lista-detail-section">
+                    <div class="lista-detail-section-heading">
+                        <span><i class="bi bi-shield-check"></i></span>
+                        <div><h3>Regras configuradas</h3><p>Critérios aplicados a esta lista.</p></div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(lista.regras)}" class="lista-detail-empty">
+                        <i class="bi bi-inbox"></i><span>Nenhuma regra cadastrada.</span>
+                    </div>
+                    <ul class="lista-detail-list" th:unless="${#lists.isEmpty(lista.regras)}">
+                        <li th:each="regra : ${lista.regras}">
+                            <i class="bi bi-check2-circle"></i><span th:text="${regra}">Regra</span>
+                        </li>
+                    </ul>
+                </section>
+
+                <section class="lista-detail-section">
+                    <div class="lista-detail-section-heading">
+                        <span class="lista-detail-city-icon"><i class="bi bi-geo"></i></span>
+                        <div><h3>Cidades vinculadas</h3><p>Localidades incluídas nas regras.</p></div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(lista.cidades)}" class="lista-detail-empty">
+                        <i class="bi bi-geo"></i><span>Nenhuma cidade vinculada.</span>
+                    </div>
+                    <div class="lista-city-tags" th:unless="${#lists.isEmpty(lista.cidades)}">
+                        <span th:each="cidade : ${lista.cidades}">
+                            <i class="bi bi-geo-alt"></i><span th:text="${cidade}">Cidade</span>
+                        </span>
+                    </div>
+                </section>
+            </div>
+
+            <footer class="lista-detail-footer">
+                <span><i class="bi bi-info-circle me-1"></i>Você pode editar ou arquivar esta lista.</span>
+                <button type="button" class="btn btn-sm btn-outline-danger"
+                        hx:patch="@{/listas/{id}/arquivar(id=${lista.id})}"
+                        hx:target="'#modal'"
+                        hx:swap="'innerHTML'">
+                    <i class="bi bi-archive me-1"></i>Arquivar lista
+                </button>
+            </footer>
+        </section>
+    </div>
+</th:block>

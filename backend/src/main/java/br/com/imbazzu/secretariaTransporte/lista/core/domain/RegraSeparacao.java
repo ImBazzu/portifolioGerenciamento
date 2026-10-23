@@ -4,6 +4,8 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.UUID;
 
+import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.DadosInvalidosException;
+
 public class RegraSeparacao {
  
     private final UUID id;
@@ -20,6 +22,7 @@ public class RegraSeparacao {
         Objects.requireNonNull(idLista,"Id da lista é obrigatório");
         Objects.requireNonNull(idTipoVeiculo,"Id do tipo do veiculo é obrigatório");
         Objects.requireNonNull(tempoTolerancia,"Tempo de tolerancia é obrigatório");
+        validarTempoTolerancia(tempoTolerancia);
         this.id = id;
         this.idLista = idLista;
         this.idTipoVeiculo = idTipoVeiculo;
@@ -37,18 +40,17 @@ public class RegraSeparacao {
 
 
     public void editar(UUID idTipoVeiculo, Duration tempoTolerancia){
-        editarTipoVeiculo(idTipoVeiculo);
-        editarTempoTolerancia(tempoTolerancia);
-    }
-
-    private void editarTempoTolerancia(Duration tempoTolerancia){
+        Objects.requireNonNull(idTipoVeiculo,"Id do tipo do veiculo é obrigatório");
         Objects.requireNonNull(tempoTolerancia,"Tempo de tolerancia é obrigatório");
+        validarTempoTolerancia(tempoTolerancia);
+        this.idTipoVeiculo = idTipoVeiculo;
         this.tempoTolerancia = tempoTolerancia;
     }
 
-    private void editarTipoVeiculo(UUID idTipoVeiculo){
-        Objects.requireNonNull(idTipoVeiculo,"Id do tipo do veiculo é obrigatório");
-        this.idTipoVeiculo = idTipoVeiculo;
+    private static void validarTempoTolerancia(Duration tempoTolerancia) {
+        if (tempoTolerancia.isNegative()) {
+            throw new DadosInvalidosException("Tempo de tolerância não pode ser negativo");
+        }
     }
 
     public UUID getId() {

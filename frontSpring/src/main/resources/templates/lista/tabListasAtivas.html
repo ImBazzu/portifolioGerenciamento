@@ -1,0 +1,108 @@
+<th:block th:fragment="tabListasAtivas" xmlns:hx="http://www.w3.org/1999/xhtml">
+    <div class="lista-panel">
+        <div class="lista-panel-header">
+            <div>
+                <span class="lista-panel-kicker">Visão geral</span>
+                <h2>Listas ativas</h2>
+                <p>Consulte e mantenha suas configurações de transporte.</p>
+            </div>
+            <label class="lista-search">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input type="search"
+                       id="inputBuscaLista"
+                       name="busca"
+                       th:value="${busca}"
+                       placeholder="Buscar pelo nome ou descrição"
+                       aria-label="Buscar listas"
+                       hx:get="@{/listas/listar}"
+                       hx-trigger="keyup changed delay:350ms, listar-ativos from:body"
+                       hx-target="#listasAtivasContainer"
+                       hx-swap="innerHTML"
+                       hx-preserve="true">
+                <span class="lista-search-shortcut" aria-hidden="true"><i class="bi bi-command"></i> K</span>
+            </label>
+        </div>
+
+        <div class="table-responsive lista-table-wrap">
+            <table class="table lista-table align-middle mb-0">
+                <thead>
+                <tr>
+                    <th scope="col">Lista</th>
+                    <th scope="col">Descrição</th>
+                    <th scope="col" class="text-center">Regras</th>
+                    <th scope="col" class="text-center">Cidades</th>
+                    <th scope="col" class="text-end">Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(listas)}">
+                    <td colspan="5" class="lista-empty-cell">
+                        <div class="lista-empty-state">
+                            <span class="lista-empty-icon"><i class="bi bi-list-ul"></i></span>
+                            <strong th:text="${#strings.isEmpty(busca) ? 'Nenhuma lista ativa ainda' : 'Nenhum resultado encontrado'}">Nenhuma lista ativa ainda</strong>
+                            <span th:text="${#strings.isEmpty(busca) ? 'Crie uma lista para começar a organizar as regras de transporte.' : 'Tente buscar por outro nome ou descrição.'}">Crie uma lista para começar a organizar as regras de transporte.</span>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:each="lista : ${listas}" th:data-id="${lista.id}">
+                    <td>
+                        <div class="lista-name-cell">
+                            <span class="lista-row-icon"><i class="bi bi-list-check"></i></span>
+                            <span class="lista-row-name" th:text="${lista.nome}">Lista</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="lista-description"
+                              th:text="${#strings.isEmpty(lista.descricao) ? 'Sem descrição' : lista.descricao}">Descrição</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="lista-count"><i class="bi bi-diagram-3"></i><span th:text="${lista.totalRegras}">0</span></span>
+                    </td>
+                    <td class="text-center">
+                        <span class="lista-count"><i class="bi bi-geo-alt"></i><span th:text="${lista.totalCidades}">0</span></span>
+                    </td>
+                    <td class="text-end">
+                        <div class="lista-row-actions">
+                            <button type="button" class="btn btn-sm btn-light lista-detail-button"
+                                    hx:get="@{/listas/{id}/detalhes(id=${lista.id})}"
+                                    hx-target="#modal"
+                                    hx-swap="innerHTML"
+                                    title="Ver detalhes da lista">
+                                <i class="bi bi-eye me-sm-1"></i><span>Detalhes</span>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-link lista-archive-button"
+                                    hx:patch="@{/listas/{id}/arquivar(id=${lista.id})}"
+                                    hx-swap="none"
+                                    title="Arquivar lista"
+                                    aria-label="Arquivar lista">
+                                <i class="bi bi-archive"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="lista-panel-footer" th:if="${totalPaginas > 1}">
+            <span th:text="'Página ' + (${paginaAtual} + 1) + ' de ' + ${totalPaginas}">Página 1 de 1</span>
+            <nav aria-label="Paginação das listas">
+                <button type="button" class="btn btn-sm btn-light"
+                        th:disabled="${paginaAtual == 0}"
+                        hx:get="@{/listas/listar(busca=${busca}, pagina=${paginaAtual - 1})}"
+                        hx-target="#listasAtivasContainer"
+                        hx-swap="innerHTML">
+                    <i class="bi bi-arrow-left me-1"></i>Anterior
+                </button>
+                <button type="button" class="btn btn-sm btn-light"
+                        th:disabled="${paginaAtual + 1 >= totalPaginas}"
+                        hx:get="@{/listas/listar(busca=${busca}, pagina=${paginaAtual + 1})}"
+                        hx-target="#listasAtivasContainer"
+                        hx-swap="innerHTML">
+                    Próxima<i class="bi bi-arrow-right ms-1"></i>
+                </button>
+            </nav>
+        </footer>
+    </div>
+</th:block>

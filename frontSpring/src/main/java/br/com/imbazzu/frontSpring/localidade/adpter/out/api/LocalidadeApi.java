@@ -1,6 +1,7 @@
 package br.com.imbazzu.frontSpring.localidade.adpter.out.api;
 
 import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
+import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 import br.com.imbazzu.frontSpring.localidade.core.dto.CidadeArquivadoResponseDto;
 import br.com.imbazzu.frontSpring.localidade.core.dto.CidadeRequestDto;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.UUID;
+import java.util.function.Supplier;
 
 @Service
 public class LocalidadeApi implements LocalidadeApiPorta {
@@ -23,9 +25,11 @@ public class LocalidadeApi implements LocalidadeApiPorta {
     private static final String CIDADE_PATH = "/cidade";
     private static final String DESTINO_PATH = "/destino";
     private final RestClient api;
+    private final RetryComRefreshPorta retryComRefresh;
 
-    public LocalidadeApi(RestClientProtegido api) {
+    public LocalidadeApi(RestClientProtegido api, RetryComRefreshPorta retryComRefresh) {
         this.api = api.get();
+        this.retryComRefresh = retryComRefresh;
     }
 
     @Override
@@ -84,14 +88,14 @@ public class LocalidadeApi implements LocalidadeApiPorta {
 
     @Override
     public ResultadoPaginado<CidadeResponseDto> listarCidades(String nome, int pagina, int tamanho) {
-        return api.get()
+        return executarComRefresh(() -> api.get()
                 .uri(uri -> uri.path(CIDADE_PATH)
                         .queryParam("nome", nome)
                         .queryParam("page", pagina)
                         .queryParam("size", tamanho)
                         .build())
                 .retrieve()
-                .body(new ParameterizedTypeReference<>() {});
+                .body(new ParameterizedTypeReference<>() {}));
     }
 
     @Override
@@ -210,5 +214,9 @@ public class LocalidadeApi implements LocalidadeApiPorta {
                 .onStatus(status -> status.isSameCodeAs(HttpStatus.NOT_FOUND),
                         (request, response) -> { throw new LocalidadeNaoEncontradaException(id); })
                 .body(DestinoResponseDto.class);
+    }
+
+    private <T> T executarComRefresh(Supplier<T> chamadaApi) {
+        return retryComRefresh.executar(chamadaApi);
     }
 }

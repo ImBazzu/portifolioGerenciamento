@@ -1,0 +1,333 @@
+<th:block th:fragment="formLista" th:with="edicao=${id != null}" xmlns:hx="http://www.w3.org/1999/xhtml">
+    <div class="custom-modal-backdrop">
+        <section class="custom-modal-card lista-modal lista-form-modal" role="dialog" aria-modal="true" aria-labelledby="listaFormTitulo">
+            <header class="lista-modal-header">
+                <div class="lista-modal-heading">
+                    <span class="lista-modal-icon"><i class="bi bi-list-check"></i></span>
+                    <div>
+                        <span class="lista-panel-kicker" th:text="${edicao ? 'Atualização' : 'Nova configuração'}">Nova configuração</span>
+                        <h2 id="listaFormTitulo" th:text="${edicao ? 'Editar lista' : 'Criar lista'}">Criar lista</h2>
+                        <p>Defina os dados e as regras que organizam o atendimento.</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close"
+                        hx:get="@{/listas/limpar-modal}"
+                        hx-target="#modal"
+                        hx-swap="innerHTML"
+                        aria-label="Fechar"></button>
+            </header>
+
+            <form class="lista-form" data-lista-form th:object="${lista}"
+                  hx:post="${!edicao} ? @{/listas/salvar} : null"
+                    hx:put="${edicao} ? @{/listas/{id}(id=${id})} : null"
+                  hx-target="#modal" hx-swap="innerHTML">
+                <div class="modal-body lista-form-body">
+                    <section class="lista-form-section">
+                        <div class="lista-section-heading">
+                            <span class="lista-section-number">01</span>
+                            <div>
+                                <h3>Identificação</h3>
+                                <p>Escolha um nome claro para encontrar esta lista depois.</p>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label for="nomeLista" class="form-label">Nome da lista <span class="text-danger">*</span></label>
+                                <input id="nomeLista" type="text" th:field="*{nome}" class="form-control"
+                                       placeholder="Ex.: Transporte regional" minlength="3" maxlength="59" required>
+                            </div>
+                            <div class="col-md-7">
+                                <label for="descricaoLista" class="form-label">Descrição <span class="text-muted">(opcional)</span></label>
+                                <input id="descricaoLista" type="text" th:field="*{descricao}" class="form-control"
+                                       placeholder="Uma breve descrição do objetivo da lista" maxlength="249">
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="lista-form-section">
+                        <div class="lista-section-heading">
+                            <span class="lista-section-number">02</span>
+                            <div>
+                                <h3>Regras de cadastro</h3>
+                                <p>Defina os veículos, prioridades e condições aceitos.</p>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary ms-auto"
+                                    data-adicionar-regra="cadastro">
+                                <i class="bi bi-plus-lg me-1"></i>Adicionar regra de cadastro
+                            </button>
+                        </div>
+
+                        <div th:if="${#lists.isEmpty(opcoesVeiculo)}" class="lista-form-notice" role="status">
+                            <i class="bi bi-info-circle"></i>
+                            <span>Cadastre um tipo de veículo antes de adicionar regras.</span>
+                        </div>
+
+                        <div class="vstack gap-3" data-lista-regras="cadastro">
+                            <article class="lista-regra-card" data-regra="cadastro" th:each="regra : ${regrasCadastro}">
+                                <div class="lista-regra-heading">
+                                    <h4 data-titulo-regra>Regra de cadastro</h4>
+                                    <button type="button" class="btn btn-sm btn-link text-danger"
+                                            data-remover-regra aria-label="Remover regra">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-lg-6">
+                                        <label class="form-label">Veículos aplicáveis <span class="text-danger">*</span></label>
+                                        <div class="lista-checkbox-group" data-grupo-obrigatorio="idsVeiculos">
+                                            <div class="lista-checkbox-options">
+                                                <label class="lista-checkbox-option" th:each="opcao : ${opcoesVeiculo}">
+                                                    <input class="form-check-input" type="checkbox" data-campo="idsVeiculos"
+                                                           th:value="${opcao.id}"
+                                                           th:checked="${#lists.contains(regra.idsVeiculos, opcao.id)}">
+                                                    <span th:text="${opcao.nome}">Veículo</span>
+                                                </label>
+                                            </div>
+                                            <div class="lista-checkbox-error" data-erro-selecao hidden>Selecione ao menos um veículo.</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label class="form-label">Cidades atendidas <span class="text-muted">(opcional)</span></label>
+                                        <div class="lista-checkbox-group">
+                                            <label class="lista-city-search">
+                                                <i class="bi bi-search" aria-hidden="true"></i>
+                                                <input type="search" data-busca-cidades
+                                                       placeholder="Pesquisar cidade..."
+                                                       aria-label="Pesquisar cidades atendidas">
+                                            </label>
+                                            <div class="lista-checkbox-options lista-checkbox-options-scroll" data-opcoes-cidades>
+                                                <label class="lista-checkbox-option" th:each="opcao : ${opcoesCidade}">
+                                                    <input class="form-check-input" type="checkbox" data-campo="idsCidades"
+                                                           th:value="${opcao.id}"
+                                                           th:checked="${#lists.contains(regra.idsCidades, opcao.id)}">
+                                                    <span th:text="${opcao.nome + ' - ' + opcao.estado}">Cidade</span>
+                                                </label>
+                                            </div>
+                                            <div class="lista-city-no-results" data-cidades-sem-resultado hidden>Nenhuma cidade encontrada.</div>
+                                            <div class="form-text">Sem seleção, a regra vale para todas as cidades.</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label class="form-label">Prioridades aceitas <span class="text-danger">*</span></label>
+                                        <div class="lista-checkbox-group" data-grupo-obrigatorio="prioridades">
+                                            <div class="lista-checkbox-options">
+                                                <label class="lista-checkbox-option" th:each="prioridade : ${prioridades}">
+                                                    <input class="form-check-input" type="checkbox" data-campo="prioridades"
+                                                           th:value="${prioridade}"
+                                                           th:checked="${#lists.contains(regra.prioridades, prioridade)}">
+                                                    <span th:text="${prioridade}">Prioridade</span>
+                                                </label>
+                                            </div>
+                                            <div class="lista-checkbox-error" data-erro-selecao hidden>Selecione ao menos uma prioridade.</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label class="form-label d-block">Horário permitido <span class="text-muted">(opcional)</span></label>
+                                        <div class="input-group">
+                                            <input type="time" class="form-control" data-campo="inicioHorario"
+                                                   aria-label="Horário inicial" th:value="${regra.inicioHorario}">
+                                            <span class="input-group-text">até</span>
+                                            <input type="time" class="form-control" data-campo="finalHorario"
+                                                   aria-label="Horário final" th:value="${regra.finalHorario}">
+                                        </div>
+                                        <div class="form-text">Preencha os dois horários ou deixe ambos vazios.</div>
+                                    </div>
+                                    <div class="col-lg-8">
+                                        <label class="form-label">Observação <span class="text-muted">(opcional)</span></label>
+                                        <input type="text" class="form-control" data-campo="descricao" maxlength="249"
+                                               placeholder="Instruções adicionais" th:value="${regra.descricao}">
+                                    </div>
+                                    <div class="col-lg-4 d-flex align-items-end pb-2">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                   data-campo="obrigacaoAnexo" th:checked="${regra.obrigacaoAnexo}">
+                                            <label class="form-check-label">Exigir anexo</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                            <div class="lista-rule-empty" data-vazio="cadastro"
+                                 th:if="${#lists.isEmpty(regrasCadastro)}">
+                                <i class="bi bi-inbox"></i>
+                                <span>Nenhuma regra de cadastro adicionada.</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="lista-form-section">
+                        <div class="lista-section-heading">
+                            <span class="lista-section-number">03</span>
+                            <div>
+                                <h3>Regras de separação</h3>
+                                <p>Configure o intervalo mínimo entre atendimentos por veículo.</p>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary ms-auto"
+                                    data-adicionar-regra="separacao">
+                                <i class="bi bi-plus-lg me-1"></i>Adicionar regra de separação
+                            </button>
+                        </div>
+
+                        <div class="vstack gap-3" data-lista-regras="separacao">
+                            <article class="lista-regra-card" data-regra="separacao" th:each="regra : ${regrasSeparacao}">
+                                <div class="lista-regra-heading">
+                                    <h4 data-titulo-regra>Regra de separação</h4>
+                                    <button type="button" class="btn btn-sm btn-link text-danger"
+                                            data-remover-regra aria-label="Remover regra">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-7">
+                                        <label class="form-label">Tipo de veículo <span class="text-danger">*</span></label>
+                                        <div class="lista-checkbox-group" data-grupo-obrigatorio="idTipoVeiculo">
+                                            <div class="lista-checkbox-options">
+                                                <label class="lista-checkbox-option" th:each="opcao : ${opcoesVeiculo}">
+                                                    <input class="form-check-input" type="checkbox"
+                                                           data-campo="idTipoVeiculo" data-selecao-unica
+                                                           th:value="${opcao.id}"
+                                                           th:checked="${regra.idTipoVeiculo == opcao.id}">
+                                                    <span th:text="${opcao.nome}">Veículo</span>
+                                                </label>
+                                            </div>
+                                            <div class="lista-checkbox-error" data-erro-selecao hidden>Selecione um veículo.</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label">Tolerância <span class="text-danger">*</span></label>
+                                        <input type="time" class="form-control" data-campo="tempoTolerancia"
+                                               required aria-label="Tempo de tolerância"
+                                               th:value="${T(java.time.LocalTime).ofSecondOfDay(regra.tempoToleranciaSegundos % 86400).format(T(java.time.format.DateTimeFormatter).ofPattern('HH:mm'))}">
+                                    </div>
+                                </div>
+                            </article>
+                            <div class="lista-rule-empty" data-vazio="separacao"
+                                 th:if="${#lists.isEmpty(regrasSeparacao)}">
+                                <i class="bi bi-inbox"></i>
+                                <span>Nenhuma regra de separação adicionada.</span>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <input type="hidden" name="regrasJson" data-regras-json>
+
+                <footer class="lista-form-footer">
+                    <span><i class="bi bi-asterisk me-1"></i>Campos marcados são obrigatórios</span>
+                    <div>
+                        <button type="button" class="btn btn-light"
+                                hx:get="@{/listas/limpar-modal}" hx-target="#modal" hx-swap="innerHTML">Cancelar</button>
+                        <button type="submit" class="btn btn-primary lista-save-button">
+                            <i class="bi bi-check-lg me-1"></i>
+                            <span th:text="${edicao ? 'Salvar alterações' : 'Criar lista'}">Criar lista</span>
+                        </button>
+                    </div>
+                </footer>
+            </form>
+        </section>
+    </div>
+
+    <template id="regra-cadastro-template">
+        <article class="lista-regra-card" data-regra="cadastro">
+            <div class="lista-regra-heading">
+                <h4 data-titulo-regra>Regra de cadastro</h4>
+                <button type="button" class="btn btn-sm btn-link text-danger"
+                        data-remover-regra aria-label="Remover regra"><i class="bi bi-trash"></i></button>
+            </div>
+            <div class="row g-3">
+                <div class="col-lg-6">
+                    <label class="form-label">Veículos aplicáveis <span class="text-danger">*</span></label>
+                    <div class="lista-checkbox-group" data-grupo-obrigatorio="idsVeiculos">
+                        <div class="lista-checkbox-options">
+                            <label class="lista-checkbox-option" th:each="opcao : ${opcoesVeiculo}">
+                                <input class="form-check-input" type="checkbox" data-campo="idsVeiculos" th:value="${opcao.id}">
+                                <span th:text="${opcao.nome}">Veículo</span>
+                            </label>
+                        </div>
+                        <div class="lista-checkbox-error" data-erro-selecao hidden>Selecione ao menos um veículo.</div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <label class="form-label">Cidades atendidas <span class="text-muted">(opcional)</span></label>
+                    <div class="lista-checkbox-group">
+                        <label class="lista-city-search">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                            <input type="search" data-busca-cidades
+                                   placeholder="Pesquisar cidade..."
+                                   aria-label="Pesquisar cidades atendidas">
+                        </label>
+                        <div class="lista-checkbox-options lista-checkbox-options-scroll" data-opcoes-cidades>
+                            <label class="lista-checkbox-option" th:each="opcao : ${opcoesCidade}">
+                                <input class="form-check-input" type="checkbox" data-campo="idsCidades" th:value="${opcao.id}">
+                                <span th:text="${opcao.nome + ' - ' + opcao.estado}">Cidade</span>
+                            </label>
+                        </div>
+                        <div class="lista-city-no-results" data-cidades-sem-resultado hidden>Nenhuma cidade encontrada.</div>
+                        <div class="form-text">Sem seleção, a regra vale para todas as cidades.</div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <label class="form-label">Prioridades aceitas <span class="text-danger">*</span></label>
+                    <div class="lista-checkbox-group" data-grupo-obrigatorio="prioridades">
+                        <div class="lista-checkbox-options">
+                            <label class="lista-checkbox-option" th:each="prioridade : ${prioridades}">
+                                <input class="form-check-input" type="checkbox" data-campo="prioridades" th:value="${prioridade}">
+                                <span th:text="${prioridade}">Prioridade</span>
+                            </label>
+                        </div>
+                        <div class="lista-checkbox-error" data-erro-selecao hidden>Selecione ao menos uma prioridade.</div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <label class="form-label d-block">Horário permitido <span class="text-muted">(opcional)</span></label>
+                    <div class="input-group">
+                        <input type="time" class="form-control" data-campo="inicioHorario" aria-label="Horário inicial">
+                        <span class="input-group-text">até</span>
+                        <input type="time" class="form-control" data-campo="finalHorario" aria-label="Horário final">
+                    </div>
+                    <div class="form-text">Preencha os dois horários ou deixe ambos vazios.</div>
+                </div>
+                <div class="col-lg-8">
+                    <label class="form-label">Observação <span class="text-muted">(opcional)</span></label>
+                    <input type="text" class="form-control" data-campo="descricao" maxlength="249"
+                           placeholder="Instruções adicionais">
+                </div>
+                <div class="col-lg-4 d-flex align-items-end pb-2">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" data-campo="obrigacaoAnexo">
+                        <label class="form-check-label">Exigir anexo</label>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </template>
+
+    <template id="regra-separacao-template">
+        <article class="lista-regra-card" data-regra="separacao">
+            <div class="lista-regra-heading">
+                <h4 data-titulo-regra>Regra de separação</h4>
+                <button type="button" class="btn btn-sm btn-link text-danger"
+                        data-remover-regra aria-label="Remover regra"><i class="bi bi-trash"></i></button>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-7">
+                    <label class="form-label">Tipo de veículo <span class="text-danger">*</span></label>
+                    <div class="lista-checkbox-group" data-grupo-obrigatorio="idTipoVeiculo">
+                        <div class="lista-checkbox-options">
+                            <label class="lista-checkbox-option" th:each="opcao : ${opcoesVeiculo}">
+                                <input class="form-check-input" type="checkbox"
+                                       data-campo="idTipoVeiculo" data-selecao-unica th:value="${opcao.id}">
+                                <span th:text="${opcao.nome}">Veículo</span>
+                            </label>
+                        </div>
+                        <div class="lista-checkbox-error" data-erro-selecao hidden>Selecione um veículo.</div>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">Tolerância <span class="text-danger">*</span></label>
+                    <input type="time" class="form-control" data-campo="tempoTolerancia"
+                           required aria-label="Tempo de tolerância" value="00:00">
+                </div>
+            </div>
+        </article>
+    </template>
+</th:block>

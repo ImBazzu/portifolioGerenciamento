@@ -11,9 +11,9 @@ public record Observacao(String valor) {
         }
         valor = valor.trim();
         if (valor.length() < 5) {
-            throw new DadosInvalidosException("Observação deve possuir pelo mais 5 caracteres");
+            throw new DadosInvalidosException("Observação deve possuir pelo menos 5 caracteres");
         }
-        if(valor.length() < 250) {
+        if (valor.length() >= 250) {
             throw new DadosInvalidosException("Observação deve possuir menos que 250 caracteres");
         }
     }

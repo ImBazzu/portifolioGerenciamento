@@ -1,6 +1,7 @@
 package br.com.imbazzu.frontSpring.veiculo.adpter.out.api;
 
 import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
+import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoArquivadoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoRequestDto;
@@ -14,17 +15,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.UUID;
+import java.util.function.Supplier;
 
 
 @Service
 public class VeiculoApi implements VeiculoApiPorta {
 
     private final RestClient api;
+    private final RetryComRefreshPorta retryComRefresh;
 
     private final String pathApi =  "/veiculo";
 
-    public VeiculoApi(RestClientProtegido api) {
+    public VeiculoApi(RestClientProtegido api, RetryComRefreshPorta retryComRefresh) {
         this.api = api.get();
+        this.retryComRefresh = retryComRefresh;
     }
     @Override
     public void arquivar(UUID id) {
@@ -88,7 +92,7 @@ public class VeiculoApi implements VeiculoApiPorta {
 
     @Override
     public ResultadoPaginado<TipoVeiculoResponseDto> listar(String nome, int pagina, int tamanho) {
-        return api
+        return executarComRefresh(() -> api
                 .get()
                 .uri(uri->{
                     uri.path(pathApi+"/listar");
@@ -98,7 +102,7 @@ public class VeiculoApi implements VeiculoApiPorta {
                     return uri.build();
                 })
                 .retrieve()
-                .body(new ParameterizedTypeReference<ResultadoPaginado<TipoVeiculoResponseDto>>() {});
+                .body(new ParameterizedTypeReference<ResultadoPaginado<TipoVeiculoResponseDto>>() {}));
     }
 
     @Override
@@ -136,5 +140,9 @@ public class VeiculoApi implements VeiculoApiPorta {
                 .onStatus(status->status.isSameCodeAs(HttpStatus.NOT_FOUND),
                         (r,p)-> {throw new VeiculoNaoEncontradoException(id);})
                 .body(TipoVeiculoArquivadoResponseDto.class);
+    }
+
+    private <T> T executarComRefresh(Supplier<T> chamadaApi) {
+        return retryComRefresh.executar(chamadaApi);
     }
 }

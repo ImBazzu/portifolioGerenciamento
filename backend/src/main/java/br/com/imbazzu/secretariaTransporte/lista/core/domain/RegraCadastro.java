@@ -1,11 +1,13 @@
 package br.com.imbazzu.secretariaTransporte.lista.core.domain;
 
 import java.time.LocalTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
 import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.Observacao;
+import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.DadosInvalidosException;
 
 public class RegraCadastro {
     
@@ -37,7 +39,7 @@ public class RegraCadastro {
         this.idLista = idLista;
         this.idsVeiculos = copiarListaObrigatoria(idsVeiculos, "Ao menos um veículo é obrigatório");
         this.prioridades = copiarListaObrigatoria(prioridades, "Ao menos uma prioridade é obrigatória");
-        this.idCidades = idCidades == null ? List.of() : List.copyOf(idCidades);
+        this.idCidades = copiarListaOpcional(idCidades);
         definirHorario(inicioHorario, finalHorario);
 
         this.obrigacaoAnexo = obrigacaoAnexo;
@@ -82,7 +84,7 @@ public class RegraCadastro {
     }
 
     public void editarCidades(List<UUID> idCidades) {
-        this.idCidades = idCidades == null ? List.of() : List.copyOf(idCidades);
+        this.idCidades = copiarListaOpcional(idCidades);
     }
 
     public boolean verificacaoDasRegras(EnumPrioridade prioridade, UUID idCidade, LocalTime horarioChegada,
@@ -124,7 +126,7 @@ public class RegraCadastro {
     }
 
     private boolean verificarObrigacaoAnexo(boolean anexo) {
-        return this.obrigacaoAnexo == anexo;
+        return !this.obrigacaoAnexo || anexo;
     }
 
     private boolean verificarCidade(UUID idCidade) {
@@ -182,12 +184,12 @@ public class RegraCadastro {
             this.finalHorario = null;
         } else if (inicioHorario != null && finalHorario != null) {
             if(inicioHorario.compareTo(finalHorario)==0){
-                throw new IllegalArgumentException("Os dois horários informados devem ser diferentes");
+                throw new DadosInvalidosException("Os dois horários informados devem ser diferentes");
             }
             this.inicioHorario = inicioHorario;
             this.finalHorario = finalHorario;
         } else {
-            throw new IllegalArgumentException("Informe os dois horários ou deixe ambos vazio");
+            throw new DadosInvalidosException("Informe os dois horários ou deixe ambos vazios");
         }
     }
 
@@ -200,11 +202,37 @@ public class RegraCadastro {
     }
 
     private static <T> List<T> copiarListaObrigatoria(List<T> valores, String mensagem) {
-        Objects.requireNonNull(valores, mensagem);
+        if (valores == null) {
+            throw new DadosInvalidosException(mensagem);
+        }
+        validarSemNulos(valores, mensagem);
         List<T> copia = List.copyOf(valores);
         if (copia.isEmpty()) {
-            throw new IllegalArgumentException(mensagem);
+            throw new DadosInvalidosException(mensagem);
         }
+        validarSemDuplicatas(copia, mensagem);
         return copia;
+    }
+
+    private static List<UUID> copiarListaOpcional(List<UUID> valores) {
+        if (valores == null) {
+            return List.of();
+        }
+        validarSemNulos(valores, "A lista de cidades contém um valor inválido");
+        var copia = List.copyOf(valores);
+        validarSemDuplicatas(copia, "A lista de cidades não pode conter duplicatas");
+        return copia;
+    }
+
+    private static <T> void validarSemDuplicatas(List<T> valores, String mensagem) {
+        if (new HashSet<>(valores).size() != valores.size()) {
+            throw new DadosInvalidosException(mensagem);
+        }
+    }
+
+    private static <T> void validarSemNulos(List<T> valores, String mensagem) {
+        if (valores.stream().anyMatch(Objects::isNull)) {
+            throw new DadosInvalidosException(mensagem);
+        }
     }
 }

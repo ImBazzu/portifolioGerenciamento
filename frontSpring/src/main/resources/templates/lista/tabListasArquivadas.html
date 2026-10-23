@@ -1,0 +1,106 @@
+<th:block th:fragment="tabListasArquivadas" xmlns:hx="http://www.w3.org/1999/xhtml">
+    <div class="custom-modal-backdrop">
+        <section class="custom-modal-card lista-modal lista-archived-modal" role="dialog" aria-modal="true" aria-labelledby="listasArquivadasTitulo">
+            <header class="lista-modal-header">
+                <div class="lista-modal-heading">
+                    <span class="lista-modal-icon lista-modal-icon-muted"><i class="bi bi-archive"></i></span>
+                    <div>
+                        <span class="lista-panel-kicker">Arquivo</span>
+                        <h2 id="listasArquivadasTitulo">Listas arquivadas</h2>
+                        <p>Listas arquivadas podem ser restauradas a qualquer momento.</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close"
+                        hx:get="@{/listas/limpar-modal}"
+                        hx-target="#modal"
+                        hx-swap="innerHTML"
+                        aria-label="Fechar"></button>
+            </header>
+
+            <div class="modal-body lista-modal-body">
+                <label class="lista-search lista-archived-search">
+                    <i class="bi bi-search" aria-hidden="true"></i>
+                    <input type="search"
+                           id="inputBuscaListaArquivada"
+                           name="busca"
+                           th:value="${busca}"
+                           placeholder="Buscar lista arquivada"
+                           aria-label="Buscar listas arquivadas"
+                           hx:get="@{/listas/listarArquivadas}"
+                           hx-trigger="keyup changed delay:350ms, listar-arquivadas from:body"
+                           hx-target="#modal"
+                           hx-swap="innerHTML">
+                </label>
+
+                <div class="table-responsive lista-table-wrap">
+                    <table class="table lista-table align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th scope="col">Lista</th>
+                            <th scope="col">Descrição</th>
+                            <th scope="col" class="text-center">Regras</th>
+                            <th scope="col" class="text-center">Cidades</th>
+                            <th scope="col" class="text-end">Ação</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(listasArquivadas)}">
+                            <td colspan="5" class="lista-empty-cell">
+                                <div class="lista-empty-state">
+                                    <span class="lista-empty-icon"><i class="bi bi-archive"></i></span>
+                                    <strong th:text="${#strings.isEmpty(busca) ? 'Nenhuma lista arquivada' : 'Nenhum resultado encontrado'}">Nenhuma lista arquivada</strong>
+                                    <span th:text="${#strings.isEmpty(busca) ? 'As listas arquivadas aparecerão aqui.' : 'Tente buscar por outro nome ou descrição.'}">As listas arquivadas aparecerão aqui.</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:each="lista : ${listasArquivadas}" th:data-id="${lista.id}">
+                            <td>
+                                <div class="lista-name-cell">
+                                    <span class="lista-row-icon lista-row-icon-muted"><i class="bi bi-list-ul"></i></span>
+                                    <span class="lista-row-name" th:text="${lista.nome}">Lista</span>
+                                </div>
+                            </td>
+                            <td><span class="lista-description"
+                                      th:text="${#strings.isEmpty(lista.descricao) ? 'Sem descrição' : lista.descricao}">Descrição</span></td>
+                            <td class="text-center">
+                                <span class="lista-count"><i class="bi bi-diagram-3"></i><span th:text="${lista.totalRegras}">0</span></span>
+                            </td>
+                            <td class="text-center">
+                                <span class="lista-count"><i class="bi bi-geo-alt"></i><span th:text="${lista.totalCidades}">0</span></span>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-light lista-restore-button"
+                                        hx:patch="@{/listas/{id}/desarquivar(id=${lista.id})}"
+                                        hx-swap="none"
+                                        title="Restaurar lista">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Restaurar
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <footer class="lista-panel-footer" th:if="${totalPaginasArquivadas > 1}">
+                    <span th:text="'Página ' + (${paginaAtualArquivadas} + 1) + ' de ' + ${totalPaginasArquivadas}">Página 1 de 1</span>
+                    <nav aria-label="Paginação das listas arquivadas">
+                        <button type="button" class="btn btn-sm btn-light"
+                                th:disabled="${paginaAtualArquivadas == 0}"
+                                hx:get="@{/listas/listarArquivadas(busca=${busca}, pagina=${paginaAtualArquivadas - 1})}"
+                                hx-target="#modal"
+                                hx-swap="innerHTML">
+                            <i class="bi bi-arrow-left me-1"></i>Anterior
+                        </button>
+                        <button type="button" class="btn btn-sm btn-light"
+                                th:disabled="${paginaAtualArquivadas + 1 >= totalPaginasArquivadas}"
+                                hx:get="@{/listas/listarArquivadas(busca=${busca}, pagina=${paginaAtualArquivadas + 1})}"
+                                hx-target="#modal"
+                                hx-swap="innerHTML">
+                            Próxima<i class="bi bi-arrow-right ms-1"></i>
+                        </button>
+                    </nav>
+                </footer>
+            </div>
+        </section>
+    </div>
+</th:block>
