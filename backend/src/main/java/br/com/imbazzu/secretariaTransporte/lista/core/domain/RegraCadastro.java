@@ -7,7 +7,7 @@ import java.util.UUID;
 
 import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.Observacao;
 
-public class RegraDaLista {
+public class RegraCadastro {
     
     private final UUID id;
     
@@ -27,7 +27,7 @@ public class RegraDaLista {
 
     private LocalTime finalHorario;
 
-    private RegraDaLista(UUID id, UUID idLista, List<UUID> idsVeiculos, List<UUID> idCidades,
+    private RegraCadastro(UUID id, UUID idLista, List<UUID> idsVeiculos, List<UUID> idCidades,
         List<EnumPrioridade> prioridades,
         boolean obrigacaoAnexo, LocalTime inicioHorario, LocalTime finalHorario, Observacao descricao
     ) {
@@ -48,17 +48,17 @@ public class RegraDaLista {
     //Metodos staticos
     //=====================
     
-        public static RegraDaLista criar(UUID idLista, List<UUID> idsVeiculos, List<UUID> idCidades,
+        public static RegraCadastro criar(UUID idLista, List<UUID> idsVeiculos, List<UUID> idCidades,
             List<EnumPrioridade> prioridades, LocalTime inicioHorario, LocalTime finalHorario,
             boolean obrigacaoAnexo, Observacao descricao) {
-            return new RegraDaLista(UUID.randomUUID(), idLista, idsVeiculos, idCidades, prioridades,
+            return new RegraCadastro(UUID.randomUUID(), idLista, idsVeiculos, idCidades, prioridades,
                 obrigacaoAnexo, inicioHorario, finalHorario, descricao);
         }
 
-        public static RegraDaLista recriar(UUID id, UUID idLista, List<UUID> idsVeiculos, List<UUID> idCidades,
+        public static RegraCadastro recriar(UUID id, UUID idLista, List<UUID> idsVeiculos, List<UUID> idCidades,
             List<EnumPrioridade> prioridades, boolean obrigacaoAnexo, Observacao descricao,
             LocalTime inicioHorario, LocalTime finalHorario) {
-            return new RegraDaLista(id, idLista, idsVeiculos, idCidades, prioridades, obrigacaoAnexo,
+            return new RegraCadastro(id, idLista, idsVeiculos, idCidades, prioridades, obrigacaoAnexo,
                 inicioHorario, finalHorario, descricao);
         }
     
