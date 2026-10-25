@@ -25,26 +25,21 @@
 
     <!-- MENU DE NAVEGAÇÃO -->
     <nav class="nav nav-pills flex-column gap-1" id="sidebar-menu">
-        <a href="/" class="nav-link text-white" th:classappend="${pagina == '/' ? 'active' : ''}">
-            <i class="bi bi-calendar3"></i> Agendamentos
+        <a th:href="@{/localidade}" class="nav-link text-white"
+           th:classappend="${pagina == 'localidade' ? 'active' : ''}">
+            <i class="bi bi-geo-alt"></i> Cidades e destinos
         </a>
-        <a href="/localidade" class="nav-link text-white" th:classappend="${pagina == 'localidade' ? 'active' : ''}">
-            <i class="bi bi-geo-alt"></i> Cidade e Destino
-        </a>
-        <a href="/pessoas" class="nav-link text-white" th:classappend="${pagina == 'pessoas' ? 'active' : ''}">
+        <a th:href="@{/pessoas}" class="nav-link text-white"
+           th:classappend="${pagina == 'pessoas' ? 'active' : ''}">
             <i class="bi bi-person"></i> Pessoas
         </a>
-        <a href="/listas" class="nav-link text-white" th:classappend="${pagina == 'listas' ? 'active' : ''}">
+        <a th:href="@{/listas}" class="nav-link text-white"
+           th:classappend="${pagina == 'listas' ? 'active' : ''}">
             <i class="bi bi-list-ul"></i> Listas
         </a>
-        <a href="/veiculo" class="nav-link text-white" th:classappend="${pagina == 'veiculos' ? 'active' : ''}">
-            <i class="bi bi-bus-front"></i>Tipos de Veículos
-        </a>
-        <a href="/condicoes" class="nav-link text-white" th:classappend="${pagina == 'condicoes' ? 'active' : ''}">
-            <i class="bi bi-shield-exclamation"></i> Condições
-        </a>
-        <a href="/configuracao" class="nav-link text-white" th:classappend="${pagina == '/configuracao' ? 'active' : ''}">
-            <i class="bi bi-gear"></i> Configuração
+        <a th:href="@{/veiculo}" class="nav-link text-white"
+           th:classappend="${pagina == 'veiculos' ? 'active' : ''}">
+            <i class="bi bi-bus-front"></i> Tipos de veículos
         </a>
     </nav>
 
@@ -61,9 +56,11 @@
                 <div class="small text-white-50" style="font-size: 0.75rem;">Online</div>
             </div>
         </div>
-        <button type="button" class="btn btn-outline-light btn-sm w-100 rounded-3">
-            <i class="bi bi-box-arrow-right me-2"></i> Sair
-        </button>
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="btn btn-outline-light btn-sm w-100 rounded-3">
+                <i class="bi bi-box-arrow-right me-2"></i> Sair
+            </button>
+        </form>
     </div>
 
 </aside>

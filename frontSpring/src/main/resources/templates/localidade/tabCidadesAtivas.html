@@ -12,7 +12,7 @@
                            class="form-control"
                            placeholder="Buscar cidade..."
                            hx:get="@{/localidade/listar}"
-                           hx-trigger="load, keyup changed delay:300ms, listar-ativos from:body"
+                           hx-trigger="keyup changed delay:300ms, listar-ativos from:body"
                            hx-target="#cidadesAtivasContainer"
                            hx-swap="innerHTML"
                            hx-preserve="true">

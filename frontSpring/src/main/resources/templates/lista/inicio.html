@@ -8,14 +8,13 @@
     <aside th:replace="~{layout/sidebar :: sidebar}"></aside>
 
     <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
-        <div th:fragment="conteudo" class="lista-page">
-            <header class="lista-page-header">
+        <div th:fragment="conteudo" class="app-page lista-page">
+            <header class="app-page-header lista-page-header">
                 <div>
-                    <span class="lista-eyebrow"><i class="bi bi-sliders2 me-2"></i>Gerenciamento</span>
                     <h1>Listas</h1>
                     <p>Organize listas de transporte, regras de cadastro e atendimento.</p>
                 </div>
-                <div class="lista-page-actions">
+                <div class="app-page-actions lista-page-actions">
                     <button type="button" class="btn btn-light lista-secondary-action"
                             hx:get="@{/listas/listarArquivadas}"
                             hx-target="#modal"

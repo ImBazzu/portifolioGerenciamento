@@ -14,18 +14,20 @@
 
 
         <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
-            <div th:fragment="conteudo" class="container-fluid py-4">
+            <div th:fragment="conteudo" class="app-page">
 
                 <!-- Cabeçalho -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                <header class="app-page-header">
                     <div>
-                        <h2 class="fw-bold mb-1">Definições / Condições</h2>
-                        <p class="text-muted small mb-0">Gerencie os Níveis de Condições e cadastre as especificações de cada nível.</p>
+                        <h1>Condições</h1>
+                        <p>Gerencie os níveis e as especificações das condições.</p>
                     </div>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovoNivel">
-                        <i class="bi bi-plus-lg me-1"></i> Novo Nível
-                    </button>
-                </div>
+                    <div class="app-page-actions">
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovoNivel">
+                            <i class="bi bi-plus-lg me-1"></i> Novo nível
+                        </button>
+                    </div>
+                </header>
 
                 <!-- Barra de Filtros e Abas -->
                 <div class="card shadow-sm mb-4">
