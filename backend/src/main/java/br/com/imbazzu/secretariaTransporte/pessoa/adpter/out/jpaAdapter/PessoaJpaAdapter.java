@@ -40,9 +40,10 @@ public class PessoaJpaAdapter implements PessoaPorta {
     @Transactional(readOnly = true)
     public ResultadoPaginado<Pessoa> listar(String nome, boolean arquivado, int pagina, int tamanho) {
         var pageable = PageRequest.of(pagina, tamanho);
+        var numero = nome.replaceAll("\\D", "");
         var resultados = arquivado
-                ? repository.listarArquivadas(nome, pageable)
-                : repository.listarAtivas(nome, pageable);
+                ? repository.listarArquivadas(nome, numero, pageable)
+                : repository.listarAtivas(nome, numero, pageable);
         return PageMapper.toDomain(resultados.map(PessoaBancoMapper::paraDomain));
     }
 

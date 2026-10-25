@@ -2,6 +2,7 @@ package br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
 public record AgendamentoResponseDto(
@@ -16,5 +17,6 @@ public record AgendamentoResponseDto(
         LocalTime horarioSaidaNecessario,
         boolean buscarNaResidencia,
         int acompanhantes,
-        UUID idVeiculoAberto) {
+        UUID idVeiculoAberto,
+        List<UUID> idsVeiculosCompativeis) {
 }

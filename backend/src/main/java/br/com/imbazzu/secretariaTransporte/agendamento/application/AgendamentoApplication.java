@@ -6,6 +6,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -68,17 +69,19 @@ public class AgendamentoApplication {
     public VerificacaoVeiculos verificarVeiculos(LocalDate data, UUID idPessoa, UUID idLista,
             UUID idDestino, LocalTime horarioChegada, int acompanhantes) {
         exigirDiaAberto(data);
-        if (porta.listarVeiculos(data).isEmpty()) {
+        var veiculosAbertos = porta.listarVeiculos(data);
+        if (veiculosAbertos.isEmpty()) {
             throw new OperacaoNaoPermitidaException("Abra pelo menos um veículo antes de agendar passageiros");
         }
         if (acompanhantes < 0) {
             throw new DadosInvalidosException("A quantidade de acompanhantes não pode ser negativa");
         }
+        long lugaresNecessarios = (long) acompanhantes + 1;
         var pessoa = validarPessoa(idPessoa);
         var destino = validarDestino(idDestino);
         validarLista(idLista);
         return verificarVeiculos(idLista, pessoa, destino, porta.listarRegrasCadastro(idLista),
-                horarioChegada, acompanhantes + 1);
+                horarioChegada, lugaresNecessarios, veiculosAbertos);
     }
 
     @Transactional
@@ -86,12 +89,14 @@ public class AgendamentoApplication {
             UUID idTipoVeiculo, UUID idDestino, LocalTime horarioChegada,
             boolean buscarNaResidencia, int acompanhantes) {
         exigirDiaAberto(data);
-        if (porta.listarVeiculos(data).isEmpty()) {
+        var veiculosAbertos = porta.listarVeiculos(data);
+        if (veiculosAbertos.isEmpty()) {
             throw new OperacaoNaoPermitidaException("Abra pelo menos um veículo antes de agendar passageiros");
         }
         if (acompanhantes < 0) {
             throw new DadosInvalidosException("A quantidade de acompanhantes não pode ser negativa");
         }
+        long lugaresNecessarios = (long) acompanhantes + 1;
         if (porta.existeAgendamento(data, idPessoa)) {
             throw new EntidadeDuplicadaException("A pessoa já possui agendamento nesta data");
         }
@@ -103,7 +108,11 @@ public class AgendamentoApplication {
         if (!tipo.ativo()) {
             throw new OperacaoNaoPermitidaException("Não é possível agendar para um tipo de veículo arquivado");
         }
-        if (acompanhantes + 1 > tipo.capacidade()) {
+        if (veiculosAbertos.stream().noneMatch(veiculo -> veiculo.idTipoVeiculo().equals(idTipoVeiculo))) {
+            throw new OperacaoNaoPermitidaException(
+                    "Abra pelo menos um veículo físico do tipo selecionado antes de agendar");
+        }
+        if (lugaresNecessarios > tipo.capacidade()) {
             throw new DadosInvalidosException("A quantidade de pessoas excede a capacidade do tipo de veículo");
         }
 
@@ -145,6 +154,38 @@ public class AgendamentoApplication {
         return porta.listarVeiculos(data);
     }
 
+    @Transactional(readOnly = true)
+    public Map<UUID, List<UUID>> listarVeiculosCompativeis(LocalDate data) {
+        exigirDiaAberto(data);
+        var agendamentos = porta.listarPorData(data);
+        var slotsConhecidos = new HashMap<UUID, Slot>();
+        var ocupantesPorVeiculo = new HashMap<UUID, List<Agendamento>>();
+        for (var agendamento : agendamentos) {
+            slotsConhecidos.put(agendamento.getId(), criarSlot(agendamento));
+            if (agendamento.getIdVeiculoAberto() != null) {
+                ocupantesPorVeiculo.computeIfAbsent(agendamento.getIdVeiculoAberto(), ignored -> new ArrayList<>())
+                        .add(agendamento);
+            }
+        }
+
+        var veiculos = porta.listarVeiculos(data);
+        var resultado = new HashMap<UUID, List<UUID>>();
+        for (var agendamento : agendamentos) {
+            if (agendamento.getIdVeiculoAberto() != null) {
+                continue;
+            }
+            var slot = slotsConhecidos.get(agendamento.getId());
+            var idsCompativeis = veiculos.stream()
+                    .filter(veiculo -> veiculo.idTipoVeiculo().equals(agendamento.getIdTipoVeiculo()))
+                    .filter(veiculo -> veiculoCompativel(veiculo,
+                            ocupantesPorVeiculo.getOrDefault(veiculo.id(), List.of()), slot, slotsConhecidos))
+                    .map(VeiculoAberto::id)
+                    .toList();
+            resultado.put(agendamento.getId(), idsCompativeis);
+        }
+        return resultado;
+    }
+
     @Transactional
     public void atribuirManualmente(UUID idAgendamento, UUID idVeiculo) {
         var agendamento = buscarAgendamento(idAgendamento);
@@ -161,13 +202,12 @@ public class AgendamentoApplication {
         }
 
         var ocupantes = agendamentosDoVeiculo(agendamento.getData(), idVeiculo);
-        validarCapacidade(veiculo, ocupantes, agendamento);
         var slotsConhecidos = new HashMap<UUID, Slot>();
         slotsConhecidos.put(agendamento.getId(), criarSlot(agendamento));
         ocupantes.forEach(ocupante -> slotsConhecidos.put(ocupante.getId(), criarSlot(ocupante)));
-        if (!compativelComVeiculo(veiculo, ocupantes, slotsConhecidos.get(agendamento.getId()), slotsConhecidos)) {
+        if (!veiculoCompativel(veiculo, ocupantes, slotsConhecidos.get(agendamento.getId()), slotsConhecidos)) {
             throw new OperacaoNaoPermitidaException(
-                    "O horário deste passageiro não é compatível com a saída e a tolerância do veículo");
+                    "O veículo não atende à capacidade ou aos horários e tolerâncias deste passageiro");
         }
         agendamento.atribuirVeiculo(idVeiculo);
         porta.salvar(agendamento);
@@ -201,9 +241,7 @@ public class AgendamentoApplication {
         for (var slot : pendentes) {
             var candidatos = veiculos.stream()
                     .filter(veiculo -> veiculo.idTipoVeiculo().equals(slot.agendamento().getIdTipoVeiculo()))
-                    .filter(veiculo -> capacidadeDisponivel(veiculo,
-                            ocupantesPorVeiculo.getOrDefault(veiculo.id(), List.of()), slot.agendamento()))
-                    .filter(veiculo -> compativelComVeiculo(veiculo,
+                    .filter(veiculo -> veiculoCompativel(veiculo,
                             ocupantesPorVeiculo.getOrDefault(veiculo.id(), List.of()), slot, slotsConhecidos))
                     .sorted(Comparator.comparingInt(veiculo -> capacidadeRestante(
                             veiculo, ocupantesPorVeiculo.getOrDefault(veiculo.id(), List.of()),
@@ -284,22 +322,33 @@ public class AgendamentoApplication {
                 .orElse(null);
     }
 
-    private VerificacaoVeiculos verificarVeiculos(UUID idLista, PessoaAgendaDados pessoa, DestinoAgendaDados destino,
-            List<RegraCadastroAgendaDados> regras, LocalTime horarioChegada, int lugaresNecessarios) {
+    private VerificacaoVeiculos verificarVeiculos(UUID idLista, PessoaAgendaDados pessoa,
+            DestinoAgendaDados destino, List<RegraCadastroAgendaDados> regras, LocalTime horarioChegada,
+            long lugaresNecessarios, List<VeiculoAberto> veiculosAbertos) {
         var idsPorTipo = new HashMap<UUID, List<UUID>>();
-        var motivos = new ArrayList<String>();
+        var motivos = new LinkedHashSet<String>();
         for (var regra : regras) {
+            if (!regraAplica(regra, pessoa, destino, horarioChegada)) {
+                continue;
+            }
             if (regra.obrigacaoAnexo()) {
                 motivos.add("A regra %s exige anexo; agendamento com anexos ainda não está disponível"
                         .formatted(regra.id()));
                 continue;
             }
-            if (!regraAplica(regra, pessoa, destino, horarioChegada)) {
-                continue;
-            }
             for (var idTipo : regra.idsVeiculos()) {
                 var tipo = porta.buscarTipoVeiculo(idTipo);
-                if (!tipo.ativo() || tipo.capacidade() < lugaresNecessarios) {
+                if (!tipo.ativo()) {
+                    motivos.add("O tipo de veículo %s está arquivado".formatted(tipo.nome()));
+                    continue;
+                }
+                if (tipo.capacidade() < lugaresNecessarios) {
+                    motivos.add("O tipo de veículo %s não possui lugares suficientes".formatted(tipo.nome()));
+                    continue;
+                }
+                if (veiculosAbertos.stream()
+                        .noneMatch(veiculo -> veiculo.idTipoVeiculo().equals(idTipo))) {
+                    motivos.add("Nenhum veículo físico do tipo %s foi aberto para o dia".formatted(tipo.nome()));
                     continue;
                 }
                 if (porta.buscarToleranciaSeparacao(idLista, idTipo).isEmpty()) {
@@ -321,7 +370,7 @@ public class AgendamentoApplication {
         if (permitidos.isEmpty() && motivos.isEmpty()) {
             motivos.add("Nenhuma regra da lista aprova o horário, prioridade, cidade e tipo de veículo");
         }
-        return new VerificacaoVeiculos(permitidos, motivos);
+        return new VerificacaoVeiculos(permitidos, List.copyOf(motivos));
     }
 
     private void validarRegra(RegraCadastroAgendaDados regra, PessoaAgendaDados pessoa,
@@ -348,29 +397,34 @@ public class AgendamentoApplication {
         if (regra.inicioHorario() == null && regra.finalHorario() == null) {
             return true;
         }
+        if (regra.inicioHorario() == null) {
+            return !horario.isAfter(regra.finalHorario());
+        }
+        if (regra.finalHorario() == null) {
+            return !horario.isBefore(regra.inicioHorario());
+        }
         if (regra.inicioHorario().compareTo(regra.finalHorario()) <= 0) {
             return !horario.isBefore(regra.inicioHorario()) && !horario.isAfter(regra.finalHorario());
         }
         return !horario.isBefore(regra.inicioHorario()) || !horario.isAfter(regra.finalHorario());
     }
 
-    private void validarCapacidade(VeiculoAberto veiculo, List<Agendamento> ocupantes,
-            Agendamento novo) {
-        if (!capacidadeDisponivel(veiculo, ocupantes, novo)) {
-            throw new OperacaoNaoPermitidaException("O veículo não possui assentos suficientes");
-        }
-    }
-
     private static boolean capacidadeDisponivel(VeiculoAberto veiculo, List<Agendamento> ocupantes,
             Agendamento novo) {
-        int ocupados = ocupantes.stream().mapToInt(Agendamento::quantidadePessoas).sum();
+        long ocupados = ocupantes.stream().mapToLong(Agendamento::quantidadePessoas).sum();
         return ocupados + novo.quantidadePessoas() <= veiculo.capacidade();
+    }
+
+    private static boolean veiculoCompativel(VeiculoAberto veiculo, List<Agendamento> ocupantes,
+            Slot novo, Map<UUID, Slot> slotsConhecidos) {
+        return capacidadeDisponivel(veiculo, ocupantes, novo.agendamento())
+                && compativelComVeiculo(veiculo, ocupantes, novo, slotsConhecidos);
     }
 
     private static int capacidadeRestante(VeiculoAberto veiculo, List<Agendamento> ocupantes,
             Agendamento novo) {
-        int ocupados = ocupantes.stream().mapToInt(Agendamento::quantidadePessoas).sum();
-        return veiculo.capacidade() - ocupados - novo.quantidadePessoas();
+        long ocupados = ocupantes.stream().mapToLong(Agendamento::quantidadePessoas).sum();
+        return (int) (veiculo.capacidade() - ocupados - novo.quantidadePessoas());
     }
 
     private static boolean compativelComVeiculo(VeiculoAberto veiculo, List<Agendamento> ocupantes,

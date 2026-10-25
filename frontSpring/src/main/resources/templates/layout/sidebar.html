@@ -37,6 +37,10 @@
            th:classappend="${pagina == 'listas' ? 'active' : ''}">
             <i class="bi bi-list-ul"></i> Listas
         </a>
+        <a th:href="@{/agendamentos}" class="nav-link text-white"
+           th:classappend="${pagina == 'agendamentos' ? 'active' : ''}">
+            <i class="bi bi-calendar2-check"></i> Agendamentos
+        </a>
         <a th:href="@{/veiculo}" class="nav-link text-white"
            th:classappend="${pagina == 'veiculos' ? 'active' : ''}">
             <i class="bi bi-bus-front"></i> Tipos de veículos

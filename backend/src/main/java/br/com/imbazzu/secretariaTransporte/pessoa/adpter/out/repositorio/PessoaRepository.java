@@ -19,16 +19,26 @@ public interface PessoaRepository extends JpaRepository<PessoaJpa, UUID> {
     @Query("""
             SELECT p FROM PessoaJpa p
             WHERE p.dataArquivado IS NULL
-              AND LOWER(p.nome) LIKE LOWER(CONCAT('%', :nome, '%'))
+              AND (
+                    LOWER(p.nome) LIKE LOWER(CONCAT('%', :nome, '%'))
+                    OR (:numero <> '' AND (p.cpf LIKE CONCAT('%', :numero, '%')
+                        OR p.telefone LIKE CONCAT('%', :numero, '%')))
+                  )
             ORDER BY p.nome ASC
             """)
-    Page<PessoaJpa> listarAtivas(@Param("nome") String nome, Pageable pageable);
+    Page<PessoaJpa> listarAtivas(
+            @Param("nome") String nome, @Param("numero") String numero, Pageable pageable);
 
     @Query("""
             SELECT p FROM PessoaJpa p
             WHERE p.dataArquivado IS NOT NULL
-              AND LOWER(p.nome) LIKE LOWER(CONCAT('%', :nome, '%'))
+              AND (
+                    LOWER(p.nome) LIKE LOWER(CONCAT('%', :nome, '%'))
+                    OR (:numero <> '' AND (p.cpf LIKE CONCAT('%', :numero, '%')
+                        OR p.telefone LIKE CONCAT('%', :numero, '%')))
+                  )
             ORDER BY p.nome ASC
             """)
-    Page<PessoaJpa> listarArquivadas(@Param("nome") String nome, Pageable pageable);
+    Page<PessoaJpa> listarArquivadas(
+            @Param("nome") String nome, @Param("numero") String numero, Pageable pageable);
 }

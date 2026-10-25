@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/head :: head('Agendamentos')}"></head>
+
+<body>
+<div class="d-flex min-vh-100">
+    <aside th:replace="~{layout/sidebar :: sidebar}"></aside>
+
+    <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
+        <div th:fragment="conteudo" class="app-page">
+            <header class="app-page-header">
+                <div>
+                    <h1>Agendamentos</h1>
+                    <p>Abra os veículos do dia, agende passageiros e organize a separação.</p>
+                </div>
+                <form method="get" th:action="@{/agendamentos}" class="d-flex gap-2 align-items-end">
+                    <div>
+                        <label class="form-label mb-1" for="dataAgenda">Dia da agenda</label>
+                        <input class="form-control" type="date" id="dataAgenda" name="data"
+                               th:value="${data}" required>
+                    </div>
+                    <button class="btn btn-outline-primary" type="submit">
+                        <i class="bi bi-calendar2-week me-1"></i>Consultar
+                    </button>
+                </form>
+            </header>
+
+            <div th:if="${sucesso}" class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle me-2"></i><span th:text="${sucesso}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+            </div>
+            <div th:if="${erro}" class="alert alert-danger" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i><span th:text="${erro}"></span>
+            </div>
+
+            <section th:if="${agenda == null and erroConsultaAgenda != true}" class="card border-0 shadow-sm mb-4">
+                <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div>
+                        <h2 class="h5 mb-1">Agenda ainda não aberta</h2>
+                        <p class="text-secondary mb-0">Abra o dia antes de cadastrar os veículos e passageiros.</p>
+                    </div>
+                    <form method="post" th:action="@{/agendamentos/dias/abrir}">
+                        <input type="hidden" name="data" th:value="${data}">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-unlock me-1"></i>Abrir agenda do dia
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <th:block th:if="${agenda != null}">
+                <section class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
+                            <div>
+                                <h2 class="h5 mb-1">Abrir veículo físico</h2>
+                                <p class="text-secondary mb-0">Registre cada veículo disponível para esta data.</p>
+                            </div>
+                            <form method="post" th:action="@{/agendamentos/veiculos}"
+                                  class="row g-2 align-items-end flex-grow-1 ms-lg-3">
+                                <input type="hidden" name="data" th:value="${data}">
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label" for="tipoVeiculo">Tipo de veículo</label>
+                                    <select class="form-select" name="idTipoVeiculo" id="tipoVeiculo" required>
+                                        <option value="">Selecione</option>
+                                        <option th:each="tipo : ${tiposVeiculo}" th:value="${tipo.id()}"
+                                                th:text="${tipo.nome() + ' — ' + tipo.capacidade() + ' lugares'}"
+                                                th:attr="data-carro=${#strings.toLowerCase(tipo.nome()).startsWith('carro')}">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-3">
+                                    <label class="form-label" for="identificacaoVeiculo">Identificação</label>
+                                    <input class="form-control" id="identificacaoVeiculo" name="identificacao"
+                                           maxlength="80" placeholder="Ex.: carro 01">
+                                </div>
+                                <div class="col-12 col-md-3" id="saidaVeiculoCampo">
+                                    <label class="form-label" for="horarioSaidaVeiculo">Saída fixa</label>
+                                    <input class="form-control" type="time" id="horarioSaidaVeiculo" name="horarioSaida">
+                                </div>
+                                <div class="col-12 col-md-2">
+                                    <button class="btn btn-primary w-100" type="submit">
+                                        <i class="bi bi-plus-lg me-1"></i>Abrir
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="form-text mt-2">Tipos com nome iniciado por “Carro” calculam a saída pelos passageiros;
+                            os demais precisam de horário fixo.</div>
+                    </div>
+                </section>
+
+                <section class="card border-0 shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
+                            <div>
+                                <h2 class="h5 mb-1">Agendar passageiro</h2>
+                                <p class="text-secondary mb-0">Informe os dados e verifique primeiro quais tipos as regras permitem.</p>
+                            </div>
+                            <form id="verificarAgendamentoForm" method="post" th:action="@{/agendamentos/verificar-veiculos}"
+                                  class="row g-3 flex-grow-1 ms-lg-3">
+                                <input type="hidden" name="data" th:value="${data}">
+                                <div class="col-12 col-md-6 position-relative">
+                                    <label class="form-label" for="pessoaBusca">Buscar pessoa</label>
+                                    <input class="form-control" id="pessoaBusca" type="search" autocomplete="off"
+                                           placeholder="Digite nome, telefone ou CPF"
+                                           th:value="${pessoaSelecionada == null ? '' : pessoaSelecionada.nome()}"
+                                           th:attr="data-url=@{/agendamentos/buscar-pessoas}"
+                                           aria-controls="pessoaResultados">
+                                    <input type="hidden" id="idPessoaAgendamento" name="idPessoa"
+                                           th:value="${idPessoaSelecionada}">
+                                    <div id="pessoaSelecionada" class="form-text"
+                                         th:classappend="${pessoaSelecionada == null ? 'd-none' : ''}"
+                                         th:text="${pessoaSelecionada == null ? '' : pessoaSelecionada.nome() + ' — ' + pessoaSelecionada.prioridade()}">
+                                    </div>
+                                    <div id="pessoaResultados" class="list-group position-absolute w-100 shadow"
+                                         style="z-index: 10; max-height: 18rem; overflow-y: auto"
+                                         role="listbox"></div>
+                                    <div id="pessoaBuscaMensagem" class="form-text" aria-live="polite">
+                                        Pesquise e selecione uma pessoa para continuar.
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="listaAgendamento">Lista</label>
+                                    <select class="form-select" id="listaAgendamento" name="idLista" required>
+                                        <option value="">Selecione uma lista</option>
+                                        <option th:each="lista : ${listas}" th:value="${lista.id()}"
+                                                th:text="${lista.nome()}"
+                                                th:selected="${lista.id() == idListaSelecionada}">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label" for="cidadeAgendamento">Cidade de destino</label>
+                                    <select class="form-select" id="cidadeAgendamento" required>
+                                        <option value="">Selecione uma cidade</option>
+                                        <option th:each="cidade : ${cidades}" th:value="${cidade.id()}"
+                                                th:text="${cidade.nome() + ' - ' + cidade.estado()}"
+                                                th:selected="${cidade.id() == idCidadeSelecionada}">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label" for="destinoAgendamento">Destino</label>
+                                    <select class="form-select" id="destinoAgendamento" name="idDestino" required>
+                                        <option value="">Selecione uma cidade primeiro</option>
+                                        <option th:each="destino : ${destinos}" th:value="${destino.id()}"
+                                                th:text="${destino.nome()}"
+                                                th:attr="data-cidade=${destino.idCidade()}"
+                                                th:selected="${destino.id() == idDestinoSelecionado}">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label" for="chegadaAgendamento">Chegada desejada</label>
+                                    <input class="form-control" type="time" id="chegadaAgendamento"
+                                           name="horarioChegada" th:value="${horarioChegadaSelecionado}" required>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label class="form-label" for="acompanhantesVerificar">Acompanhantes</label>
+                                    <input class="form-control" type="number" id="acompanhantesVerificar"
+                                           name="acompanhantes" min="0"
+                                           th:value="${acompanhantesSelecionados == null ? 0 : acompanhantesSelecionados}"
+                                           required>
+                                </div>
+                                <div class="col-12">
+                                    <button class="btn btn-outline-primary" type="submit">
+                                        <i class="bi bi-search me-1"></i>Verificar veículos permitidos
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div id="resultadoVerificacao" th:if="${verificacao != null}" class="border-top pt-3 mt-3">
+                            <h3 class="h6">Resultado das regras</h3>
+                            <div th:if="${!#lists.isEmpty(verificacao.veiculosPermitidos())}"
+                                 class="alert alert-success py-2">
+                                A pessoa pode ser cadastrada nos tipos de veículo abaixo. Selecione uma regra aprovada.
+                            </div>
+                            <div th:if="${#lists.isEmpty(verificacao.veiculosPermitidos())}"
+                                 class="alert alert-warning py-2">
+                                Nenhum tipo de veículo foi aprovado pelas regras.
+                            </div>
+                            <ul th:if="${!#lists.isEmpty(verificacao.motivosReprovacao())}" class="small text-secondary">
+                                <li th:each="motivo : ${verificacao.motivosReprovacao()}" th:text="${motivo}"></li>
+                            </ul>
+
+                            <form th:if="${!#lists.isEmpty(verificacao.veiculosPermitidos())}"
+                                  method="post" th:action="@{/agendamentos/passageiros}" class="row g-3">
+                                <input type="hidden" name="data" th:value="${data}">
+                                <input type="hidden" name="idPessoa" th:value="${idPessoaSelecionada}">
+                                <input type="hidden" name="idLista" th:value="${idListaSelecionada}">
+                                <input type="hidden" name="idDestino" th:value="${idDestinoSelecionado}">
+                                <input type="hidden" name="horarioChegada" th:value="${horarioChegadaSelecionado}">
+                                <input type="hidden" name="acompanhantes" th:value="${acompanhantesSelecionados}">
+
+                                <div class="col-12 col-md-5">
+                                    <label class="form-label" for="tipoPermitido">Tipo de veículo necessário</label>
+                                    <select class="form-select" name="idTipoVeiculo" id="tipoPermitido" required>
+                                        <option value="">Selecione um tipo aprovado</option>
+                                        <option th:each="tipo : ${verificacao.veiculosPermitidos()}"
+                                                th:value="${tipo.idTipoVeiculo()}"
+                                                th:text="${tipo.nome() + ' — ' + tipo.capacidade() + ' lugares'}"
+                                                th:attr="data-regras=${#strings.listJoin(tipo.idsRegrasAprovadas(), ',')}">
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-5">
+                                    <label class="form-label" for="regraAprovada">Regra de cadastro</label>
+                                    <select class="form-select" name="idRegraCadastro" id="regraAprovada" required>
+                                        <option value="">Selecione primeiro um tipo</option>
+                                        <th:block th:each="lista : ${listas}">
+                                            <option th:each="regra : ${lista.regrasCadastroDados()}"
+                                                    th:value="${regra.id()}"
+                                                    th:text="${lista.nome() + ' — ' + #strings.listJoin(regra.prioridades(), ', ') + (regra.obrigacaoAnexo() ? ' — exige anexo' : '')}"
+                                                    th:attr="data-lista=${lista.id()}">
+                                            </option>
+                                        </th:block>
+                                    </select>
+                                    <div class="form-text">A seleção só habilita regras que aprovaram o tipo escolhido.</div>
+                                </div>
+                                <div class="col-12 col-md-2">
+                                    <label class="form-label" for="acompanhantesCadastro">Acompanhantes</label>
+                                    <input class="form-control" type="number" id="acompanhantesCadastro"
+                                           name="acompanhantes" min="0"
+                                           th:value="${acompanhantesSelecionados}" required>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="buscarNaResidencia"
+                                               value="true" id="buscarNaResidencia">
+                                        <label class="form-check-label" for="buscarNaResidencia">
+                                            Buscar passageiro na residência
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <button class="btn btn-success" type="submit">
+                                        <i class="bi bi-person-plus me-1"></i>Confirmar agendamento
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+                    <div>
+                        <h2 class="h4 mb-1">Agenda de <span th:text="${#temporals.format(data, 'dd/MM/yyyy')}"></span></h2>
+                        <span class="text-secondary" th:text="${agenda.passageirosPendentes().size() + ' passageiro(s) sem veículo físico'}"></span>
+                    </div>
+                    <form method="post" th:action="@{/agendamentos/dias/{data}/separacao-automatica(data=${data})}">
+                        <button class="btn btn-warning" type="submit"
+                                th:disabled="${#lists.isEmpty(agenda.passageirosPendentes())}">
+                            <i class="bi bi-diagram-3 me-1"></i>Separar automaticamente
+                        </button>
+                    </form>
+                </div>
+
+                <div th:if="${pendencias != null and !#lists.isEmpty(pendencias)}"
+                     class="alert alert-warning">
+                    <strong>Passageiros que permaneceram pendentes:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li th:each="pendencia : ${pendencias}"
+                            th:text="${pendencia.idAgendamento() + ' — ' + pendencia.motivo()}"></li>
+                    </ul>
+                </div>
+
+                <section th:if="${#lists.isEmpty(agenda.veiculos())}" class="alert alert-info">
+                    Abra pelo menos um veículo físico para começar a atribuir passageiros.
+                </section>
+
+                <section class="row g-3 mb-4" aria-label="Veículos abertos">
+                    <div class="col-12 col-xl-6" th:each="veiculo : ${agenda.veiculos()}">
+                        <article class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h3 class="h6 mb-1" th:text="${veiculo.nomeTipoVeiculo()}"></h3>
+                                    <div class="small text-secondary">
+                                        <span th:if="${veiculo.identificacao() != null}"
+                                              th:text="${veiculo.identificacao() + ' · '}"></span>
+                                        <span th:text="${veiculo.assentosOcupados() + ' / ' + veiculo.capacidade() + ' lugares'}"></span>
+                                    </div>
+                                </div>
+                                <span class="badge text-bg-light"
+                                      th:text="${veiculo.horarioSaida() == null ? 'Saída a definir' : 'Saída ' + veiculo.horarioSaida()}"></span>
+                            </div>
+                            <div class="card-body">
+                                <div th:if="${#lists.isEmpty(veiculo.passageiros())}" class="text-secondary small">
+                                    Nenhum passageiro atribuído.
+                                </div>
+                                <div th:each="passageiro : ${veiculo.passageiros()}"
+                                     class="border-bottom py-2 d-flex justify-content-between gap-2">
+                                    <div class="small">
+                                        <strong th:text="${'Chegada ' + passageiro.horarioChegada()}"></strong>
+                                        <span th:text="${' · saída necessária ' + passageiro.horarioSaidaNecessario()}"></span>
+                                        <span th:if="${passageiro.buscarNaResidencia()}" class="badge text-bg-info">Buscar em casa</span>
+                                        <div class="text-secondary"
+                                             th:text="${passageiro.acompanhantes() + ' acompanhante(s)'}"></div>
+                                    </div>
+                                    <form method="post"
+                                          th:action="@{/agendamentos/{id}/remover-veiculo(id=${passageiro.id()})}">
+                                        <input type="hidden" name="data" th:value="${data}">
+                                        <button class="btn btn-sm btn-outline-secondary" type="submit">Remover</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="card border-0 shadow-sm">
+                    <div class="card-header bg-white">
+                        <h2 class="h5 mb-0">Passageiros sem veículo físico</h2>
+                    </div>
+                    <div th:if="${#lists.isEmpty(agenda.passageirosPendentes())}" class="card-body text-secondary">
+                        Todos os passageiros desta agenda estão atribuídos.
+                    </div>
+                    <div th:if="${!#lists.isEmpty(agenda.passageirosPendentes())}" class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Chegada</th>
+                                <th>Saída necessária</th>
+                                <th>Tipo necessário</th>
+                                <th>Acompanhantes</th>
+                                <th>Veículo físico</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="passageiro : ${agenda.passageirosPendentes()}">
+                                <td th:text="${passageiro.horarioChegada()}"></td>
+                                <td th:text="${passageiro.horarioSaidaNecessario()}"></td>
+                                <td>
+                                    <span th:each="tipo : ${tiposVeiculo}"
+                                          th:if="${tipo.id() == passageiro.idTipoVeiculo()}"
+                                          th:text="${tipo.nome()}"></span>
+                                </td>
+                                <td th:text="${passageiro.acompanhantes()}"></td>
+                                <td>
+                                    <form method="post"
+                                          th:action="@{/agendamentos/{id}/veiculo(id=${passageiro.id()})}"
+                                          class="d-flex gap-2 pending-vehicle-form">
+                                        <input type="hidden" name="data" th:value="${data}">
+                                        <select class="form-select form-select-sm" name="idVeiculo" required>
+                                            <option value="">Selecione</option>
+                                            <option th:each="veiculo : ${agenda.veiculos()}"
+                                                    th:if="${passageiro.idsVeiculosCompativeis().contains(veiculo.id())}"
+                                                    th:value="${veiculo.id()}"
+                                                    th:text="${(veiculo.identificacao() == null ? veiculo.nomeTipoVeiculo() : veiculo.identificacao()) + ' (' + veiculo.assentosOcupados() + '/' + veiculo.capacidade() + ')'}">
+                                            </option>
+                                        </select>
+                                        <button class="btn btn-sm btn-outline-primary" type="submit"
+                                                th:disabled="${#lists.isEmpty(passageiro.idsVeiculosCompativeis())}">
+                                            Atribuir
+                                        </button>
+                                    </form>
+                                    <span th:if="${#lists.isEmpty(passageiro.idsVeiculosCompativeis())}"
+                                          class="small text-secondary">
+                                        Nenhum veículo disponível atende à capacidade e ao horário.
+                                    </span>
+                                </td>
+                                <td>
+                                    <form method="post"
+                                          th:action="@{/agendamentos/{id}/excluir(id=${passageiro.id()})}">
+                                        <input type="hidden" name="data" th:value="${data}">
+                                        <button class="btn btn-sm btn-outline-danger" type="submit"
+                                                aria-label="Excluir agendamento">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </th:block>
+
+            <script>
+                (() => {
+                    const pessoaBusca = document.getElementById("pessoaBusca");
+                    const pessoaId = document.getElementById("idPessoaAgendamento");
+                    const pessoaResultados = document.getElementById("pessoaResultados");
+                    const pessoaMensagem = document.getElementById("pessoaBuscaMensagem");
+                    const pessoaSelecionada = document.getElementById("pessoaSelecionada");
+                    const verificarForm = document.getElementById("verificarAgendamentoForm");
+                    const resultadoVerificacao = document.getElementById("resultadoVerificacao");
+                    let buscaPessoasTimer;
+                    let buscaPessoasSequencia = 0;
+
+                    const limparResultadosPessoa = () => {
+                        pessoaResultados?.replaceChildren();
+                    };
+                    const buscarPessoas = async (termo, pagina = 0, acrescentar = false) => {
+                        const sequencia = ++buscaPessoasSequencia;
+                        try {
+                            const url = new URL(pessoaBusca.dataset.url, window.location.origin);
+                            url.searchParams.set("termo", termo);
+                            url.searchParams.set("pagina", pagina);
+                            const resposta = await fetch(url);
+                            if (!resposta.ok) throw new Error("Não foi possível buscar pessoas.");
+                            const dados = await resposta.json();
+                            if (sequencia !== buscaPessoasSequencia) return;
+                            if (!acrescentar) limparResultadosPessoa();
+                            for (const pessoa of dados.pessoas) {
+                                const opcao = document.createElement("button");
+                                opcao.type = "button";
+                                opcao.className = "list-group-item list-group-item-action";
+                                opcao.dataset.id = pessoa.id;
+                                opcao.dataset.nome = pessoa.nome;
+                                opcao.dataset.prioridade = pessoa.prioridade;
+                                opcao.dataset.cpf = pessoa.cpf;
+                                opcao.dataset.telefone = pessoa.telefone;
+                                const nome = document.createElement("strong");
+                                nome.textContent = pessoa.nome;
+                                const detalhes = document.createElement("div");
+                                detalhes.className = "small text-secondary";
+                                detalhes.textContent = `${pessoa.prioridade} · CPF ${pessoa.cpf} · Telefone ${pessoa.telefone}`;
+                                opcao.append(nome, detalhes);
+                                pessoaResultados.append(opcao);
+                            }
+                            if (dados.temMais) {
+                                const mais = document.createElement("button");
+                                mais.type = "button";
+                                mais.className = "list-group-item list-group-item-action text-center";
+                                mais.textContent = "Carregar mais resultados";
+                                mais.addEventListener("click", () => buscarPessoas(termo, pagina + 1, true));
+                                pessoaResultados.append(mais);
+                            }
+                            pessoaMensagem.textContent = dados.pessoas.length
+                                ? "Selecione uma pessoa nos resultados."
+                                : "Nenhuma pessoa ativa encontrada.";
+                        } catch (erro) {
+                            if (sequencia !== buscaPessoasSequencia) return;
+                            limparResultadosPessoa();
+                            pessoaMensagem.textContent = erro.message;
+                        }
+                    };
+
+                    pessoaBusca?.addEventListener("input", () => {
+                        pessoaId.value = "";
+                        pessoaSelecionada.textContent = "";
+                        pessoaSelecionada.classList.add("d-none");
+                        if (resultadoVerificacao) resultadoVerificacao.hidden = true;
+                        buscaPessoasSequencia++;
+                        clearTimeout(buscaPessoasTimer);
+                        limparResultadosPessoa();
+                        const termo = pessoaBusca.value.trim();
+                        if (termo.length < 2) {
+                            buscaPessoasSequencia++;
+                            pessoaMensagem.textContent = "Digite pelo menos 2 caracteres para buscar.";
+                            return;
+                        }
+                        pessoaMensagem.textContent = "Buscando...";
+                        buscaPessoasTimer = setTimeout(() => buscarPessoas(termo), 250);
+                    });
+
+                    pessoaResultados?.addEventListener("click", (evento) => {
+                        const opcao = evento.target.closest("button[data-id]");
+                        if (!opcao) return;
+                        pessoaId.value = opcao.dataset.id;
+                        pessoaBusca.value = opcao.dataset.nome;
+                        pessoaSelecionada.textContent = `${opcao.dataset.nome} — ${opcao.dataset.prioridade}`;
+                        pessoaSelecionada.classList.remove("d-none");
+                        pessoaMensagem.textContent = "Pessoa selecionada.";
+                        limparResultadosPessoa();
+                        if (resultadoVerificacao) resultadoVerificacao.hidden = true;
+                    });
+
+                    verificarForm?.addEventListener("submit", (evento) => {
+                        if (pessoaId.value) return;
+                        evento.preventDefault();
+                        pessoaMensagem.textContent = "Busque e selecione uma pessoa antes de verificar.";
+                        pessoaBusca.focus();
+                    });
+
+                    verificarForm?.addEventListener("change", (evento) => {
+                        if (evento.target.id !== "pessoaBusca" && resultadoVerificacao) {
+                            resultadoVerificacao.hidden = true;
+                        }
+                    });
+
+                    const tipoSelect = document.getElementById("tipoVeiculo");
+                    const horarioSaida = document.getElementById("horarioSaidaVeiculo");
+                    const updateSaida = () => {
+                        if (!tipoSelect || !horarioSaida) return;
+                        const tipo = tipoSelect.selectedOptions[0];
+                        const carro = tipo?.dataset.carro === "true";
+                        horarioSaida.disabled = carro;
+                        horarioSaida.required = !carro && tipoSelect.value !== "";
+                        if (carro) horarioSaida.value = "";
+                    };
+                    tipoSelect?.addEventListener("change", updateSaida);
+                    updateSaida();
+
+                    const cidade = document.getElementById("cidadeAgendamento");
+                    const destino = document.getElementById("destinoAgendamento");
+                    const filtrarDestinos = () => {
+                        if (!cidade || !destino) return;
+                        let disponiveis = 0;
+                        for (const option of destino.options) {
+                            if (!option.value) continue;
+                            option.hidden = option.dataset.cidade !== cidade.value;
+                            if (!option.hidden) disponiveis++;
+                        }
+                        if (destino.selectedOptions[0]?.hidden) destino.value = "";
+                        destino.disabled = !cidade.value || disponiveis === 0;
+                    };
+                    cidade?.addEventListener("change", filtrarDestinos);
+                    filtrarDestinos();
+
+                    const tipoPermitido = document.getElementById("tipoPermitido");
+                    const regra = document.getElementById("regraAprovada");
+                    const filtrarRegras = () => {
+                        if (!tipoPermitido || !regra) return;
+                        const selecionado = tipoPermitido.selectedOptions[0];
+                        const idsRegras = (selecionado?.dataset.regras || "").split(",");
+                        let primeiraRegra = "";
+                        for (const option of regra.options) {
+                            if (!option.value) continue;
+                            const permitida = idsRegras.includes(option.value);
+                            option.hidden = !permitida;
+                            if (permitida && !primeiraRegra) primeiraRegra = option.value;
+                        }
+                        if (regra.selectedOptions[0]?.hidden) regra.value = "";
+                        regra.disabled = idsRegras.length === 0 || !tipoPermitido.value;
+                        if (!regra.value && primeiraRegra) regra.value = primeiraRegra;
+                    };
+                    tipoPermitido?.addEventListener("change", filtrarRegras);
+                    filtrarRegras();
+
+                })();
+            </script>
+        </div>
+    </main>
+</div>
+</body>
+</html>

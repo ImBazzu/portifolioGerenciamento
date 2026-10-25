@@ -98,10 +98,12 @@ public class AgendamentoController {
                                 .filter(agendamento -> veiculo.id().equals(agendamento.getIdVeiculoAberto()))
                                 .toList()))
                 .toList();
+        var veiculosCompativeis = application.listarVeiculosCompativeis(data);
         var pendentes = agendamentos.stream()
                 .filter(agendamento -> agendamento.getIdVeiculoAberto() == null)
                 .sorted(java.util.Comparator.comparing(Agendamento::getHorarioChegada))
-                .map(this::toResponse)
+                .map(agendamento -> toResponse(agendamento,
+                        veiculosCompativeis.getOrDefault(agendamento.getId(), List.of())))
                 .toList();
         return ResponseEntity.ok(new AgendaDiaResponseDto(data, veiculos, pendentes));
     }
@@ -160,7 +162,25 @@ public class AgendamentoController {
                 application.horarioSaidaNecessario(agendamento),
                 agendamento.isBuscarNaResidencia(),
                 agendamento.getAcompanhantes(),
-                agendamento.getIdVeiculoAberto());
+                agendamento.getIdVeiculoAberto(),
+                List.of());
+    }
+
+    private AgendamentoResponseDto toResponse(Agendamento agendamento, List<UUID> idsVeiculosCompativeis) {
+        return new AgendamentoResponseDto(
+                agendamento.getId(),
+                agendamento.getData(),
+                agendamento.getIdPessoa(),
+                agendamento.getIdLista(),
+                agendamento.getIdRegraCadastro(),
+                agendamento.getIdTipoVeiculo(),
+                agendamento.getIdDestino(),
+                agendamento.getHorarioChegada(),
+                application.horarioSaidaNecessario(agendamento),
+                agendamento.isBuscarNaResidencia(),
+                agendamento.getAcompanhantes(),
+                agendamento.getIdVeiculoAberto(),
+                idsVeiculosCompativeis);
     }
 
     private VeiculoAbertoResponseDto toVeiculoResponse(VeiculoAberto veiculo, List<Agendamento> passageiros) {
