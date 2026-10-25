@@ -1,0 +1,68 @@
+<th:block th:fragment="tabPessoasArquivadas">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h5 class="mb-0 fw-bold">Pessoas arquivadas</h5>
+                <button class="btn btn-link btn-sm p-0 mt-1"
+                        hx:get="@{/pessoas/listar}" hx-target="#pessoas-lista" hx-swap="innerHTML">
+                    <i class="bi bi-arrow-left me-1"></i>Voltar às pessoas ativas
+                </button>
+            </div>
+            <div class="col-12 col-md-4">
+                <input type="search" name="nome" th:value="${nome}" class="form-control"
+                       placeholder="Buscar por nome..."
+                       hx:get="@{/pessoas/listar(arquivadas=true)}"
+                       hx-trigger="keyup changed delay:300ms, atualizar-pessoas from:body"
+                       hx-target="#pessoas-lista" hx-swap="innerHTML">
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Nome</th>
+                    <th>CPF</th>
+                    <th>Telefone</th>
+                    <th>Arquivada em</th>
+                    <th class="text-end pe-3">Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(pessoas)}">
+                    <td colspan="5" class="text-center text-muted py-4">Nenhuma pessoa arquivada encontrada.</td>
+                </tr>
+                <tr th:each="pessoa : ${pessoas}">
+                    <td class="ps-3 fw-medium">
+                        <span th:text="${pessoa.nome}">Nome</span>
+                        <div class="text-muted small" th:text="${pessoa.endereco}">Endereço</div>
+                    </td>
+                    <td th:text="${pessoa.cpf}">00000000000</td>
+                    <td th:text="${pessoa.telefone}">(00) 00000-0000</td>
+                    <td th:text="${pessoa.dataArquivado}">2026-01-01</td>
+                    <td class="text-end pe-3">
+                        <button class="btn btn-sm btn-outline-success" title="Restaurar"
+                                th:attr="hx-patch=@{/pessoas/{id}/desarquivar(id=${pessoa.id})}"
+                                hx-confirm="Deseja restaurar esta pessoa?"
+                                hx-target="this" hx-swap="none">
+                            <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2"
+             th:if="${totalPaginas > 1}">
+            <span class="text-muted small"
+                  th:text="'Página ' + (${paginaAtual} + 1) + ' de ' + ${totalPaginas}">Página</span>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary" th:disabled="${paginaAtual == 0}"
+                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=true,pagina=${paginaAtual - 1})}"
+                        hx-target="#pessoas-lista" hx-swap="innerHTML">Anterior</button>
+                <button class="btn btn-outline-secondary" th:disabled="${paginaAtual + 1 >= totalPaginas}"
+                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=true,pagina=${paginaAtual + 1})}"
+                        hx-target="#pessoas-lista" hx-swap="innerHTML">Próxima</button>
+            </div>
+        </div>
+    </div>
+</th:block>

@@ -1,0 +1,83 @@
+<th:block th:fragment="formPessoa" th:with="edicao=${id != null}">
+    <div class="custom-modal-backdrop">
+        <div class="custom-modal-card bg-white rounded shadow-lg p-4">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                <h5 class="fw-bold m-0" th:text="${edicao ? 'Editar Pessoa' : 'Cadastrar Pessoa'}">Pessoa</h5>
+                <button type="button" class="btn-close"
+                        hx:get="@{/pessoas/limpar-modal}" hx-target="#modal" hx-swap="innerHTML"
+                        aria-label="Fechar"></button>
+            </div>
+
+            <form th:object="${pessoa}"
+                  hx:post="${!edicao ? '/pessoas' : null}"
+                  hx:put="${edicao ? '/pessoas/' + id : null}"
+                  hx-target="#modal" hx-swap="innerHTML">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="nome" class="form-label fw-bold">Nome</label>
+                        <input id="nome" type="text" th:field="*{nome}" class="form-control"
+                               th:classappend="${#fields.hasErrors('nome')} ? 'is-invalid'"
+                               minlength="3" maxlength="59" required>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('nome')}"
+                             th:errors="*{nome}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="cpf" class="form-label fw-bold">CPF</label>
+                        <input id="cpf" type="text" th:field="*{cpf}" class="form-control"
+                               th:classappend="${#fields.hasErrors('cpf')} ? 'is-invalid'"
+                               inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" required>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('cpf')}"
+                             th:errors="*{cpf}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="telefone" class="form-label fw-bold">Telefone</label>
+                        <input id="telefone" type="tel" th:field="*{telefone}" class="form-control"
+                               th:classappend="${#fields.hasErrors('telefone')} ? 'is-invalid'"
+                               autocomplete="tel" placeholder="(00) 00000-0000" required>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('telefone')}"
+                             th:errors="*{telefone}"></div>
+                    </div>
+                    <div class="col-12">
+                        <label for="endereco" class="form-label fw-bold">Endereço</label>
+                        <input id="endereco" type="text" th:field="*{endereco}" class="form-control"
+                               th:classappend="${#fields.hasErrors('endereco')} ? 'is-invalid'"
+                               minlength="10" maxlength="249" autocomplete="street-address" required>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('endereco')}"
+                             th:errors="*{endereco}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="prioridade" class="form-label fw-bold">Prioridade</label>
+                        <select id="prioridade" th:field="*{prioridade}" class="form-select"
+                                th:classappend="${#fields.hasErrors('prioridade')} ? 'is-invalid'" required>
+                            <option th:each="prioridade : ${T(br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaPrioridade).values()}"
+                                    th:value="${prioridade}" th:text="${prioridade}">MODERADA</option>
+                        </select>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('prioridade')}"
+                             th:errors="*{prioridade}"></div>
+                    </div>
+                    <div class="col-12">
+                        <label for="observacao" class="form-label fw-bold">Observação</label>
+                        <textarea id="observacao" th:field="*{observacao}" class="form-control"
+                                  th:classappend="${#fields.hasErrors('observacao')} ? 'is-invalid'"
+                                  maxlength="249" rows="3"></textarea>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('observacao')}"
+                             th:errors="*{observacao}"></div>
+                    </div>
+                </div>
+
+                <div th:if="${erroGlobal != null}" class="alert alert-danger mt-3 mb-0"
+                     role="alert" th:text="${erroGlobal}"></div>
+
+                <div class="border-top pt-3 mt-3 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-light border"
+                            hx:get="@{/pessoas/limpar-modal}" hx-target="#modal" hx-swap="innerHTML">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg me-1"></i> Salvar Pessoa
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</th:block>
