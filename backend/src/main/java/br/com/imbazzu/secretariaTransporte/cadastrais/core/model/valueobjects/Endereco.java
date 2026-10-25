@@ -13,7 +13,7 @@ public record Endereco(String valor) {
         if (valor.length() < 10) {
             throw new DadosInvalidosException("Endereço deve possuir pelo mais 10 caracteres");
         }
-        if(valor.length() < 250) {
+        if (valor.length() >= 250) {
             throw new DadosInvalidosException("Endereço deve possuir menos que 250 caracteres");
         }
     }
