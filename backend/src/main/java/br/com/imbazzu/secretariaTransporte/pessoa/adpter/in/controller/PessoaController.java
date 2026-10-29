@@ -19,6 +19,18 @@ import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.Resu
 import br.com.imbazzu.secretariaTransporte.pessoa.adpter.in.controller.dto.PessoaRequestDto;
 import br.com.imbazzu.secretariaTransporte.pessoa.adpter.in.controller.dto.PessoaResponseDto;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.PessoaApplication;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.arquivar.PessoaCommandArquivar;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.arquivar.PessoaCommandArquivarHandler;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.deletar.PessoaCommandDeletar;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.deletar.PessoaCommandDeletarHandler;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.desarquivar.PessoaCommandDesarquivar;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.desarquivar.PessoaCommandDesarquivarHandler;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.editar.PessoaCommandEditar;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.editar.PessoaCommandEditarHandler;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.salvar.PessoaCommandSalvar;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.salvar.PessoaCommandSalvarHandler;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.query.buscar.PessoaQueryBuscar;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.query.buscar.PessoaQueryBuscarHandler;
 import br.com.imbazzu.secretariaTransporte.pessoa.core.domain.Pessoa;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,17 +45,25 @@ import lombok.RequiredArgsConstructor;
 public class PessoaController {
 
     private final PessoaApplication application;
+    private final PessoaCommandArquivarHandler arquivarHandler;
+    private final PessoaCommandDesarquivarHandler desarquivarHandler;
+    private final PessoaCommandDeletarHandler deletarHandler;
+    private final PessoaCommandEditarHandler editarHandler;
+    private final PessoaCommandSalvarHandler salvarHandler;
+
+    private final PessoaQueryBuscarHandler buscarHandler;
 
     @PostMapping
     public ResponseEntity<Void> criar(@RequestBody @Valid PessoaRequestDto request) {
-        var id = application.criar(request.nome(), request.observacao(), request.prioridade(),
-                request.endereco(), request.cpf(), request.telefone());
+        var id = salvarHandler.handler(new PessoaCommandSalvar(request.nome(), request.observacao(), request.prioridade(),
+                request.endereco(), request.cpf(), request.telefone()));
+                
         return ResponseEntity.created(URI.create("/api/pessoa/%s".formatted(id))).build();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<PessoaResponseDto> buscar(@PathVariable UUID id) {
-        return ResponseEntity.ok(toResponse(application.buscar(id)));
+        return ResponseEntity.ok(toResponse((Pessoa) buscarHandler.handler(new PessoaQueryBuscar(id))));
     }
 
     @GetMapping("/listar")
@@ -64,26 +84,26 @@ public class PessoaController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Void> editar(@PathVariable UUID id, @RequestBody @Valid PessoaRequestDto request) {
-        application.editar(id, request.nome(), request.observacao(), request.prioridade(),
-                request.endereco(), request.cpf(), request.telefone());
+        editarHandler.handler(new PessoaCommandEditar(id, request.nome(), request.observacao(), request.prioridade(),
+                request.endereco(), request.cpf(), request.telefone()));
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/arquivar")
     public ResponseEntity<Void> arquivar(@PathVariable UUID id) {
-        application.arquivar(id);
+        arquivarHandler.handler(new PessoaCommandArquivar(id));
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/desarquivar")
     public ResponseEntity<Void> desarquivar(@PathVariable UUID id) {
-        application.desarquivar(id);
+        desarquivarHandler.handler(new PessoaCommandDesarquivar(id));
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable UUID id) {
-        application.deletar(id);
+        deletarHandler.handler(new PessoaCommandDeletar(id));
         return ResponseEntity.noContent().build();
     }
 
