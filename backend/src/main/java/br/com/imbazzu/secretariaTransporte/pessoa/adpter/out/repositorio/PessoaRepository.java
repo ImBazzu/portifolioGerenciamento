@@ -1,6 +1,7 @@
 package br.com.imbazzu.secretariaTransporte.pessoa.adpter.out.repositorio;
 
 import java.util.UUID;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,6 +12,10 @@ import org.springframework.data.repository.query.Param;
 import br.com.imbazzu.secretariaTransporte.pessoa.adpter.out.entidadeJpa.PessoaJpa;
 
 public interface PessoaRepository extends JpaRepository<PessoaJpa, UUID> {
+
+    Optional<PessoaJpa> findByIdAndDataArquivadoIsNull(UUID id);
+
+    Optional<PessoaJpa> findByIdAndDataArquivadoIsNotNull(UUID id);
 
     boolean existsByCpf(String cpf);
 

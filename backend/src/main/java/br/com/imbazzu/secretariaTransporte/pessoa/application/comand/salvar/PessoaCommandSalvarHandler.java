@@ -24,7 +24,9 @@ public class PessoaCommandSalvarHandler {
     @Transactional
     public UUID handler(PessoaCommandSalvar command){
         
-        var observacao = command.observacao()==null || command.observacao().isEmpty() ? null : new Observacao(command.observacao());
+        var observacao = command.observacao() == null || command.observacao().isBlank()
+                ? null
+                : new Observacao(command.observacao());
         var cpf = new Cpf(command.cpf());
         
         if(porta.existeCpf(cpf.valor(), null)){

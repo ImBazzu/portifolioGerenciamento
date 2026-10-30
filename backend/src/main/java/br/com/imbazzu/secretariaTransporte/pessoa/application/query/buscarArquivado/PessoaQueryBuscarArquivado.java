@@ -3,5 +3,4 @@ package br.com.imbazzu.secretariaTransporte.pessoa.application.query.buscarArqui
 import java.util.UUID;
 
 public record PessoaQueryBuscarArquivado(UUID id) {
-    
 }

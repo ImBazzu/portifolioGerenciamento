@@ -17,8 +17,8 @@ public record TipoListaResponseDto(
 
     public record RegraCadastroResponseDto(
             UUID id,
-            List<UUID> idsVeiculos,
-            List<UUID> idsCidades,
+            List<VeiculoResponseDto> veiculos,
+            List<CidadeResponseDto> cidades,
             List<EnumPrioridade> prioridades,
             LocalTime inicioHorario,
             LocalTime finalHorario,
@@ -32,4 +32,8 @@ public record TipoListaResponseDto(
             long tempoToleranciaSegundos,
             int tempoToleranciaNanos) {
     }
+
+    public record CidadeResponseDto(UUID id, String nome){}
+
+    public record VeiculoResponseDto(UUID id, String nome){}
 }

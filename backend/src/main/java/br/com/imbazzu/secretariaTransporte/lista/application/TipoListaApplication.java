@@ -36,10 +36,7 @@ public class TipoListaApplication {
         listaPorta.salvar(lista);
     }
 
-    @Transactional(readOnly = true)
-    public TipoLista buscar(UUID id) {
-        return buscarObrigatorio(id);
-    }
+
 
     @Transactional(readOnly = true)
     public ResultadoPaginado<TipoListaResumo> listar(String nome, boolean arquivado, int pagina, int tamanho) {

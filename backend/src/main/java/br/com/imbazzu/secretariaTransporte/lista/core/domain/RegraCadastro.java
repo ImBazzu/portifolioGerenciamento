@@ -18,6 +18,7 @@ public class RegraCadastro {
     private List<EnumPrioridade> prioridades;
 
     private List<UUID> idsVeiculos;
+    
 
     private List<UUID> idCidades;
 

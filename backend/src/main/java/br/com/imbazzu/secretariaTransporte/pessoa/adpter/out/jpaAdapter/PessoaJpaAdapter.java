@@ -1,5 +1,8 @@
 package br.com.imbazzu.secretariaTransporte.pessoa.adpter.out.jpaAdapter;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +20,18 @@ import lombok.RequiredArgsConstructor;
 public class PessoaJpaAdapter implements PessoaPorta {
 
     private final PessoaRepository repository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Pessoa> buscar(UUID id) {
+        return repository.findByIdAndDataArquivadoIsNull(id).map(PessoaBancoMapper::paraDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Pessoa> buscarArquivado(UUID id) {
+        return repository.findByIdAndDataArquivadoIsNotNull(id).map(PessoaBancoMapper::paraDomain);
+    }
 
     @Override
     @Transactional(readOnly = true)

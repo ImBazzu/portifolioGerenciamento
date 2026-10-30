@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
+import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.EntidadeNaoEncontradoException;
 import br.com.imbazzu.secretariaTransporte.lista.adpter.in.controller.dto.RegraCadastroRequestDto;
 import br.com.imbazzu.secretariaTransporte.lista.adpter.in.controller.dto.RegraSeparacaoRequestDto;
 import br.com.imbazzu.secretariaTransporte.lista.adpter.in.controller.dto.TipoListaRegrasRequestDto;
@@ -26,6 +27,8 @@ import br.com.imbazzu.secretariaTransporte.lista.application.TipoListaApplicatio
 import br.com.imbazzu.secretariaTransporte.lista.application.model.RegraCadastroInput;
 import br.com.imbazzu.secretariaTransporte.lista.application.model.RegraSeparacaoInput;
 import br.com.imbazzu.secretariaTransporte.lista.core.domain.TipoLista;
+import br.com.imbazzu.secretariaTransporte.localidades.core.portas.out.CidadeQueryPorta;
+import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.porta.out.TipoVeiculoQueryPorta;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -39,6 +42,9 @@ import lombok.RequiredArgsConstructor;
 public class TipoListaController {
 
     private final TipoListaApplication application;
+    private final CidadeQueryPorta cidadeQueryPorta;
+private final TipoVeiculoQueryPorta tipoVeiculoQueryPorta; // novo campo, ao lado do cidadeQueryPorta
+
 
     @PostMapping
     public ResponseEntity<Void> criar(@RequestBody @Valid TipoListaRequestDto request) {
@@ -130,12 +136,16 @@ public class TipoListaController {
                 Duration.ofSeconds(request.tempoToleranciaSegundos(), request.tempoToleranciaNanos()));
     }
 
-    private static TipoListaResponseDto toResponse(TipoLista lista) {
+    private TipoListaResponseDto toResponse(TipoLista lista) {
         var regrasCadastro = lista.getListaRegrasCadastro().stream()
                 .map(regra -> new TipoListaResponseDto.RegraCadastroResponseDto(
                         regra.getId(),
-                        regra.getIdsVeiculos(),
-                        regra.listaCidades(),
+                        regra.getIdsVeiculos().stream()
+                                .map(id -> new TipoListaResponseDto.VeiculoResponseDto(id, nomeVeiculo(id)))
+                                .toList(),
+                        regra.listaCidades().stream()
+                                .map(id->new TipoListaResponseDto.CidadeResponseDto(id, nomeCidade(id)))
+                                .toList(),
                         regra.getPrioridades(),
                         regra.getInicioHorario(),
                         regra.getFinalHorario(),
@@ -157,4 +167,22 @@ public class TipoListaController {
                 regrasCadastro,
                 regrasSeparacao);
     }
+
+    private String nomeCidade(UUID idCidade) {
+        return cidadeQueryPorta.buscar(idCidade)
+                .map(CidadeQueryPorta.CidadeOutput::nome)
+                .or(() -> cidadeQueryPorta.buscarArquivado(idCidade)
+                        .map(CidadeQueryPorta.CidadeOutputArquivado::nome))
+                .orElseThrow(() -> new EntidadeNaoEncontradoException("Cidade não encontrada: " + idCidade));
+    }
+
+
+private String nomeVeiculo(UUID idTipoVeiculo) {
+    return tipoVeiculoQueryPorta.buscarAtivo(idTipoVeiculo)
+            .map(TipoVeiculoQueryPorta.TipoVeiculoOutput::nome)
+            .or(() -> tipoVeiculoQueryPorta.buscarArquivado(idTipoVeiculo)
+                    .map(TipoVeiculoQueryPorta.TipoVeiculoOutputArquivado::nome))
+            .orElseThrow(() -> new EntidadeNaoEncontradoException(
+                    "Tipo de veículo não encontrado: " + idTipoVeiculo));
+}
 }

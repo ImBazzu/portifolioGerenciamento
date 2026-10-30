@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
 import br.com.imbazzu.secretariaTransporte.pessoa.adpter.in.controller.dto.PessoaRequestDto;
 import br.com.imbazzu.secretariaTransporte.pessoa.adpter.in.controller.dto.PessoaResponseDto;
-import br.com.imbazzu.secretariaTransporte.pessoa.application.PessoaApplication;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.arquivar.PessoaCommandArquivar;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.arquivar.PessoaCommandArquivarHandler;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.deletar.PessoaCommandDeletar;
@@ -31,6 +30,12 @@ import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.salvar.Pess
 import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.salvar.PessoaCommandSalvarHandler;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.query.buscar.PessoaQueryBuscar;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.query.buscar.PessoaQueryBuscarHandler;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.query.buscarArquivado.PessoaQueryBuscarArquivado;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.query.buscarArquivado.PessoaQueryBuscarArquivadoHandler;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.query.listar.PessoaQueryListar;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.query.listar.PessoaQueryListarHandler;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.query.listarArquivado.PessoaQueryListarArquivado;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.query.listarArquivado.PessoaQueryListarArquivadoHandler;
 import br.com.imbazzu.secretariaTransporte.pessoa.core.domain.Pessoa;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -44,7 +49,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PessoaController {
 
-    private final PessoaApplication application;
     private final PessoaCommandArquivarHandler arquivarHandler;
     private final PessoaCommandDesarquivarHandler desarquivarHandler;
     private final PessoaCommandDeletarHandler deletarHandler;
@@ -52,6 +56,9 @@ public class PessoaController {
     private final PessoaCommandSalvarHandler salvarHandler;
 
     private final PessoaQueryBuscarHandler buscarHandler;
+    private final PessoaQueryBuscarArquivadoHandler buscarArquivadoHandler;
+    private final PessoaQueryListarHandler listarHandler;
+    private final PessoaQueryListarArquivadoHandler listarArquivadoHandler;
 
     @PostMapping
     public ResponseEntity<Void> criar(@RequestBody @Valid PessoaRequestDto request) {
@@ -63,7 +70,12 @@ public class PessoaController {
 
     @GetMapping("/{id}")
     public ResponseEntity<PessoaResponseDto> buscar(@PathVariable UUID id) {
-        return ResponseEntity.ok(toResponse((Pessoa) buscarHandler.handler(new PessoaQueryBuscar(id))));
+        return ResponseEntity.ok(toResponse(buscarHandler.handler(new PessoaQueryBuscar(id))));
+    }
+
+    @GetMapping("/{id}/arquivado")
+    public ResponseEntity<PessoaResponseDto> buscarArquivado(@PathVariable UUID id) {
+        return ResponseEntity.ok(toResponse(buscarArquivadoHandler.handler(new PessoaQueryBuscarArquivado(id))));
     }
 
     @GetMapping("/listar")
@@ -71,7 +83,8 @@ public class PessoaController {
             @RequestParam(defaultValue = "") String nome,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamanho) {
-        return ResponseEntity.ok(application.listar(nome, false, pagina, tamanho).map(PessoaController::toResponse));
+        var resultado = listarHandler.handler(new PessoaQueryListar(nome, pagina, tamanho));
+        return ResponseEntity.ok(resultado.map(PessoaController::toResponse));
     }
 
     @GetMapping("/listar/arquivado")
@@ -79,7 +92,8 @@ public class PessoaController {
             @RequestParam(defaultValue = "") String nome,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamanho) {
-        return ResponseEntity.ok(application.listar(nome, true, pagina, tamanho).map(PessoaController::toResponse));
+        var resultado = listarArquivadoHandler.handler(new PessoaQueryListarArquivado(nome, pagina, tamanho));
+        return ResponseEntity.ok(resultado.map(PessoaController::toResponse));
     }
 
     @PutMapping("/{id}")
