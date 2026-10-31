@@ -1,0 +1,14 @@
+package br.com.imbazzu.secretariaTransporte.lista.adpter.out.repositorio.projecoes;
+
+import java.util.UUID;
+
+public interface RegraSeparacaoProjecao {
+
+    UUID getId();
+
+    UUID getIdTipoVeiculo();
+
+    long getTempoToleranciaSegundos();
+
+    int getTempoToleranciaNanos();
+}

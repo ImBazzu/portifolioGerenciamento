@@ -11,11 +11,9 @@ import br.com.imbazzu.secretariaTransporte.compartilhados.valueObjects.Nome;
 import br.com.imbazzu.secretariaTransporte.lista.adpter.out.entidadeJpa.RegraCadastroJpa;
 import br.com.imbazzu.secretariaTransporte.lista.adpter.out.entidadeJpa.RegraSeparacaoJpa;
 import br.com.imbazzu.secretariaTransporte.lista.adpter.out.entidadeJpa.TipoListaJpa;
-import br.com.imbazzu.secretariaTransporte.lista.adpter.out.repositorio.projecoes.TipoListaResumoProjecao;
 import br.com.imbazzu.secretariaTransporte.lista.core.domain.RegraCadastro;
 import br.com.imbazzu.secretariaTransporte.lista.core.domain.RegraSeparacao;
 import br.com.imbazzu.secretariaTransporte.lista.core.domain.TipoLista;
-import br.com.imbazzu.secretariaTransporte.lista.core.model.TipoListaResumo;
 
 public final class TipoListaBancoMapper {
 
@@ -99,11 +97,6 @@ public final class TipoListaBancoMapper {
             regraJpa.setTempoToleranciaSegundos(regra.getTempoTolerancia().getSeconds());
             regraJpa.setTempoToleranciaNanos(regra.getTempoTolerancia().getNano());
         }
-    }
-
-    public static TipoListaResumo paraResumo(TipoListaResumoProjecao projecao) {
-        return new TipoListaResumo(projecao.getId(), projecao.getNome(), projecao.getDescricao(),
-                projecao.getDataArquivado(), projecao.getTotalRegras(), projecao.getTotalCidades());
     }
 
     private static Observacao observacaoOpcional(String valor) {

@@ -15,20 +15,36 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
-import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.EntidadeNaoEncontradoException;
 import br.com.imbazzu.secretariaTransporte.lista.adpter.in.controller.dto.RegraCadastroRequestDto;
 import br.com.imbazzu.secretariaTransporte.lista.adpter.in.controller.dto.RegraSeparacaoRequestDto;
 import br.com.imbazzu.secretariaTransporte.lista.adpter.in.controller.dto.TipoListaRegrasRequestDto;
 import br.com.imbazzu.secretariaTransporte.lista.adpter.in.controller.dto.TipoListaRequestDto;
 import br.com.imbazzu.secretariaTransporte.lista.adpter.in.controller.dto.TipoListaResponseDto;
 import br.com.imbazzu.secretariaTransporte.lista.adpter.in.controller.dto.TipoListaResumoResponseDto;
-import br.com.imbazzu.secretariaTransporte.lista.application.TipoListaApplication;
-import br.com.imbazzu.secretariaTransporte.lista.application.model.RegraCadastroInput;
-import br.com.imbazzu.secretariaTransporte.lista.application.model.RegraSeparacaoInput;
-import br.com.imbazzu.secretariaTransporte.lista.core.domain.TipoLista;
-import br.com.imbazzu.secretariaTransporte.localidades.core.portas.out.CidadeQueryPorta;
-import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.porta.out.TipoVeiculoQueryPorta;
+import br.com.imbazzu.secretariaTransporte.lista.application.command.arquivar.TipoListaCommandArquivar;
+import br.com.imbazzu.secretariaTransporte.lista.application.command.arquivar.TipoListaCommandArquivarHandler;
+import br.com.imbazzu.secretariaTransporte.lista.application.command.atualizarRegras.TipoListaCommandAtualizarRegras;
+import br.com.imbazzu.secretariaTransporte.lista.application.command.atualizarRegras.TipoListaCommandAtualizarRegrasHandler;
+import br.com.imbazzu.secretariaTransporte.lista.application.command.deletar.TipoListaCommandDeletar;
+import br.com.imbazzu.secretariaTransporte.lista.application.command.deletar.TipoListaCommandDeletarHandler;
+import br.com.imbazzu.secretariaTransporte.lista.application.command.desarquivar.TipoListaCommandDesarquivar;
+import br.com.imbazzu.secretariaTransporte.lista.application.command.desarquivar.TipoListaCommandDesarquivarHandler;
+import br.com.imbazzu.secretariaTransporte.lista.application.command.editar.TipoListaCommandEditar;
+import br.com.imbazzu.secretariaTransporte.lista.application.command.editar.TipoListaCommandEditarHandler;
+import br.com.imbazzu.secretariaTransporte.lista.application.command.salvar.TipoListaCommandSalvar;
+import br.com.imbazzu.secretariaTransporte.lista.application.command.salvar.TipoListaCommandSalvarHandler;
+import br.com.imbazzu.secretariaTransporte.lista.adpter.model.RegraCadastroInput;
+import br.com.imbazzu.secretariaTransporte.lista.adpter.model.RegraSeparacaoInput;
+
+import br.com.imbazzu.secretariaTransporte.lista.application.query.buscar.ListaQueryBuscar;
+import br.com.imbazzu.secretariaTransporte.lista.application.query.buscar.ListaQueryBuscarHandler;
+import br.com.imbazzu.secretariaTransporte.lista.application.query.buscar.ListaQueryBuscarResultado;
+import br.com.imbazzu.secretariaTransporte.lista.application.query.listarArquivado.ListaQueryListarArquivado;
+import br.com.imbazzu.secretariaTransporte.lista.application.query.listarArquivado.ListaQueryListarArquivadoHandler;
+import br.com.imbazzu.secretariaTransporte.lista.application.query.listarAtivos.ListaQueryListarAtivos;
+import br.com.imbazzu.secretariaTransporte.lista.application.query.listarAtivos.ListaQueryListarAtivosHandler;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -41,20 +57,28 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TipoListaController {
 
-    private final TipoListaApplication application;
-    private final CidadeQueryPorta cidadeQueryPorta;
-private final TipoVeiculoQueryPorta tipoVeiculoQueryPorta; // novo campo, ao lado do cidadeQueryPorta
+    // Commands
+    private final TipoListaCommandSalvarHandler salvarHandler;
+    private final TipoListaCommandEditarHandler editarHandler;
+    private final TipoListaCommandAtualizarRegrasHandler atualizarRegrasHandler;
+    private final TipoListaCommandArquivarHandler arquivarHandler;
+    private final TipoListaCommandDesarquivarHandler desarquivarHandler;
+    private final TipoListaCommandDeletarHandler deletarHandler;
 
+    // Queries
+    private final ListaQueryBuscarHandler buscarHandler;
+    private final ListaQueryListarAtivosHandler listarAtivosHandler;
+    private final ListaQueryListarArquivadoHandler listarArquivadoHandler;
 
     @PostMapping
     public ResponseEntity<Void> criar(@RequestBody @Valid TipoListaRequestDto request) {
-        var id = application.criar(request.nome(), request.descricao());
+        var id = salvarHandler.handler(new TipoListaCommandSalvar(request.nome(), request.descricao()));
         return ResponseEntity.created(URI.create("/api/lista/%s".formatted(id))).build();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<TipoListaResponseDto> buscar(@PathVariable UUID id) {
-        return ResponseEntity.ok(toResponse(application.buscar(id)));
+        return ResponseEntity.ok(toResponse(buscarHandler.handler(new ListaQueryBuscar(id))));
     }
 
     @GetMapping("/listar")
@@ -62,7 +86,7 @@ private final TipoVeiculoQueryPorta tipoVeiculoQueryPorta; // novo campo, ao lad
             @RequestParam(defaultValue = "") String nome,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamanho) {
-        var resultado = application.listar(nome, false, pagina, tamanho)
+        var resultado = listarAtivosHandler.handler(new ListaQueryListarAtivos(nome, pagina, tamanho))
                 .map(lista -> new TipoListaResumoResponseDto(
                         lista.id(), lista.nome(), lista.descricao(), lista.totalRegras(), lista.totalCidades(),
                         false, null));
@@ -74,7 +98,7 @@ private final TipoVeiculoQueryPorta tipoVeiculoQueryPorta; // novo campo, ao lad
             @RequestParam(defaultValue = "") String nome,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamanho) {
-        var resultado = application.listar(nome, true, pagina, tamanho)
+        var resultado = listarArquivadoHandler.handler(new ListaQueryListarArquivado(nome, pagina, tamanho))
                 .map(lista -> new TipoListaResumoResponseDto(
                         lista.id(), lista.nome(), lista.descricao(), lista.totalRegras(), lista.totalCidades(),
                         true, lista.dataArquivado()));
@@ -83,7 +107,7 @@ private final TipoVeiculoQueryPorta tipoVeiculoQueryPorta; // novo campo, ao lad
 
     @PutMapping("/{id}")
     public ResponseEntity<Void> editar(@PathVariable UUID id, @RequestBody @Valid TipoListaRequestDto request) {
-        application.editar(id, request.nome(), request.descricao());
+        editarHandler.handler(new TipoListaCommandEditar(id, request.nome(), request.descricao()));
         return ResponseEntity.noContent().build();
     }
 
@@ -97,25 +121,25 @@ private final TipoVeiculoQueryPorta tipoVeiculoQueryPorta; // novo campo, ao lad
         var regrasSeparacao = request.regrasSeparacao().stream()
                 .map(TipoListaController::toInput)
                 .toList();
-        application.atualizarRegras(id, regrasCadastro, regrasSeparacao);
+        atualizarRegrasHandler.handler(new TipoListaCommandAtualizarRegras(id, regrasCadastro, regrasSeparacao));
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/arquivar")
     public ResponseEntity<Void> arquivar(@PathVariable UUID id) {
-        application.arquivar(id);
+        arquivarHandler.handler(new TipoListaCommandArquivar(id));
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/desarquivar")
     public ResponseEntity<Void> desarquivar(@PathVariable UUID id) {
-        application.desarquivar(id);
+        desarquivarHandler.handler(new TipoListaCommandDesarquivar(id));
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable UUID id) {
-        application.deletar(id);
+        deletarHandler.handler(new TipoListaCommandDeletar(id));
         return ResponseEntity.noContent().build();
     }
 
@@ -136,53 +160,35 @@ private final TipoVeiculoQueryPorta tipoVeiculoQueryPorta; // novo campo, ao lad
                 Duration.ofSeconds(request.tempoToleranciaSegundos(), request.tempoToleranciaNanos()));
     }
 
-    private TipoListaResponseDto toResponse(TipoLista lista) {
-        var regrasCadastro = lista.getListaRegrasCadastro().stream()
+    private static TipoListaResponseDto toResponse(ListaQueryBuscarResultado resultado) {
+        var regrasCadastro = resultado.regrasCadastro().stream()
                 .map(regra -> new TipoListaResponseDto.RegraCadastroResponseDto(
-                        regra.getId(),
-                        regra.getIdsVeiculos().stream()
-                                .map(id -> new TipoListaResponseDto.VeiculoResponseDto(id, nomeVeiculo(id)))
+                        regra.id(),
+                        regra.veiculos().stream()
+                                .map(v -> new TipoListaResponseDto.VeiculoResponseDto(v.id(), v.nome()))
                                 .toList(),
-                        regra.listaCidades().stream()
-                                .map(id->new TipoListaResponseDto.CidadeResponseDto(id, nomeCidade(id)))
+                        regra.cidades().stream()
+                                .map(c -> new TipoListaResponseDto.CidadeResponseDto(c.id(), c.nome()))
                                 .toList(),
-                        regra.getPrioridades(),
-                        regra.getInicioHorario(),
-                        regra.getFinalHorario(),
-                        regra.isObrigacaoAnexo(),
-                        regra.getDescricao() == null ? null : regra.getDescricao().valor()))
+                        regra.prioridades(),
+                        regra.inicioHorario(),
+                        regra.finalHorario(),
+                        regra.obrigacaoAnexo(),
+                        regra.descricao()))
                 .toList();
-        var regrasSeparacao = lista.getListaRegraSeparacao().stream()
+        var regrasSeparacao = resultado.regrasSeparacao().stream()
                 .map(regra -> new TipoListaResponseDto.RegraSeparacaoResponseDto(
-                        regra.getId(),
-                        regra.getIdTipoVeiculo(),
-                        regra.getTempoTolerancia().getSeconds(),
-                        regra.getTempoTolerancia().getNano()))
+                        regra.id(),
+                        regra.idTipoVeiculo(),
+                        regra.tempoTolerancia().getSeconds(),
+                        regra.tempoTolerancia().getNano()))
                 .toList();
         return new TipoListaResponseDto(
-                lista.getId(),
-                lista.getNome().valor(),
-                lista.getDescricao() == null ? null : lista.getDescricao().valor(),
-                lista.getDataArquivado(),
+                resultado.id(),
+                resultado.nome(),
+                resultado.descricao(),
+                resultado.dataArquivado(),
                 regrasCadastro,
                 regrasSeparacao);
     }
-
-    private String nomeCidade(UUID idCidade) {
-        return cidadeQueryPorta.buscar(idCidade)
-                .map(CidadeQueryPorta.CidadeOutput::nome)
-                .or(() -> cidadeQueryPorta.buscarArquivado(idCidade)
-                        .map(CidadeQueryPorta.CidadeOutputArquivado::nome))
-                .orElseThrow(() -> new EntidadeNaoEncontradoException("Cidade não encontrada: " + idCidade));
-    }
-
-
-private String nomeVeiculo(UUID idTipoVeiculo) {
-    return tipoVeiculoQueryPorta.buscarAtivo(idTipoVeiculo)
-            .map(TipoVeiculoQueryPorta.TipoVeiculoOutput::nome)
-            .or(() -> tipoVeiculoQueryPorta.buscarArquivado(idTipoVeiculo)
-                    .map(TipoVeiculoQueryPorta.TipoVeiculoOutputArquivado::nome))
-            .orElseThrow(() -> new EntidadeNaoEncontradoException(
-                    "Tipo de veículo não encontrado: " + idTipoVeiculo));
-}
 }

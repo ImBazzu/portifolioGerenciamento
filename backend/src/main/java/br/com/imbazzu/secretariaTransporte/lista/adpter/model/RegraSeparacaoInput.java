@@ -1,4 +1,4 @@
-package br.com.imbazzu.secretariaTransporte.lista.application.model;
+package br.com.imbazzu.secretariaTransporte.lista.adpter.model;
 
 import java.time.Duration;
 import java.util.UUID;

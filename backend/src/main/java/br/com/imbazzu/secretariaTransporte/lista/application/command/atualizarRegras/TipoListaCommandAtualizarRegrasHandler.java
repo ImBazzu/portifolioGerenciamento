@@ -1,0 +1,44 @@
+package br.com.imbazzu.secretariaTransporte.lista.application.command.atualizarRegras;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.Observacao;
+import br.com.imbazzu.secretariaTransporte.lista.core.excecoes.TipoListaNaoEncontradoException;
+import br.com.imbazzu.secretariaTransporte.lista.core.porta.out.TipoListaPorta;
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class TipoListaCommandAtualizarRegrasHandler {
+
+    private final TipoListaPorta porta;
+
+    @Transactional
+    public void handler(TipoListaCommandAtualizarRegras command) {
+        var lista = porta.buscarPorId(command.id())
+                .orElseThrow(() -> new TipoListaNaoEncontradoException(command.id()));
+
+        // Os getters devolvem cópia (List.copyOf), então remover durante a iteração é seguro.
+        lista.getListaRegrasCadastro().forEach(regra -> lista.removerRegraCadastro(regra.getId()));
+        lista.getListaRegraSeparacao().forEach(regra -> lista.removerRegraSeparacao(regra.getId()));
+
+        command.regrasCadastro().forEach(regra -> lista.criarRegraCadastro(
+                regra.idsVeiculos(),
+                regra.idsCidades(),
+                regra.prioridades(),
+                regra.inicioHorario(),
+                regra.finalHorario(),
+                regra.obrigacaoAnexo(),
+                observacaoOpcional(regra.descricao())));
+        command.regrasSeparacao().forEach(regra -> lista.criarRegraSeparacao(
+                regra.idTipoVeiculo(),
+                regra.tempoTolerancia()));
+
+        porta.salvar(lista);
+    }
+
+    private Observacao observacaoOpcional(String valor) {
+        return valor == null || valor.isBlank() ? null : new Observacao(valor);
+    }
+}
