@@ -31,6 +31,6 @@ public record TipoListaDetalhe(
             String descricao) {
     }
 
-    public record RegraSeparacaoDetalhe(UUID id, UUID idTipoVeiculo, Duration tempoTolerancia) {
+    public record RegraSeparacaoDetalhe(UUID id, String nome, String tempoTolerancia) {
     }
 }

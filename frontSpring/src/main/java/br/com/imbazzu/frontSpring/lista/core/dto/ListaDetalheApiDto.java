@@ -13,8 +13,8 @@ public record ListaDetalheApiDto(
 
     public record RegraCadastro(
             UUID id,
-            List<VeiculoResponse> idsVeiculos,
-            List<CidadeResponse> idsCidades,
+            List<VeiculoResponse> veiculos,
+            List<CidadeResponse> cidades,
             List<String> prioridades,
             String inicioHorario,
             String finalHorario,
@@ -24,9 +24,8 @@ public record ListaDetalheApiDto(
 
     public record RegraSeparacao(
             UUID id,
-            UUID idTipoVeiculo,
-            long tempoToleranciaSegundos,
-            int tempoToleranciaNanos) {
+            String nome,
+            String tempoTolerancia) {
     }
 
     public record CidadeResponse(

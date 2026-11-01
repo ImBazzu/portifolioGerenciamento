@@ -37,7 +37,7 @@ public final class TipoListaBancoMapper {
                 .map(regra -> RegraSeparacao.recriar(
                         regra.getId(),
                         entidade.getId(),
-                        regra.getIdTipoVeiculo(),
+                        regra.getTipoVeiculo().getId(),
                         Duration.ofSeconds(regra.getTempoToleranciaSegundos(), regra.getTempoToleranciaNanos())))
                 .toList();
 
@@ -93,7 +93,7 @@ public final class TipoListaBancoMapper {
                 regraJpa.setLista(entidade);
                 entidade.getRegrasSeparacao().add(regraJpa);
             }
-            regraJpa.setIdTipoVeiculo(regra.getIdTipoVeiculo());
+            regraJpa.getTipoVeiculo().setId(regra.getIdTipoVeiculo());
             regraJpa.setTempoToleranciaSegundos(regra.getTempoTolerancia().getSeconds());
             regraJpa.setTempoToleranciaNanos(regra.getTempoTolerancia().getNano());
         }

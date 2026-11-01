@@ -185,10 +185,10 @@ public class ListaApi implements ListaApiPorta {
                 lista.regrasSeparacao().stream().map(ListaApi::formatarRegraSeparacao))
                 .toList();
         var cidades = lista.regrasCadastro().stream()
-                .flatMap(regra -> regra.idsCidades().stream())
-                .distinct()
-                .map(UUID::toString)
-                .toList();
+            .flatMap(regra -> regra.cidades().stream())
+            .map(cidade -> cidade.nome())
+            .distinct()
+            .toList();
         return new ListaResponseDto(
                 lista.id(),
                 lista.nome(),
@@ -209,8 +209,8 @@ public class ListaApi implements ListaApiPorta {
         var descricao = regra.descricao() == null ? "" : " — " + regra.descricao();
         return "Cadastro: prioridades %s, %d veículo(s), %d cidade(s), %s, anexo %s%s".formatted(
                 String.join(", ", regra.prioridades()),
-                regra.idsVeiculos().size(),
-                regra.idsCidades().size(),
+                regra.veiculos().size(),
+                regra.cidades().size(),
                 horario,
                 regra.obrigacaoAnexo() ? "obrigatório" : "não obrigatório",
                 descricao);
@@ -218,7 +218,7 @@ public class ListaApi implements ListaApiPorta {
 
     private static String formatarRegraSeparacao(ListaDetalheApiDto.RegraSeparacao regra) {
         return "Separação: tipo de veículo %s, tolerância %s".formatted(
-                regra.idTipoVeiculo(),
-                java.time.Duration.ofSeconds(regra.tempoToleranciaSegundos(), regra.tempoToleranciaNanos()));
+                regra.nome(),
+                regra.tempoTolerancia());
     }
 }

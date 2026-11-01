@@ -2,6 +2,7 @@ package br.com.imbazzu.secretariaTransporte.lista.adpter.out.entidadeJpa;
 
 import java.util.UUID;
 
+import br.com.imbazzu.secretariaTransporte.tipoVeiculo.adpter.out.entidadeJpa.TipoVeiculoJpa;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -28,8 +29,10 @@ public class RegraSeparacaoJpa {
     @JoinColumn(name = "lista_id", nullable = false)
     private TipoListaJpa lista;
 
-    @Column(name = "tipo_veiculo_id", nullable = false)
-    private UUID idTipoVeiculo;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "tipo_veiculo_id", nullable = false)
+    private TipoVeiculoJpa tipoVeiculo;
+
 
     @Column(name = "tempo_tolerancia_segundos", nullable = false)
     private long tempoToleranciaSegundos;

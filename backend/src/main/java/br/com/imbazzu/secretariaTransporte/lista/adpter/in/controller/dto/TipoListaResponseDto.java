@@ -28,9 +28,8 @@ public record TipoListaResponseDto(
 
     public record RegraSeparacaoResponseDto(
             UUID id,
-            UUID idTipoVeiculo,
-            long tempoToleranciaSegundos,
-            int tempoToleranciaNanos) {
+            String nome,
+            String tempoTolerancia) {
     }
 
     public record CidadeResponseDto(UUID id, String nome){}

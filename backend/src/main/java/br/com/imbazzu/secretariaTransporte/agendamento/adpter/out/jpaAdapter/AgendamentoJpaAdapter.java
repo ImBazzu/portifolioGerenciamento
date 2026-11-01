@@ -167,7 +167,7 @@ public class AgendamentoJpaAdapter implements AgendamentoPorta {
     public Optional<Duration> buscarToleranciaSeparacao(UUID idLista, UUID idTipoVeiculo) {
         var lista = listaRepository.findById(idLista);
         return lista.flatMap(tipoLista -> tipoLista.getRegrasSeparacao().stream()
-                        .filter(regra -> regra.getIdTipoVeiculo().equals(idTipoVeiculo))
+                        .filter(regra -> regra.getTipoVeiculo().getId().equals(idTipoVeiculo))
                         .findFirst())
                 .map(regra -> Duration.ofSeconds(regra.getTempoToleranciaSegundos(),
                         regra.getTempoToleranciaNanos()));
