@@ -147,7 +147,6 @@ public class TipoVeiculoController {
         var result = listarArquivadoHandler.handler(new TipoVeiculoQueryListarArquivado(nome, pagina, tamanho));
         var response = result
                 .map(v -> new TipoVeiculoArquivadoResponseDto(v.id(), v.nome(), v.capacidade(), v.dataArquivado()));
-        System.err.println(response);
         return ResponseEntity.ok(response);
     }
 

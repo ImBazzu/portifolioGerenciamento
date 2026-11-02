@@ -1,7 +1,7 @@
 package br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out;
 
-import java.time.LocalDate;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -13,21 +13,15 @@ import br.com.imbazzu.secretariaTransporte.agendamento.core.model.PessoaAgendaDa
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.RegraCadastroAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.TipoVeiculoAgendaDados;
 
-public interface AgendamentoPorta {
+public interface AgendamentoQueryPorta {
 
     boolean diaAberto(LocalDate data);
 
-    void abrirDia(LocalDate data);
-
     boolean existeAgendamento(LocalDate data, UUID idPessoa);
 
-    UUID salvar(Agendamento agendamento);
+    Optional<Agendamento> buscarAgendamento(UUID id);
 
-    Optional<Agendamento> buscarPorId(UUID id);
-
-    void deletar(UUID id);
-
-    List<Agendamento> listarPorData(LocalDate data);
+    List<Agendamento> listarAgendamentos(LocalDate data);
 
     PessoaAgendaDados buscarPessoa(UUID id);
 
@@ -40,8 +34,6 @@ public interface AgendamentoPorta {
     TipoVeiculoAgendaDados buscarTipoVeiculo(UUID id);
 
     Optional<Duration> buscarToleranciaSeparacao(UUID idLista, UUID idTipoVeiculo);
-
-    VeiculoAberto salvar(VeiculoAberto veiculo);
 
     Optional<VeiculoAberto> buscarVeiculo(UUID id);
 

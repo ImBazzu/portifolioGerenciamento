@@ -1,4 +1,4 @@
-package br.com.imbazzu.secretariaTransporte.agendamento.application.model;
+package br.com.imbazzu.secretariaTransporte.agendamento.application.query.model;
 
 import java.util.List;
 

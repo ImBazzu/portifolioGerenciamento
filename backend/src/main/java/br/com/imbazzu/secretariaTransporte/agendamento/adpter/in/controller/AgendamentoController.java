@@ -15,19 +15,45 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AbrirVeiculoRequestDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AgendaDiaResponseDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AgendamentoRequestDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AgendamentoResponseDto;
-import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AbrirVeiculoRequestDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.ResultadoSeparacaoResponseDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.VeiculoAbertoResponseDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.VeiculoPermitidoResponseDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.VerificarVeiculosRequestDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.VerificacaoVeiculosResponseDto;
-import br.com.imbazzu.secretariaTransporte.agendamento.application.AgendamentoApplication;
-import br.com.imbazzu.secretariaTransporte.agendamento.application.model.VeiculoPermitido;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.abrirDia.AgendamentoCommandAbrirDia;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.abrirDia.AgendamentoCommandAbrirDiaHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.abrirVeiculo.AgendamentoCommandAbrirVeiculo;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.abrirVeiculo.AgendamentoCommandAbrirVeiculoHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.atribuirVeiculo.AgendamentoCommandAtribuirVeiculo;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.atribuirVeiculo.AgendamentoCommandAtribuirVeiculoHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.criar.AgendamentoCommandCriar;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.criar.AgendamentoCommandCriarHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.model.ResultadoSeparacaoAutomatica;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.remover.AgendamentoCommandRemover;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.remover.AgendamentoCommandRemoverHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.removerVeiculo.AgendamentoCommandRemoverVeiculo;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.removerVeiculo.AgendamentoCommandRemoverVeiculoHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.separarAutomaticamente.AgendamentoCommandSepararAutomaticamente;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.separarAutomaticamente.AgendamentoCommandSepararAutomaticamenteHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.query.buscar.AgendamentoQueryBuscar;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.query.buscar.AgendamentoQueryBuscarHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.query.buscarDia.AgendamentoQueryBuscarDia;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.query.buscarDia.AgendamentoQueryBuscarDiaHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.query.listarPendentes.AgendamentoQueryListarPendentes;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.query.listarPendentes.AgendamentoQueryListarPendentesHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.query.model.AgendamentoAgenda;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.query.model.AgendaDia;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.query.model.VeiculoAgenda;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.query.model.VeiculoPermitido;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.query.verificarVeiculos.AgendamentoQueryVerificarVeiculos;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.query.verificarVeiculos.AgendamentoQueryVerificarVeiculosHandler;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.VeiculoAberto;
+import br.com.imbazzu.secretariaTransporte.agendamento.core.service.CompatibilidadeVeiculoAgendamento;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -40,11 +66,21 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AgendamentoController {
 
-    private final AgendamentoApplication application;
+    private final AgendamentoCommandAbrirDiaHandler abrirDiaHandler;
+    private final AgendamentoCommandAbrirVeiculoHandler abrirVeiculoHandler;
+    private final AgendamentoQueryVerificarVeiculosHandler verificarVeiculosHandler;
+    private final AgendamentoCommandCriarHandler criarHandler;
+    private final AgendamentoQueryBuscarDiaHandler buscarDiaHandler;
+    private final AgendamentoQueryListarPendentesHandler listarPendentesHandler;
+    private final AgendamentoCommandSepararAutomaticamenteHandler separarAutomaticamenteHandler;
+    private final AgendamentoQueryBuscarHandler buscarHandler;
+    private final AgendamentoCommandAtribuirVeiculoHandler atribuirVeiculoHandler;
+    private final AgendamentoCommandRemoverVeiculoHandler removerVeiculoHandler;
+    private final AgendamentoCommandRemoverHandler removerHandler;
 
     @PostMapping("/dias/{data}/abrir")
     public ResponseEntity<Void> abrirDia(@PathVariable LocalDate data) {
-        application.abrirDia(data);
+        abrirDiaHandler.handler(new AgendamentoCommandAbrirDia(data));
         return ResponseEntity.created(URI.create("/api/agendamentos/dias/%s".formatted(data))).build();
     }
 
@@ -52,19 +88,23 @@ public class AgendamentoController {
     public ResponseEntity<VeiculoAbertoResponseDto> abrirVeiculo(
             @PathVariable LocalDate data,
             @RequestBody @Valid AbrirVeiculoRequestDto request) {
-        var veiculo = application.abrirVeiculo(
-                data, request.idTipoVeiculo(), request.identificacao(), request.horarioSaida());
+        var veiculo = abrirVeiculoHandler.handler(new AgendamentoCommandAbrirVeiculo(
+                data, request.idTipoVeiculo(), request.identificacao(), request.horarioSaida()));
         return ResponseEntity.created(URI.create("/api/agendamentos/dias/%s/veiculos/%s"
-                .formatted(data, veiculo.id()))).body(toVeiculoResponse(veiculo, List.of()));
+                .formatted(data, veiculo.id()))).body(toResponse(veiculo, List.of()));
     }
 
     @PostMapping("/dias/{data}/verificar-veiculos")
     public ResponseEntity<VerificacaoVeiculosResponseDto> verificarVeiculos(
             @PathVariable LocalDate data,
             @RequestBody @Valid VerificarVeiculosRequestDto request) {
-        var resultado = application.verificarVeiculos(
-                data, request.idPessoa(), request.idLista(), request.idDestino(),
-                request.horarioChegada(), request.acompanhantes());
+        var resultado = verificarVeiculosHandler.handler(new AgendamentoQueryVerificarVeiculos(
+                data,
+                request.idPessoa(),
+                request.idLista(),
+                request.idDestino(),
+                request.horarioChegada(),
+                request.acompanhantes()));
         var permitidos = resultado.veiculosPermitidos().stream()
                 .map(AgendamentoController::toResponse)
                 .toList();
@@ -75,7 +115,7 @@ public class AgendamentoController {
     public ResponseEntity<Void> criar(
             @PathVariable LocalDate data,
             @RequestBody @Valid AgendamentoRequestDto request) {
-        var id = application.criar(
+        var id = criarHandler.handler(new AgendamentoCommandCriar(
                 data,
                 request.idPessoa(),
                 request.idLista(),
@@ -84,69 +124,88 @@ public class AgendamentoController {
                 request.idDestino(),
                 request.horarioChegada(),
                 request.buscarNaResidencia(),
-                request.acompanhantes());
+                request.acompanhantes()));
         return ResponseEntity.created(URI.create("/api/agendamentos/%s".formatted(id))).build();
     }
 
     @GetMapping("/dias/{data}")
     public ResponseEntity<AgendaDiaResponseDto> buscarDia(@PathVariable LocalDate data) {
-        var agendamentos = application.listarPorData(data);
-        var veiculos = application.listarVeiculos(data).stream()
-                .map(veiculo -> toVeiculoResponse(
-                        veiculo,
-                        agendamentos.stream()
-                                .filter(agendamento -> veiculo.id().equals(agendamento.getIdVeiculoAberto()))
-                                .toList()))
-                .toList();
-        var veiculosCompativeis = application.listarVeiculosCompativeis(data);
-        var pendentes = agendamentos.stream()
-                .filter(agendamento -> agendamento.getIdVeiculoAberto() == null)
-                .sorted(java.util.Comparator.comparing(Agendamento::getHorarioChegada))
-                .map(agendamento -> toResponse(agendamento,
-                        veiculosCompativeis.getOrDefault(agendamento.getId(), List.of())))
-                .toList();
-        return ResponseEntity.ok(new AgendaDiaResponseDto(data, veiculos, pendentes));
+        var agenda = buscarDiaHandler.handler(new AgendamentoQueryBuscarDia(data));
+        return ResponseEntity.ok(toResponse(agenda));
     }
 
     @GetMapping("/dias/{data}/pendentes")
     public ResponseEntity<List<AgendamentoResponseDto>> listarPendentes(@PathVariable LocalDate data) {
-        return ResponseEntity.ok(application.listarPendentes(data).stream().map(this::toResponse).toList());
+        return ResponseEntity.ok(listarPendentesHandler.handler(new AgendamentoQueryListarPendentes(data))
+                .stream().map(this::toResponse).toList());
     }
 
     @PostMapping("/dias/{data}/separacao-automatica")
     public ResponseEntity<ResultadoSeparacaoResponseDto> separarAutomaticamente(@PathVariable LocalDate data) {
-        var resultado = application.separarAutomaticamente(data);
-        return ResponseEntity.ok(new ResultadoSeparacaoResponseDto(
-                resultado.passageirosAlocados(),
-                resultado.passageirosPendentes().stream()
-                        .map(pendente -> new ResultadoSeparacaoResponseDto.PassageiroPendenteResponseDto(
-                                pendente.idAgendamento(), pendente.motivo()))
-                        .toList()));
+        var resultado = separarAutomaticamenteHandler.handler(new AgendamentoCommandSepararAutomaticamente(data));
+        return ResponseEntity.ok(toResponse(resultado));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<AgendamentoResponseDto> buscar(@PathVariable UUID id) {
-        return ResponseEntity.ok(toResponse(application.buscar(id)));
+        return ResponseEntity.ok(toResponse(buscarHandler.handler(new AgendamentoQueryBuscar(id))));
     }
 
     @PutMapping("/{id}/veiculo/{idVeiculo}")
     public ResponseEntity<Void> atribuirManualmente(
             @PathVariable UUID id,
             @PathVariable UUID idVeiculo) {
-        application.atribuirManualmente(id, idVeiculo);
+        atribuirVeiculoHandler.handler(new AgendamentoCommandAtribuirVeiculo(id, idVeiculo));
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}/veiculo")
     public ResponseEntity<Void> removerDoVeiculo(@PathVariable UUID id) {
-        application.removerDoVeiculo(id);
+        removerVeiculoHandler.handler(new AgendamentoCommandRemoverVeiculo(id));
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> remover(@PathVariable UUID id) {
-        application.remover(id);
+        removerHandler.handler(new AgendamentoCommandRemover(id));
         return ResponseEntity.noContent().build();
+    }
+
+    private AgendaDiaResponseDto toResponse(AgendaDia agenda) {
+        return new AgendaDiaResponseDto(
+                agenda.data(),
+                agenda.veiculos().stream().map(this::toResponse).toList(),
+                agenda.passageirosPendentes().stream().map(this::toResponse).toList());
+    }
+
+    private VeiculoAbertoResponseDto toResponse(VeiculoAgenda veiculo) {
+        return new VeiculoAbertoResponseDto(
+                veiculo.id(),
+                veiculo.data(),
+                veiculo.idTipoVeiculo(),
+                veiculo.nomeTipoVeiculo(),
+                veiculo.capacidade(),
+                veiculo.identificacao(),
+                veiculo.horarioSaida(),
+                veiculo.assentosOcupados(),
+                veiculo.passageiros().stream().map(this::toResponse).toList());
+    }
+
+    private AgendamentoResponseDto toResponse(AgendamentoAgenda agendamento) {
+        return new AgendamentoResponseDto(
+                agendamento.id(),
+                agendamento.data(),
+                agendamento.idPessoa(),
+                agendamento.idLista(),
+                agendamento.idRegraCadastro(),
+                agendamento.idTipoVeiculo(),
+                agendamento.idDestino(),
+                agendamento.horarioChegada(),
+                agendamento.horarioSaidaNecessario(),
+                agendamento.buscarNaResidencia(),
+                agendamento.acompanhantes(),
+                agendamento.idVeiculoAberto(),
+                agendamento.idsVeiculosCompativeis());
     }
 
     private AgendamentoResponseDto toResponse(Agendamento agendamento) {
@@ -159,31 +218,14 @@ public class AgendamentoController {
                 agendamento.getIdTipoVeiculo(),
                 agendamento.getIdDestino(),
                 agendamento.getHorarioChegada(),
-                application.horarioSaidaNecessario(agendamento),
+                CompatibilidadeVeiculoAgendamento.horarioSaidaNecessario(agendamento),
                 agendamento.isBuscarNaResidencia(),
                 agendamento.getAcompanhantes(),
                 agendamento.getIdVeiculoAberto(),
                 List.of());
     }
 
-    private AgendamentoResponseDto toResponse(Agendamento agendamento, List<UUID> idsVeiculosCompativeis) {
-        return new AgendamentoResponseDto(
-                agendamento.getId(),
-                agendamento.getData(),
-                agendamento.getIdPessoa(),
-                agendamento.getIdLista(),
-                agendamento.getIdRegraCadastro(),
-                agendamento.getIdTipoVeiculo(),
-                agendamento.getIdDestino(),
-                agendamento.getHorarioChegada(),
-                application.horarioSaidaNecessario(agendamento),
-                agendamento.isBuscarNaResidencia(),
-                agendamento.getAcompanhantes(),
-                agendamento.getIdVeiculoAberto(),
-                idsVeiculosCompativeis);
-    }
-
-    private VeiculoAbertoResponseDto toVeiculoResponse(VeiculoAberto veiculo, List<Agendamento> passageiros) {
+    private VeiculoAbertoResponseDto toResponse(VeiculoAberto veiculo, List<Agendamento> passageiros) {
         return new VeiculoAbertoResponseDto(
                 veiculo.id(),
                 veiculo.data(),
@@ -191,9 +233,18 @@ public class AgendamentoController {
                 veiculo.nomeTipoVeiculo(),
                 veiculo.capacidade(),
                 veiculo.identificacao(),
-                application.horarioSaidaDoVeiculo(veiculo),
+                CompatibilidadeVeiculoAgendamento.horarioSaidaDoVeiculo(veiculo, passageiros),
                 passageiros.stream().mapToInt(Agendamento::quantidadePessoas).sum(),
                 passageiros.stream().map(this::toResponse).toList());
+    }
+
+    private ResultadoSeparacaoResponseDto toResponse(ResultadoSeparacaoAutomatica resultado) {
+        return new ResultadoSeparacaoResponseDto(
+                resultado.passageirosAlocados(),
+                resultado.passageirosPendentes().stream()
+                        .map(pendente -> new ResultadoSeparacaoResponseDto.PassageiroPendenteResponseDto(
+                                pendente.idAgendamento(), pendente.motivo()))
+                        .toList());
     }
 
     private static VeiculoPermitidoResponseDto toResponse(VeiculoPermitido veiculo) {

@@ -4,6 +4,7 @@ import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestCli
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoArquivadoResponseDto;
+import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoHistoricoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoRequestDto;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.excecoes.VeiculoDuplicadoException;
@@ -32,41 +33,40 @@ public class VeiculoApi implements VeiculoApiPorta {
     }
     @Override
     public void arquivar(UUID id) {
-            api
+        executarComRefresh(() -> api
                 .patch()
                 .uri("%s/%s/arquivar".formatted(pathApi,id))
-                    .retrieve()
-                    .onStatus(status->status.isSameCodeAs(HttpStatus.NOT_FOUND),
-                            (r,p)->{throw new VeiculoNaoEncontradoException(id);})
-                    .toBodilessEntity();
-
+                .retrieve()
+                .onStatus(status->status.isSameCodeAs(HttpStatus.NOT_FOUND),
+                        (r,p)->{throw new VeiculoNaoEncontradoException(id);})
+                .toBodilessEntity());
     }
 
     @Override
     public void desarquivar(UUID id) {
-        api
+        executarComRefresh(() -> api
                 .patch()
                 .uri("%s/%s/desarquivar".formatted(pathApi,id))
                 .retrieve()
                 .onStatus(status->status.isSameCodeAs(HttpStatus.NOT_FOUND),
                         (r,p)-> {throw new VeiculoNaoEncontradoException(id);})
-                .toBodilessEntity();
+                .toBodilessEntity());
     }
 
     @Override
     public void deletar(UUID id) {
-        api
+        executarComRefresh(() -> api
                 .delete()
                 .uri("%s/%s".formatted(pathApi,id))
                 .retrieve()
                 .onStatus(status->status.isSameCodeAs(HttpStatus.NOT_FOUND),
                         (r,p)-> {throw new VeiculoNaoEncontradoException(id);})
-                .toBodilessEntity();
+                .toBodilessEntity());
     }
 
     @Override
     public void editar(UUID id, TipoVeiculoRequestDto dto) {
-        api
+        executarComRefresh(() -> api
                 .put()
                 .uri(pathApi+"/"+id)
                 .body(dto)
@@ -75,19 +75,19 @@ public class VeiculoApi implements VeiculoApiPorta {
                         (r,p)-> {throw new VeiculoNaoEncontradoException(id);})
                 .onStatus(status->status.isSameCodeAs(HttpStatus.CONFLICT),
                         (r,p)->{throw new VeiculoDuplicadoException(id);})
-                .toBodilessEntity();
+                .toBodilessEntity());
     }
 
     @Override
     public void salvar(TipoVeiculoRequestDto dto) {
-        api
+        executarComRefresh(() -> api
                 .post()
                 .uri(pathApi)
                 .body(dto)
                 .retrieve()
                 .onStatus(status->status.isSameCodeAs(HttpStatus.CONFLICT),
                         (r,p)->{throw new VeiculoDuplicadoException(null);})
-                .toBodilessEntity();
+                .toBodilessEntity());
     }
 
     @Override
@@ -107,7 +107,7 @@ public class VeiculoApi implements VeiculoApiPorta {
 
     @Override
     public ResultadoPaginado<TipoVeiculoArquivadoResponseDto> listarArquivados(String nome, int pagina, int tamanho) {
-        return api
+        return executarComRefresh(() -> api
                 .get()
                 .uri(uri->{
                     uri.path(pathApi+"/listar/arquivado");
@@ -117,29 +117,45 @@ public class VeiculoApi implements VeiculoApiPorta {
                     return uri.build();
                 })
                 .retrieve()
-                .body(new ParameterizedTypeReference<ResultadoPaginado<TipoVeiculoArquivadoResponseDto>>() {});
+                .body(new ParameterizedTypeReference<ResultadoPaginado<TipoVeiculoArquivadoResponseDto>>() {}));
+    }
+
+    @Override
+    public ResultadoPaginado<TipoVeiculoHistoricoResponseDto> listarHistorico(UUID id, int pagina, int tamanho) {
+        return executarComRefresh(() -> api
+                .get()
+                .uri(uri -> {
+                    uri.path(pathApi + "/{id}/historico");
+                    uri.queryParam("pagina", pagina);
+                    uri.queryParam("tamanho", tamanho);
+                    return uri.build(id);
+                })
+                .retrieve()
+                .onStatus(status -> status.isSameCodeAs(HttpStatus.NOT_FOUND),
+                        (r, p) -> { throw new VeiculoNaoEncontradoException(id); })
+                .body(new ParameterizedTypeReference<ResultadoPaginado<TipoVeiculoHistoricoResponseDto>>() {}));
     }
 
     @Override
     public TipoVeiculoResponseDto buscar(UUID id) {
-            return api
+        return executarComRefresh(() -> api
                 .get()
                 .uri(pathApi+"/"+id+"/ativo")
                 .retrieve()
                 .onStatus(status->status.isSameCodeAs(HttpStatus.NOT_FOUND),
                         (r,p)-> {throw new VeiculoNaoEncontradoException(id);})
-                .body(TipoVeiculoResponseDto.class);
+                .body(TipoVeiculoResponseDto.class));
     }
 
     @Override
     public TipoVeiculoArquivadoResponseDto buscarArquivado(UUID id) {
-        return api
+        return executarComRefresh(() -> api
                 .get()
                 .uri(pathApi+"/"+id+"/arquivado")
                 .retrieve()
                 .onStatus(status->status.isSameCodeAs(HttpStatus.NOT_FOUND),
                         (r,p)-> {throw new VeiculoNaoEncontradoException(id);})
-                .body(TipoVeiculoArquivadoResponseDto.class);
+                .body(TipoVeiculoArquivadoResponseDto.class));
     }
 
     private <T> T executarComRefresh(Supplier<T> chamadaApi) {

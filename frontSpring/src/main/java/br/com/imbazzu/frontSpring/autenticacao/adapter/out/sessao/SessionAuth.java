@@ -26,8 +26,6 @@ public class SessionAuth implements SessionAuthPorta {
 
         session.setAttribute(ACCESS, accessToken);
         session.setAttribute(REFRESH, refreshToken);
-
-        System.out.println("Token Armazenado: " + accessToken + "\n" + refreshToken);
     }
 
     @Override

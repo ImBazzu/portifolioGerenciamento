@@ -3,6 +3,7 @@ package br.com.imbazzu.frontSpring.veiculo.core.porta.out;
 
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoArquivadoResponseDto;
+import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoHistoricoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoRequestDto;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
 
@@ -29,6 +30,8 @@ public interface VeiculoApiPorta {
     ResultadoPaginado<TipoVeiculoResponseDto> listar(String nome, int pagina, int tamanho);
 
     ResultadoPaginado<TipoVeiculoArquivadoResponseDto> listarArquivados(String nome, int pagina, int tamanho);
+
+    ResultadoPaginado<TipoVeiculoHistoricoResponseDto> listarHistorico(UUID id, int pagina, int tamanho);
 
     TipoVeiculoResponseDto buscar(UUID id);
 

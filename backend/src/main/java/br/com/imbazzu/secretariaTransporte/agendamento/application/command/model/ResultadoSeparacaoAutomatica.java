@@ -1,4 +1,4 @@
-package br.com.imbazzu.secretariaTransporte.agendamento.application.model;
+package br.com.imbazzu.secretariaTransporte.agendamento.application.command.model;
 
 import java.util.List;
 import java.util.UUID;

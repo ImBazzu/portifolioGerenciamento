@@ -64,6 +64,13 @@
                     </td>
                     <td class="text-end">
                         <div class="lista-row-actions">
+                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                    hx:get="@{/listas/abrirFormulario/{id}(id=${lista.id})}"
+                                    hx-target="#modal"
+                                    hx-swap="innerHTML"
+                                    th:attr="title='Editar lista ' + ${lista.nome}, aria-label='Editar lista ' + ${lista.nome}">
+                                <i class="bi bi-pencil me-sm-1"></i><span>Editar</span>
+                            </button>
                             <button type="button" class="btn btn-sm btn-light lista-detail-button"
                                     hx:get="@{/listas/{id}/detalhes(id=${lista.id})}"
                                     hx-target="#modal"

@@ -38,9 +38,14 @@ public class SecurityConfig {
     }
 
     @Bean
+    public ObjectMapper objectMapper() {
+        return new ObjectMapper().findAndRegisterModules();
+    }
+
+    @Bean
     public SessionTokenAuthFilter sessionTokenAuthFilter(
-            SessionAuthPorta sessionAuth) {
-        return new SessionTokenAuthFilter(sessionAuth, new ObjectMapper());
+            SessionAuthPorta sessionAuth, ObjectMapper objectMapper) {
+        return new SessionTokenAuthFilter(sessionAuth, objectMapper);
     }
 
     private AuthenticationEntryPoint htmxAwareEntryPoint() {

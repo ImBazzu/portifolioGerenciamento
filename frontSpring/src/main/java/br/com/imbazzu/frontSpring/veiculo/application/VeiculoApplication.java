@@ -10,6 +10,7 @@ import br.com.imbazzu.frontSpring.veiculo.core.porta.out.VeiculoApiPorta;
 
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -54,9 +55,7 @@ public class VeiculoApplication implements VeiculoApplicationPorta{
 
     @Override
     public ResultadoPaginado<TipoVeiculoArquivadoResponseDto> listarArquivados(String nome, int pagina) {
-        var conteudo = api.listarArquivados(nome,pagina,7);
-        System.err.println(conteudo.conteudo());
-        return conteudo;
+        return api.listarArquivados(nome,pagina,7);
     }
 
     @Override
@@ -69,6 +68,12 @@ public class VeiculoApplication implements VeiculoApplicationPorta{
 
     @Override
     public List<TipoVeiculoHistoricoResponseDto> buscarHistorico(UUID id) {
-        return List.of();
+        final int tamanhoPagina = 100;
+        var primeiraPagina = api.listarHistorico(id, 0, tamanhoPagina);
+        var historico = new ArrayList<>(primeiraPagina.conteudo());
+        for (int pagina = 1; pagina < primeiraPagina.totalPaginas(); pagina++) {
+            historico.addAll(api.listarHistorico(id, pagina, tamanhoPagina).conteudo());
+        }
+        return List.copyOf(historico);
     }
 }

@@ -147,19 +147,30 @@ public class AgendamentoController {
             @RequestParam UUID idDestino,
             @RequestParam LocalTime horarioChegada,
             @RequestParam(defaultValue = "0") int acompanhantes,
+            @RequestParam(defaultValue = "false") boolean buscarNaResidencia,
+            @RequestParam(required = false) UUID idTipoVeiculoSelecionado,
+            @RequestParam(required = false) UUID idRegraCadastroSelecionada,
             RedirectAttributes redirect) {
         redirect.addFlashAttribute("idPessoaSelecionada", idPessoa);
         redirect.addFlashAttribute("idListaSelecionada", idLista);
         redirect.addFlashAttribute("idDestinoSelecionado", idDestino);
         redirect.addFlashAttribute("horarioChegadaSelecionado", horarioChegada);
         redirect.addFlashAttribute("acompanhantesSelecionados", acompanhantes);
+        redirect.addFlashAttribute("buscarNaResidenciaSelecionado", buscarNaResidencia);
+        if (idTipoVeiculoSelecionado != null) {
+            redirect.addFlashAttribute("idTipoVeiculoSelecionado", idTipoVeiculoSelecionado);
+        }
+        if (idRegraCadastroSelecionada != null) {
+            redirect.addFlashAttribute("idRegraCadastroSelecionada", idRegraCadastroSelecionada);
+        }
         try {
             var resposta = agendamentoApi.verificarVeiculos(data, new VerificarVeiculosRequestDto(
                     idPessoa, idLista, idDestino, horarioChegada, acompanhantes));
             redirect.addFlashAttribute("verificacao", resposta);
         } catch (RestClientResponseException e) {
             redirect.addFlashAttribute("erro", mensagemErro(e));
-            manterDadosAgendamento(redirect, idPessoa, idLista, idDestino, horarioChegada, acompanhantes);
+            manterDadosAgendamento(
+                    redirect, idPessoa, idLista, idDestino, horarioChegada, acompanhantes, buscarNaResidencia);
         }
         return redirect(data);
     }
@@ -183,7 +194,18 @@ public class AgendamentoController {
             redirect.addFlashAttribute("sucesso", "Passageiro agendado.");
         } catch (RestClientResponseException e) {
             redirect.addFlashAttribute("erro", mensagemErro(e));
-            manterDadosAgendamento(redirect, idPessoa, idLista, idDestino, horarioChegada, acompanhantes);
+            manterDadosAgendamento(
+                    redirect, idPessoa, idLista, idDestino, horarioChegada, acompanhantes, buscarNaResidencia);
+            redirect.addFlashAttribute("idTipoVeiculoSelecionado", idTipoVeiculo);
+            redirect.addFlashAttribute("idRegraCadastroSelecionada", idRegraCadastro);
+            try {
+                var verificacao = agendamentoApi.verificarVeiculos(data, new VerificarVeiculosRequestDto(
+                        idPessoa, idLista, idDestino, horarioChegada, acompanhantes));
+                redirect.addFlashAttribute("verificacao", verificacao);
+            } catch (RestClientResponseException erroVerificacao) {
+                redirect.addFlashAttribute("erroVerificacao",
+                        "Não foi possível atualizar os tipos permitidos: %s".formatted(mensagemErro(erroVerificacao)));
+            }
         }
         return redirect(data);
     }
@@ -260,12 +282,14 @@ public class AgendamentoController {
             UUID idLista,
             UUID idDestino,
             LocalTime horarioChegada,
-            int acompanhantes) {
+            int acompanhantes,
+            boolean buscarNaResidencia) {
         redirect.addFlashAttribute("idPessoaSelecionada", idPessoa);
         redirect.addFlashAttribute("idListaSelecionada", idLista);
         redirect.addFlashAttribute("idDestinoSelecionado", idDestino);
         redirect.addFlashAttribute("horarioChegadaSelecionado", horarioChegada);
         redirect.addFlashAttribute("acompanhantesSelecionados", acompanhantes);
+        redirect.addFlashAttribute("buscarNaResidenciaSelecionado", buscarNaResidencia);
     }
 
     private List<ListaResponseDto> listarListasAtivas() {

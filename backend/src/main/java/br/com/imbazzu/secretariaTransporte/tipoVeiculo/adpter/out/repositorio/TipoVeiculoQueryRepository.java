@@ -77,7 +77,7 @@ public interface TipoVeiculoQueryRepository extends JpaRepository<TipoVeiculoJpa
                         JOIN
                                 TipoVeiculoJpa tp ON v.idTipoVeiculo = tp.id
                         WHERE
-                                v.id = :idTipoVeiculo
+                                tp.id = :idTipoVeiculo
                         GROUP BY
                                 v.dataSaida""", countQuery = """
                         SELECT
@@ -85,9 +85,9 @@ public interface TipoVeiculoQueryRepository extends JpaRepository<TipoVeiculoJpa
                         FROM
                                 VeiculoJpa v
                         JOIN
-                        TipoVeiculoJpa tp ON v.id = tp.id
+                                TipoVeiculoJpa tp ON v.idTipoVeiculo = tp.id
                         WHERE
-                                tp.id = :id
+                                tp.id = :idTipoVeiculo
                         """)
         Page<TipoVeiculoHistoricoProjecao> buscarHistorico(@Param("idTipoVeiculo") UUID id, Pageable pageable);
 }

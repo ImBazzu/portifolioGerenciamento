@@ -60,6 +60,8 @@ public class VeiculoFormularioController {
             return "veiculo/formVeiculo :: formVeiculo";
         } catch (VeiculoNaoEncontradoException e) {
             model.addAttribute("erroGlobal", "Veículo não encontrado ou removido.");
+            model.addAttribute("veiculo", new TipoVeiculoRequestDto("", 0));
+            model.addAttribute("id", id);
             model.addAttribute("arquivado", arquivado);
             return "veiculo/formVeiculo :: formVeiculo";
         }

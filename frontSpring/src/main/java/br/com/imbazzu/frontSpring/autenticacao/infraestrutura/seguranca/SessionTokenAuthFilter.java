@@ -34,15 +34,11 @@ public class SessionTokenAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        System.out.println(">>> REQUEST: " + request.getMethod() + " " + request.getRequestURI());
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
             var accessToken = sessionAuth.access();
 
-            System.out.println(">>> TOKEN NA SESSÃO: " + accessToken); // temporário
-
             if (accessToken != null) {
                 JwtClaims claims = extractClaims(accessToken);
-                System.out.println(">>> CLAIMS: " + claims); // temporário
 
                 if (claims != null) {
                     var authorities = claims.roles().stream()
@@ -52,9 +48,6 @@ public class SessionTokenAuthFilter extends OncePerRequestFilter {
                             claims.subject(), null, authorities);
                     auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(auth);
-                    System.out.println(">>> AUTENTICAÇÃO SETADA: " + auth.getName()
-                            + " authorities=" + auth.getAuthorities()); // adiciona isso
-
                 }
             }
         }

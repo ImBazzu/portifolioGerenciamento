@@ -1,40 +1,60 @@
 services:
-
     mysql:
         image: mysql:8
         environment:
-            MYSQL_ROOT_PASSWORD: root
-            MYSQL_DATABASE: secretaria_transporte
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+            MYSQL_DATABASE: ${DB_BANCO:-secretaria_transporte}
+            MYSQL_USER: ${DB_USER:?Configure DB_USER no .env.prod}
+            MYSQL_PASSWORD: ${DB_PASSWORD:?Configure DB_PASSWORD no .env.prod}
+        env_file:
+            - .env.prod
         volumes:
             - mysql_data:/var/lib/mysql
-            - ./mysql-init:/docker-entrypoint-initdb.d
         networks:
-            - app-network # Adiciona o MySQL à mesma rede dos outros serviços
+            - app-network
+        healthcheck:
+            test: ["CMD-SHELL", "mysqladmin ping --host=127.0.0.1 --user=root --password=\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+            interval: 5s
+            timeout: 5s
+            retries: 20
+            start_period: 20s
+
     backend:
         build: ./backend
         env_file:
             - .env.prod
+        environment:
+            DB_HOST: mysql
+            DB_PORT: "3306"
         depends_on:
-            - mysql # Garante que o MySQL seja iniciado antes do backend
+            mysql:
+                condition: service_healthy
         ports:
             - "8080:8080"
         networks:
             - app-network
+        healthcheck:
+            test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/api/v3/api-docs"]
+            interval: 10s
+            timeout: 5s
+            retries: 12
+            start_period: 45s
 
     frontend:
         build:
-            context: ./frontend
-            args:
-                VITE_BACKEND_URL: http://backend:8080
+            context: ./frontSpring
+        environment:
+            API_BASE_URL: http://backend:8080/api
         ports:
-            - "80:80"
+            - "8081:80"
         depends_on:
-            - backend
+            backend:
+                condition: service_healthy
         networks:
             - app-network
+
 volumes:
     mysql_data:
-
 
 networks:
     app-network:

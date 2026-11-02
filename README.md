@@ -47,7 +47,7 @@ O backend organiza funcionalidades em módulos de domínio — como `pessoa`, `l
 | Segurança | Spring Security, JWT |
 | Cache | Spring Cache, Caffeine |
 | Testes | JUnit e Spring Boot Test |
-| Empacotamento | Dockerfile para o backend; configuração Docker Compose na raiz |
+| Empacotamento | Dockerfiles para backend e frontend; Docker Compose na raiz |
 
 As versões dos frameworks e bibliotecas estão declaradas em `backend/pom.xml` e `frontSpring/pom.xml`.
 
@@ -213,7 +213,15 @@ Os arquivos JAR são gerados no diretório `target/` de cada módulo.
 
 ## Docker e implantação
 
-Há um `Dockerfile` para o backend e um `docker-compose.yml` na raiz. **O Compose ainda não está pronto para subir a aplicação completa:** o serviço `frontend` aponta para `./frontend`, mas o módulo presente no repositório se chama `frontSpring` e não contém um `Dockerfile`. Ajuste a configuração e prepare a imagem do frontend antes de usar o Compose como ambiente integrado.
+O Docker Compose sobe o MySQL, o backend e o frontend. Configure as variáveis do arquivo `.env.prod` antes de iniciar os serviços:
+
+```powershell
+docker compose --env-file .env.prod up --build
+```
+
+O Compose aguarda o MySQL ficar saudável antes de iniciar o backend e aguarda a API antes de iniciar o frontend. A interface fica disponível em `http://localhost:8081` e a API em `http://localhost:8080/api`. Os dados do MySQL são persistidos no volume `mysql_data`.
+
+O usuário da aplicação e sua senha são provisionados a partir de `DB_USER` e `DB_PASSWORD`; não mantenha credenciais em scripts SQL versionados. `MYSQL_ROOT_PASSWORD` é opcional para uma instalação nova e, se omitida, mantém a senha padrão de desenvolvimento `root` para compatibilidade com volumes criados pela configuração anterior. Defina uma senha própria em ambientes não locais; a configuração de senha do MySQL não altera volumes já inicializados.
 
 Antes de publicar ou implantar o sistema:
 

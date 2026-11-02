@@ -3,10 +3,10 @@
 
 <!-- ① Alerta de erro geral -->
 <th:block th:fragment="alertaErro">
-    <th:block th:if="${error != null}">
+    <th:block th:if="${error != null or erroGlobal != null}">
         <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0"></i>
-            <span th:text="${error}">Erro</span>
+            <span th:text="${erroGlobal != null ? erroGlobal : error}">Erro</span>
         </div>
     </th:block>
 </th:block>
