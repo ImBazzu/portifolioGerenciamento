@@ -8,7 +8,7 @@ public record PessoaRequestDto(
         @NotBlank @Size(min = 3, max = 59) String nome,
         @Size(max = 249) String observacao,
         @NotNull PessoaPrioridade prioridade,
-        @NotBlank @Size(min = 10, max = 249) String endereco,
+        @Size(max = 249) String endereco,
         @NotBlank String cpf,
         @NotBlank String telefone) {
 }

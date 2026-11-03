@@ -33,8 +33,11 @@ public class PessoaCommandEditarHandler {
 
         var observacao = command.observacao() == null || command.observacao().isBlank() ? null : new Observacao(command.observacao());
 
+        var endereco = command.endereco() == null || command.endereco().isBlank()
+                ? null
+                : new Endereco(command.endereco());
         pessoa.editar(new Nome(command.nome()),  observacao, command.prioridade(),
-                new Endereco(command.endereco()), novoCpf, new Telefone(command.telefone()));
+                endereco, novoCpf, new Telefone(command.telefone()));
         porta.salvar(pessoa);
     }
 }

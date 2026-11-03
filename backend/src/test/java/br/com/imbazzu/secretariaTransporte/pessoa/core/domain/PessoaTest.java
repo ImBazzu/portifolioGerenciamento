@@ -35,4 +35,17 @@ class PessoaTest {
         pessoa.desarquivar();
         assertNull(pessoa.getDataArquivado());
     }
+
+    @Test
+    void criaPessoaSemEndereco() {
+        var pessoa = Pessoa.criar(
+                new Nome("Pessoa teste"),
+                null,
+                EnumPrioridade.MODERADA,
+                null,
+                new Cpf("52998224725"),
+                new Telefone("11987654321"));
+
+        assertNull(pessoa.getEndereco());
+    }
 }

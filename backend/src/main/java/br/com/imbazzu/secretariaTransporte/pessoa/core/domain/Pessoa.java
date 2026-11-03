@@ -28,7 +28,7 @@ public final class Pessoa {
         this.observacao = observacao;
         this.prioridade = Objects.requireNonNull(prioridade, "Prioridade é obrigatória");
         this.dataArquivado = dataArquivado;
-        this.endereco = Objects.requireNonNull(endereco, "Endereço é obrigatório");
+        this.endereco = endereco;
         this.cpf = Objects.requireNonNull(cpf, "CPF é obrigatório");
         this.telefone = Objects.requireNonNull(telefone, "Telefone é obrigatório");
     }
@@ -48,7 +48,7 @@ public final class Pessoa {
         this.nome = Objects.requireNonNull(nome, "Nome é obrigatório");
         this.observacao = observacao;
         this.prioridade = Objects.requireNonNull(prioridade, "Prioridade é obrigatória");
-        this.endereco = Objects.requireNonNull(endereco, "Endereço é obrigatório");
+        this.endereco = endereco;
         this.cpf = Objects.requireNonNull(cpf, "CPF é obrigatório");
         this.telefone = Objects.requireNonNull(telefone, "Telefone é obrigatório");
     }

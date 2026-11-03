@@ -41,4 +41,22 @@ class PessoaBancoMapperTest {
         entidade.setObservacao(null);
         assertNull(PessoaBancoMapper.paraDomain(entidade).getObservacao());
     }
+
+    @Test
+    void convertePessoaSemEnderecoNoJpaEDeVolta() {
+        var pessoa = Pessoa.criar(
+                new Nome("Pessoa teste"),
+                null,
+                EnumPrioridade.MODERADA,
+                null,
+                new Cpf("52998224725"),
+                new Telefone("11987654321"));
+        var entidade = new PessoaJpa();
+
+        PessoaBancoMapper.atualizarEntidade(pessoa, entidade);
+        var recriada = PessoaBancoMapper.paraDomain(entidade);
+
+        assertNull(entidade.getEndereco());
+        assertNull(recriada.getEndereco());
+    }
 }

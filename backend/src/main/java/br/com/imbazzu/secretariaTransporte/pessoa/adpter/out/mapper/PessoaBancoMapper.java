@@ -20,7 +20,7 @@ public final class PessoaBancoMapper {
                 observacaoOpcional(entidade.getObservacao()),
                 entidade.getPrioridade(),
                 entidade.getDataArquivado(),
-                new Endereco(entidade.getEndereco()),
+                enderecoOpcional(entidade.getEndereco()),
                 new Cpf(entidade.getCpf()),
                 new Telefone(entidade.getTelefone()));
     }
@@ -31,12 +31,16 @@ public final class PessoaBancoMapper {
         entidade.setObservacao(dominio.getObservacao() == null ? null : dominio.getObservacao().valor());
         entidade.setPrioridade(dominio.getPrioridade());
         entidade.setDataArquivado(dominio.getDataArquivado());
-        entidade.setEndereco(dominio.getEndereco().valor());
+        entidade.setEndereco(dominio.getEndereco() == null ? null : dominio.getEndereco().valor());
         entidade.setCpf(dominio.getCpf().valor());
         entidade.setTelefone(dominio.getTelefone().valor());
     }
 
     private static Observacao observacaoOpcional(String valor) {
         return valor == null || valor.isBlank() ? null : new Observacao(valor);
+    }
+
+    private static Endereco enderecoOpcional(String valor) {
+        return valor == null || valor.isBlank() ? null : new Endereco(valor);
     }
 }

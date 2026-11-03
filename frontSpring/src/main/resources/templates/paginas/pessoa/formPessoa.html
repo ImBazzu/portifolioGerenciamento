@@ -41,7 +41,7 @@
                         <label for="endereco" class="form-label fw-bold">Endereço</label>
                         <input id="endereco" type="text" th:field="*{endereco}" class="form-control"
                                th:classappend="${#fields.hasErrors('endereco')} ? 'is-invalid'"
-                               minlength="10" maxlength="249" autocomplete="street-address" required>
+                               maxlength="249" autocomplete="street-address">
                         <div class="invalid-feedback" th:if="${#fields.hasErrors('endereco')}"
                              th:errors="*{endereco}"></div>
                     </div>

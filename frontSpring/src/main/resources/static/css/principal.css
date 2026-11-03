@@ -912,7 +912,6 @@ body.htmx-request #global-loader,
     gap: 0.4rem;
 }
 
-.lista-detail-button,
 .lista-restore-button {
     border: 1px solid #dfe8e4;
     background: #fff;
@@ -920,7 +919,6 @@ body.htmx-request #global-loader,
     font-weight: 600;
 }
 
-.lista-detail-button:hover,
 .lista-restore-button:hover {
     border-color: #aed7bc;
     background: #f2faf5;

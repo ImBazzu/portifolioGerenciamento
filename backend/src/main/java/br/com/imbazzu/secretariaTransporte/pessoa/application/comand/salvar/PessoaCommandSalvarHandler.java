@@ -33,8 +33,11 @@ public class PessoaCommandSalvarHandler {
             throw new PessoaDuplicadoException(cpf);
         }
 
+        var endereco = command.endereco() == null || command.endereco().isBlank()
+                ? null
+                : new Endereco(command.endereco());
         var pessoa = Pessoa.criar(new Nome(command.nome()), observacao,
-                command.prioridade(), new Endereco(command.endereco()), cpf, new Telefone(command.telefone()));
+                command.prioridade(), endereco, cpf, new Telefone(command.telefone()));
         
      
         

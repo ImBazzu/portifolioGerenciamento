@@ -38,7 +38,7 @@ public class PessoaJpa {
     @Column(name = "data_arquivado")
     private LocalDate dataArquivado;
 
-    @Column(name = "endereco", nullable = false, length = 250)
+    @Column(name = "endereco", length = 250)
     private String endereco;
 
     @Column(name = "cpf", nullable = false, length = 11)

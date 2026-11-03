@@ -1,0 +1,2 @@
+ALTER TABLE pessoas
+    MODIFY COLUMN endereco VARCHAR(250) NULL;
