@@ -31,8 +31,8 @@ public class PessoaApplication implements PessoaApplicationPorta {
     }
 
     @Override
-    public void salvar(PessoaRequestDto pessoa) {
-        api.salvar(pessoa);
+    public UUID salvar(PessoaRequestDto pessoa) {
+        return api.salvar(pessoa);
     }
 
     @Override

@@ -11,7 +11,7 @@ public interface PessoaApiPorta {
 
     PessoaResponseDto buscar(UUID id);
 
-    void salvar(PessoaRequestDto pessoa);
+    UUID salvar(PessoaRequestDto pessoa);
 
     void editar(UUID id, PessoaRequestDto pessoa);
 

@@ -3,12 +3,20 @@ package br.com.imbazzu.frontSpring.agendamento.adpter.in.controller;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,9 +29,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.imbazzu.frontSpring.agendamento.adpter.out.api.AgendamentoApi;
+import br.com.imbazzu.frontSpring.agendamento.adpter.out.pdf.AgendamentoPdfService;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AbrirVeiculoRequestDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendaDiaResponseDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificarVeiculosRequestDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificacaoVeiculosResponseDto;
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaResponseDto;
 import br.com.imbazzu.frontSpring.lista.core.porta.in.ListaApplicationPorta;
@@ -31,6 +43,7 @@ import br.com.imbazzu.frontSpring.localidade.core.dto.CidadeResponseDto;
 import br.com.imbazzu.frontSpring.localidade.core.dto.DestinoResponseDto;
 import br.com.imbazzu.frontSpring.localidade.core.porta.in.LocalidadeApplicationPorta;
 import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
+import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
 
@@ -80,9 +93,12 @@ public class AgendamentoController {
                     .findFirst()
                     .ifPresent(destino -> model.addAttribute("idCidadeSelecionada", destino.idCidade()));
         }
+        carregarPassageiroVerificado(model);
         try {
             var agenda = agendamentoApi.buscarDia(dia);
             model.addAttribute("agenda", agenda);
+            model.addAttribute("detalhesPassageiros", carregarDetalhesPassageiros(agenda, model));
+            carregarAgendaDivididaPorTipo(model, agenda);
         } catch (RestClientResponseException e) {
             if (e.getStatusCode().value() == 404) {
                 model.addAttribute("agenda", null);
@@ -92,6 +108,44 @@ public class AgendamentoController {
             }
         }
         return "agendamento/inicio";
+    }
+
+    @GetMapping("/carros")
+    public String passageirosCarro(@RequestParam(required = false) LocalDate data, Model model) {
+        var dia = data == null ? LocalDate.now() : data;
+        model.addAttribute("pagina", "agendamentos");
+        model.addAttribute("data", dia);
+        carregarOpcoes(model);
+        try {
+            var agenda = agendamentoApi.buscarDia(dia);
+            model.addAttribute("agenda", agenda);
+            model.addAttribute("detalhesPassageiros", carregarDetalhesPassageiros(agenda, model));
+            carregarAgendaDivididaPorTipo(model, agenda);
+        } catch (RestClientResponseException e) {
+            if (e.getStatusCode().value() == 404) {
+                model.addAttribute("agenda", null);
+            } else {
+                model.addAttribute("erroConsultaAgenda", true);
+                model.addAttribute("erro", mensagemErro(e));
+            }
+        }
+        return "agendamento/carros";
+    }
+
+    @GetMapping("/pdf/veiculos")
+    public ResponseEntity<byte[]> pdfVeiculosNaoCarro(@RequestParam LocalDate data, Model model) {
+        return gerarPdf(data, false, null, model);
+    }
+
+    @GetMapping("/pdf/carros")
+    public ResponseEntity<byte[]> pdfGeralCarros(@RequestParam LocalDate data, Model model) {
+        return gerarPdf(data, true, null, model);
+    }
+
+    @GetMapping("/pdf/carros/{idVeiculo}")
+    public ResponseEntity<byte[]> pdfCarro(
+            @PathVariable UUID idVeiculo, @RequestParam LocalDate data, Model model) {
+        return gerarPdf(data, true, idVeiculo, model);
     }
 
     @GetMapping("/buscar-pessoas")
@@ -149,28 +203,68 @@ public class AgendamentoController {
             @RequestParam(defaultValue = "0") int acompanhantes,
             @RequestParam(defaultValue = "false") boolean buscarNaResidencia,
             @RequestParam(required = false) UUID idTipoVeiculoSelecionado,
-            @RequestParam(required = false) UUID idRegraCadastroSelecionada,
+            @RequestHeader(value = "HX-Request", required = false) String hxRequest,
+            Model model,
             RedirectAttributes redirect) {
-        redirect.addFlashAttribute("idPessoaSelecionada", idPessoa);
-        redirect.addFlashAttribute("idListaSelecionada", idLista);
-        redirect.addFlashAttribute("idDestinoSelecionado", idDestino);
-        redirect.addFlashAttribute("horarioChegadaSelecionado", horarioChegada);
-        redirect.addFlashAttribute("acompanhantesSelecionados", acompanhantes);
-        redirect.addFlashAttribute("buscarNaResidenciaSelecionado", buscarNaResidencia);
+        VerificacaoVeiculosResponseDto resposta = null;
+        String erro = null;
+        try {
+            resposta = agendamentoApi.verificarVeiculos(data, new VerificarVeiculosRequestDto(
+                    idPessoa, idLista, idDestino, horarioChegada, acompanhantes));
+        } catch (RestClientResponseException e) {
+            erro = mensagemErro(e);
+        }
+        if ("true".equalsIgnoreCase(hxRequest)) {
+            model.addAttribute("data", data);
+            model.addAttribute("idPessoaSelecionada", idPessoa);
+            model.addAttribute("idListaSelecionada", idLista);
+            model.addAttribute("idDestinoSelecionado", idDestino);
+            model.addAttribute("horarioChegadaSelecionado", horarioChegada);
+            model.addAttribute("acompanhantesSelecionados", acompanhantes);
+            model.addAttribute("buscarNaResidenciaSelecionado", buscarNaResidencia);
+            model.addAttribute("idTipoVeiculoSelecionado", idTipoVeiculoSelecionado);
+            model.addAttribute("verificacao", resposta);
+            model.addAttribute("erroVerificacao", erro);
+            carregarOpcoes(model);
+            try {
+                var agenda = agendamentoApi.buscarDia(data);
+                model.addAttribute("agenda", agenda);
+                carregarAgendaDivididaPorTipo(model, agenda);
+                var pessoa = pessoas.buscar(idPessoa);
+                var destinos = model.getAttribute("destinos");
+                var destino = destinos instanceof List<?> opcoes
+                        ? opcoes.stream()
+                                .filter(DestinoView.class::isInstance)
+                                .map(DestinoView.class::cast)
+                                .filter(item -> item.id().equals(idDestino))
+                                .findFirst()
+                                .orElse(null)
+                        : null;
+                model.addAttribute("passageiroVerificado", new PassageiroVerificadoView(
+                        pessoa.nome(),
+                        pessoa.telefone(),
+                        destino == null ? "Cidade não encontrada" : destino.cidade(),
+                        destino == null ? "Destino não encontrado" : destino.nome(),
+                        horarioChegada,
+                        buscarNaResidencia,
+                        acompanhantes));
+            } catch (RestClientResponseException e) {
+                model.addAttribute("erroVerificacao",
+                        "Não foi possível carregar os dados para confirmar: %s".formatted(mensagemErro(e)));
+            }
+            return "agendamento/inicio :: resultadoVerificacao";
+        }
+
+        manterDadosAgendamento(
+                redirect, idPessoa, idLista, idDestino, horarioChegada, acompanhantes, buscarNaResidencia);
         if (idTipoVeiculoSelecionado != null) {
             redirect.addFlashAttribute("idTipoVeiculoSelecionado", idTipoVeiculoSelecionado);
         }
-        if (idRegraCadastroSelecionada != null) {
-            redirect.addFlashAttribute("idRegraCadastroSelecionada", idRegraCadastroSelecionada);
-        }
-        try {
-            var resposta = agendamentoApi.verificarVeiculos(data, new VerificarVeiculosRequestDto(
-                    idPessoa, idLista, idDestino, horarioChegada, acompanhantes));
+        if (resposta != null) {
             redirect.addFlashAttribute("verificacao", resposta);
-        } catch (RestClientResponseException e) {
-            redirect.addFlashAttribute("erro", mensagemErro(e));
-            manterDadosAgendamento(
-                    redirect, idPessoa, idLista, idDestino, horarioChegada, acompanhantes, buscarNaResidencia);
+        }
+        if (erro != null) {
+            redirect.addFlashAttribute("erro", erro);
         }
         return redirect(data);
     }
@@ -180,24 +274,28 @@ public class AgendamentoController {
             @RequestParam LocalDate data,
             @RequestParam UUID idPessoa,
             @RequestParam UUID idLista,
-            @RequestParam UUID idRegraCadastro,
             @RequestParam UUID idTipoVeiculo,
             @RequestParam UUID idDestino,
             @RequestParam LocalTime horarioChegada,
             @RequestParam(defaultValue = "false") boolean buscarNaResidencia,
             @RequestParam(defaultValue = "0") int acompanhantes,
+            @RequestParam(required = false) UUID idVeiculo,
             RedirectAttributes redirect) {
         try {
             agendamentoApi.criar(data, new AgendamentoRequestDto(
-                    idPessoa, idLista, idRegraCadastro, idTipoVeiculo, idDestino,
-                    horarioChegada, buscarNaResidencia, acompanhantes));
-            redirect.addFlashAttribute("sucesso", "Passageiro agendado.");
+                    idPessoa, idLista, idTipoVeiculo, idDestino,
+                    horarioChegada, buscarNaResidencia, acompanhantes, idVeiculo));
+            redirect.addFlashAttribute(
+                    "sucesso",
+                    idVeiculo == null
+                            ? "Passageiro de carro agendado para separação."
+                            : "Passageiro agendado e atribuído ao veículo físico.");
         } catch (RestClientResponseException e) {
             redirect.addFlashAttribute("erro", mensagemErro(e));
             manterDadosAgendamento(
                     redirect, idPessoa, idLista, idDestino, horarioChegada, acompanhantes, buscarNaResidencia);
             redirect.addFlashAttribute("idTipoVeiculoSelecionado", idTipoVeiculo);
-            redirect.addFlashAttribute("idRegraCadastroSelecionada", idRegraCadastro);
+            redirect.addFlashAttribute("idVeiculoSelecionado", idVeiculo);
             try {
                 var verificacao = agendamentoApi.verificarVeiculos(data, new VerificarVeiculosRequestDto(
                         idPessoa, idLista, idDestino, horarioChegada, acompanhantes));
@@ -223,7 +321,7 @@ public class AgendamentoController {
         } catch (RestClientResponseException e) {
             redirect.addFlashAttribute("erro", mensagemErro(e));
         }
-        return redirect(data);
+        return redirectCarros(data);
     }
 
     @PostMapping("/{idAgendamento}/veiculo")
@@ -231,6 +329,7 @@ public class AgendamentoController {
             @PathVariable UUID idAgendamento,
             @RequestParam UUID idVeiculo,
             @RequestParam LocalDate data,
+            @RequestParam(defaultValue = "false") boolean paginaCarros,
             RedirectAttributes redirect) {
         try {
             agendamentoApi.atribuir(idAgendamento, idVeiculo);
@@ -238,13 +337,14 @@ public class AgendamentoController {
         } catch (RestClientResponseException e) {
             redirect.addFlashAttribute("erro", mensagemErro(e));
         }
-        return redirect(data);
+        return paginaCarros ? redirectCarros(data) : redirect(data);
     }
 
     @PostMapping("/{idAgendamento}/remover-veiculo")
     public String removerVeiculo(
             @PathVariable UUID idAgendamento,
             @RequestParam LocalDate data,
+            @RequestParam(defaultValue = "false") boolean paginaCarros,
             RedirectAttributes redirect) {
         try {
             agendamentoApi.removerDoVeiculo(idAgendamento);
@@ -252,7 +352,7 @@ public class AgendamentoController {
         } catch (RestClientResponseException e) {
             redirect.addFlashAttribute("erro", mensagemErro(e));
         }
-        return redirect(data);
+        return paginaCarros ? redirectCarros(data) : redirect(data);
     }
 
     @PostMapping("/{idAgendamento}/excluir")
@@ -274,6 +374,169 @@ public class AgendamentoController {
         model.addAttribute("tiposVeiculo", listarTiposAtivos());
         model.addAttribute("cidades", listarCidadesAtivas());
         model.addAttribute("destinos", listarDestinosAtivos());
+    }
+
+    private void carregarAgendaDivididaPorTipo(Model model, AgendaDiaResponseDto agenda) {
+        var nomesPorTipo = nomesDosTiposVeiculo(model);
+        model.addAttribute("nomesTipoVeiculo", nomesPorTipo);
+        model.addAttribute(
+                "veiculosNaoCarro",
+                agenda.veiculos().stream().filter(veiculo -> !ehCarro(veiculo.nomeTipoVeiculo())).toList());
+        model.addAttribute(
+                "veiculosCarro",
+                agenda.veiculos().stream().filter(veiculo -> ehCarro(veiculo.nomeTipoVeiculo())).toList());
+        model.addAttribute(
+                "passageirosPendentesNaoCarro",
+                agenda.passageirosPendentes().stream()
+                        .filter(passageiro -> !ehCarro(nomesPorTipo.get(passageiro.idTipoVeiculo())))
+                        .toList());
+        model.addAttribute(
+                "passageirosPendentesCarro",
+                agenda.passageirosPendentes().stream()
+                        .filter(passageiro -> ehCarro(nomesPorTipo.get(passageiro.idTipoVeiculo())))
+                        .toList());
+        var veiculosCarro = agenda.veiculos().stream()
+                .filter(veiculo -> ehCarro(veiculo.nomeTipoVeiculo()))
+                .toList();
+        model.addAttribute(
+                "temVeiculoCarroCompativel",
+                agenda.passageirosPendentes().stream()
+                        .filter(passageiro -> ehCarro(nomesPorTipo.get(passageiro.idTipoVeiculo())))
+                        .collect(java.util.stream.Collectors.toMap(
+                                AgendamentoResponseDto::id,
+                                passageiro -> veiculosCarro.stream().anyMatch(veiculo ->
+                                        passageiro.idsVeiculosCompativeis().contains(veiculo.id())))));
+    }
+
+    private Map<UUID, String> nomesDosTiposVeiculo(Model model) {
+        var tipos = model.getAttribute("tiposVeiculo");
+        return tipos instanceof List<?> opcoes
+                ? opcoes.stream()
+                        .filter(TipoVeiculoResponseDto.class::isInstance)
+                        .map(TipoVeiculoResponseDto.class::cast)
+                        .collect(java.util.stream.Collectors.toMap(
+                                TipoVeiculoResponseDto::id, TipoVeiculoResponseDto::nome))
+                : Map.of();
+    }
+
+    private ResponseEntity<byte[]> gerarPdf(
+            LocalDate data, boolean carros, UUID idVeiculo, Model model) {
+        try {
+            carregarOpcoes(model);
+            var agenda = agendamentoApi.buscarDia(data);
+            carregarAgendaDivididaPorTipo(model, agenda);
+            var veiculos = agenda.veiculos().stream()
+                    .filter(veiculo -> ehCarro(veiculo.nomeTipoVeiculo()) == carros)
+                    .filter(veiculo -> idVeiculo == null || veiculo.id().equals(idVeiculo))
+                    .toList();
+            if (idVeiculo != null && veiculos.isEmpty()) {
+                throw new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Carro não encontrado nesta agenda.");
+            }
+            String titulo = idVeiculo != null
+                    ? "Passageiros do carro " + (veiculos.getFirst().identificacao() == null
+                            ? veiculos.getFirst().nomeTipoVeiculo()
+                            : veiculos.getFirst().identificacao())
+                    : carros ? "Relatório geral de carros" : "Relatório geral de ônibus e vans";
+            var nomesPorTipo = nomesDosTiposVeiculo(model);
+            var passageirosSemVeiculo = idVeiculo == null
+                    ? agenda.passageirosPendentes().stream()
+                            .filter(passageiro -> ehCarro(nomesPorTipo.get(passageiro.idTipoVeiculo())) == carros)
+                            .toList()
+                    : List.<AgendamentoResponseDto>of();
+            var passageirosDoRelatorio = veiculos.stream()
+                    .flatMap(veiculo -> veiculo.passageiros().stream())
+                    .toList();
+            var detalhes = carregarDetalhesPassageiros(passageirosDoRelatorio, passageirosSemVeiculo, model);
+            var pdf = AgendamentoPdfService.gerar(data, titulo, veiculos, passageirosSemVeiculo, detalhes);
+            String tipoArquivo = idVeiculo != null ? "carro-" + idVeiculo : carros ? "carros" : "veiculos";
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "inline; filename=\"agenda-" + tipoArquivo + "-" + data + ".pdf\"")
+                    .body(pdf);
+        } catch (RestClientResponseException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, mensagemErro(e), e);
+        }
+    }
+
+    private boolean ehCarro(String nomeTipo) {
+        return nomeTipo != null && nomeTipo.strip().toLowerCase(java.util.Locale.ROOT).startsWith("carro");
+    }
+
+    private void carregarPassageiroVerificado(Model model) {
+        if (model.getAttribute("verificacao") == null) {
+            return;
+        }
+        var pessoa = model.getAttribute("pessoaSelecionada");
+        var idDestino = model.getAttribute("idDestinoSelecionado");
+        var horario = model.getAttribute("horarioChegadaSelecionado");
+        if (!(pessoa instanceof PessoaResponseDto pessoaDto)
+                || !(idDestino instanceof UUID destinoId)
+                || !(horario instanceof LocalTime horarioChegada)) {
+            return;
+        }
+        var destinos = model.getAttribute("destinos");
+        var destino = destinos instanceof List<?> opcoes
+                ? opcoes.stream()
+                        .filter(DestinoView.class::isInstance)
+                        .map(DestinoView.class::cast)
+                        .filter(item -> item.id().equals(destinoId))
+                        .findFirst()
+                        .orElse(null)
+                : null;
+        var acompanhantes = model.getAttribute("acompanhantesSelecionados");
+        model.addAttribute("passageiroVerificado", new PassageiroVerificadoView(
+                pessoaDto.nome(),
+                pessoaDto.telefone(),
+                destino == null ? "Cidade não encontrada" : destino.cidade(),
+                destino == null ? "Destino não encontrado" : destino.nome(),
+                horarioChegada,
+                Boolean.TRUE.equals(model.getAttribute("buscarNaResidenciaSelecionado")),
+                acompanhantes instanceof Number numero ? numero.intValue() : 0));
+    }
+
+    private Map<UUID, PassageiroDetalheView> carregarDetalhesPassageiros(AgendaDiaResponseDto agenda, Model model) {
+        return carregarDetalhesPassageiros(
+                agenda.veiculos().stream().flatMap(veiculo -> veiculo.passageiros().stream()).toList(),
+                agenda.passageirosPendentes(),
+                model);
+    }
+
+    private Map<UUID, PassageiroDetalheView> carregarDetalhesPassageiros(
+            List<AgendamentoResponseDto> passageiros,
+            List<AgendamentoResponseDto> passageirosPendentes,
+            Model model) {
+        var destinos = model.getAttribute("destinos");
+        var destinosPorId = destinos instanceof List<?> opcoes
+                ? opcoes.stream()
+                        .filter(DestinoView.class::isInstance)
+                        .map(DestinoView.class::cast)
+                        .collect(java.util.stream.Collectors.toMap(DestinoView::id, destino -> destino))
+                : java.util.Map.<UUID, DestinoView>of();
+        var agendamentos = java.util.stream.Stream.concat(
+                passageiros.stream(), passageirosPendentes.stream()).toList();
+        Map<UUID, PassageiroDetalheView> detalhes = new HashMap<>();
+        for (AgendamentoResponseDto agendamento : agendamentos) {
+            if (detalhes.containsKey(agendamento.idPessoa())) {
+                continue;
+            }
+            PessoaResponseDto pessoa = pessoas.buscar(agendamento.idPessoa());
+            var destino = destinosPorId.get(agendamento.idDestino());
+            detalhes.put(
+                    agendamento.idPessoa(),
+                    new PassageiroDetalheView(
+                            pessoa.nome(),
+                            pessoa.telefone(),
+                            pessoa.endereco(),
+                            destino == null
+                                    ? "Cidade não encontrada (%s)".formatted(agendamento.idDestino())
+                                    : destino.cidade(),
+                            destino == null
+                                    ? "Destino não encontrado (%s)".formatted(agendamento.idDestino())
+                                    : destino.nome()));
+        }
+        return detalhes;
     }
 
     private void manterDadosAgendamento(
@@ -353,6 +616,10 @@ public class AgendamentoController {
         return "redirect:/agendamentos?data=" + data;
     }
 
+    private String redirectCarros(LocalDate data) {
+        return "redirect:/agendamentos/carros?data=" + data;
+    }
+
     private String mensagemErro(RestClientResponseException e) {
         try {
             var json = objectMapper.readTree(e.getResponseBodyAsString());
@@ -368,6 +635,20 @@ public class AgendamentoController {
     }
 
     public record DestinoView(UUID id, UUID idCidade, String cidade, String nome) {
+    }
+
+    public record PassageiroDetalheView(
+            String nome, String telefone, String endereco, String cidade, String destino) {
+    }
+
+    public record PassageiroVerificadoView(
+            String nome,
+            String telefone,
+            String cidade,
+            String destino,
+            LocalTime horarioChegada,
+            boolean buscarNaResidencia,
+            int acompanhantes) {
     }
 
     public record PessoaBuscaOption(UUID id, String nome, String prioridade, String cpf, String telefone) {

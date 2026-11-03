@@ -14,6 +14,7 @@ import br.com.imbazzu.secretariaTransporte.lista.adpter.out.entidadeJpa.TipoList
 import br.com.imbazzu.secretariaTransporte.lista.core.domain.RegraCadastro;
 import br.com.imbazzu.secretariaTransporte.lista.core.domain.RegraSeparacao;
 import br.com.imbazzu.secretariaTransporte.lista.core.domain.TipoLista;
+import br.com.imbazzu.secretariaTransporte.tipoVeiculo.adpter.out.entidadeJpa.TipoVeiculoJpa;
 
 public final class TipoListaBancoMapper {
 
@@ -93,7 +94,12 @@ public final class TipoListaBancoMapper {
                 regraJpa.setLista(entidade);
                 entidade.getRegrasSeparacao().add(regraJpa);
             }
-            regraJpa.getTipoVeiculo().setId(regra.getIdTipoVeiculo());
+            var tipoVeiculoJpa = regraJpa.getTipoVeiculo();
+            if (tipoVeiculoJpa == null) {
+                tipoVeiculoJpa = new TipoVeiculoJpa();
+                regraJpa.setTipoVeiculo(tipoVeiculoJpa);
+            }
+            tipoVeiculoJpa.setId(regra.getIdTipoVeiculo());
             regraJpa.setTempoToleranciaSegundos(regra.getTempoTolerancia().getSeconds());
             regraJpa.setTempoToleranciaNanos(regra.getTempoTolerancia().getNano());
         }

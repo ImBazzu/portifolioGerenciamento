@@ -29,7 +29,7 @@ public interface LocalidadeApiPorta {
 
     CidadeArquivadoResponseDto buscarCidadeArquivada(UUID id);
 
-    void salvarDestino(DestinoRequestDto destino);
+    UUID salvarDestino(DestinoRequestDto destino);
 
     void editarDestino(UUID id, String nome);
 

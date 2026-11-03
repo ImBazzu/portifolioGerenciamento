@@ -9,7 +9,7 @@
             </div>
 
             <form th:object="${pessoa}"
-                  hx:post="${!edicao ? '/pessoas' : null}"
+                  hx:post="${!edicao} ? @{/pessoas(contextoAgendamento=${contextoAgendamento})} : null"
                   hx:put="${edicao ? '/pessoas/' + id : null}"
                   hx-target="#modal" hx-swap="innerHTML">
                 <div class="row g-3">

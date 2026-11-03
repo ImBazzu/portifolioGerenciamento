@@ -30,7 +30,13 @@ public record ListaQueryBuscarResultado(
             String descricao) {
     }
 
-    public record RegraSeparacaoResultado(UUID id, String nome, String tempoTolerancia) {
+    public record RegraSeparacaoResultado(
+            UUID id,
+            UUID idTipoVeiculo,
+            String nome,
+            String tempoTolerancia,
+            long tempoToleranciaSegundos,
+            int tempoToleranciaNanos) {
     }
 
     public record IdNome(UUID id, String nome) {

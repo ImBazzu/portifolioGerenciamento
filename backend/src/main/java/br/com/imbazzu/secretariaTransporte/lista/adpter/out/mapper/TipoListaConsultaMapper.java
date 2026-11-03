@@ -51,11 +51,14 @@ public final class TipoListaConsultaMapper {
     }
 
     private static RegraSeparacaoDetalhe paraRegraSeparacao(RegraSeparacaoProjecao regra) {
-        var tempo =Duration.ofSeconds(regra.getTempoToleranciaSegundos(), regra.getTempoToleranciaNanos());
-        var tempoFormatado = "%02d:%02d".formatted(tempo.toHoursPart(),tempo.toMillisPart());
+        var tempo = Duration.ofSeconds(regra.getTempoToleranciaSegundos(), regra.getTempoToleranciaNanos());
+        var tempoFormatado = "%02d:%02d".formatted(tempo.toHoursPart(), tempo.toMinutesPart());
         return new RegraSeparacaoDetalhe(
                 regra.getId(),
+                regra.getTipoVeiculo().getId(),
                 regra.getTipoVeiculo().getNome(),
-                tempoFormatado);
+                tempoFormatado,
+                regra.getTempoToleranciaSegundos(),
+                regra.getTempoToleranciaNanos());
     }
 }

@@ -42,13 +42,23 @@ public class AgendamentoQueryVerificarVeiculosHandler {
         var idsPorTipo = new HashMap<java.util.UUID, List<java.util.UUID>>();
         var motivos = new LinkedHashSet<String>();
         var regras = consultas.listarRegrasCadastro(query.idLista());
+        if (regras.isEmpty()) {
+            motivos.add("A lista selecionada não possui regras de cadastro configuradas");
+        }
         for (var regra : regras) {
-            if (!RegraCadastroAgendamento.aplica(regra, pessoa, destino, query.horarioChegada())) {
+            var motivosRegra = RegraCadastroAgendamento.motivosNaoAplicacao(
+                    regra, pessoa, destino, query.horarioChegada());
+            if (!motivosRegra.isEmpty()) {
+                motivos.add("Regra %s: %s".formatted(regra.id(), String.join("; ", motivosRegra)));
                 continue;
             }
             if (regra.obrigacaoAnexo()) {
                 motivos.add("A regra %s exige anexo; agendamento com anexos ainda não está disponível"
                         .formatted(regra.id()));
+                continue;
+            }
+            if (regra.idsVeiculos().isEmpty()) {
+                motivos.add("A regra %s não possui tipos de veículo vinculados".formatted(regra.id()));
                 continue;
             }
             for (var idTipo : regra.idsVeiculos()) {

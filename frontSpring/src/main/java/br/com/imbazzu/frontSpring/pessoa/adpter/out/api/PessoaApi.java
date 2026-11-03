@@ -56,8 +56,8 @@ public class PessoaApi implements PessoaApiPorta {
     }
 
     @Override
-    public void salvar(PessoaRequestDto pessoa) {
-        api.post()
+    public UUID salvar(PessoaRequestDto pessoa) {
+        var respostaCriacao = api.post()
                 .uri(PATH_API)
                 .body(pessoa)
                 .retrieve()
@@ -70,6 +70,12 @@ public class PessoaApi implements PessoaApiPorta {
                             throw new PessoaDadosInvalidosException();
                         })
                 .toBodilessEntity();
+        var location = respostaCriacao.getHeaders().getLocation();
+        if (location == null) {
+            throw new IllegalStateException("A API não retornou o endereço da pessoa criada.");
+        }
+        var path = location.getPath();
+        return UUID.fromString(path.substring(path.lastIndexOf('/') + 1));
     }
 
     @Override

@@ -1,6 +1,8 @@
 package br.com.imbazzu.secretariaTransporte.agendamento.core.service;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.DestinoAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.PessoaAgendaDados;
@@ -15,12 +17,33 @@ public final class RegraCadastroAgendamento {
     public static boolean aplica(
             RegraCadastroAgendaDados regra, PessoaAgendaDados pessoa,
             DestinoAgendaDados destino, LocalTime horario) {
+        return motivosNaoAplicacao(regra, pessoa, destino, horario).isEmpty();
+    }
+
+    public static List<String> motivosNaoAplicacao(
+            RegraCadastroAgendaDados regra, PessoaAgendaDados pessoa,
+            DestinoAgendaDados destino, LocalTime horario) {
+        var motivos = new ArrayList<String>();
         if (!regra.prioridades().contains(pessoa.prioridade().name())) {
-            return false;
+            motivos.add("prioridade da pessoa (%s) não está entre as aceitas: %s"
+                    .formatted(pessoa.prioridade(), regra.prioridades()));
         }
         if (!regra.idsCidades().isEmpty() && !regra.idsCidades().contains(destino.idCidade())) {
-            return false;
+            motivos.add("cidade do destino (%s) não está entre as atendidas: %s"
+                    .formatted(destino.idCidade(), regra.idsCidades()));
         }
+        if (!horarioPermitido(regra, horario)) {
+            var intervalo = regra.inicioHorario() == null
+                    ? "até %s".formatted(regra.finalHorario())
+                    : regra.finalHorario() == null
+                            ? "a partir de %s".formatted(regra.inicioHorario())
+                            : "de %s até %s".formatted(regra.inicioHorario(), regra.finalHorario());
+            motivos.add("horário %s fora do intervalo permitido (%s)".formatted(horario, intervalo));
+        }
+        return List.copyOf(motivos);
+    }
+
+    private static boolean horarioPermitido(RegraCadastroAgendaDados regra, LocalTime horario) {
         if (regra.inicioHorario() == null && regra.finalHorario() == null) {
             return true;
         }

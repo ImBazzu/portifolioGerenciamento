@@ -6,10 +6,10 @@ import java.util.UUID;
 public record AgendamentoRequestDto(
         UUID idPessoa,
         UUID idLista,
-        UUID idRegraCadastro,
         UUID idTipoVeiculo,
         UUID idDestino,
         LocalTime horarioChegada,
         boolean buscarNaResidencia,
-        int acompanhantes) {
+        int acompanhantes,
+        UUID idVeiculo) {
 }

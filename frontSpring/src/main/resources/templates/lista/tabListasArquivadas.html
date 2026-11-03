@@ -69,12 +69,21 @@
                                 <span class="lista-count"><i class="bi bi-geo-alt"></i><span th:text="${lista.totalCidades}">0</span></span>
                             </td>
                             <td class="text-end">
-                                <button type="button" class="btn btn-sm btn-light lista-restore-button"
-                                        hx:patch="@{/listas/{id}/desarquivar(id=${lista.id})}"
-                                        hx-swap="none"
-                                        title="Restaurar lista">
-                                    <i class="bi bi-arrow-counterclockwise me-1"></i>Restaurar
-                                </button>
+                                <div class="lista-row-actions">
+                                    <button type="button" class="btn btn-sm btn-light lista-detail-button"
+                                            hx:get="@{/listas/{id}/detalhes-arquivada(id=${lista.id})}"
+                                            hx-target="#modal"
+                                            hx-swap="innerHTML"
+                                            title="Ver detalhes da lista">
+                                        <i class="bi bi-eye me-sm-1"></i><span>Detalhes</span>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-light lista-restore-button"
+                                            hx:patch="@{/listas/{id}/desarquivar(id=${lista.id})}"
+                                            hx-swap="none"
+                                            title="Restaurar lista">
+                                        <i class="bi bi-arrow-counterclockwise me-1"></i>Restaurar
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         </tbody>

@@ -179,8 +179,11 @@ public class TipoListaController {
         var regrasSeparacao = resultado.regrasSeparacao().stream()
                 .map(regra -> new TipoListaResponseDto.RegraSeparacaoResponseDto(
                         regra.id(),
+                        regra.idTipoVeiculo(),
                         regra.nome(),
-                        regra.tempoTolerancia()))
+                        regra.tempoTolerancia(),
+                        regra.tempoToleranciaSegundos(),
+                        regra.tempoToleranciaNanos()))
                 .toList();
         return new TipoListaResponseDto(
                 resultado.id(),

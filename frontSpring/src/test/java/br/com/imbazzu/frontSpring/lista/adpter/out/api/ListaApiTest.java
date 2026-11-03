@@ -94,6 +94,69 @@ class ListaApiTest {
     }
 
     @Test
+    void buscarAtivaMapeiaIdsDeVeiculosECidadesParaEdicaoDasRegras() {
+        var id = UUID.fromString("b4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f21");
+        var idRegra = UUID.fromString("c4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f22");
+        var idVeiculo = UUID.fromString("d4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f23");
+        var idCidade = UUID.fromString("e4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f24");
+        server.expect(requestTo("http://localhost:8080/api/lista/" + id))
+                .andRespond(withSuccess("""
+                        {
+                          "id": "%s",
+                          "nome": "Lista Centro",
+                          "descricao": null,
+                          "dataArquivado": null,
+                          "regrasCadastro": [{
+                            "id": "%s",
+                            "veiculos": [{"id": "%s", "nome": "Van"}],
+                            "cidades": [{"id": "%s", "nome": "Centro"}],
+                            "prioridades": ["ALTA"],
+                            "inicioHorario": null,
+                            "finalHorario": null,
+                            "obrigacaoAnexo": false,
+                            "descricao": null
+                          }],
+                          "regrasSeparacao": []
+                        }
+                        """.formatted(id, idRegra, idVeiculo, idCidade), MediaType.APPLICATION_JSON));
+
+        var regra = api.buscarAtiva(id).regrasCadastroDados().getFirst();
+
+        assertEquals(List.of(idVeiculo), regra.getIdsVeiculos());
+        assertEquals(List.of(idCidade), regra.getIdsCidades());
+    }
+
+    @Test
+    void buscarAtivaMapeiaTipoEToleranciaDaRegraDeSeparacaoParaEdicao() {
+        var id = UUID.fromString("b4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f21");
+        var idTipoVeiculo = UUID.fromString("d4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f23");
+        server.expect(requestTo("http://localhost:8080/api/lista/" + id))
+                .andRespond(withSuccess("""
+                        {
+                          "id": "%s",
+                          "nome": "Lista Centro",
+                          "descricao": null,
+                          "dataArquivado": null,
+                          "regrasCadastro": [],
+                          "regrasSeparacao": [{
+                            "id": "c4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f22",
+                            "idTipoVeiculo": "%s",
+                            "nome": "Onibus",
+                            "tempoTolerancia": "01:00",
+                            "tempoToleranciaSegundos": 3600,
+                            "tempoToleranciaNanos": 0
+                          }]
+                        }
+                        """.formatted(id, idTipoVeiculo), MediaType.APPLICATION_JSON));
+
+        var regra = api.buscarAtiva(id).regrasSeparacaoDados().getFirst();
+
+        assertEquals(idTipoVeiculo, regra.idTipoVeiculo());
+        assertEquals(3_600, regra.tempoToleranciaSegundos());
+        assertEquals(0, regra.tempoToleranciaNanos());
+    }
+
+    @Test
     void salvarEnviaDadosParaApi() {
         var id = UUID.fromString("b4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f21");
         server.expect(requestTo("http://localhost:8080/api/lista"))

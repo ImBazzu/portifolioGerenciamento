@@ -15,10 +15,10 @@ public final class Agendamento {
     private final UUID idPessoa;
     private final UUID idLista;
     private final UUID idRegraCadastro;
-    private final UUID idTipoVeiculo;
+    private UUID idTipoVeiculo;
     private final UUID idDestino;
     private final Duration tempoViagem;
-    private final Duration toleranciaSeparacao;
+    private Duration toleranciaSeparacao;
     private final LocalTime horarioChegada;
     private final boolean buscarNaResidencia;
     private final int acompanhantes;
@@ -69,6 +69,18 @@ public final class Agendamento {
 
     public void atribuirVeiculo(UUID idVeiculoAberto) {
         this.idVeiculoAberto = Objects.requireNonNull(idVeiculoAberto, "Veículo físico é obrigatório");
+    }
+
+    public void atribuirVeiculo(UUID idVeiculoAberto, UUID idTipoVeiculo, Duration toleranciaSeparacao) {
+        Objects.requireNonNull(idVeiculoAberto, "Veículo físico é obrigatório");
+        Objects.requireNonNull(idTipoVeiculo, "Tipo de veículo é obrigatório");
+        Objects.requireNonNull(toleranciaSeparacao, "Tolerância é obrigatória");
+        if (toleranciaSeparacao.isNegative()) {
+            throw new DadosInvalidosException("A tolerância não pode ser negativa");
+        }
+        this.idVeiculoAberto = idVeiculoAberto;
+        this.idTipoVeiculo = idTipoVeiculo;
+        this.toleranciaSeparacao = toleranciaSeparacao;
     }
 
     public void removerVeiculo() {

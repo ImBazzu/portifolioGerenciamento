@@ -131,14 +131,20 @@ public class LocalidadeApi implements LocalidadeApiPorta {
     }
 
     @Override
-    public void salvarDestino(DestinoRequestDto destino) {
-        api.post()
+    public UUID salvarDestino(DestinoRequestDto destino) {
+        var respostaCriacao = api.post()
                 .uri(DESTINO_PATH)
                 .body(destino)
                 .retrieve()
                 .onStatus(status -> status.isSameCodeAs(HttpStatus.CONFLICT),
                         (request, response) -> { throw new LocalidadeDuplicadaException(null); })
                 .toBodilessEntity();
+        var location = respostaCriacao.getHeaders().getLocation();
+        if (location == null) {
+            throw new IllegalStateException("A API não retornou o endereço do destino criado.");
+        }
+        var path = location.getPath();
+        return UUID.fromString(path.substring(path.lastIndexOf('/') + 1));
     }
 
     @Override

@@ -7,6 +7,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
+import java.net.URI;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -106,10 +107,11 @@ class PessoaApiTest {
                           "telefone":"11987654321"
                         }
                         """))
-                .andRespond(withStatus(HttpStatus.CREATED));
+                .andRespond(withStatus(HttpStatus.CREATED)
+                        .location(URI.create("/api/pessoa/b4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f21")));
 
-        api.salvar(new PessoaRequestDto(
-                "Ana Souza", "", PessoaPrioridade.MODERADA, "Rua das Flores, 123", "52998224725", "11987654321"));
+        assertEquals(UUID.fromString("b4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f21"), api.salvar(new PessoaRequestDto(
+                "Ana Souza", "", PessoaPrioridade.MODERADA, "Rua das Flores, 123", "52998224725", "11987654321")));
     }
 
     @Test

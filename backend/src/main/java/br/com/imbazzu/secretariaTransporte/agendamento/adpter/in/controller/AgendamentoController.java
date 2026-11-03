@@ -119,12 +119,13 @@ public class AgendamentoController {
                 data,
                 request.idPessoa(),
                 request.idLista(),
-                request.idRegraCadastro(),
+                null,
                 request.idTipoVeiculo(),
                 request.idDestino(),
                 request.horarioChegada(),
                 request.buscarNaResidencia(),
-                request.acompanhantes()));
+                request.acompanhantes(),
+                request.idVeiculo()));
         return ResponseEntity.created(URI.create("/api/agendamentos/%s".formatted(id))).build();
     }
 

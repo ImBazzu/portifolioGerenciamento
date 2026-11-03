@@ -9,10 +9,10 @@ import jakarta.validation.constraints.NotNull;
 public record AgendamentoRequestDto(
         @NotNull UUID idPessoa,
         @NotNull UUID idLista,
-        @NotNull UUID idRegraCadastro,
         @NotNull UUID idTipoVeiculo,
         @NotNull UUID idDestino,
         @NotNull LocalTime horarioChegada,
         boolean buscarNaResidencia,
-        @Min(0) int acompanhantes) {
+        @Min(0) int acompanhantes,
+        UUID idVeiculo) {
 }

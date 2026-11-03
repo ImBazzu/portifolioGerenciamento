@@ -1,5 +1,7 @@
 package br.com.imbazzu.frontSpring.localidade.adpter.in.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import br.com.imbazzu.frontSpring.localidade.core.dto.CidadeResponseDto;
 import br.com.imbazzu.frontSpring.localidade.core.dto.DestinoRequestDto;
 import br.com.imbazzu.frontSpring.localidade.core.dto.DestinoResponseDto;
@@ -9,21 +11,27 @@ import br.com.imbazzu.frontSpring.localidade.core.porta.in.LocalidadeApplication
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxRequest;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxTriggerAfterSettle;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/localidade")
 public class LocalidadeDestinoController {
 
     private final LocalidadeApplicationPorta application;
+    private final ObjectMapper objectMapper;
 
-    public LocalidadeDestinoController(LocalidadeApplicationPorta application) {
+    public LocalidadeDestinoController(
+            LocalidadeApplicationPorta application,
+            ObjectMapper objectMapper) {
         this.application = application;
+        this.objectMapper = objectMapper;
     }
 
     @HxRequest
@@ -60,8 +68,12 @@ public class LocalidadeDestinoController {
 
     @HxRequest
     @GetMapping("/{idCidade}/destinos/abrirFormulario")
-    public String formNovo(@PathVariable UUID idCidade, Model model) {
+    public String formNovo(
+            @PathVariable UUID idCidade,
+            @RequestParam(defaultValue = "false") boolean contextoAgendamento,
+            Model model) {
         prepararFormulario(model, new DestinoRequestDto(idCidade, ""), null);
+        model.addAttribute("contextoAgendamento", contextoAgendamento);
         return "localidade/formDestino :: formDestino";
     }
 
@@ -88,20 +100,32 @@ public class LocalidadeDestinoController {
 
     @HxRequest
     @PostMapping("/destinos")
-    @HxTriggerAfterSettle("listar-ativos")
     public String salvar(
             @Valid @ModelAttribute("destino") DestinoRequestDto destino,
             BindingResult result,
-            Model model) {
+            @RequestParam(defaultValue = "false") boolean contextoAgendamento,
+            Model model,
+            HttpServletResponse response) throws JsonProcessingException {
         prepararFormulario(model, destino, null, destino.idCidade());
+        model.addAttribute("contextoAgendamento", contextoAgendamento);
         if (result.hasErrors()) {
             return "localidade/formDestino :: formDestino";
         }
         try {
-            application.salvarDestino(destino);
+            UUID id = application.salvarDestino(destino);
+            if (contextoAgendamento) {
+                response.setHeader("HX-Trigger-After-Settle", objectMapper.writeValueAsString(
+                        Map.of("destino-criado", Map.of(
+                                "id", id,
+                                "nome", destino.nome(),
+                                "idCidade", destino.idCidade()))));
+                return "layout/vazio :: vazio";
+            }
+            response.setHeader("HX-Trigger-After-Settle", "listar-ativos");
             return detalhesCidade(destino.idCidade(), model);
         } catch (LocalidadeDuplicadaException e) {
             result.rejectValue("nome", "duplicado", "Já existe um destino com este nome nesta cidade.");
+            model.addAttribute("contextoAgendamento", contextoAgendamento);
             return "localidade/formDestino :: formDestino";
         }
     }
@@ -157,6 +181,7 @@ public class LocalidadeDestinoController {
         model.addAttribute("id", id);
         model.addAttribute("idCidade", idCidade);
         model.addAttribute("arquivado", false);
+        model.addAttribute("contextoAgendamento", false);
     }
 
     private String detalhesCidade(UUID idCidade, Model model) {

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/head :: head('Passageiros de carros')}"></head>
+
+<body>
+<div class="d-flex min-vh-100">
+    <aside th:replace="~{layout/sidebar :: sidebar}"></aside>
+
+    <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
+        <div th:fragment="conteudo" class="app-page">
+            <header class="app-page-header">
+                <div>
+                    <h1>Passageiros de carros</h1>
+                    <p>Organize manualmente ou automaticamente os passageiros que requerem carro.</p>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="btn btn-outline-secondary" th:href="@{/agendamentos(data=${data})}">
+                        Voltar à agenda
+                    </a>
+                    <a class="btn btn-outline-primary" th:href="@{/agendamentos/pdf/carros(data=${data})}"
+                       target="_blank">
+                        <i class="bi bi-file-earmark-pdf me-1"></i>PDF geral de carros
+                    </a>
+                </div>
+            </header>
+
+            <div th:if="${erro}" class="alert alert-danger" role="alert" th:text="${erro}"></div>
+            <div th:if="${sucesso}" class="alert alert-success" role="alert" th:text="${sucesso}"></div>
+
+            <section th:if="${agenda == null}" class="alert alert-info">
+                Não há agenda aberta para <span th:text="${#temporals.format(data, 'dd/MM/yyyy')}"></span>.
+            </section>
+
+            <th:block th:if="${agenda != null}">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+                    <div>
+                        <h2 class="h4 mb-1">Agenda de <span th:text="${#temporals.format(data, 'dd/MM/yyyy')}"></span></h2>
+                        <span class="text-secondary"
+                              th:text="${passageirosPendentesCarro.size() + ' passageiro(s) de carro aguardando separação'}"></span>
+                    </div>
+                    <form method="post"
+                          th:action="@{/agendamentos/dias/{data}/separacao-automatica(data=${data})}"
+                          onsubmit="return confirm('Separar automaticamente somente os passageiros de carro?')">
+                        <button class="btn btn-warning" type="submit"
+                                th:disabled="${#lists.isEmpty(passageirosPendentesCarro)}">
+                            <i class="bi bi-diagram-3 me-1"></i>Separar carros automaticamente
+                        </button>
+                    </form>
+                </div>
+
+                <section th:if="${pendencias != null and !#lists.isEmpty(pendencias)}" class="alert alert-warning">
+                    <strong>Passageiros que permaneceram pendentes:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li th:each="pendencia : ${pendencias}"
+                            th:text="${pendencia.idAgendamento() + ' — ' + pendencia.motivo()}"></li>
+                    </ul>
+                </section>
+
+                <section class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h2 class="h5 mb-0">Passageiros pendentes</h2>
+                    </div>
+                    <div th:if="${#lists.isEmpty(passageirosPendentesCarro)}" class="card-body text-secondary">
+                        Não há passageiros de carro aguardando atribuição.
+                    </div>
+                    <div th:if="${!#lists.isEmpty(passageirosPendentesCarro)}" class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Passageiro</th>
+                                <th>Telefone</th>
+                                <th>Busca</th>
+                                <th>Cidade</th>
+                                <th>Destino</th>
+                                <th>Chegada</th>
+                                <th>Acompanhantes</th>
+                                <th>Veículo compatível</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="passageiro : ${passageirosPendentesCarro}">
+                                <td th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></td>
+                                <td th:text="${detalhesPassageiros.get(passageiro.idPessoa()).telefone()}"></td>
+                                <td th:text="${passageiro.buscarNaResidencia() ? 'Residência' : 'Não'}"></td>
+                                <td th:text="${detalhesPassageiros.get(passageiro.idPessoa()).cidade()}"></td>
+                                <td th:text="${detalhesPassageiros.get(passageiro.idPessoa()).destino()}"></td>
+                                <td th:text="${passageiro.horarioChegada()}"></td>
+                                <td th:text="${passageiro.acompanhantes() + ' acompanhante(s)'}"></td>
+                                <td>
+                                    <form method="post"
+                                          th:action="@{/agendamentos/{id}/veiculo(id=${passageiro.id()})}"
+                                          class="d-flex gap-2">
+                                        <input type="hidden" name="data" th:value="${data}">
+                                        <input type="hidden" name="paginaCarros" value="true">
+                                        <select class="form-select form-select-sm"
+                                                name="idVeiculo" required
+                                                th:attr="aria-label='Veículo para ' + ${detalhesPassageiros.get(passageiro.idPessoa()).nome()}">
+                                            <option value="">Selecione</option>
+                                            <option th:each="veiculo : ${veiculosCarro}"
+                                                    th:if="${passageiro.idsVeiculosCompativeis().contains(veiculo.id())}"
+                                                    th:value="${veiculo.id()}"
+                                                    th:text="${veiculo.identificacao() == null ? veiculo.nomeTipoVeiculo() : veiculo.identificacao()}">
+                                            </option>
+                                        </select>
+                                        <button class="btn btn-sm btn-outline-primary" type="submit"
+                                                th:disabled="${temVeiculoCarroCompativel.get(passageiro.id()) != true}">
+                                            Atribuir
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="h5 mb-3">Carros e passageiros atribuídos</h2>
+                    <div th:if="${#lists.isEmpty(veiculosCarro)}" class="alert alert-info">
+                        Nenhum carro físico foi aberto para esta data.
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12 col-xl-6" th:each="veiculo : ${veiculosCarro}">
+                            <article class="card border-0 shadow-sm h-100">
+                                <div class="card-header bg-white d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h3 class="h6 mb-1" th:text="${veiculo.nomeTipoVeiculo()}"></h3>
+                                        <div class="small text-secondary">
+                                            <span th:text="${veiculo.identificacao() == null ? 'Sem identificação' : veiculo.identificacao()}"></span>
+                                            <span> · </span>
+                                            <span th:text="${veiculo.assentosOcupados() + ' / ' + veiculo.capacidade() + ' lugares'}"></span>
+                                        </div>
+                                    </div>
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       th:href="@{/agendamentos/pdf/carros/{id}(id=${veiculo.id()}, data=${data})}"
+                                       target="_blank">
+                                        <i class="bi bi-file-earmark-pdf me-1"></i>PDF deste carro
+                                    </a>
+                                </div>
+                                <div class="card-body">
+                                    <div th:if="${#lists.isEmpty(veiculo.passageiros())}" class="text-secondary small">
+                                        Nenhum passageiro atribuído.
+                                    </div>
+                                    <div th:each="passageiro : ${veiculo.passageiros()}"
+                                         class="border-bottom py-2 d-flex justify-content-between gap-2">
+                                        <div class="small">
+                                            <strong th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></strong>
+                                            <div th:text="${detalhesPassageiros.get(passageiro.idPessoa()).telefone()}"></div>
+                                            <div th:text="${detalhesPassageiros.get(passageiro.idPessoa()).cidade() + ' · ' + detalhesPassageiros.get(passageiro.idPessoa()).destino()}"></div>
+                                            <div>
+                                                <span th:text="${'Chegada ' + passageiro.horarioChegada()}"></span>
+                                                <span> · </span>
+                                                <span th:text="${passageiro.buscarNaResidencia() ? 'Buscar na residência' : 'Sem busca na residência'}"></span>
+                                                <span> · </span>
+                                                <span th:text="${passageiro.acompanhantes() + ' acompanhante(s)'}"></span>
+                                            </div>
+                                        </div>
+                                        <form method="post"
+                                              th:action="@{/agendamentos/{id}/remover-veiculo(id=${passageiro.id()})}"
+                                              onsubmit="return confirm('Retirar este passageiro do carro?')">
+                                            <input type="hidden" name="data" th:value="${data}">
+                                            <input type="hidden" name="paginaCarros" value="true">
+                                            <button class="btn btn-sm btn-outline-secondary" type="submit">Retirar</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </section>
+            </th:block>
+        </div>
+    </main>
+</div>
+</body>
+</html>

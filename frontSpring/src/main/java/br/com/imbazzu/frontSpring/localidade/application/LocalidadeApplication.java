@@ -69,8 +69,8 @@ public class LocalidadeApplication implements LocalidadeApplicationPorta {
     }
 
     @Override
-    public void salvarDestino(DestinoRequestDto destino) {
-        api.salvarDestino(destino);
+    public UUID salvarDestino(DestinoRequestDto destino) {
+        return api.salvarDestino(destino);
     }
 
     @Override

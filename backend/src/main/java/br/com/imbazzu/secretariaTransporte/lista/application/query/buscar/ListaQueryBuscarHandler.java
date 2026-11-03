@@ -68,7 +68,13 @@ public class ListaQueryBuscarHandler {
     }
 
     private RegraSeparacaoResultado paraResultado(RegraSeparacaoDetalhe regra) {
-        return new RegraSeparacaoResultado(regra.id(), regra.nome(), regra.tempoTolerancia());
+        return new RegraSeparacaoResultado(
+                regra.id(),
+                regra.idTipoVeiculo(),
+                regra.nome(),
+                regra.tempoTolerancia(),
+                regra.tempoToleranciaSegundos(),
+                regra.tempoToleranciaNanos());
     }
 
     private List<IdNome> comNomes(List<UUID> ids, Map<UUID, String> cache, Function<UUID, String> resolvedor) {

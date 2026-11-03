@@ -5,13 +5,14 @@
                 <div class="lista-modal-heading">
                     <span class="lista-modal-icon"><i class="bi bi-list-check"></i></span>
                     <div>
-                        <span class="lista-panel-kicker">Detalhes da lista</span>
+                        <span class="lista-panel-kicker"
+                              th:text="${lista.arquivado() ? 'Lista arquivada' : 'Detalhes da lista'}">Detalhes da lista</span>
                         <h2 id="listaDetalheTitulo" th:text="${lista.nome}">Lista</h2>
                         <p th:text="${#strings.isEmpty(lista.descricao) ? 'Nenhuma descrição informada.' : lista.descricao}">Descrição</p>
                     </div>
                 </div>
                 <div class="lista-modal-actions">
-                    <button type="button" class="btn btn-sm btn-outline-primary"
+                    <button th:unless="${lista.arquivado()}" type="button" class="btn btn-sm btn-outline-primary"
                             hx:get="@{/listas/abrirFormulario/{id}(id=${lista.id})}"
                             hx-target="#modal"
                             hx-swap="innerHTML">
@@ -69,13 +70,29 @@
             </div>
 
             <footer class="lista-detail-footer">
-                <span><i class="bi bi-info-circle me-1"></i>Você pode editar ou arquivar esta lista.</span>
-                <button type="button" class="btn btn-sm btn-outline-danger"
+                <span th:if="${lista.arquivado()}"><i class="bi bi-info-circle me-1"></i>Esta lista está arquivada.</span>
+                <span th:unless="${lista.arquivado()}"><i class="bi bi-info-circle me-1"></i>Você pode editar ou arquivar esta lista.</span>
+                <button th:unless="${lista.arquivado()}" type="button" class="btn btn-sm btn-outline-danger"
                         hx:patch="@{/listas/{id}/arquivar(id=${lista.id})}"
                         hx:target="'#modal'"
                         hx:swap="'innerHTML'">
                     <i class="bi bi-archive me-1"></i>Arquivar lista
                 </button>
+                <div th:if="${lista.arquivado()}" class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-light"
+                            hx:get="@{/listas/listarArquivadas}"
+                            hx-target="#modal"
+                            hx-swap="innerHTML">
+                        <i class="bi bi-arrow-left me-1"></i>Voltar
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            hx:delete="@{/listas/{id}(id=${lista.id})}"
+                            hx-target="#modal"
+                            hx-swap="innerHTML"
+                            hx-confirm="Excluir definitivamente esta lista arquivada?">
+                        <i class="bi bi-trash me-1"></i>Deletar lista
+                    </button>
+                </div>
             </footer>
         </section>
     </div>

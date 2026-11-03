@@ -20,21 +20,32 @@ public record ListaDetalheApiDto(
             String finalHorario,
             boolean obrigacaoAnexo,
             String descricao) {
+
+        public List<UUID> getIdsVeiculos() {
+            return veiculos.stream().map(VeiculoResponse::id).toList();
+        }
+
+        public List<UUID> getIdsCidades() {
+            return cidades.stream().map(CidadeResponse::id).toList();
+        }
     }
 
     public record RegraSeparacao(
             UUID id,
+            UUID idTipoVeiculo,
             String nome,
-            String tempoTolerancia) {
+            String tempoTolerancia,
+            long tempoToleranciaSegundos,
+            int tempoToleranciaNanos) {
     }
 
     public record CidadeResponse(
-        UUID ids,
+        UUID id,
         String nome
     ){}
 
     public record VeiculoResponse(
-        UUID ids,
+        UUID id,
         String nome
     ){}
 }

@@ -8,7 +8,7 @@
                         aria-label="Fechar"></button>
             </div>
             <form th:object="${destino}"
-                  hx:post="${!edicao} ? @{/localidade/destinos} : null"
+                  hx:post="${!edicao} ? @{/localidade/destinos(contextoAgendamento=${contextoAgendamento})} : null"
                   hx:put="${edicao} ? @{/localidade/destinos/{id}(id=${id}, idCidade=${idCidade})} : null"
                   hx-target="#modal" hx-swap="innerHTML">
                 <input type="hidden" th:field="*{idCidade}">
@@ -23,9 +23,11 @@
                          th:errors="*{nome}"></div>
                 </div>
                 <div class="border-top pt-3 mt-3 d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-light border"
+                    <button th:unless="${contextoAgendamento}" type="button" class="btn btn-light border"
                             hx:get="@{/localidade/{id}/detalhes(id=${idCidade})}"
                             hx-target="#modal" hx-swap="innerHTML">Cancelar</button>
+                    <button th:if="${contextoAgendamento}" type="button" class="btn btn-light border"
+                            hx:get="@{/localidade/limpar-modal}" hx-target="#modal" hx-swap="innerHTML">Cancelar</button>
                     <button type="submit" class="btn btn-success">
                         <i class="bi bi-check-lg me-1"></i> Salvar destino
                     </button>

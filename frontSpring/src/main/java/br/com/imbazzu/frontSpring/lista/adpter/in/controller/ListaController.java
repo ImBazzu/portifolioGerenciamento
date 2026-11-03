@@ -8,6 +8,7 @@ import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxTriggerAfterSettle;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -52,6 +53,10 @@ public class ListaController {
             @RequestParam(required = false, defaultValue = "") String busca,
             @RequestParam(defaultValue = "0") int pagina,
             Model model) {
+        return carregarArquivadas(busca, pagina, model);
+    }
+
+    private String carregarArquivadas(String busca, int pagina, Model model) {
         ResultadoPaginado<ListaResponseDto> resultado = application.listarArquivadas(busca, pagina);
         model.addAttribute("listasArquivadas", resultado.conteudo());
         model.addAttribute("paginaAtualArquivadas", resultado.paginaAtual());
@@ -65,6 +70,24 @@ public class ListaController {
     public String detalhes(@PathVariable UUID id, Model model) {
         model.addAttribute("lista", application.buscarAtiva(id));
         return "lista/detalhesLista :: detalhesLista";
+    }
+
+    @HxRequest
+    @GetMapping("/{id}/detalhes-arquivada")
+    public String detalhesArquivada(@PathVariable UUID id, Model model) {
+        model.addAttribute("lista", application.buscarArquivada(id));
+        return "lista/detalhesLista :: detalhesLista";
+    }
+
+    @HxRequest
+    @DeleteMapping("/{id}")
+    public String deletar(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "") String busca,
+            @RequestParam(defaultValue = "0") int pagina,
+            Model model) {
+        application.deletar(id);
+        return carregarArquivadas(busca, pagina, model);
     }
 
     @HxRequest

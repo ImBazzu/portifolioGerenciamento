@@ -13,6 +13,8 @@ public interface RegraSeparacaoProjecao {
     int getTempoToleranciaNanos();
 
     interface TipoVeiculoProjecao {
+        UUID getId();
+
         String getNome();
     }
 }

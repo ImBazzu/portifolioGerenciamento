@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.imbazzu.secretariaTransporte.agendamento.application.AgendamentoCompatibilidadeResolver;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.query.model.AgendaDia;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.query.model.AgendamentoAgenda;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.query.model.VeiculoAgenda;
@@ -30,7 +31,9 @@ public class AgendamentoQueryBuscarDiaHandler {
         AgendamentoValidacao.exigirDiaAberto(consultas, query.data());
         var agendamentos = consultas.listarAgendamentos(query.data());
         var veiculos = consultas.listarVeiculos(query.data());
-        var compativeis = CompatibilidadeVeiculoAgendamento.listarCompativeis(agendamentos, veiculos);
+        var toleranciasPorTipo = AgendamentoCompatibilidadeResolver.toleranciasPorTipo(consultas, agendamentos);
+        var compativeis = CompatibilidadeVeiculoAgendamento.listarCompativeis(
+                agendamentos, veiculos, toleranciasPorTipo);
         var passageirosPorVeiculo = agendamentos.stream()
                 .filter(agendamento -> agendamento.getIdVeiculoAberto() != null)
                 .collect(Collectors.groupingBy(Agendamento::getIdVeiculoAberto));

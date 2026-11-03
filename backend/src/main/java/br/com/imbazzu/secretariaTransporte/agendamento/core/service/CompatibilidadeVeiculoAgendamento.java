@@ -17,7 +17,9 @@ public final class CompatibilidadeVeiculoAgendamento {
     }
 
     public static Map<UUID, List<UUID>> listarCompativeis(
-            List<Agendamento> agendamentos, List<VeiculoAberto> veiculos) {
+            List<Agendamento> agendamentos,
+            List<VeiculoAberto> veiculos,
+            Map<UUID, Map<UUID, Duration>> toleranciasPorTipo) {
         var slotsConhecidos = new HashMap<UUID, Slot>();
         var ocupantesPorVeiculo = new HashMap<UUID, List<Agendamento>>();
         for (var agendamento : agendamentos) {
@@ -33,12 +35,12 @@ public final class CompatibilidadeVeiculoAgendamento {
             if (agendamento.getIdVeiculoAberto() != null) {
                 continue;
             }
-            var slot = slotsConhecidos.get(agendamento.getId());
+            var tolerancias = toleranciasPorTipo.getOrDefault(agendamento.getId(), Map.of());
             var idsCompativeis = veiculos.stream()
-                    .filter(veiculo -> veiculo.idTipoVeiculo().equals(agendamento.getIdTipoVeiculo()))
+                    .filter(veiculo -> tolerancias.containsKey(veiculo.idTipoVeiculo()))
                     .filter(veiculo -> compativel(
                             veiculo, ocupantesPorVeiculo.getOrDefault(veiculo.id(), List.of()),
-                            slot, slotsConhecidos))
+                            criarSlot(agendamento, tolerancias.get(veiculo.idTipoVeiculo())), slotsConhecidos))
                     .map(VeiculoAberto::id)
                     .toList();
             resultado.put(agendamento.getId(), idsCompativeis);
@@ -68,7 +70,14 @@ public final class CompatibilidadeVeiculoAgendamento {
     }
 
     public static Slot criarSlot(Agendamento agendamento) {
-        return new Slot(agendamento, agendamento.getHorarioChegada().minus(agendamento.getTempoViagem()));
+        return criarSlot(agendamento, agendamento.getToleranciaSeparacao());
+    }
+
+    public static Slot criarSlot(Agendamento agendamento, Duration toleranciaSeparacao) {
+        return new Slot(
+                agendamento,
+                agendamento.getHorarioChegada().minus(agendamento.getTempoViagem()),
+                toleranciaSeparacao);
     }
 
     public static LocalTime horarioSaidaNecessario(Agendamento agendamento) {
@@ -91,12 +100,11 @@ public final class CompatibilidadeVeiculoAgendamento {
             List<Agendamento> ocupantes,
             Slot novo,
             Map<UUID, Slot> slotsConhecidos) {
-        var novosDados = novo.agendamento();
         var novaSaidaNecessaria = novo.horarioSaidaNecessario();
         if (!veiculo.calculaHorarioSaida()
                 && (veiculo.horarioSaida().isAfter(novaSaidaNecessaria)
                         || Duration.between(veiculo.horarioSaida(), novaSaidaNecessaria)
-                                .compareTo(novosDados.getToleranciaSeparacao()) > 0)) {
+                                .compareTo(novo.toleranciaSeparacao()) > 0)) {
             return false;
         }
         for (var ocupante : ocupantes) {
@@ -106,10 +114,10 @@ public final class CompatibilidadeVeiculoAgendamento {
             }
             var diferenca = Duration.between(
                     slotOcupante.horarioSaidaNecessario(), novaSaidaNecessaria).abs();
-            var toleranciaOcupante = slotOcupante.agendamento().getToleranciaSeparacao();
-            var toleranciaRestritiva = toleranciaOcupante.compareTo(novosDados.getToleranciaSeparacao()) <= 0
+            var toleranciaOcupante = slotOcupante.toleranciaSeparacao();
+            var toleranciaRestritiva = toleranciaOcupante.compareTo(novo.toleranciaSeparacao()) <= 0
                     ? toleranciaOcupante
-                    : novosDados.getToleranciaSeparacao();
+                    : novo.toleranciaSeparacao();
             if (diferenca.compareTo(toleranciaRestritiva) > 0) {
                 return false;
             }
@@ -117,6 +125,6 @@ public final class CompatibilidadeVeiculoAgendamento {
         return true;
     }
 
-    public record Slot(Agendamento agendamento, LocalTime horarioSaidaNecessario) {
+    public record Slot(Agendamento agendamento, LocalTime horarioSaidaNecessario, Duration toleranciaSeparacao) {
     }
 }
