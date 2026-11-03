@@ -46,7 +46,7 @@
                     </td>
                     <td class="text-end">
                         <button class="btn btn-sm btn-outline-primary"
-                                hx:get="@{/veiculo/{id}/detalhes(id=${veiculo.id})}"
+                                th:attr="hx-get=@{/veiculo/{id}/detalhes(id=${veiculo.id})}"
                                 hx-target="#modal"
                                 hx-swap="innerHTML"
                                 title="Ver Detalhes">

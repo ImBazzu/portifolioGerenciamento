@@ -117,6 +117,52 @@ class AgendamentoControllerTest {
     }
 
     @Test
+    void editaVeiculoAbertoERetornaParaAgendaGeral() {
+        var api = mock(AgendamentoApi.class);
+        var controller = criarController(api, mock(VeiculoApplicationPorta.class));
+        var idVeiculo = UUID.randomUUID();
+        var data = LocalDate.of(2026, 11, 2);
+        var redirect = new RedirectAttributesModelMap();
+
+        var resultado = controller.editarVeiculo(
+                idVeiculo, data, "Van 02", LocalTime.of(8, 30), false, redirect);
+
+        assertEquals("redirect:/agendamentos?data=2026-11-02", resultado);
+        assertEquals("Veículo atualizado.", redirect.getFlashAttributes().get("sucesso"));
+        verify(api).atualizarVeiculo(eq(idVeiculo), any());
+    }
+
+    @Test
+    void excluiVeiculoDeCarrosERetornaParaPaginaDeCarros() {
+        var api = mock(AgendamentoApi.class);
+        var controller = criarController(api, mock(VeiculoApplicationPorta.class));
+        var idVeiculo = UUID.randomUUID();
+        var data = LocalDate.of(2026, 11, 2);
+        var redirect = new RedirectAttributesModelMap();
+
+        var resultado = controller.excluirVeiculo(idVeiculo, data, true, redirect);
+
+        assertEquals("redirect:/agendamentos/carros?data=2026-11-02", resultado);
+        assertTrue(redirect.getFlashAttributes().get("sucesso").toString().contains("passageiros"));
+        verify(api).removerVeiculo(idVeiculo);
+    }
+
+    @Test
+    void excluiPassageiroPendenteDeCarroERetornaParaPaginaDeCarros() {
+        var api = mock(AgendamentoApi.class);
+        var controller = criarController(api, mock(VeiculoApplicationPorta.class));
+        var idAgendamento = UUID.randomUUID();
+        var data = LocalDate.of(2026, 11, 2);
+        var redirect = new RedirectAttributesModelMap();
+
+        var resultado = controller.excluir(idAgendamento, data, true, redirect);
+
+        assertEquals("redirect:/agendamentos/carros?data=2026-11-02", resultado);
+        assertEquals("Agendamento excluído.", redirect.getFlashAttributes().get("sucesso"));
+        verify(api).remover(idAgendamento);
+    }
+
+    @Test
     void editaAgendamentoERetornaParaPaginaDeCarros() {
         var api = mock(AgendamentoApi.class);
         var controller = criarController(api, mock(VeiculoApplicationPorta.class));
@@ -225,10 +271,13 @@ class AgendamentoControllerTest {
         var idCidade = UUID.randomUUID();
         var idTipoCarro = UUID.randomUUID();
         var idTipoVan = UUID.randomUUID();
+        var idVanAberta = UUID.randomUUID();
         var passageiro = new AgendamentoResponseDto(
-                UUID.randomUUID(), data, idPessoa, UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
+                UUID.randomUUID(), data, idPessoa, UUID.randomUUID(), UUID.randomUUID(), idTipoCarro,
                 idDestino, LocalTime.of(8, 0), LocalTime.of(6, 0), false, 0, null, List.of());
-        var agenda = new AgendaDiaResponseDto(data, List.of(), List.of(passageiro));
+        var vanDisponivel = new VeiculoAbertoResponseDto(
+                idVanAberta, data, idTipoVan, "Van", 15, "Van 1", LocalTime.of(7, 0), 0, List.of());
+        var agenda = new AgendaDiaResponseDto(data, List.of(vanDisponivel), List.of(passageiro));
         when(api.buscarDia(data)).thenReturn(agenda);
         when(pessoas.buscar(idPessoa)).thenReturn(new PessoaResponseDto(
                 idPessoa, "Robert", "", PessoaPrioridade.ALTA, null, "", "123", "11999999999"));
@@ -260,6 +309,9 @@ class AgendamentoControllerTest {
                 model.getAttribute("tiposVeiculoCarro"));
         assertEquals(List.of(new TipoVeiculoResponseDto(idTipoVan, "Van", 15)),
                 model.getAttribute("tiposVeiculoNaoCarro"));
+        var veiculosDisponiveis = (java.util.Map<?, ?>)
+                model.getAttribute("veiculosDisponiveisParaAtribuicaoManual");
+        assertEquals(List.of(idVanAberta), veiculosDisponiveis.get(passageiro.id()));
     }
 
     @Test

@@ -35,8 +35,10 @@ import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendaDiaResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoAtualizarRequestDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoAbertoAtualizarRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificarVeiculosRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificacaoVeiculosResponseDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoAbertoResponseDto;
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaResponseDto;
 import br.com.imbazzu.frontSpring.lista.core.porta.in.ListaApplicationPorta;
@@ -203,6 +205,40 @@ public class AgendamentoController {
             @RequestParam(required = false) String identificacao,
             RedirectAttributes redirect) {
         return abrirVeiculo(data, idTipoVeiculo, identificacao, null, true, redirect);
+    }
+
+    @PostMapping("/veiculos/{idVeiculo}/editar")
+    public String editarVeiculo(
+            @PathVariable UUID idVeiculo,
+            @RequestParam LocalDate data,
+            @RequestParam(required = false) String identificacao,
+            @RequestParam(required = false) LocalTime horarioSaida,
+            @RequestParam(defaultValue = "false") boolean paginaCarros,
+            RedirectAttributes redirect) {
+        try {
+            agendamentoApi.atualizarVeiculo(
+                    idVeiculo, new VeiculoAbertoAtualizarRequestDto(identificacao, horarioSaida));
+            redirect.addFlashAttribute("sucesso", "Veículo atualizado.");
+        } catch (RestClientResponseException e) {
+            redirect.addFlashAttribute("erro", mensagemErro(e));
+        }
+        return paginaCarros ? redirectCarros(data) : redirect(data);
+    }
+
+    @PostMapping("/veiculos/{idVeiculo}/excluir")
+    public String excluirVeiculo(
+            @PathVariable UUID idVeiculo,
+            @RequestParam LocalDate data,
+            @RequestParam(defaultValue = "false") boolean paginaCarros,
+            RedirectAttributes redirect) {
+        try {
+            agendamentoApi.removerVeiculo(idVeiculo);
+            redirect.addFlashAttribute(
+                    "sucesso", "Veículo excluído. Os passageiros foram devolvidos à lista de pendentes.");
+        } catch (RestClientResponseException e) {
+            redirect.addFlashAttribute("erro", mensagemErro(e));
+        }
+        return paginaCarros ? redirectCarros(data) : redirect(data);
     }
 
     private String abrirVeiculo(
@@ -425,6 +461,7 @@ public class AgendamentoController {
     public String excluir(
             @PathVariable UUID idAgendamento,
             @RequestParam LocalDate data,
+            @RequestParam(defaultValue = "false") boolean paginaCarros,
             RedirectAttributes redirect) {
         try {
             agendamentoApi.remover(idAgendamento);
@@ -432,7 +469,7 @@ public class AgendamentoController {
         } catch (RestClientResponseException e) {
             redirect.addFlashAttribute("erro", mensagemErro(e));
         }
-        return redirect(data);
+        return paginaCarros ? redirectCarros(data) : redirect(data);
     }
 
     private void carregarOpcoes(Model model) {
@@ -468,17 +505,16 @@ public class AgendamentoController {
                 agenda.passageirosPendentes().stream()
                         .filter(passageiro -> ehCarro(nomesPorTipo.get(passageiro.idTipoVeiculo())))
                         .toList());
-        var veiculosCarro = agenda.veiculos().stream()
-                .filter(veiculo -> ehCarro(veiculo.nomeTipoVeiculo()))
-                .toList();
         model.addAttribute(
-                "temVeiculoCarroCompativel",
+                "veiculosDisponiveisParaAtribuicaoManual",
                 agenda.passageirosPendentes().stream()
-                        .filter(passageiro -> ehCarro(nomesPorTipo.get(passageiro.idTipoVeiculo())))
                         .collect(java.util.stream.Collectors.toMap(
                                 AgendamentoResponseDto::id,
-                                passageiro -> veiculosCarro.stream().anyMatch(veiculo ->
-                                        passageiro.idsVeiculosCompativeis().contains(veiculo.id())))));
+                                passageiro -> agenda.veiculos().stream()
+                                        .filter(veiculo -> veiculo.capacidade() - veiculo.assentosOcupados()
+                                                >= passageiro.acompanhantes() + 1)
+                                        .map(VeiculoAbertoResponseDto::id)
+                                        .toList())));
     }
 
     private Map<UUID, String> nomesDosTiposVeiculo(Model model) {

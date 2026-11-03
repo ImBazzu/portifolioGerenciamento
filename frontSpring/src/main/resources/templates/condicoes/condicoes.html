@@ -52,17 +52,17 @@
 
                             <!-- Campo de Pesquisa e Filtro por Nível -->
                             <div class="col-md-8">
-                                <form class="d-flex gap-2 justify-content-md-end"
+                                <form class="d-flex flex-wrap gap-2 justify-content-md-end condicoes-filtros"
                                       hx-get="/definicoes/condicoes/filtrar"
                                       hx-target="#cond-ativas"
                                       hx-trigger="keyup from:#inputBusca delay:300ms, change from:#selectFiltroNivel">
 
-                                    <div class="input-group input-group-sm style-search" style="max-width: 280px;">
+                                    <div class="input-group input-group-sm style-search">
                                         <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
                                         <input type="text" id="inputBusca" name="busca" class="form-control" placeholder="Buscar condição (ex: Autista)...">
                                     </div>
 
-                                    <select class="form-select form-select-sm" id="selectFiltroNivel" name="nivel" style="max-width: 180px;">
+                                    <select class="form-select form-select-sm" id="selectFiltroNivel" name="nivel">
                                         <option value="">Todos os Níveis</option>
                                         <option value="Grave">Grave</option>
                                         <option value="Média">Média</option>

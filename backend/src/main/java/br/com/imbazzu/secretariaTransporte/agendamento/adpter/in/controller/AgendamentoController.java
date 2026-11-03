@@ -22,6 +22,7 @@ import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AgendamentoResponseDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.ResultadoSeparacaoResponseDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.VeiculoAbertoResponseDto;
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.VeiculoAbertoAtualizarRequestDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.VeiculoPermitidoResponseDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.VerificarVeiculosRequestDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.VerificacaoVeiculosResponseDto;
@@ -29,6 +30,8 @@ import br.com.imbazzu.secretariaTransporte.agendamento.application.command.abrir
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.abrirDia.AgendamentoCommandAbrirDiaHandler;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.abrirVeiculo.AgendamentoCommandAbrirVeiculo;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.abrirVeiculo.AgendamentoCommandAbrirVeiculoHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.atualizarVeiculo.AgendamentoCommandAtualizarVeiculo;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.atualizarVeiculo.AgendamentoCommandAtualizarVeiculoHandler;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.atribuirVeiculo.AgendamentoCommandAtribuirVeiculo;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.atribuirVeiculo.AgendamentoCommandAtribuirVeiculoHandler;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.criar.AgendamentoCommandCriar;
@@ -40,6 +43,8 @@ import br.com.imbazzu.secretariaTransporte.agendamento.application.command.remov
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.remover.AgendamentoCommandRemoverHandler;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.removerVeiculo.AgendamentoCommandRemoverVeiculo;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.removerVeiculo.AgendamentoCommandRemoverVeiculoHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.removerVeiculoAberto.AgendamentoCommandRemoverVeiculoAberto;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.removerVeiculoAberto.AgendamentoCommandRemoverVeiculoAbertoHandler;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.separarAutomaticamente.AgendamentoCommandSepararAutomaticamente;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.separarAutomaticamente.AgendamentoCommandSepararAutomaticamenteHandler;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.query.buscar.AgendamentoQueryBuscar;
@@ -71,6 +76,8 @@ public class AgendamentoController {
 
     private final AgendamentoCommandAbrirDiaHandler abrirDiaHandler;
     private final AgendamentoCommandAbrirVeiculoHandler abrirVeiculoHandler;
+    private final AgendamentoCommandAtualizarVeiculoHandler atualizarVeiculoHandler;
+    private final AgendamentoCommandRemoverVeiculoAbertoHandler removerVeiculoAbertoHandler;
     private final AgendamentoQueryVerificarVeiculosHandler verificarVeiculosHandler;
     private final AgendamentoCommandCriarHandler criarHandler;
     private final AgendamentoCommandAtualizarHandler atualizarHandler;
@@ -96,6 +103,21 @@ public class AgendamentoController {
                 data, request.idTipoVeiculo(), request.identificacao(), request.horarioSaida()));
         return ResponseEntity.created(URI.create("/api/agendamentos/dias/%s/veiculos/%s"
                 .formatted(data, veiculo.id()))).body(toResponse(veiculo, List.of()));
+    }
+
+    @PutMapping("/veiculos/{id}")
+    public ResponseEntity<VeiculoAbertoResponseDto> atualizarVeiculo(
+            @PathVariable UUID id,
+            @RequestBody @Valid VeiculoAbertoAtualizarRequestDto request) {
+        var veiculo = atualizarVeiculoHandler.handler(new AgendamentoCommandAtualizarVeiculo(
+                id, request.identificacao(), request.horarioSaida()));
+        return ResponseEntity.ok(toResponse(veiculo, List.of()));
+    }
+
+    @DeleteMapping("/veiculos/{id}")
+    public ResponseEntity<Void> removerVeiculoAberto(@PathVariable UUID id) {
+        removerVeiculoAbertoHandler.handler(new AgendamentoCommandRemoverVeiculoAberto(id));
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/dias/{data}/verificar-veiculos")

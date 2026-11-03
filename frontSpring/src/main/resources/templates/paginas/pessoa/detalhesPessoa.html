@@ -1,0 +1,58 @@
+<th:block th:fragment="detalhesPessoa">
+    <div class="custom-modal-backdrop">
+        <section class="custom-modal-card bg-white rounded shadow-lg p-4"
+                 role="dialog" aria-modal="true" aria-labelledby="detalhesPessoaTitulo">
+            <header class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">
+                <div>
+                    <h2 class="h5 fw-bold mb-1" id="detalhesPessoaTitulo" th:text="${pessoa.nome}">Pessoa</h2>
+                    <span class="badge text-bg-light" th:text="${pessoa.prioridade}">MODERADA</span>
+                </div>
+                <button type="button" class="btn-close"
+                        hx:get="@{/pessoas/limpar-modal}" hx-target="#modal" hx-swap="innerHTML"
+                        hx-trigger="fechar-formulario from:body, click"
+                        aria-label="Fechar"></button>
+            </header>
+
+            <dl class="row g-3 mb-0">
+                <div class="col-12 col-md-6">
+                    <dt class="small text-secondary">CPF</dt>
+                    <dd th:text="${pessoa.cpf}">CPF</dd>
+                </div>
+                <div class="col-12 col-md-6">
+                    <dt class="small text-secondary">Telefone</dt>
+                    <dd th:text="${pessoa.telefone}">Telefone</dd>
+                </div>
+                <div class="col-12">
+                    <dt class="small text-secondary">Endereço</dt>
+                    <dd th:text="${pessoa.endereco}">Endereço</dd>
+                </div>
+                <div class="col-12">
+                    <dt class="small text-secondary">Observação</dt>
+                    <dd th:text="${#strings.isEmpty(pessoa.observacao) ? 'Nenhuma observação informada.' : pessoa.observacao}">
+                        Observação
+                    </dd>
+                </div>
+            </dl>
+
+            <footer class="border-top pt-3 mt-3 d-flex flex-wrap justify-content-between gap-2">
+                <button class="btn btn-sm btn-outline-warning"
+                        th:attr="hx-patch=@{/pessoas/{id}/arquivar(id=${pessoa.id})}"
+                        hx-confirm="Deseja arquivar esta pessoa?"
+                        hx-swap="none">
+                    <i class="bi bi-archive me-1"></i>Arquivar
+                </button>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-primary"
+                            th:attr="hx-get=@{/pessoas/abrirFormulario/{id}(id=${pessoa.id})}"
+                            hx-target="#modal" hx-swap="innerHTML">
+                        <i class="bi bi-pencil me-1"></i>Editar
+                    </button>
+                    <button type="button" class="btn btn-sm btn-light border"
+                            hx:get="@{/pessoas/limpar-modal}" hx-target="#modal" hx-swap="innerHTML">
+                        Fechar
+                    </button>
+                </div>
+            </footer>
+        </section>
+    </div>
+</th:block>

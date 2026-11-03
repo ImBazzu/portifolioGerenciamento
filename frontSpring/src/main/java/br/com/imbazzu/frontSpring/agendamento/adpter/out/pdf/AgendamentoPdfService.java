@@ -197,19 +197,22 @@ public final class AgendamentoPdfService {
             List<AgendamentoResponseDto> passageiros,
             Map<UUID, PassageiroDetalheView> detalhes,
             EstilosPdf estilos) throws DocumentException {
-        var tabela = new PdfPTable(new float[] {2.2f, 1.5f, 2.3f, 0.8f});
+        var tabela = new PdfPTable(new float[] {2.1f, 2.2f, 2.3f, 0.8f});
         tabela.setWidthPercentage(100);
         tabela.setHeaderRows(1);
         tabela.setSplitRows(true);
         for (var cabecalho : List.of(
-                "Passageiro / telefone", "Destino / chegada", "Busca / endereço", "Acomp.")) {
+                "Passageiro / telefone", "Cidade / destino / chegada", "Busca / endereço", "Acomp.")) {
             adicionarCelula(tabela, cabecalho, estilos.textoCabecalho(), true);
         }
         for (var passageiro : passageiros) {
             var detalhe = detalhes.get(passageiro.idPessoa());
             adicionarCelula(tabela, detalhe.nome() + "\n" + detalhe.telefone(), estilos.texto(), false);
             adicionarCelula(
-                    tabela, detalhe.destino() + "\nChegada: " + passageiro.horarioChegada(), estilos.texto(), false);
+                    tabela,
+                    detalhe.cidade() + "\n" + detalhe.destino() + "\nChegada: " + passageiro.horarioChegada(),
+                    estilos.texto(),
+                    false);
             adicionarCelula(
                     tabela,
                     passageiro.buscarNaResidencia()

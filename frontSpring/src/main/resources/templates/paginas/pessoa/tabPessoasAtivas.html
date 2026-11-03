@@ -34,16 +34,10 @@
                     <td th:text="${pessoa.telefone}">(00) 00000-0000</td>
                     <td><span class="badge text-bg-light" th:text="${pessoa.prioridade}">MODERADA</span></td>
                     <td class="text-end pe-3">
-                        <button class="btn btn-sm btn-outline-primary" title="Editar"
-                                th:attr="hx-get=@{/pessoas/abrirFormulario/{id}(id=${pessoa.id})}"
+                        <button class="btn btn-sm btn-outline-primary" title="Detalhes"
+                                th:attr="hx-get=@{/pessoas/{id}/detalhes(id=${pessoa.id})}"
                                 hx-target="#modal" hx-swap="innerHTML">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-warning" title="Arquivar"
-                                th:attr="hx-patch=@{/pessoas/{id}/arquivar(id=${pessoa.id})}"
-                                hx-confirm="Deseja arquivar esta pessoa?"
-                                hx-target="this" hx-swap="none">
-                            <i class="bi bi-archive"></i>
+                            <i class="bi bi-info-circle me-1"></i> Detalhes
                         </button>
                     </td>
                 </tr>

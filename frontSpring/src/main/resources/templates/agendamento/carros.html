@@ -126,7 +126,7 @@
                                 <th>Destino</th>
                                 <th>Chegada</th>
                                 <th>Acompanhantes</th>
-                                <th>Veículo compatível</th>
+                                <th>Veículo para atribuição manual</th>
                                 <th>Ações</th>
                             </tr>
                             </thead>
@@ -140,7 +140,8 @@
                                 <td th:text="${passageiro.horarioChegada()}"></td>
                                 <td th:text="${passageiro.acompanhantes() + ' acompanhante(s)'}"></td>
                                 <td>
-                                    <form method="post"
+                                    <form th:if="${!#lists.isEmpty(veiculosDisponiveisParaAtribuicaoManual.get(passageiro.id()))}"
+                                          method="post"
                                           th:action="@{/agendamentos/{id}/veiculo(id=${passageiro.id()})}"
                                           class="d-flex gap-2">
                                         <input type="hidden" name="data" th:value="${data}">
@@ -149,24 +150,35 @@
                                                 name="idVeiculo" required
                                                 th:attr="aria-label='Veículo para ' + ${detalhesPassageiros.get(passageiro.idPessoa()).nome()}">
                                             <option value="">Selecione</option>
-                                            <option th:each="veiculo : ${veiculosCarro}"
-                                                    th:if="${passageiro.idsVeiculosCompativeis().contains(veiculo.id())}"
+                                            <option th:each="veiculo : ${agenda.veiculos()}"
+                                                    th:if="${veiculosDisponiveisParaAtribuicaoManual.get(passageiro.id()).contains(veiculo.id())}"
                                                     th:value="${veiculo.id()}"
-                                                    th:text="${veiculo.identificacao() == null ? veiculo.nomeTipoVeiculo() : veiculo.identificacao()}">
+                                                    th:text="${(veiculo.identificacao() == null ? veiculo.nomeTipoVeiculo() : veiculo.identificacao() + ' — ' + veiculo.nomeTipoVeiculo()) + ' (' + veiculo.assentosOcupados() + '/' + veiculo.capacidade() + ')'}">
                                             </option>
                                         </select>
-                                        <button class="btn btn-sm btn-outline-primary" type="submit"
-                                                th:disabled="${temVeiculoCarroCompativel.get(passageiro.id()) != true}">
+                                        <button class="btn btn-sm btn-outline-primary" type="submit">
                                             Atribuir
                                         </button>
                                     </form>
+                                    <span th:if="${#lists.isEmpty(veiculosDisponiveisParaAtribuicaoManual.get(passageiro.id()))}"
+                                          class="small text-secondary">
+                                        Nenhum veículo aberto possui assentos suficientes.
+                                    </span>
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-secondary" type="button"
-                                            data-bs-toggle="modal"
-                                            th:attr="data-bs-target='#editarAgendamentoModal-' + ${passageiro.id()}">
-                                        Editar
-                                    </button>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button class="btn btn-sm btn-outline-secondary" type="button"
+                                                data-bs-toggle="modal"
+                                                th:attr="data-bs-target='#editarAgendamentoModal-' + ${passageiro.id()}">
+                                            Editar
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" type="button"
+                                                aria-label="Excluir passageiro pendente"
+                                                data-bs-toggle="modal"
+                                                th:attr="data-bs-target='#excluirPassageiroCarroModal-' + ${passageiro.id()}">
+                                            <i class="bi bi-trash me-1"></i>Excluir
+                                        </button>
+                                    </div>
                                     <div th:replace="~{agendamento/modalEditar :: modal(${passageiro}, ${data}, ${tiposVeiculo}, ${destinos}, ${agenda.veiculos()}, true)}"></div>
                                 </td>
                             </tr>
@@ -174,6 +186,34 @@
                         </table>
                     </div>
                 </section>
+                <th:block th:each="passageiro : ${passageirosPendentesCarro}">
+                    <div class="modal fade" th:id="'excluirPassageiroCarroModal-' + ${passageiro.id()}"
+                         tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form method="post"
+                                      th:action="@{/agendamentos/{id}/excluir(id=${passageiro.id()})}">
+                                    <input type="hidden" name="data" th:value="${data}">
+                                    <input type="hidden" name="paginaCarros" value="true">
+                                    <div class="modal-header">
+                                        <h2 class="modal-title fs-5">Excluir agendamento</h2>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Fechar"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Deseja excluir o agendamento pendente de
+                                        <strong th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></strong>?
+                                        Esta ação não pode ser desfeita.
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancelar</button>
+                                        <button class="btn btn-danger" type="submit">Excluir agendamento</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </th:block>
 
                 <section>
                     <h2 class="h5 mb-3">Carros e passageiros atribuídos</h2>
@@ -192,11 +232,14 @@
                                             <span th:text="${veiculo.assentosOcupados() + ' / ' + veiculo.capacidade() + ' lugares'}"></span>
                                         </div>
                                     </div>
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                       th:href="@{/agendamentos/pdf/veiculos/{id}(id=${veiculo.id()}, data=${data})}"
-                                       target="_blank">
-                                        <i class="bi bi-file-earmark-pdf me-1"></i>PDF deste carro
-                                    </a>
+                                    <div class="d-flex flex-column align-items-end gap-2">
+                                        <a class="btn btn-sm btn-outline-secondary"
+                                           th:href="@{/agendamentos/pdf/veiculos/{id}(id=${veiculo.id()}, data=${data})}"
+                                           target="_blank">
+                                            <i class="bi bi-file-earmark-pdf me-1"></i>PDF deste carro
+                                        </a>
+                                        <div th:replace="~{agendamento/controlesVeiculo :: controles(${veiculo}, ${data}, true)}"></div>
+                                    </div>
                                 </div>
                                 <div class="card-body">
                                     <div th:if="${#lists.isEmpty(veiculo.passageiros())}" class="text-secondary small">

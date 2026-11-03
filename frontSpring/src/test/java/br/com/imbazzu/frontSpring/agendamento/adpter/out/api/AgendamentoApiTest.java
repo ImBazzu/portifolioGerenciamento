@@ -109,4 +109,36 @@ class AgendamentoApiTest {
 
         server.verify();
     }
+
+    @Test
+    void atualizarVeiculoAbertoUsaContratoPutDoBackend() {
+        var id = UUID.fromString("6b0d3800-2ca7-4e1f-bfb3-36f849104d83");
+        server.expect(requestTo("http://localhost:8080/api/agendamentos/veiculos/" + id))
+                .andExpect(method(HttpMethod.PUT))
+                .andExpect(content().json("""
+                        {
+                          "identificacao":"Van 02",
+                          "horarioSaida":"08:30:00"
+                        }
+                        """))
+                .andRespond(withSuccess());
+
+        api.atualizarVeiculo(
+                id, new br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoAbertoAtualizarRequestDto(
+                        "Van 02", LocalTime.of(8, 30)));
+
+        server.verify();
+    }
+
+    @Test
+    void excluirVeiculoAbertoUsaContratoDeleteDoBackend() {
+        var id = UUID.fromString("6b0d3800-2ca7-4e1f-bfb3-36f849104d83");
+        server.expect(requestTo("http://localhost:8080/api/agendamentos/veiculos/" + id))
+                .andExpect(method(HttpMethod.DELETE))
+                .andRespond(withSuccess());
+
+        api.removerVeiculo(id);
+
+        server.verify();
+    }
 }

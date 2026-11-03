@@ -15,4 +15,6 @@ public interface AgendamentoCommandPorta {
     void deletar(UUID id);
 
     VeiculoAberto salvar(VeiculoAberto veiculo);
+
+    void deletarVeiculo(UUID id);
 }

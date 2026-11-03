@@ -88,6 +88,13 @@ public class PessoaController {
     }
 
     @HxRequest
+    @GetMapping("/{id}/detalhes")
+    public String detalhes(@PathVariable UUID id, Model model) {
+        model.addAttribute("pessoa", application.buscar(id));
+        return "paginas/pessoa/detalhesPessoa :: detalhesPessoa";
+    }
+
+    @HxRequest
     @PostMapping
     public String salvar(
             @Valid @ModelAttribute("pessoa") PessoaRequestDto pessoa,
@@ -149,7 +156,7 @@ public class PessoaController {
 
     @HxRequest
     @PatchMapping("/{id}/arquivar")
-    @HxTriggerAfterSettle("atualizar-pessoas")
+    @HxTriggerAfterSettle({"atualizar-pessoas", "fechar-formulario"})
     @ResponseBody
     public void arquivar(@PathVariable UUID id) {
         application.arquivar(id);

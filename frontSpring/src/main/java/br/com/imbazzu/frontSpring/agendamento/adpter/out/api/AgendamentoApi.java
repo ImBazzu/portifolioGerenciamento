@@ -15,6 +15,7 @@ import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendaDiaResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.ResultadoSeparacaoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificarVeiculosRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificacaoVeiculosResponseDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoAbertoAtualizarRequestDto;
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
 import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
 
@@ -43,6 +44,22 @@ public class AgendamentoApi {
                 .uri(PATH + "/dias/{data}/veiculos", data)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(request)
+                .retrieve()
+                .toBodilessEntity());
+    }
+
+    public void atualizarVeiculo(UUID id, VeiculoAbertoAtualizarRequestDto request) {
+        executar(() -> api.put()
+                .uri(PATH + "/veiculos/{id}", id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .retrieve()
+                .toBodilessEntity());
+    }
+
+    public void removerVeiculo(UUID id) {
+        executar(() -> api.delete()
+                .uri(PATH + "/veiculos/{id}", id)
                 .retrieve()
                 .toBodilessEntity());
     }

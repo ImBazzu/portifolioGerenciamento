@@ -79,6 +79,7 @@ class AgendamentoPdfServiceTest {
             assertTrue(texto.contains("Assinatura do motorista"));
             assertTrue(texto.contains("Conferência da secretaria"));
             assertTrue(texto.contains("Maria Silva"));
+            assertTrue(texto.contains("Aracaju"));
             var recursos = leitor.getPageN(pagina).getAsDict(PdfName.RESOURCES);
             assertTrue(recursos.getAsDict(PdfName.XOBJECT).size() > 0);
         }

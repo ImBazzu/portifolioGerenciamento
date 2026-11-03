@@ -14,6 +14,7 @@ import br.com.imbazzu.secretariaTransporte.agendamento.application.AgendamentoCo
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.model.ResultadoSeparacaoAutomatica;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.VeiculoAberto;
+import br.com.imbazzu.secretariaTransporte.agendamento.core.model.TipoVeiculoAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.AgendamentoCommandPorta;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.AgendamentoQueryPorta;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.AgendamentoValidacao;
@@ -47,9 +48,10 @@ public class AgendamentoCommandSepararAutomaticamenteHandler {
             }
         }
         pendentes.sort(Comparator.comparing(slot -> slot.agendamento().getHorarioChegada()));
-        var veiculos = consultas.listarVeiculos(command.data());
+        var veiculos = new ArrayList<>(consultas.listarVeiculos(command.data()));
         var ocupantesPorVeiculo = ocupantesPorVeiculo(todos);
         var toleranciasPorTipo = AgendamentoCompatibilidadeResolver.toleranciasPorTipo(consultas, todos);
+        var tiposVeiculoPorId = new HashMap<UUID, TipoVeiculoAgendaDados>();
 
         int alocados = 0;
         for (var slot : pendentes) {
@@ -59,7 +61,7 @@ public class AgendamentoCommandSepararAutomaticamenteHandler {
                         "A regra de cadastro não permite tipos de veículo compatíveis com esta pessoa");
                 continue;
             }
-            var veiculosCompativeis = veiculos.stream()
+            var veiculoEscolhido = veiculos.stream()
                     .filter(veiculo -> VeiculoAberto.tipoCalculaHorarioSaida(veiculo.nomeTipoVeiculo()))
                     .filter(veiculo -> tolerancias.containsKey(veiculo.idTipoVeiculo()))
                     .filter(veiculo -> CompatibilidadeVeiculoAgendamento.compativel(
@@ -68,28 +70,48 @@ public class AgendamentoCommandSepararAutomaticamenteHandler {
                             CompatibilidadeVeiculoAgendamento.criarSlot(
                                     slot.agendamento(), tolerancias.get(veiculo.idTipoVeiculo())),
                             slotsConhecidos))
-                    .sorted(Comparator.comparingInt(veiculo -> CompatibilidadeVeiculoAgendamento.capacidadeRestante(
+                    .min(Comparator.comparingInt(veiculo -> CompatibilidadeVeiculoAgendamento.capacidadeRestante(
                             veiculo,
                             ocupantesPorVeiculo.getOrDefault(veiculo.id(), List.of()),
                             slot.agendamento())))
-                    .toList();
-            if (veiculosCompativeis.isEmpty()) {
-                var permitidos = veiculos.stream()
-                        .filter(veiculo -> VeiculoAberto.tipoCalculaHorarioSaida(veiculo.nomeTipoVeiculo()))
-                        .filter(veiculo -> tolerancias.containsKey(veiculo.idTipoVeiculo()))
+                    .orElse(null);
+            if (veiculoEscolhido == null) {
+                var tiposCarroPermitidos = tolerancias.keySet().stream()
+                        .map(idTipo -> tiposVeiculoPorId.computeIfAbsent(idTipo, consultas::buscarTipoVeiculo))
+                        .filter(tipo -> VeiculoAberto.tipoCalculaHorarioSaida(tipo.nome()))
                         .toList();
-                motivosPendencia.put(slot.agendamento().getId(), motivoPendencia(
-                        permitidos, ocupantesPorVeiculo, slot.agendamento()));
-                continue;
+                var tipoCarro = tiposCarroPermitidos.stream()
+                        .filter(TipoVeiculoAgendaDados::ativo)
+                        .filter(tipo -> tipo.capacidade() >= slot.agendamento().quantidadePessoas())
+                        .min(Comparator.comparingInt(
+                                tipo -> tipo.capacidade() - slot.agendamento().quantidadePessoas()))
+                        .orElse(null);
+                if (tipoCarro == null) {
+                    motivosPendencia.put(slot.agendamento().getId(),
+                            motivoSemCarroCompativel(tiposCarroPermitidos, slot.agendamento()));
+                    continue;
+                }
+
+                veiculoEscolhido = comandos.salvar(new VeiculoAberto(
+                        UUID.randomUUID(),
+                        command.data(),
+                        tipoCarro.id(),
+                        tipoCarro.nome(),
+                        tipoCarro.capacidade(),
+                        null,
+                        null,
+                        true));
+                veiculos.add(veiculoEscolhido);
+                ocupantesPorVeiculo.put(veiculoEscolhido.id(), new ArrayList<>());
             }
 
-            var escolhido = veiculosCompativeis.getFirst();
-            var tolerancia = tolerancias.get(escolhido.idTipoVeiculo());
-            slot.agendamento().atribuirVeiculo(escolhido.id(), escolhido.idTipoVeiculo(), tolerancia);
+            var tolerancia = tolerancias.get(veiculoEscolhido.idTipoVeiculo());
+            slot.agendamento().atribuirVeiculo(
+                    veiculoEscolhido.id(), veiculoEscolhido.idTipoVeiculo(), tolerancia);
             comandos.salvar(slot.agendamento());
             slotsConhecidos.put(
                     slot.agendamento().getId(), CompatibilidadeVeiculoAgendamento.criarSlot(slot.agendamento()));
-            ocupantesPorVeiculo.computeIfAbsent(escolhido.id(), ignored -> new ArrayList<>())
+            ocupantesPorVeiculo.computeIfAbsent(veiculoEscolhido.id(), ignored -> new ArrayList<>())
                     .add(slot.agendamento());
             alocados++;
         }
@@ -120,18 +142,17 @@ public class AgendamentoCommandSepararAutomaticamenteHandler {
         return resultado;
     }
 
-    private static String motivoPendencia(
-            List<VeiculoAberto> veiculos,
-            HashMap<UUID, List<Agendamento>> ocupantesPorVeiculo,
+    private static String motivoSemCarroCompativel(
+            List<TipoVeiculoAgendaDados> tiposCarroPermitidos,
             Agendamento agendamento) {
-        if (veiculos.isEmpty()) {
-            return "Nenhum veículo físico de um tipo permitido pela regra foi aberto para o dia";
+        if (tiposCarroPermitidos.isEmpty()) {
+            return "A regra de cadastro não permite tipos de veículo Carro";
         }
-        if (veiculos.stream().noneMatch(veiculo -> CompatibilidadeVeiculoAgendamento.capacidadeDisponivel(
-                veiculo, ocupantesPorVeiculo.getOrDefault(veiculo.id(), List.of()), agendamento))) {
-            return "Não há assentos disponíveis nos tipos de veículo permitidos pela regra";
+        if (tiposCarroPermitidos.stream().noneMatch(tipo ->
+                tipo.ativo() && tipo.capacidade() >= agendamento.quantidadePessoas())) {
+            return "Não há tipo Carro ativo permitido pela regra com capacidade suficiente";
         }
-        return "Horário de saída incompatível com a tolerância das regras";
+        return "Não foi possível abrir um Carro compatível com as regras de separação";
     }
 
 }

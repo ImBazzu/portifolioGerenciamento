@@ -64,7 +64,7 @@ public class AgendamentoCommandJpaAdapter implements AgendamentoCommandPorta {
     @Override
     @Transactional
     public VeiculoAberto salvar(VeiculoAberto veiculo) {
-        var entidade = new VeiculoAgendaJpa();
+        var entidade = veiculoRepository.findById(veiculo.id()).orElseGet(VeiculoAgendaJpa::new);
         entidade.setId(veiculo.id());
         entidade.setData(veiculo.data());
         entidade.setIdTipoVeiculo(veiculo.idTipoVeiculo());
@@ -75,5 +75,11 @@ public class AgendamentoCommandJpaAdapter implements AgendamentoCommandPorta {
         entidade.setHorarioSaidaCalculado(veiculo.horarioSaidaCalculado());
         veiculoRepository.saveAndFlush(entidade);
         return veiculo;
+    }
+
+    @Override
+    @Transactional
+    public void deletarVeiculo(UUID id) {
+        veiculoRepository.deleteById(id);
     }
 }
