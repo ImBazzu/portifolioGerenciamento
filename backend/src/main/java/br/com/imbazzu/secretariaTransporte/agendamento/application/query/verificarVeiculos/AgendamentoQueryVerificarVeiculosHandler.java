@@ -15,6 +15,7 @@ import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.Agendament
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.AgendamentoValidacao;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.RegraCadastroAgendamento;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.DadosInvalidosException;
+import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.VeiculoAberto;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -34,11 +35,6 @@ public class AgendamentoQueryVerificarVeiculosHandler {
         var pessoa = AgendamentoValidacao.validarPessoa(consultas, query.idPessoa());
         var destino = AgendamentoValidacao.validarDestino(consultas, query.idDestino());
         AgendamentoValidacao.validarLista(consultas, query.idLista());
-        if (veiculosAbertos.isEmpty()) {
-            return new VerificacaoVeiculos(List.of(),
-                    List.of("Abra pelo menos um veículo antes de verificar os tipos permitidos"));
-        }
-
         var idsPorTipo = new HashMap<java.util.UUID, List<java.util.UUID>>();
         var motivos = new LinkedHashSet<String>();
         var regras = consultas.listarRegrasCadastro(query.idLista());
@@ -71,11 +67,13 @@ public class AgendamentoQueryVerificarVeiculosHandler {
                     motivos.add("O tipo de veículo %s não possui lugares suficientes".formatted(tipo.nome()));
                     continue;
                 }
-                if (veiculosAbertos.stream().noneMatch(veiculo -> veiculo.idTipoVeiculo().equals(idTipo))) {
+                if (!VeiculoAberto.tipoCalculaHorarioSaida(tipo.nome())
+                        && veiculosAbertos.stream().noneMatch(veiculo -> veiculo.idTipoVeiculo().equals(idTipo))) {
                     motivos.add("Nenhum veículo físico do tipo %s foi aberto para o dia".formatted(tipo.nome()));
                     continue;
                 }
-                if (consultas.buscarToleranciaSeparacao(query.idLista(), idTipo).isEmpty()) {
+                if (VeiculoAberto.tipoCalculaHorarioSaida(tipo.nome())
+                        && consultas.buscarToleranciaSeparacao(query.idLista(), idTipo).isEmpty()) {
                     motivos.add("A lista não possui regra de tolerância para o tipo de veículo %s"
                             .formatted(tipo.nome()));
                     continue;

@@ -12,6 +12,7 @@ import br.com.imbazzu.secretariaTransporte.agendamento.core.model.DestinoAgendaD
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.PessoaAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.RegraCadastroAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.AgendamentoQueryPorta;
+import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.VeiculoAberto;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.RegraCadastroAgendamento;
 
 public final class AgendamentoCompatibilidadeResolver {
@@ -54,10 +55,15 @@ public final class AgendamentoCompatibilidadeResolver {
 
             var tolerancias = new HashMap<UUID, Duration>();
             for (var idTipo : regra.idsVeiculos()) {
+                var tipo = consultas.buscarTipoVeiculo(idTipo);
+                if (!VeiculoAberto.tipoCalculaHorarioSaida(tipo.nome())) {
+                    tolerancias.put(idTipo, Duration.ZERO);
+                    continue;
+                }
                 var tolerancia = toleranciasPorLista
                         .computeIfAbsent(agendamento.getIdLista(), ignored -> new HashMap<>())
-                        .computeIfAbsent(idTipo, tipo -> consultas.buscarToleranciaSeparacao(
-                                agendamento.getIdLista(), tipo));
+                        .computeIfAbsent(idTipo, ignored -> consultas.buscarToleranciaSeparacao(
+                                agendamento.getIdLista(), idTipo));
                 tolerancia.ifPresent(valor -> tolerancias.put(idTipo, valor));
             }
             resultado.put(agendamento.getId(), Map.copyOf(tolerancias));

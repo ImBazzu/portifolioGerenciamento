@@ -4,9 +4,9 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.Locale;
 
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.DadosInvalidosException;
+import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.model.TipoVeiculo;
 
 public record VeiculoAberto(
         UUID id,
@@ -33,6 +33,6 @@ public record VeiculoAberto(
     }
 
     public static boolean tipoCalculaHorarioSaida(String nomeTipoVeiculo) {
-        return nomeTipoVeiculo.strip().toLowerCase(Locale.ROOT).startsWith("carro");
+        return TipoVeiculo.ehCarro(nomeTipoVeiculo);
     }
 }

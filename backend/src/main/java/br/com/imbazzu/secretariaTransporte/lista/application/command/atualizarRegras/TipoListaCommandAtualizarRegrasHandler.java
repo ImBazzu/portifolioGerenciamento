@@ -4,8 +4,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.Observacao;
+import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.RegraDeNegocioException;
 import br.com.imbazzu.secretariaTransporte.lista.core.excecoes.TipoListaNaoEncontradoException;
 import br.com.imbazzu.secretariaTransporte.lista.core.porta.out.TipoListaPorta;
+import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.model.TipoVeiculo;
+import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.porta.out.TipoVeiculoQueryPorta;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -13,11 +16,20 @@ import lombok.RequiredArgsConstructor;
 public class TipoListaCommandAtualizarRegrasHandler {
 
     private final TipoListaPorta porta;
+    private final TipoVeiculoQueryPorta tipoVeiculoQuery;
 
     @Transactional
     public void handler(TipoListaCommandAtualizarRegras command) {
         var lista = porta.buscarPorId(command.id())
                 .orElseThrow(() -> new TipoListaNaoEncontradoException(command.id()));
+
+        command.regrasSeparacao().forEach(regra -> {
+            var tipoVeiculo = tipoVeiculoQuery.buscarAtivo(regra.idTipoVeiculo());
+            if (!TipoVeiculo.ehCarro(tipoVeiculo.nome())) {
+                throw new RegraDeNegocioException(
+                        "A regra de separação só pode ser aplicada a tipos de veículo Carro.");
+            }
+        });
 
         // Os getters devolvem cópia (List.copyOf), então remover durante a iteração é seguro.
         lista.getListaRegrasCadastro().forEach(regra -> lista.removerRegraCadastro(regra.getId()));

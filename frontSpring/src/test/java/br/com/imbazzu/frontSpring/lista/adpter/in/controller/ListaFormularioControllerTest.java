@@ -1,6 +1,7 @@
 package br.com.imbazzu.frontSpring.lista.adpter.in.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -12,12 +13,43 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 import br.com.imbazzu.frontSpring.localidade.core.porta.in.LocalidadeApplicationPorta;
+import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaRegrasRequestDto;
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaRequestDto;
 import br.com.imbazzu.frontSpring.lista.core.porta.in.ListaApplicationPorta;
+import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
+import org.springframework.ui.ExtendedModelMap;
 
 class ListaFormularioControllerTest {
+
+    @Test
+    void formularioOfereceSomenteTiposCarroParaRegrasDeSeparacao() {
+        var lista = mock(ListaApplicationPorta.class);
+        var localidade = mock(LocalidadeApplicationPorta.class);
+        var veiculos = mock(VeiculoApplicationPorta.class);
+        var idCarro = UUID.randomUUID();
+        var idCarroAdaptado = UUID.randomUUID();
+        var idVan = UUID.randomUUID();
+        when(veiculos.listar("", 0)).thenReturn(new ResultadoPaginado<>(
+                List.of(
+                        new TipoVeiculoResponseDto(idCarro, "Carro", 4),
+                        new TipoVeiculoResponseDto(idCarroAdaptado, "Carro adaptado", 4),
+                        new TipoVeiculoResponseDto(idVan, "Van", 15)),
+                0, 20, 3, 1));
+        when(localidade.listarCidades("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 20, 0, 0));
+        var controller = new ListaFormularioController(lista, localidade, veiculos);
+        var model = new ExtendedModelMap();
+
+        controller.formNovo(model);
+
+        var opcoesSeparacao = model.getAttribute("opcoesVeiculoSeparacao");
+        assertTrue(opcoesSeparacao instanceof List<?>);
+        assertEquals(List.of(
+                new TipoVeiculoResponseDto(idCarro, "Carro", 4),
+                new TipoVeiculoResponseDto(idCarroAdaptado, "Carro adaptado", 4)), opcoesSeparacao);
+        assertEquals(3, ((List<?>) model.getAttribute("opcoesVeiculo")).size());
+    }
 
     @Test
     void salvarEncaminhaRegrasDeCadastroESeparacao() throws Exception {

@@ -20,7 +20,7 @@
                     </a>
                     <a class="btn btn-outline-primary" th:href="@{/agendamentos/pdf/carros(data=${data})}"
                        target="_blank">
-                        <i class="bi bi-file-earmark-pdf me-1"></i>PDF geral de carros
+                        <i class="bi bi-file-earmark-pdf me-1"></i>PDF único de todos os carros
                     </a>
                 </div>
             </header>
@@ -58,6 +58,57 @@
                 </section>
 
                 <section class="card border-0 shadow-sm mb-4">
+                    <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                        <div>
+                            <h2 class="h5 mb-1">Abrir carro</h2>
+                            <p class="text-secondary mb-0">Registre um carro para atribuir passageiros desta agenda.</p>
+                        </div>
+                        <button class="btn btn-primary" type="button"
+                                data-bs-toggle="modal" data-bs-target="#abrirCarroModal"
+                                th:disabled="${#lists.isEmpty(tiposVeiculoCarro)}">
+                            <i class="bi bi-plus-lg me-1"></i>Abrir carro
+                        </button>
+                    </div>
+                </section>
+
+                <div class="modal fade" id="abrirCarroModal" tabindex="-1" aria-labelledby="abrirCarroTitulo"
+                     aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <form method="post" th:action="@{/agendamentos/carros/veiculos}">
+                                <input type="hidden" name="data" th:value="${data}">
+                                <div class="modal-header">
+                                    <h2 class="modal-title fs-5" id="abrirCarroTitulo">Abrir carro</h2>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label" for="tipoCarro">Tipo de carro</label>
+                                        <select class="form-select" name="idTipoVeiculo" id="tipoCarro" required>
+                                            <option value="">Selecione</option>
+                                            <option th:each="tipo : ${tiposVeiculoCarro}" th:value="${tipo.id()}"
+                                                    th:text="${tipo.nome() + ' — ' + tipo.capacidade() + ' lugares'}">
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="form-label" for="identificacaoCarro">Identificação</label>
+                                        <input class="form-control" id="identificacaoCarro" name="identificacao"
+                                               maxlength="80" placeholder="Ex.: carro 01">
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancelar</button>
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="bi bi-plus-lg me-1"></i>Abrir carro
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="card border-0 shadow-sm mb-4">
                     <div class="card-header bg-white">
                         <h2 class="h5 mb-0">Passageiros pendentes</h2>
                     </div>
@@ -76,6 +127,7 @@
                                 <th>Chegada</th>
                                 <th>Acompanhantes</th>
                                 <th>Veículo compatível</th>
+                                <th>Ações</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -109,6 +161,14 @@
                                         </button>
                                     </form>
                                 </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-secondary" type="button"
+                                            data-bs-toggle="modal"
+                                            th:attr="data-bs-target='#editarAgendamentoModal-' + ${passageiro.id()}">
+                                        Editar
+                                    </button>
+                                    <div th:replace="~{agendamento/modalEditar :: modal(${passageiro}, ${data}, ${tiposVeiculo}, ${destinos}, ${agenda.veiculos()}, true)}"></div>
+                                </td>
                             </tr>
                             </tbody>
                         </table>
@@ -133,7 +193,7 @@
                                         </div>
                                     </div>
                                     <a class="btn btn-sm btn-outline-secondary"
-                                       th:href="@{/agendamentos/pdf/carros/{id}(id=${veiculo.id()}, data=${data})}"
+                                       th:href="@{/agendamentos/pdf/veiculos/{id}(id=${veiculo.id()}, data=${data})}"
                                        target="_blank">
                                         <i class="bi bi-file-earmark-pdf me-1"></i>PDF deste carro
                                     </a>
@@ -156,13 +216,21 @@
                                                 <span th:text="${passageiro.acompanhantes() + ' acompanhante(s)'}"></span>
                                             </div>
                                         </div>
-                                        <form method="post"
-                                              th:action="@{/agendamentos/{id}/remover-veiculo(id=${passageiro.id()})}"
-                                              onsubmit="return confirm('Retirar este passageiro do carro?')">
-                                            <input type="hidden" name="data" th:value="${data}">
-                                            <input type="hidden" name="paginaCarros" value="true">
-                                            <button class="btn btn-sm btn-outline-secondary" type="submit">Retirar</button>
-                                        </form>
+                                        <div class="d-flex flex-column gap-2">
+                                            <button class="btn btn-sm btn-outline-primary" type="button"
+                                                    data-bs-toggle="modal"
+                                                    th:attr="data-bs-target='#editarAgendamentoModal-' + ${passageiro.id()}">
+                                                Editar
+                                            </button>
+                                            <form method="post"
+                                                  th:action="@{/agendamentos/{id}/remover-veiculo(id=${passageiro.id()})}"
+                                                  onsubmit="return confirm('Retirar este passageiro do carro?')">
+                                                <input type="hidden" name="data" th:value="${data}">
+                                                <input type="hidden" name="paginaCarros" value="true">
+                                                <button class="btn btn-sm btn-outline-secondary" type="submit">Retirar</button>
+                                            </form>
+                                        </div>
+                                        <div th:replace="~{agendamento/modalEditar :: modal(${passageiro}, ${data}, ${tiposVeiculo}, ${destinos}, ${agenda.veiculos()}, true)}"></div>
                                     </div>
                                 </div>
                             </article>
@@ -173,5 +241,6 @@
         </div>
     </main>
 </div>
+<script th:src="@{/js/agendamento-edicao.js}" defer></script>
 </body>
 </html>

@@ -159,7 +159,7 @@
                             <span class="lista-section-number">03</span>
                             <div>
                                 <h3>Regras de separação</h3>
-                                <p>Configure o intervalo mínimo entre atendimentos por veículo.</p>
+                                <p>Configure a tolerância dos tipos de carro usada na separação automática.</p>
                             </div>
                             <button type="button" class="btn btn-sm btn-outline-primary ms-auto"
                                     data-adicionar-regra="separacao">
@@ -181,7 +181,7 @@
                                         <label class="form-label">Tipo de veículo <span class="text-danger">*</span></label>
                                         <div class="lista-checkbox-group" data-grupo-obrigatorio="idTipoVeiculo">
                                             <div class="lista-checkbox-options">
-                                                <label class="lista-checkbox-option" th:each="opcao : ${opcoesVeiculo}">
+                                                <label class="lista-checkbox-option" th:each="opcao : ${opcoesVeiculoSeparacao}">
                                                     <input class="form-check-input" type="checkbox"
                                                            data-campo="idTipoVeiculo" data-selecao-unica
                                                            th:value="${opcao.id}"
@@ -313,7 +313,7 @@
                     <label class="form-label">Tipo de veículo <span class="text-danger">*</span></label>
                     <div class="lista-checkbox-group" data-grupo-obrigatorio="idTipoVeiculo">
                         <div class="lista-checkbox-options">
-                            <label class="lista-checkbox-option" th:each="opcao : ${opcoesVeiculo}">
+                            <label class="lista-checkbox-option" th:each="opcao : ${opcoesVeiculoSeparacao}">
                                 <input class="form-check-input" type="checkbox"
                                        data-campo="idTipoVeiculo" data-selecao-unica th:value="${opcao.id}">
                                 <span th:text="${opcao.nome}">Veículo</span>

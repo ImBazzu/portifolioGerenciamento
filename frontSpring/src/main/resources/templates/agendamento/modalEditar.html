@@ -1,0 +1,81 @@
+<div th:fragment="modal(passageiro, data, tiposVeiculo, destinos, veiculos, paginaCarros)"
+     class="modal fade" th:id="'editarAgendamentoModal-' + ${passageiro.id()}"
+     tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" th:action="@{/agendamentos/{id}/editar(id=${passageiro.id()})}"
+                  class="js-editar-agendamento-form">
+                <input type="hidden" name="data" th:value="${data}">
+                <input th:if="${paginaCarros}" type="hidden" name="paginaCarros" value="true">
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5">Editar agendamento</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label" th:for="'editarTipo-' + ${passageiro.id()}">Tipo de veículo</label>
+                        <select class="form-select js-editar-tipo" name="idTipoVeiculo"
+                                th:id="'editarTipo-' + ${passageiro.id()}" required>
+                            <option th:each="tipo : ${tiposVeiculo}" th:value="${tipo.id()}"
+                                    th:text="${tipo.nome() + ' — ' + tipo.capacidade() + ' lugares'}"
+                                    th:selected="${tipo.id() == passageiro.idTipoVeiculo()}"
+                                    th:attr="data-carro=${#strings.toLowerCase(tipo.nome()).startsWith('carro')}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label" th:for="'editarDestino-' + ${passageiro.id()}">Destino</label>
+                        <select class="form-select" name="idDestino"
+                                th:id="'editarDestino-' + ${passageiro.id()}" required>
+                            <option th:each="destino : ${destinos}" th:value="${destino.id()}"
+                                    th:text="${destino.nome() + ' — ' + destino.cidade()}"
+                                    th:selected="${destino.id() == passageiro.idDestino()}">
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label" th:for="'editarChegada-' + ${passageiro.id()}">Horário de chegada</label>
+                        <input class="form-control" type="time" name="horarioChegada"
+                               th:id="'editarChegada-' + ${passageiro.id()}"
+                               th:value="${passageiro.horarioChegada()}" required>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label" th:for="'editarAcompanhantes-' + ${passageiro.id()}">Acompanhantes</label>
+                        <input class="form-control" type="number" name="acompanhantes" min="0"
+                               th:id="'editarAcompanhantes-' + ${passageiro.id()}"
+                               th:value="${passageiro.acompanhantes()}" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" th:for="'editarVeiculo-' + ${passageiro.id()}">Veículo físico</label>
+                        <select class="form-select js-editar-veiculo" name="idVeiculo"
+                                th:id="'editarVeiculo-' + ${passageiro.id()}">
+                            <option value="">Sem veículo físico</option>
+                            <option th:each="veiculo : ${veiculos}" th:value="${veiculo.id()}"
+                                    th:text="${veiculo.nomeTipoVeiculo() + (veiculo.identificacao() == null ? '' : ' — ' + veiculo.identificacao())}"
+                                    th:selected="${veiculo.id() == passageiro.idVeiculoAberto()}"
+                                    th:attr="data-tipo=${veiculo.idTipoVeiculo()}">
+                            </option>
+                        </select>
+                        <div class="form-text">Veículos não carro precisam ser selecionados. Para Carro, a atribuição é opcional.</div>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="buscarNaResidencia" value="true"
+                                   th:id="'editarBusca-' + ${passageiro.id()}"
+                                   th:checked="${passageiro.buscarNaResidencia()}">
+                            <label class="form-check-label" th:for="'editarBusca-' + ${passageiro.id()}">
+                                Buscar passageiro na residência
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-check-lg me-1"></i>Salvar alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

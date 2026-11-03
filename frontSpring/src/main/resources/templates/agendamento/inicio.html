@@ -94,15 +94,14 @@
                         <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
                             <div>
                                 <h2 class="h5 mb-1">Abrir veículo físico</h2>
-                                <p class="text-secondary mb-0">Registre cada veículo disponível para esta data.</p>
+                                <p class="text-secondary mb-0">Registre ônibus, vans e demais veículos para esta data.</p>
                             </div>
                             <button class="btn btn-primary align-self-start" type="button"
                                     data-bs-toggle="modal" data-bs-target="#abrirVeiculoModal">
                                 <i class="bi bi-plus-lg me-1"></i>Abrir veículo
                             </button>
                         </div>
-                        <div class="form-text mt-2">Tipos com nome iniciado por “Carro” calculam a saída pelos passageiros;
-                            os demais precisam de horário fixo.</div>
+                        <div class="form-text mt-2">Carros são abertos na página de passageiros de carros.</div>
                     </div>
                 </section>
 
@@ -121,20 +120,20 @@
                                         <label class="form-label" for="tipoVeiculo">Tipo de veículo</label>
                                         <select class="form-select" name="idTipoVeiculo" id="tipoVeiculo" required>
                                             <option value="">Selecione</option>
-                                            <option th:each="tipo : ${tiposVeiculo}" th:value="${tipo.id()}"
+                                            <option th:each="tipo : ${tiposVeiculoNaoCarro}" th:value="${tipo.id()}"
                                                     th:text="${tipo.nome() + ' — ' + tipo.capacidade() + ' lugares'}"
-                                                    th:attr="data-carro=${#strings.toLowerCase(tipo.nome()).startsWith('carro')}">
                                             </option>
                                         </select>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label" for="identificacaoVeiculo">Identificação</label>
                                         <input class="form-control" id="identificacaoVeiculo" name="identificacao"
-                                               maxlength="80" placeholder="Ex.: carro 01">
+                                               maxlength="80" placeholder="Ex.: Van 01">
                                     </div>
-                                    <div id="saidaVeiculoCampo">
-                                        <label class="form-label" for="horarioSaidaVeiculo">Saída fixa</label>
-                                        <input class="form-control" type="time" id="horarioSaidaVeiculo" name="horarioSaida">
+                                    <div>
+                                        <label class="form-label" for="horarioSaidaVeiculo">Horário de saída</label>
+                                        <input class="form-control" type="time" id="horarioSaidaVeiculo"
+                                               name="horarioSaida" required>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
@@ -216,26 +215,47 @@
                                         </option>
                                     </select>
                                 </div>
-                                <div class="col-12 col-md-4">
+                                <div class="col-12 col-md-4 position-relative">
                                     <label class="form-label" for="cidadeAgendamento">Cidade de destino</label>
-                                    <select class="form-select" id="cidadeAgendamento" required>
-                                        <option value="">Selecione uma cidade</option>
-                                        <option th:each="cidade : ${cidades}" th:value="${cidade.id()}"
-                                                th:text="${cidade.nome() + ' - ' + cidade.estado()}"
-                                                th:selected="${cidade.id() == idCidadeSelecionada}">
-                                        </option>
-                                    </select>
+                                    <input class="form-control" id="cidadeAgendamento" type="search" autocomplete="off"
+                                           placeholder="Digite o nome da cidade"
+                                           th:value="${cidadeSelecionada}"
+                                           aria-controls="cidadeResultados">
+                                    <input type="hidden" id="idCidadeAgendamento" th:value="${idCidadeSelecionada}">
+                                    <div id="cidadeResultados" class="list-group position-absolute w-100 shadow"
+                                         style="z-index: 10; max-height: 18rem; overflow-y: auto"
+                                         role="listbox" hidden>
+                                        <button th:each="cidade : ${cidades}" type="button"
+                                                class="list-group-item list-group-item-action"
+                                                th:attr="data-id=${cidade.id()}, data-nome=${cidade.nome()}, data-estado=${cidade.estado()}"
+                                                th:text="${cidade.nome() + ' - ' + cidade.estado()}">
+                                        </button>
+                                    </div>
+                                    <div id="cidadeBuscaMensagem" class="form-text" aria-live="polite">
+                                        Pesquise e selecione uma cidade.
+                                    </div>
                                 </div>
-                                <div class="col-12 col-md-4">
+                                <div class="col-12 col-md-4 position-relative">
                                     <label class="form-label" for="destinoAgendamento">Destino</label>
-                                    <select class="form-select" id="destinoAgendamento" name="idDestino" required>
-                                        <option value="">Selecione uma cidade primeiro</option>
-                                        <option th:each="destino : ${destinos}" th:value="${destino.id()}"
-                                                th:text="${destino.nome()}"
-                                                th:attr="data-cidade=${destino.idCidade()}"
-                                                th:selected="${destino.id() == idDestinoSelecionado}">
-                                        </option>
-                                    </select>
+                                    <input class="form-control" id="destinoAgendamento" type="search" autocomplete="off"
+                                           placeholder="Selecione uma cidade primeiro"
+                                           th:value="${destinoSelecionado}"
+                                           th:disabled="${idCidadeSelecionada == null}"
+                                           aria-controls="destinoResultados">
+                                    <input type="hidden" id="idDestinoAgendamento" name="idDestino"
+                                           th:value="${idDestinoSelecionado}">
+                                    <div id="destinoResultados" class="list-group position-absolute w-100 shadow"
+                                         style="z-index: 10; max-height: 18rem; overflow-y: auto"
+                                         role="listbox" hidden>
+                                        <button th:each="destino : ${destinos}" type="button"
+                                                class="list-group-item list-group-item-action"
+                                                th:attr="data-id=${destino.id()}, data-cidade=${destino.idCidade()}"
+                                                th:text="${destino.nome()}">
+                                        </button>
+                                    </div>
+                                    <div id="destinoBuscaMensagem" class="form-text" aria-live="polite">
+                                        Selecione uma cidade antes de pesquisar o destino.
+                                    </div>
                                     <button type="button" class="btn btn-sm btn-outline-secondary mt-2"
                                             id="abrirCadastroDestino"
                                             th:attr="data-url-prefix=@{/localidade/}, data-url-suffix='/destinos/abrirFormulario?contextoAgendamento=true'">
@@ -374,10 +394,6 @@
                             <i class="bi bi-car-front me-1"></i>Passageiros de carros
                         </a>
                         <a class="btn btn-outline-secondary"
-                           th:href="@{/agendamentos/pdf/veiculos(data=${data})}" target="_blank">
-                            <i class="bi bi-file-earmark-pdf me-1"></i>PDF ônibus/van
-                        </a>
-                        <a class="btn btn-outline-secondary"
                            th:href="@{/agendamentos/pdf/carros(data=${data})}" target="_blank">
                             <i class="bi bi-file-earmark-pdf me-1"></i>PDF geral de carros
                         </a>
@@ -409,8 +425,15 @@
                                         <span th:text="${veiculo.assentosOcupados() + ' / ' + veiculo.capacidade() + ' lugares'}"></span>
                                     </div>
                                 </div>
-                                <span class="badge text-bg-light"
-                                      th:text="${veiculo.horarioSaida() == null ? 'Saída a definir' : 'Saída ' + veiculo.horarioSaida()}"></span>
+                                <div class="d-flex flex-column align-items-end gap-2">
+                                    <span class="badge text-bg-light"
+                                          th:text="${veiculo.horarioSaida() == null ? 'Saída a definir' : 'Saída ' + veiculo.horarioSaida()}"></span>
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       th:href="@{/agendamentos/pdf/veiculos/{id}(id=${veiculo.id()}, data=${data})}"
+                                       target="_blank">
+                                        <i class="bi bi-file-earmark-pdf me-1"></i>PDF deste veículo
+                                    </a>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <div th:if="${#lists.isEmpty(veiculo.passageiros())}" class="text-secondary small">
@@ -433,9 +456,17 @@
                                         <span th:unless="${passageiro.buscarNaResidencia()}" class="badge text-bg-light">Sem busca na residência</span>
                                         <div th:text="${passageiro.acompanhantes() + ' acompanhante(s)'}"></div>
                                     </div>
+                                    <div class="d-flex flex-column gap-2">
+                                        <button class="btn btn-sm btn-outline-primary" type="button"
+                                                data-bs-toggle="modal"
+                                                th:attr="data-bs-target='#editarAgendamentoModal-' + ${passageiro.id()}">
+                                            Editar
+                                        </button>
                                     <button class="btn btn-sm btn-outline-secondary" type="button"
                                             data-bs-toggle="modal"
                                             th:attr="data-bs-target='#removerVeiculoModal-' + ${passageiro.id()}">Remover</button>
+                                    </div>
+                                    <div th:replace="~{agendamento/modalEditar :: modal(${passageiro}, ${data}, ${tiposVeiculoNaoCarro}, ${destinos}, ${agenda.veiculos()}, false)}"></div>
                                     <div class="modal fade" th:id="'removerVeiculoModal-' + ${passageiro.id()}"
                                          tabindex="-1" aria-hidden="true">
                                         <div class="modal-dialog">
@@ -571,6 +602,12 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <button class="btn btn-sm btn-outline-primary mt-2" type="button"
+                                            data-bs-toggle="modal"
+                                            th:attr="data-bs-target='#editarAgendamentoModal-' + ${passageiro.id()}">
+                                        Editar agendamento
+                                    </button>
+                                    <div th:replace="~{agendamento/modalEditar :: modal(${passageiro}, ${data}, ${tiposVeiculoNaoCarro}, ${destinos}, ${agenda.veiculos()}, false)}"></div>
                                 </td>
                             </tr>
                             </tbody>
@@ -677,10 +714,23 @@
                     });
 
                     verificarForm?.addEventListener("submit", (evento) => {
-                        if (pessoaId.value) return;
-                        evento.preventDefault();
-                        pessoaMensagem.textContent = "Busque e selecione uma pessoa antes de verificar.";
-                        pessoaBusca.focus();
+                        if (!pessoaId.value) {
+                            evento.preventDefault();
+                            pessoaMensagem.textContent = "Busque e selecione uma pessoa antes de verificar.";
+                            pessoaBusca.focus();
+                            return;
+                        }
+                        if (!cidadeId.value) {
+                            evento.preventDefault();
+                            cidadeMensagem.textContent = "Busque e selecione uma cidade antes de continuar.";
+                            cidade.focus();
+                            return;
+                        }
+                        if (!destinoId.value) {
+                            evento.preventDefault();
+                            destinoMensagem.textContent = "Busque e selecione um destino antes de continuar.";
+                            destino.focus();
+                        }
                     });
 
                     verificarForm?.addEventListener("change", (evento) => {
@@ -689,50 +739,104 @@
                         }
                     });
 
-                    const tipoSelect = document.getElementById("tipoVeiculo");
-                    const horarioSaida = document.getElementById("horarioSaidaVeiculo");
-                    const updateSaida = () => {
-                        if (!tipoSelect || !horarioSaida) return;
-                        const tipo = tipoSelect.selectedOptions[0];
-                        const carro = tipo?.dataset.carro === "true";
-                        horarioSaida.disabled = carro;
-                        horarioSaida.required = !carro && tipoSelect.value !== "";
-                        if (carro) horarioSaida.value = "";
-                    };
-                    tipoSelect?.addEventListener("change", updateSaida);
-                    updateSaida();
-
                     const cidade = document.getElementById("cidadeAgendamento");
+                    const cidadeId = document.getElementById("idCidadeAgendamento");
+                    const cidadeResultados = document.getElementById("cidadeResultados");
+                    const cidadeMensagem = document.getElementById("cidadeBuscaMensagem");
                     const destino = document.getElementById("destinoAgendamento");
+                    const destinoId = document.getElementById("idDestinoAgendamento");
+                    const destinoResultados = document.getElementById("destinoResultados");
+                    const destinoMensagem = document.getElementById("destinoBuscaMensagem");
                     const cadastroDestino = document.getElementById("abrirCadastroDestino");
                     const cadastroPessoa = document.getElementById("abrirCadastroPessoa");
-                    const filtrarDestinos = () => {
-                        if (!cidade || !destino) return;
+                    const normalizarBusca = valor => valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase();
+                    const filtrarOpcoes = (resultados, termo, filtrarCidade = false) => {
+                        if (!resultados) return 0;
+                        const consulta = normalizarBusca(termo.trim());
                         let disponiveis = 0;
-                        for (const option of destino.options) {
-                            if (!option.value) continue;
-                            option.hidden = option.dataset.cidade !== cidade.value;
-                            if (!option.hidden) disponiveis++;
+                        for (const opcao of resultados.querySelectorAll("button[data-id]")) {
+                            const correspondeCidade = !filtrarCidade || opcao.dataset.cidade === cidadeId.value;
+                            const correspondeTexto = consulta.length >= 2
+                                && normalizarBusca(opcao.textContent).includes(consulta);
+                            opcao.hidden = !correspondeCidade || !correspondeTexto;
+                            if (!opcao.hidden) disponiveis++;
                         }
-                        if (destino.selectedOptions[0]?.hidden) destino.value = "";
-                        destino.disabled = !cidade.value || disponiveis === 0;
+                        resultados.hidden = disponiveis === 0;
+                        return disponiveis;
                     };
-                    cidade?.addEventListener("change", filtrarDestinos);
-                    filtrarDestinos();
-
+                    cidade?.addEventListener("input", () => {
+                        cidadeId.value = "";
+                        destino.value = "";
+                        destinoId.value = "";
+                        destino.disabled = true;
+                        destino.placeholder = "Selecione uma cidade primeiro";
+                        destinoResultados.hidden = true;
+                        destinoMensagem.textContent = "Selecione uma cidade antes de pesquisar o destino.";
+                        ocultarResultadoVerificacao();
+                        const disponiveis = filtrarOpcoes(cidadeResultados, cidade.value);
+                        cidadeMensagem.textContent = cidade.value.trim().length < 2
+                            ? "Digite pelo menos 2 caracteres para buscar."
+                            : disponiveis ? "Selecione uma cidade nos resultados." : "Nenhuma cidade encontrada.";
+                    });
+                    cidadeResultados?.addEventListener("click", evento => {
+                        const opcao = evento.target.closest("button[data-id]");
+                        if (!opcao) return;
+                        cidadeId.value = opcao.dataset.id;
+                        cidade.value = `${opcao.dataset.nome} - ${opcao.dataset.estado}`;
+                        cidadeResultados.hidden = true;
+                        cidadeMensagem.textContent = "Cidade selecionada.";
+                        destino.value = "";
+                        destinoId.value = "";
+                        destino.disabled = false;
+                        destino.placeholder = "Digite o nome do destino";
+                        destino.focus();
+                        ocultarResultadoVerificacao();
+                    });
+                    destino?.addEventListener("input", () => {
+                        destinoId.value = "";
+                        ocultarResultadoVerificacao();
+                        const disponiveis = cidadeId.value
+                            ? filtrarOpcoes(destinoResultados, destino.value, true)
+                            : 0;
+                        destinoMensagem.textContent = !cidadeId.value
+                            ? "Selecione uma cidade antes de pesquisar o destino."
+                            : destino.value.trim().length < 2
+                                ? "Digite pelo menos 2 caracteres para buscar."
+                                : disponiveis ? "Selecione um destino nos resultados." : "Nenhum destino encontrado para esta cidade.";
+                    });
+                    destinoResultados?.addEventListener("click", evento => {
+                        const opcao = evento.target.closest("button[data-id]");
+                        if (!opcao) return;
+                        destinoId.value = opcao.dataset.id;
+                        destino.value = opcao.textContent.trim();
+                        destinoResultados.hidden = true;
+                        destinoMensagem.textContent = "Destino selecionado.";
+                        ocultarResultadoVerificacao();
+                    });
+                    cidade?.addEventListener("focus", () => {
+                        if (!cidadeId.value && cidade.value.trim().length >= 2) {
+                            filtrarOpcoes(cidadeResultados, cidade.value);
+                        }
+                    });
+                    destino?.addEventListener("focus", () => {
+                        if (cidadeId.value && !destinoId.value && destino.value.trim().length >= 2) {
+                            filtrarOpcoes(destinoResultados, destino.value, true);
+                        }
+                    });
                     cadastroPessoa?.addEventListener("click", () => {
                         modalAgendamentoPausado = true;
                         bootstrap.Modal.getOrCreateInstance(agendamentoModal).hide();
                     });
 
                     cadastroDestino?.addEventListener("click", () => {
-                        if (!cidade?.value) {
-                            cidade?.reportValidity();
+                        if (!cidadeId?.value) {
+                            cidade?.focus();
+                            cidadeMensagem.textContent = "Selecione uma cidade antes de cadastrar um destino.";
                             return;
                         }
                         modalAgendamentoPausado = true;
                         bootstrap.Modal.getOrCreateInstance(agendamentoModal).hide();
-                        const url = `${cadastroDestino.dataset.urlPrefix}${encodeURIComponent(cidade.value)}${cadastroDestino.dataset.urlSuffix}`;
+                        const url = `${cadastroDestino.dataset.urlPrefix}${encodeURIComponent(cidadeId.value)}${cadastroDestino.dataset.urlSuffix}`;
                         htmx.ajax("GET", url, {target: "#modal", swap: "innerHTML"});
                     });
 
@@ -764,15 +868,18 @@
                     });
 
                     document.body.addEventListener("destino-criado", evento => {
-                        if (!cidade || !destino) return;
-                        const option = document.createElement("option");
-                        option.value = evento.detail.id;
-                        option.dataset.cidade = evento.detail.idCidade;
-                        option.textContent = evento.detail.nome;
-                        destino.append(option);
-                        cidade.value = evento.detail.idCidade;
-                        filtrarDestinos();
-                        destino.value = evento.detail.id;
+                        if (!cidade || !cidadeId || !destino || !destinoId) return;
+                        const cidadeOpcao = cidadeResultados?.querySelector(`button[data-id="${evento.detail.idCidade}"]`);
+                        if (cidadeOpcao) {
+                            cidadeId.value = cidadeOpcao.dataset.id;
+                            cidade.value = `${cidadeOpcao.dataset.nome} - ${cidadeOpcao.dataset.estado}`;
+                        }
+                        destinoId.value = evento.detail.id;
+                        destino.value = evento.detail.nome;
+                        destino.disabled = false;
+                        destinoMensagem.textContent = "Destino cadastrado e selecionado.";
+                        destinoResultados.hidden = true;
+                        ocultarResultadoVerificacao();
                     });
 
                     const atualizarVeiculoAgendamento = () => {
@@ -820,5 +927,6 @@
         </div>
     </main>
 </div>
+<script th:src="@{/js/agendamento-edicao.js}" defer></script>
 </body>
 </html>

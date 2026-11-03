@@ -10,6 +10,7 @@ import org.springframework.web.client.RestClient;
 
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AbrirVeiculoRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoRequestDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoAtualizarRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendaDiaResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.ResultadoSeparacaoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificarVeiculosRequestDto;
@@ -59,6 +60,15 @@ public class AgendamentoApi {
     public void criar(LocalDate data, AgendamentoRequestDto request) {
         executar(() -> api.post()
                 .uri(PATH + "/dias/{data}/passageiros", data)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(request)
+                .retrieve()
+                .toBodilessEntity());
+    }
+
+    public void atualizar(UUID id, AgendamentoAtualizarRequestDto request) {
+        executar(() -> api.put()
+                .uri(PATH + "/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(request)
                 .retrieve()

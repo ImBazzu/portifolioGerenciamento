@@ -34,6 +34,7 @@ import br.com.imbazzu.frontSpring.agendamento.core.dto.AbrirVeiculoRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendaDiaResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoRequestDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoAtualizarRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificarVeiculosRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificacaoVeiculosResponseDto;
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
@@ -46,6 +47,7 @@ import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
+import br.com.imbazzu.frontSpring.veiculo.core.TipoVeiculoUtil;
 
 @Controller
 @RequestMapping("/agendamentos")
@@ -91,7 +93,20 @@ public class AgendamentoController {
                     .map(DestinoView.class::cast)
                     .filter(destino -> destino.id().equals(idDestino))
                     .findFirst()
-                    .ifPresent(destino -> model.addAttribute("idCidadeSelecionada", destino.idCidade()));
+                    .ifPresent(destino -> {
+                        model.addAttribute("idCidadeSelecionada", destino.idCidade());
+                        model.addAttribute("destinoSelecionado", destino.nome());
+                        var cidades = model.getAttribute("cidades");
+                        if (cidades instanceof List<?> opcoesCidade) {
+                            opcoesCidade.stream()
+                                    .filter(CidadeResponseDto.class::isInstance)
+                                    .map(CidadeResponseDto.class::cast)
+                                    .filter(cidade -> cidade.id().equals(destino.idCidade()))
+                                    .findFirst()
+                                    .ifPresent(cidade -> model.addAttribute(
+                                            "cidadeSelecionada", cidade.nome() + " - " + cidade.estado()));
+                        }
+                    });
         }
         carregarPassageiroVerificado(model);
         try {
@@ -132,20 +147,15 @@ public class AgendamentoController {
         return "agendamento/carros";
     }
 
-    @GetMapping("/pdf/veiculos")
-    public ResponseEntity<byte[]> pdfVeiculosNaoCarro(@RequestParam LocalDate data, Model model) {
-        return gerarPdf(data, false, null, model);
-    }
-
     @GetMapping("/pdf/carros")
     public ResponseEntity<byte[]> pdfGeralCarros(@RequestParam LocalDate data, Model model) {
         return gerarPdf(data, true, null, model);
     }
 
-    @GetMapping("/pdf/carros/{idVeiculo}")
-    public ResponseEntity<byte[]> pdfCarro(
+    @GetMapping("/pdf/veiculos/{idVeiculo}")
+    public ResponseEntity<byte[]> pdfVeiculo(
             @PathVariable UUID idVeiculo, @RequestParam LocalDate data, Model model) {
-        return gerarPdf(data, true, idVeiculo, model);
+        return gerarPdf(data, false, idVeiculo, model);
     }
 
     @GetMapping("/buscar-pessoas")
@@ -183,14 +193,43 @@ public class AgendamentoController {
             @RequestParam(required = false) String identificacao,
             @RequestParam(required = false) LocalTime horarioSaida,
             RedirectAttributes redirect) {
+        return abrirVeiculo(data, idTipoVeiculo, identificacao, horarioSaida, false, redirect);
+    }
+
+    @PostMapping("/carros/veiculos")
+    public String abrirCarro(
+            @RequestParam LocalDate data,
+            @RequestParam UUID idTipoVeiculo,
+            @RequestParam(required = false) String identificacao,
+            RedirectAttributes redirect) {
+        return abrirVeiculo(data, idTipoVeiculo, identificacao, null, true, redirect);
+    }
+
+    private String abrirVeiculo(
+            LocalDate data,
+            UUID idTipoVeiculo,
+            String identificacao,
+            LocalTime horarioSaida,
+            boolean carro,
+            RedirectAttributes redirect) {
+        String destino = carro ? redirectCarros(data) : redirect(data);
         try {
+            var tipo = tiposVeiculo.buscar(idTipoVeiculo);
+            if (ehCarro(tipo.nome()) != carro) {
+                redirect.addFlashAttribute(
+                        "erro",
+                        carro
+                                ? "Selecione um tipo de veículo Carro nesta página."
+                                : "Veículos do tipo Carro só podem ser abertos na página de passageiros de carros.");
+                return destino;
+            }
             agendamentoApi.abrirVeiculo(data,
                     new AbrirVeiculoRequestDto(idTipoVeiculo, identificacao, horarioSaida));
             redirect.addFlashAttribute("sucesso", "Veículo aberto para a agenda do dia.");
         } catch (RestClientResponseException e) {
             redirect.addFlashAttribute("erro", mensagemErro(e));
         }
-        return redirect(data);
+        return destino;
     }
 
     @PostMapping("/verificar-veiculos")
@@ -308,6 +347,33 @@ public class AgendamentoController {
         return redirect(data);
     }
 
+    @PostMapping("/{idAgendamento}/editar")
+    public String editar(
+            @PathVariable UUID idAgendamento,
+            @RequestParam LocalDate data,
+            @RequestParam UUID idTipoVeiculo,
+            @RequestParam UUID idDestino,
+            @RequestParam LocalTime horarioChegada,
+            @RequestParam(defaultValue = "false") boolean buscarNaResidencia,
+            @RequestParam(defaultValue = "0") int acompanhantes,
+            @RequestParam(required = false) UUID idVeiculo,
+            @RequestParam(defaultValue = "false") boolean paginaCarros,
+            RedirectAttributes redirect) {
+        try {
+            if (!paginaCarros && ehCarro(tiposVeiculo.buscar(idTipoVeiculo).nome())) {
+                redirect.addFlashAttribute(
+                        "erro", "Agendamentos de Carro só podem ser editados na página de passageiros de carros.");
+                return redirect(data);
+            }
+            agendamentoApi.atualizar(idAgendamento, new AgendamentoAtualizarRequestDto(
+                    idTipoVeiculo, idDestino, horarioChegada, buscarNaResidencia, acompanhantes, idVeiculo));
+            redirect.addFlashAttribute("sucesso", "Agendamento atualizado.");
+        } catch (RestClientResponseException e) {
+            redirect.addFlashAttribute("erro", mensagemErro(e));
+        }
+        return paginaCarros ? redirectCarros(data) : redirect(data);
+    }
+
     @PostMapping("/dias/{data}/separacao-automatica")
     public String separarAutomaticamente(@PathVariable LocalDate data, RedirectAttributes redirect) {
         try {
@@ -371,7 +437,14 @@ public class AgendamentoController {
 
     private void carregarOpcoes(Model model) {
         model.addAttribute("listas", listarListasAtivas());
-        model.addAttribute("tiposVeiculo", listarTiposAtivos());
+        var tipos = listarTiposAtivos();
+        model.addAttribute("tiposVeiculo", tipos);
+        model.addAttribute("tiposVeiculoNaoCarro", tipos.stream()
+                .filter(tipo -> !ehCarro(tipo.nome()))
+                .toList());
+        model.addAttribute("tiposVeiculoCarro", tipos.stream()
+                .filter(tipo -> ehCarro(tipo.nome()))
+                .toList());
         model.addAttribute("cidades", listarCidadesAtivas());
         model.addAttribute("destinos", listarDestinosAtivos());
     }
@@ -426,18 +499,27 @@ public class AgendamentoController {
             var agenda = agendamentoApi.buscarDia(data);
             carregarAgendaDivididaPorTipo(model, agenda);
             var veiculos = agenda.veiculos().stream()
-                    .filter(veiculo -> ehCarro(veiculo.nomeTipoVeiculo()) == carros)
-                    .filter(veiculo -> idVeiculo == null || veiculo.id().equals(idVeiculo))
+                    .filter(veiculo -> idVeiculo != null
+                            ? veiculo.id().equals(idVeiculo)
+                            : ehCarro(veiculo.nomeTipoVeiculo()) == carros)
                     .toList();
             if (idVeiculo != null && veiculos.isEmpty()) {
                 throw new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Carro não encontrado nesta agenda.");
+                        HttpStatus.NOT_FOUND, "Veículo não encontrado nesta agenda.");
             }
-            String titulo = idVeiculo != null
-                    ? "Passageiros do carro " + (veiculos.getFirst().identificacao() == null
-                            ? veiculos.getFirst().nomeTipoVeiculo()
-                            : veiculos.getFirst().identificacao())
-                    : carros ? "Relatório geral de carros" : "Relatório geral de ônibus e vans";
+            if (idVeiculo != null) {
+                var veiculo = veiculos.getFirst();
+                var passageiros = veiculo.passageiros();
+                var detalhes = carregarDetalhesPassageiros(
+                        passageiros, List.<AgendamentoResponseDto>of(), model);
+                var pdf = AgendamentoPdfService.gerarIndividual(data, veiculo, detalhes);
+                return ResponseEntity.ok()
+                        .contentType(MediaType.APPLICATION_PDF)
+                        .header(HttpHeaders.CONTENT_DISPOSITION,
+                                "inline; filename=\"veiculo-" + idVeiculo + "-" + data + ".pdf\"")
+                        .body(pdf);
+            }
+            String titulo = "Relatório geral de carros";
             var nomesPorTipo = nomesDosTiposVeiculo(model);
             var passageirosSemVeiculo = idVeiculo == null
                     ? agenda.passageirosPendentes().stream()
@@ -449,7 +531,7 @@ public class AgendamentoController {
                     .toList();
             var detalhes = carregarDetalhesPassageiros(passageirosDoRelatorio, passageirosSemVeiculo, model);
             var pdf = AgendamentoPdfService.gerar(data, titulo, veiculos, passageirosSemVeiculo, detalhes);
-            String tipoArquivo = idVeiculo != null ? "carro-" + idVeiculo : carros ? "carros" : "veiculos";
+            String tipoArquivo = idVeiculo == null ? "carros" : "veiculo-" + idVeiculo;
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_PDF)
                     .header(HttpHeaders.CONTENT_DISPOSITION,
@@ -461,7 +543,7 @@ public class AgendamentoController {
     }
 
     private boolean ehCarro(String nomeTipo) {
-        return nomeTipo != null && nomeTipo.strip().toLowerCase(java.util.Locale.ROOT).startsWith("carro");
+        return TipoVeiculoUtil.ehCarro(nomeTipo);
     }
 
     private void carregarPassageiroVerificado(Model model) {

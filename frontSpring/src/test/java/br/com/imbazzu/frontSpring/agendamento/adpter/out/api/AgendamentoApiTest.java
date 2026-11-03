@@ -20,6 +20,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificarVeiculosRequestDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoAtualizarRequestDto;
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
 import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
 
@@ -80,6 +81,32 @@ class AgendamentoApiTest {
 
         assertEquals(idTipo, resultado.veiculosPermitidos().getFirst().idTipoVeiculo());
         assertEquals(List.of(idRegra), resultado.veiculosPermitidos().getFirst().idsRegrasAprovadas());
+        server.verify();
+    }
+
+    @Test
+    void atualizarAgendamentoUsaContratoPutDoBackend() {
+        var id = UUID.fromString("6b0d3800-2ca7-4e1f-bfb3-36f849104d83");
+        var idTipo = UUID.fromString("7b17f241-4e6a-4bdf-b1f9-06fe8760bb11");
+        var idDestino = UUID.fromString("ea5bb91c-4faa-4dfa-85f7-96fcbf849497");
+        var idVeiculo = UUID.fromString("5836e253-4c5a-42fd-ae3f-4e11b7b76b7e");
+        server.expect(requestTo("http://localhost:8080/api/agendamentos/" + id))
+                .andExpect(method(HttpMethod.PUT))
+                .andExpect(content().json("""
+                        {
+                          "idTipoVeiculo":"7b17f241-4e6a-4bdf-b1f9-06fe8760bb11",
+                          "idDestino":"ea5bb91c-4faa-4dfa-85f7-96fcbf849497",
+                          "horarioChegada":"10:00:00",
+                          "buscarNaResidencia":true,
+                          "acompanhantes":2,
+                          "idVeiculo":"5836e253-4c5a-42fd-ae3f-4e11b7b76b7e"
+                        }
+                        """))
+                .andRespond(withSuccess());
+
+        api.atualizar(id, new AgendamentoAtualizarRequestDto(
+                idTipo, idDestino, LocalTime.of(10, 0), true, 2, idVeiculo));
+
         server.verify();
     }
 }

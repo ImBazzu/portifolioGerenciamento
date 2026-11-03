@@ -1,6 +1,7 @@
 package br.com.imbazzu.secretariaTransporte.agendamento.application;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,6 +24,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.criar.AgendamentoCommandCriar;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.criar.AgendamentoCommandCriarHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.atualizar.AgendamentoCommandAtualizar;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.atualizar.AgendamentoCommandAtualizarHandler;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.atribuirVeiculo.AgendamentoCommandAtribuirVeiculo;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.atribuirVeiculo.AgendamentoCommandAtribuirVeiculoHandler;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.separarAutomaticamente.AgendamentoCommandSepararAutomaticamente;
@@ -58,6 +61,7 @@ class AgendamentoHandlersTest {
 
     private AgendamentoQueryVerificarVeiculosHandler verificarVeiculosHandler;
     private AgendamentoCommandCriarHandler criarHandler;
+    private AgendamentoCommandAtualizarHandler atualizarHandler;
     private AgendamentoQueryListarVeiculosCompativeisHandler listarVeiculosCompativeisHandler;
     private AgendamentoCommandSepararAutomaticamenteHandler separarAutomaticamenteHandler;
 
@@ -65,28 +69,98 @@ class AgendamentoHandlersTest {
     void configurarHandlers() {
         verificarVeiculosHandler = new AgendamentoQueryVerificarVeiculosHandler(consultas);
         criarHandler = new AgendamentoCommandCriarHandler(comandos, consultas);
+        atualizarHandler = new AgendamentoCommandAtualizarHandler(comandos, consultas);
         listarVeiculosCompativeisHandler = new AgendamentoQueryListarVeiculosCompativeisHandler(consultas);
         separarAutomaticamenteHandler = new AgendamentoCommandSepararAutomaticamenteHandler(comandos, consultas);
     }
 
     @Test
-    void verificarSemVeiculosAbertosRetornaOrientacaoEmVezDeErro() {
+    void verificaCarroPermitidoMesmoSemVeiculosAbertos() {
         var data = LocalDate.of(2026, 10, 25);
         var idPessoa = UUID.randomUUID();
         var idLista = UUID.randomUUID();
         var idDestino = UUID.randomUUID();
+        var idCidade = UUID.randomUUID();
+        var idTipo = UUID.randomUUID();
+        var idRegra = UUID.randomUUID();
 
         when(consultas.diaAberto(data)).thenReturn(true);
         when(consultas.listarVeiculos(data)).thenReturn(List.of());
         when(consultas.buscarPessoa(idPessoa)).thenReturn(new PessoaAgendaDados(EnumPrioridade.MODERADA, true));
         when(consultas.buscarDestino(idDestino))
-                .thenReturn(new DestinoAgendaDados(UUID.randomUUID(), Duration.ofMinutes(30), true));
+                .thenReturn(new DestinoAgendaDados(idCidade, Duration.ofMinutes(30), true));
         when(consultas.listaAtiva(idLista)).thenReturn(true);
+        when(consultas.listarRegrasCadastro(idLista)).thenReturn(List.of(
+                new RegraCadastroAgendaDados(idRegra, List.of("MODERADA"), List.of(idTipo),
+                        List.of(idCidade), false, null, null)));
+        when(consultas.buscarTipoVeiculo(idTipo))
+                .thenReturn(new TipoVeiculoAgendaDados(idTipo, "Carro", 4, true));
+        when(consultas.buscarToleranciaSeparacao(idLista, idTipo))
+                .thenReturn(Optional.of(Duration.ofMinutes(15)));
+
+        var resultado = verificar(data, idPessoa, idLista, idDestino, LocalTime.of(9, 0), 0);
+
+        assertEquals(List.of(idTipo), resultado.veiculosPermitidos().stream()
+                .map(tipo -> tipo.idTipoVeiculo()).toList());
+    }
+
+    @Test
+    void verificaVanNaoPermitidaSemVeiculoFisicoAberto() {
+        var data = LocalDate.of(2026, 10, 25);
+        var idPessoa = UUID.randomUUID();
+        var idLista = UUID.randomUUID();
+        var idDestino = UUID.randomUUID();
+        var idCidade = UUID.randomUUID();
+        var idTipo = UUID.randomUUID();
+        var idRegra = UUID.randomUUID();
+
+        when(consultas.diaAberto(data)).thenReturn(true);
+        when(consultas.listarVeiculos(data)).thenReturn(List.of());
+        when(consultas.buscarPessoa(idPessoa)).thenReturn(new PessoaAgendaDados(EnumPrioridade.MODERADA, true));
+        when(consultas.buscarDestino(idDestino))
+                .thenReturn(new DestinoAgendaDados(idCidade, Duration.ofMinutes(30), true));
+        when(consultas.listaAtiva(idLista)).thenReturn(true);
+        when(consultas.listarRegrasCadastro(idLista)).thenReturn(List.of(
+                new RegraCadastroAgendaDados(idRegra, List.of("MODERADA"), List.of(idTipo),
+                        List.of(idCidade), false, null, null)));
+        when(consultas.buscarTipoVeiculo(idTipo))
+                .thenReturn(new TipoVeiculoAgendaDados(idTipo, "Van", 15, true));
 
         var resultado = verificar(data, idPessoa, idLista, idDestino, LocalTime.of(9, 0), 0);
 
         assertTrue(resultado.veiculosPermitidos().isEmpty());
-        assertTrue(resultado.motivosReprovacao().getFirst().contains("Abra pelo menos um veículo"));
+        assertTrue(resultado.motivosReprovacao().stream()
+                .anyMatch(motivo -> motivo.contains("Nenhum veículo físico do tipo Van")));
+    }
+
+    @Test
+    void verificaVanPermitidaSemRegraDeTolerancia() {
+        var data = LocalDate.of(2026, 10, 25);
+        var idPessoa = UUID.randomUUID();
+        var idLista = UUID.randomUUID();
+        var idDestino = UUID.randomUUID();
+        var idCidade = UUID.randomUUID();
+        var idTipo = UUID.randomUUID();
+        var idRegra = UUID.randomUUID();
+        var veiculo = new VeiculoAberto(
+                UUID.randomUUID(), data, idTipo, "Van", 15, "Van 1", LocalTime.of(7, 0), false);
+
+        when(consultas.diaAberto(data)).thenReturn(true);
+        when(consultas.listarVeiculos(data)).thenReturn(List.of(veiculo));
+        when(consultas.buscarPessoa(idPessoa)).thenReturn(new PessoaAgendaDados(EnumPrioridade.MODERADA, true));
+        when(consultas.buscarDestino(idDestino))
+                .thenReturn(new DestinoAgendaDados(idCidade, Duration.ofMinutes(30), true));
+        when(consultas.listaAtiva(idLista)).thenReturn(true);
+        when(consultas.listarRegrasCadastro(idLista)).thenReturn(List.of(
+                new RegraCadastroAgendaDados(idRegra, List.of("MODERADA"), List.of(idTipo),
+                        List.of(idCidade), false, null, null)));
+        when(consultas.buscarTipoVeiculo(idTipo))
+                .thenReturn(new TipoVeiculoAgendaDados(idTipo, "Van", 15, true));
+
+        var resultado = verificar(data, idPessoa, idLista, idDestino, LocalTime.of(9, 0), 0);
+
+        assertEquals(List.of(idTipo), resultado.veiculosPermitidos().stream()
+                .map(tipo -> tipo.idTipoVeiculo()).toList());
     }
 
     @Test
@@ -266,7 +340,7 @@ class AgendamentoHandlersTest {
         var idRegra = UUID.randomUUID();
         var idAgendamento = UUID.randomUUID();
         var veiculo = new VeiculoAberto(
-                UUID.randomUUID(), data, idTipo, "Van", 8, "Van 1", LocalTime.of(8, 30), false);
+                UUID.randomUUID(), data, idTipo, "Van", 8, "Van 1", LocalTime.of(7, 0), false);
 
         when(consultas.diaAberto(data)).thenReturn(true);
         when(consultas.listarVeiculos(data)).thenReturn(List.of(veiculo));
@@ -279,12 +353,11 @@ class AgendamentoHandlersTest {
         when(consultas.listarRegrasCadastro(idLista)).thenReturn(List.of(
                 new RegraCadastroAgendaDados(
                         idRegra, List.of("MODERADA"), List.of(idTipo), List.of(idCidade), false, null, null)));
-        when(consultas.buscarToleranciaSeparacao(idLista, idTipo))
-                .thenReturn(Optional.of(Duration.ofMinutes(15)));
         when(consultas.listarAgendamentos(data)).thenReturn(List.of());
         when(comandos.salvar(any(Agendamento.class))).thenAnswer(invocation -> {
             var agendamento = invocation.getArgument(0, Agendamento.class);
             assertEquals(veiculo.id(), agendamento.getIdVeiculoAberto());
+            assertEquals(Duration.ZERO, agendamento.getToleranciaSeparacao());
             return idAgendamento;
         });
 
@@ -296,26 +369,145 @@ class AgendamentoHandlersTest {
     }
 
     @Test
-    void rejeitaAgendamentoQuandoTipoNaoFoiAbertoNaAgenda() {
+    void atualizaAgendamentoDeVanSemExigirTolerancia() {
+        var data = LocalDate.of(2026, 10, 25);
+        var idPessoa = UUID.randomUUID();
+        var idLista = UUID.randomUUID();
+        var idDestinoOriginal = UUID.randomUUID();
+        var idNovoDestino = UUID.randomUUID();
+        var idCidade = UUID.randomUUID();
+        var idTipo = UUID.randomUUID();
+        var idRegra = UUID.randomUUID();
+        var veiculo = new VeiculoAberto(
+                UUID.randomUUID(), data, idTipo, "Van", 15, "Van 1", LocalTime.of(7, 0), false);
+        var atual = Agendamento.criar(
+                data, idPessoa, idLista, idRegra, idTipo, idDestinoOriginal,
+                Duration.ofMinutes(30), Duration.ZERO, LocalTime.of(9, 0), false, 0);
+        atual.atribuirVeiculo(veiculo.id(), idTipo, Duration.ZERO);
+
+        when(consultas.buscarAgendamento(atual.getId())).thenReturn(Optional.of(atual));
+        when(consultas.diaAberto(data)).thenReturn(true);
+        when(consultas.buscarPessoa(idPessoa)).thenReturn(new PessoaAgendaDados(EnumPrioridade.MODERADA, true));
+        when(consultas.buscarDestino(idNovoDestino))
+                .thenReturn(new DestinoAgendaDados(idCidade, Duration.ofMinutes(45), true));
+        when(consultas.listaAtiva(idLista)).thenReturn(true);
+        when(consultas.buscarTipoVeiculo(idTipo)).thenReturn(new TipoVeiculoAgendaDados(idTipo, "Van", 15, true));
+        when(consultas.listarRegrasCadastro(idLista)).thenReturn(List.of(
+                new RegraCadastroAgendaDados(idRegra, List.of("MODERADA"), List.of(idTipo),
+                        List.of(idCidade), false, null, null)));
+        when(consultas.listarVeiculos(data)).thenReturn(List.of(veiculo));
+        when(consultas.listarAgendamentos(data)).thenReturn(List.of(atual));
+
+        atualizarHandler.handler(new AgendamentoCommandAtualizar(
+                atual.getId(), idTipo, idNovoDestino, LocalTime.of(10, 0), true, 2, veiculo.id()));
+
+        org.mockito.Mockito.verify(comandos).salvar(org.mockito.ArgumentMatchers.argThat(
+                (Agendamento agendamento) ->
+                agendamento.getId().equals(atual.getId())
+                        && agendamento.getIdDestino().equals(idNovoDestino)
+                        && agendamento.getHorarioChegada().equals(LocalTime.of(10, 0))
+                        && agendamento.isBuscarNaResidencia()
+                        && agendamento.getAcompanhantes() == 2
+                        && agendamento.getIdVeiculoAberto().equals(veiculo.id())
+                        && agendamento.getTempoViagem().equals(Duration.ofMinutes(45))
+                        && agendamento.getToleranciaSeparacao().isZero()));
+    }
+
+    @Test
+    void atualizarCarroContinuaExigindoToleranciaDaLista() {
         var data = LocalDate.of(2026, 10, 25);
         var idPessoa = UUID.randomUUID();
         var idLista = UUID.randomUUID();
         var idDestino = UUID.randomUUID();
-        var tipoEscolhido = UUID.randomUUID();
+        var idCidade = UUID.randomUUID();
+        var idTipoCarro = UUID.randomUUID();
+        var idTipoVan = UUID.randomUUID();
+        var idRegra = UUID.randomUUID();
+        var atual = Agendamento.criar(
+                data, idPessoa, idLista, idRegra, idTipoVan, idDestino,
+                Duration.ofMinutes(30), Duration.ZERO, LocalTime.of(9, 0), false, 0);
+
+        when(consultas.buscarAgendamento(atual.getId())).thenReturn(Optional.of(atual));
+        when(consultas.diaAberto(data)).thenReturn(true);
+        when(consultas.buscarPessoa(idPessoa)).thenReturn(new PessoaAgendaDados(EnumPrioridade.MODERADA, true));
+        when(consultas.buscarDestino(idDestino))
+                .thenReturn(new DestinoAgendaDados(idCidade, Duration.ofMinutes(30), true));
+        when(consultas.listaAtiva(idLista)).thenReturn(true);
+        when(consultas.buscarTipoVeiculo(idTipoCarro))
+                .thenReturn(new TipoVeiculoAgendaDados(idTipoCarro, "Carro", 4, true));
+        when(consultas.listarRegrasCadastro(idLista)).thenReturn(List.of(
+                new RegraCadastroAgendaDados(idRegra, List.of("MODERADA"),
+                        List.of(idTipoCarro), List.of(idCidade), false, null, null)));
+        when(consultas.buscarToleranciaSeparacao(idLista, idTipoCarro)).thenReturn(Optional.empty());
+
+        assertThrows(OperacaoNaoPermitidaException.class, () -> atualizarHandler.handler(
+                new AgendamentoCommandAtualizar(
+                        atual.getId(), idTipoCarro, idDestino, LocalTime.of(9, 0), false, 0, null)));
+    }
+
+    @Test
+    void criaPassageiroDeCarroPendenteMesmoSemVeiculoAberto() {
+        var data = LocalDate.of(2026, 10, 25);
+        var idPessoa = UUID.randomUUID();
+        var idLista = UUID.randomUUID();
+        var idDestino = UUID.randomUUID();
+        var idCidade = UUID.randomUUID();
+        var idTipo = UUID.randomUUID();
+        var idRegra = UUID.randomUUID();
+        var idAgendamento = UUID.randomUUID();
 
         when(consultas.diaAberto(data)).thenReturn(true);
-        when(consultas.listarVeiculos(data)).thenReturn(List.of(
-                new VeiculoAberto(UUID.randomUUID(), data, UUID.randomUUID(), "Van", 8, null, null, false)));
+        when(consultas.listarVeiculos(data)).thenReturn(List.of());
         when(consultas.existeAgendamento(data, idPessoa)).thenReturn(false);
         when(consultas.buscarPessoa(idPessoa)).thenReturn(new PessoaAgendaDados(EnumPrioridade.MODERADA, true));
         when(consultas.buscarDestino(idDestino))
-                .thenReturn(new DestinoAgendaDados(UUID.randomUUID(), Duration.ofMinutes(30), true));
+                .thenReturn(new DestinoAgendaDados(idCidade, Duration.ofMinutes(30), true));
         when(consultas.listaAtiva(idLista)).thenReturn(true);
-        when(consultas.buscarTipoVeiculo(tipoEscolhido))
-                .thenReturn(new TipoVeiculoAgendaDados(tipoEscolhido, "Carro", 4, true));
+        when(consultas.buscarTipoVeiculo(idTipo))
+                .thenReturn(new TipoVeiculoAgendaDados(idTipo, "Carro", 4, true));
+        when(consultas.listarRegrasCadastro(idLista)).thenReturn(List.of(
+                new RegraCadastroAgendaDados(idRegra, List.of("MODERADA"), List.of(idTipo),
+                        List.of(idCidade), false, null, null)));
+        when(consultas.buscarToleranciaSeparacao(idLista, idTipo))
+                .thenReturn(Optional.of(Duration.ofMinutes(15)));
+        when(comandos.salvar(any(Agendamento.class))).thenAnswer(invocation -> {
+            var agendamento = invocation.getArgument(0, Agendamento.class);
+            assertNull(agendamento.getIdVeiculoAberto());
+            return idAgendamento;
+        });
 
-        assertThrows(OperacaoNaoPermitidaException.class, () -> criar(data, idPessoa, idLista,
-                UUID.randomUUID(), tipoEscolhido, idDestino, LocalTime.of(9, 0), false, 0));
+        var resultado = criar(data, idPessoa, idLista, idRegra, idTipo, idDestino,
+                LocalTime.of(9, 0), false, 0);
+
+        assertEquals(idAgendamento, resultado);
+    }
+
+    @Test
+    void rejeitaAgendamentoDeVanSemVeiculoFisicoSelecionado() {
+        var data = LocalDate.of(2026, 10, 25);
+        var idPessoa = UUID.randomUUID();
+        var idLista = UUID.randomUUID();
+        var idDestino = UUID.randomUUID();
+        var idCidade = UUID.randomUUID();
+        var idTipo = UUID.randomUUID();
+        var idRegra = UUID.randomUUID();
+
+        when(consultas.diaAberto(data)).thenReturn(true);
+        when(consultas.listarVeiculos(data)).thenReturn(List.of(
+                new VeiculoAberto(UUID.randomUUID(), data, idTipo, "Van", 8, null, null, false)));
+        when(consultas.existeAgendamento(data, idPessoa)).thenReturn(false);
+        when(consultas.buscarPessoa(idPessoa)).thenReturn(new PessoaAgendaDados(EnumPrioridade.MODERADA, true));
+        when(consultas.buscarDestino(idDestino))
+                .thenReturn(new DestinoAgendaDados(idCidade, Duration.ofMinutes(30), true));
+        when(consultas.listaAtiva(idLista)).thenReturn(true);
+        when(consultas.buscarTipoVeiculo(idTipo))
+                .thenReturn(new TipoVeiculoAgendaDados(idTipo, "Van", 8, true));
+        when(consultas.listarRegrasCadastro(idLista)).thenReturn(List.of(
+                new RegraCadastroAgendaDados(idRegra, List.of("MODERADA"), List.of(idTipo),
+                        List.of(idCidade), false, null, null)));
+        var excecao = assertThrows(OperacaoNaoPermitidaException.class, () -> criar(data, idPessoa, idLista,
+                idRegra, idTipo, idDestino, LocalTime.of(9, 0), false, 0));
+        assertTrue(excecao.getMessage().contains("Selecione o veículo físico"));
     }
 
     @Test
@@ -324,10 +516,11 @@ class AgendamentoHandlersTest {
         var tipoId = UUID.randomUUID();
         var idLista = UUID.randomUUID();
         var idDestino = UUID.randomUUID();
-        var cheio = new VeiculoAberto(UUID.randomUUID(), data, tipoId, "Carro", 1, "Cheio", null, true);
+        var cheio = new VeiculoAberto(UUID.randomUUID(), data, tipoId, "Van", 1, "Cheio", LocalTime.of(7, 0), false);
         var horarioIncompativel = new VeiculoAberto(
-                UUID.randomUUID(), data, tipoId, "Carro", 4, "Fora do horário", LocalTime.of(8, 0), false);
-        var disponivel = new VeiculoAberto(UUID.randomUUID(), data, tipoId, "Carro", 4, "Disponível", null, true);
+                UUID.randomUUID(), data, tipoId, "Van", 4, "Fora do horário", LocalTime.of(9, 1), false);
+        var disponivel = new VeiculoAberto(
+                UUID.randomUUID(), data, tipoId, "Van", 4, "Disponível", LocalTime.of(8, 0), false);
         var pendente = agendamento(data, idLista, tipoId, idDestino, LocalTime.of(10, 0));
         var ocupante = agendamento(data, idLista, tipoId, idDestino, LocalTime.of(10, 40));
         ocupante.atribuirVeiculo(cheio.id());
@@ -358,7 +551,7 @@ class AgendamentoHandlersTest {
         var veiculoCheio = new VeiculoAberto(
                 UUID.randomUUID(), data, tipoSelecionado, "Carro", 1, "Cheio", null, true);
         var veiculoAlternativo = new VeiculoAberto(
-                UUID.randomUUID(), data, tipoAlternativo, "Van", 8, "Van disponível", LocalTime.of(9, 0), false);
+                UUID.randomUUID(), data, tipoAlternativo, "Van", 8, "Van disponível", LocalTime.of(7, 0), false);
         var regra = new RegraCadastroAgendaDados(
                 idRegra, List.of("MODERADA"), List.of(tipoSelecionado, tipoAlternativo),
                 List.of(idCidade), false, null, null);
@@ -374,6 +567,10 @@ class AgendamentoHandlersTest {
         when(consultas.listarAgendamentos(data)).thenReturn(List.of(pendente, ocupante));
         when(consultas.listarVeiculos(data)).thenReturn(List.of(veiculoCheio, veiculoAlternativo));
         when(consultas.listarRegrasCadastro(idLista)).thenReturn(List.of(regra));
+        when(consultas.buscarTipoVeiculo(tipoSelecionado))
+                .thenReturn(new TipoVeiculoAgendaDados(tipoSelecionado, "Carro", 4, true));
+        when(consultas.buscarTipoVeiculo(tipoAlternativo))
+                .thenReturn(new TipoVeiculoAgendaDados(tipoAlternativo, "Van", 8, true));
         when(consultas.buscarPessoa(idPessoaPendente))
                 .thenReturn(new PessoaAgendaDados(EnumPrioridade.MODERADA, true));
         when(consultas.buscarPessoa(idPessoaOcupante))
@@ -382,8 +579,6 @@ class AgendamentoHandlersTest {
                 .thenReturn(new DestinoAgendaDados(idCidade, Duration.ofHours(1), true));
         when(consultas.buscarToleranciaSeparacao(idLista, tipoSelecionado))
                 .thenReturn(Optional.of(Duration.ofMinutes(15)));
-        when(consultas.buscarToleranciaSeparacao(idLista, tipoAlternativo))
-                .thenReturn(Optional.of(Duration.ofMinutes(30)));
 
         var compativeis = listarVeiculosCompativeisHandler.handler(
                 new AgendamentoQueryListarVeiculosCompativeis(data));
@@ -451,8 +646,8 @@ class AgendamentoHandlersTest {
                 .thenReturn(new DestinoAgendaDados(idCidade, Duration.ofHours(1), true));
         when(consultas.buscarToleranciaSeparacao(idLista, tipoSelecionado))
                 .thenReturn(Optional.of(Duration.ofMinutes(15)));
-        when(consultas.buscarToleranciaSeparacao(idLista, tipoAlternativo))
-                .thenReturn(Optional.of(Duration.ofMinutes(30)));
+        when(consultas.buscarTipoVeiculo(tipoAlternativo))
+                .thenReturn(new TipoVeiculoAgendaDados(tipoAlternativo, "Van", 8, true));
 
         var resultado = separarAutomaticamenteHandler.handler(
                 new AgendamentoCommandSepararAutomaticamente(data));

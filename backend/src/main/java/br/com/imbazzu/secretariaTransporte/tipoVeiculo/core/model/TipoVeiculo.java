@@ -4,6 +4,7 @@ import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.DadosI
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.model.valueobject.NomeVeiculo;
 
 import java.time.LocalDate;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -37,6 +38,10 @@ public class TipoVeiculo {
 
     public static TipoVeiculo recriar(UUID id, NomeVeiculo nome, int capacidade, LocalDate dataArquivado) {
         return new TipoVeiculo(id, nome, capacidade, dataArquivado);
+    }
+
+    public static boolean ehCarro(String nome) {
+        return nome != null && nome.strip().toLowerCase(Locale.ROOT).startsWith("carro");
     }
 
     public void editarVeiculo(NomeVeiculo nome, int capacidade) {

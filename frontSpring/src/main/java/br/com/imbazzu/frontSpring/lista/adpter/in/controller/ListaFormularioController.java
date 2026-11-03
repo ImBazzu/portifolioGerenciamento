@@ -6,6 +6,7 @@ import br.com.imbazzu.frontSpring.localidade.core.porta.in.LocalidadeApplication
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaRegrasRequestDto;
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaRequestDto;
 import br.com.imbazzu.frontSpring.lista.core.porta.in.ListaApplicationPorta;
+import br.com.imbazzu.frontSpring.veiculo.core.TipoVeiculoUtil;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -99,7 +100,11 @@ public class ListaFormularioController {
     }
 
     private void adicionarOpcoes(Model model) {
-        model.addAttribute("opcoesVeiculo", listarVeiculos());
+        var tiposVeiculo = listarVeiculos();
+        model.addAttribute("opcoesVeiculo", tiposVeiculo);
+        model.addAttribute("opcoesVeiculoSeparacao", tiposVeiculo.stream()
+                .filter(tipo -> TipoVeiculoUtil.ehCarro(tipo.nome()))
+                .toList());
         model.addAttribute("opcoesCidade", listarCidades());
         model.addAttribute("prioridades", List.of("BAIXA", "MODERADA", "ALTA", "URGENTE"));
     }

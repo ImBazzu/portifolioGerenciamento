@@ -32,9 +32,6 @@ public class AgendamentoCommandCriarHandler {
     public UUID handler(AgendamentoCommandCriar command) {
         AgendamentoValidacao.exigirDiaAberto(consultas, command.data());
         var veiculosAbertos = consultas.listarVeiculos(command.data());
-        if (veiculosAbertos.isEmpty()) {
-            throw new OperacaoNaoPermitidaException("Abra pelo menos um veículo antes de agendar passageiros");
-        }
         if (command.acompanhantes() < 0) {
             throw new DadosInvalidosException("A quantidade de acompanhantes não pode ser negativa");
         }
@@ -50,7 +47,8 @@ public class AgendamentoCommandCriarHandler {
         if (!tipo.ativo()) {
             throw new OperacaoNaoPermitidaException("Não é possível agendar para um tipo de veículo arquivado");
         }
-        if (veiculosAbertos.stream()
+        boolean tipoCarro = VeiculoAberto.tipoCalculaHorarioSaida(tipo.nome());
+        if (!tipoCarro && veiculosAbertos.stream()
                 .noneMatch(veiculo -> veiculo.idTipoVeiculo().equals(command.idTipoVeiculo()))) {
             throw new OperacaoNaoPermitidaException(
                     "Abra pelo menos um veículo físico do tipo selecionado antes de agendar");
@@ -66,7 +64,7 @@ public class AgendamentoCommandCriarHandler {
                         .filter(item -> item.idsVeiculos().contains(command.idTipoVeiculo()))
                         .filter(item -> RegraCadastroAgendamento.motivosNaoAplicacao(
                                 item, pessoa, destino, command.horarioChegada()).isEmpty())
-                        .filter(item -> consultas.buscarToleranciaSeparacao(
+                        .filter(item -> !tipoCarro || consultas.buscarToleranciaSeparacao(
                                 command.idLista(), command.idTipoVeiculo()).isPresent())
                         .findFirst()
                         .orElseThrow(() -> new OperacaoNaoPermitidaException(
@@ -79,9 +77,11 @@ public class AgendamentoCommandCriarHandler {
         RegraCadastroAgendamento.validar(
                 regra, pessoa, destino, command.horarioChegada(), command.idTipoVeiculo());
 
-        var tolerancia = consultas.buscarToleranciaSeparacao(command.idLista(), command.idTipoVeiculo())
-                .orElseThrow(() -> new OperacaoNaoPermitidaException(
-                        "A lista não possui regra de tolerância para o tipo de veículo selecionado"));
+        var tolerancia = tipoCarro
+                ? consultas.buscarToleranciaSeparacao(command.idLista(), command.idTipoVeiculo())
+                        .orElseThrow(() -> new OperacaoNaoPermitidaException(
+                                "A lista não possui regra de tolerância para o tipo de veículo selecionado"))
+                : java.time.Duration.ZERO;
         var agendamento = Agendamento.criar(
                 command.data(),
                 command.idPessoa(),
@@ -94,7 +94,6 @@ public class AgendamentoCommandCriarHandler {
                 command.horarioChegada(),
                 command.buscarNaResidencia(),
                 command.acompanhantes());
-        boolean tipoCarro = VeiculoAberto.tipoCalculaHorarioSaida(tipo.nome());
         if (tipoCarro && command.idVeiculo() != null) {
             throw new OperacaoNaoPermitidaException(
                     "Passageiros de carro devem ser atribuídos pela página de carros");

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AbrirVeiculoRequestDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AgendaDiaResponseDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AgendamentoRequestDto;
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AgendamentoAtualizarRequestDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AgendamentoResponseDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.ResultadoSeparacaoResponseDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.VeiculoAbertoResponseDto;
@@ -32,6 +33,8 @@ import br.com.imbazzu.secretariaTransporte.agendamento.application.command.atrib
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.atribuirVeiculo.AgendamentoCommandAtribuirVeiculoHandler;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.criar.AgendamentoCommandCriar;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.criar.AgendamentoCommandCriarHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.atualizar.AgendamentoCommandAtualizar;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.atualizar.AgendamentoCommandAtualizarHandler;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.model.ResultadoSeparacaoAutomatica;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.remover.AgendamentoCommandRemover;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.remover.AgendamentoCommandRemoverHandler;
@@ -70,6 +73,7 @@ public class AgendamentoController {
     private final AgendamentoCommandAbrirVeiculoHandler abrirVeiculoHandler;
     private final AgendamentoQueryVerificarVeiculosHandler verificarVeiculosHandler;
     private final AgendamentoCommandCriarHandler criarHandler;
+    private final AgendamentoCommandAtualizarHandler atualizarHandler;
     private final AgendamentoQueryBuscarDiaHandler buscarDiaHandler;
     private final AgendamentoQueryListarPendentesHandler listarPendentesHandler;
     private final AgendamentoCommandSepararAutomaticamenteHandler separarAutomaticamenteHandler;
@@ -127,6 +131,21 @@ public class AgendamentoController {
                 request.acompanhantes(),
                 request.idVeiculo()));
         return ResponseEntity.created(URI.create("/api/agendamentos/%s".formatted(id))).build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> atualizar(
+            @PathVariable UUID id,
+            @RequestBody @Valid AgendamentoAtualizarRequestDto request) {
+        atualizarHandler.handler(new AgendamentoCommandAtualizar(
+                id,
+                request.idTipoVeiculo(),
+                request.idDestino(),
+                request.horarioChegada(),
+                request.buscarNaResidencia(),
+                request.acompanhantes(),
+                request.idVeiculo()));
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/dias/{data}")

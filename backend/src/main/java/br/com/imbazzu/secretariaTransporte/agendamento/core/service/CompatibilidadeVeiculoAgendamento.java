@@ -101,11 +101,15 @@ public final class CompatibilidadeVeiculoAgendamento {
             Slot novo,
             Map<UUID, Slot> slotsConhecidos) {
         var novaSaidaNecessaria = novo.horarioSaidaNecessario();
-        if (!veiculo.calculaHorarioSaida()
-                && (veiculo.horarioSaida().isAfter(novaSaidaNecessaria)
-                        || Duration.between(veiculo.horarioSaida(), novaSaidaNecessaria)
-                                .compareTo(novo.toleranciaSeparacao()) > 0)) {
-            return false;
+        if (!veiculo.calculaHorarioSaida()) {
+            if (veiculo.horarioSaida().isAfter(novaSaidaNecessaria)) {
+                return false;
+            }
+            return ocupantes.stream().allMatch(ocupante -> {
+                var slotOcupante = slotsConhecidos.get(ocupante.getId());
+                return slotOcupante != null
+                        && !veiculo.horarioSaida().isAfter(slotOcupante.horarioSaidaNecessario());
+            });
         }
         for (var ocupante : ocupantes) {
             var slotOcupante = slotsConhecidos.get(ocupante.getId());
