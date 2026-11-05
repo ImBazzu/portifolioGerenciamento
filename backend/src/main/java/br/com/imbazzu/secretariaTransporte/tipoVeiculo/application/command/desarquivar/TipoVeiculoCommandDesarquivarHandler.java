@@ -3,6 +3,7 @@ package br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.command.desa
 import org.springframework.stereotype.Service;
 
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.porta.out.TipoVeiculoCommandPorta;
+import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.service.TipoVeiculoServiceBuscarEntidade;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -11,9 +12,14 @@ public class TipoVeiculoCommandDesarquivarHandler {
 
     private final TipoVeiculoCommandPorta commandPorta;
 
+    private final TipoVeiculoServiceBuscarEntidade buscarEntidade;
+
     public void handler(TipoVeiculoCommandDesarquivar dto) {
-        var veiculo = commandPorta.buscarPorId(dto.id());
+        // Buscar a entidade pelo ID fornecido no DTO
+        var veiculo = buscarEntidade.executar(dto.id());
+        // Desarquivar a entidade
         veiculo.desarquivar();
+        // Salvar a entidade desarquivada
         commandPorta.salvar(veiculo);
     }
 }

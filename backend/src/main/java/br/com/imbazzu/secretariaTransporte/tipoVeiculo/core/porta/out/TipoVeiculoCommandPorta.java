@@ -3,17 +3,21 @@ package br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.porta.out;
 import java.util.UUID;
 
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.model.TipoVeiculo;
-import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.model.valueobject.NomeVeiculo;
 
 public interface TipoVeiculoCommandPorta {
 
+    /**
+     * Salva um tipo de veículo.
+     * @param veiculo
+     * @return
+     */
     UUID salvar(TipoVeiculo veiculo);
 
-    TipoVeiculo buscarPorId(UUID id);
-
+    /**
+     * Deleta um tipo de veículo.
+     * @param id
+     */
     void deletar(UUID id);
 
-    boolean verificarPorNome(NomeVeiculo nome);
 
-    boolean verificarPorNomeIgnorandoId(UUID id, NomeVeiculo nome);
 }

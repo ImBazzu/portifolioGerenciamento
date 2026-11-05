@@ -257,6 +257,48 @@ class AgendamentoControllerTest {
     }
 
     @Test
+    void pdfGeralDeCarrosOrdenaVeiculosPorHorarioDeSaida() throws java.io.IOException {
+        var api = mock(AgendamentoApi.class);
+        var listas = mock(ListaApplicationPorta.class);
+        var veiculos = mock(VeiculoApplicationPorta.class);
+        var localidades = mock(LocalidadeApplicationPorta.class);
+        var controller = new AgendamentoController(
+                api,
+                mock(PessoaApplicationPorta.class),
+                listas,
+                veiculos,
+                localidades,
+                new ObjectMapper().findAndRegisterModules());
+        var data = LocalDate.of(2026, 11, 2);
+        var carroTarde = new VeiculoAbertoResponseDto(
+                UUID.randomUUID(), data, UUID.randomUUID(), "Carro", 4, "Carro tarde",
+                LocalTime.of(9, 0), 0, List.of());
+        var carroCedo = new VeiculoAbertoResponseDto(
+                UUID.randomUUID(), data, UUID.randomUUID(), "Carro", 4, "Carro cedo",
+                LocalTime.of(6, 30), 0, List.of());
+        var carroSemHorario = new VeiculoAbertoResponseDto(
+                UUID.randomUUID(), data, UUID.randomUUID(), "Carro", 4, "Carro sem horario",
+                null, 0, List.of());
+        when(api.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(
+                data, List.of(carroTarde, carroSemHorario, carroCedo), List.of()));
+        when(listas.listarAtivas("", 0)).thenReturn(new ResultadoPaginado<>(
+                List.of(), 0, 5, 0, 0));
+        when(veiculos.listar("", 0)).thenReturn(new ResultadoPaginado<>(
+                List.of(), 0, 5, 0, 0));
+        when(localidades.listarCidades("", 0)).thenReturn(new ResultadoPaginado<>(
+                List.of(), 0, 5, 0, 0));
+
+        var resposta = controller.pdfGeralCarros(data, new ExtendedModelMap());
+
+        assertEquals(HttpStatus.OK, resposta.getStatusCode());
+        var leitor = new PdfReader(resposta.getBody());
+        var texto = new PdfTextExtractor(leitor).getTextFromPage(1);
+        assertTrue(texto.indexOf("Carro cedo") < texto.indexOf("Carro tarde"));
+        assertTrue(texto.indexOf("Carro tarde") < texto.indexOf("Carro sem horario"));
+        leitor.close();
+    }
+
+    @Test
     void inicioCarregaDetalhesDosPassageirosDaAgenda() {
         var api = mock(AgendamentoApi.class);
         var pessoas = mock(PessoaApplicationPorta.class);

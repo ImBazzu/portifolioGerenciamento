@@ -7,6 +7,7 @@ import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.Entida
 public class TipoVeiculoNaoEncontradoException extends EntidadeNaoEncontradoException {
 
     public TipoVeiculoNaoEncontradoException(UUID id) {
+        //Id do veículo não encontrado.
         super("Id do veículo não encontrado.\nId: %s".formatted(id));
     }
 

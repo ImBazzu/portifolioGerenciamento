@@ -24,8 +24,9 @@ public class TipoListaCommandAtualizarRegrasHandler {
                 .orElseThrow(() -> new TipoListaNaoEncontradoException(command.id()));
 
         command.regrasSeparacao().forEach(regra -> {
-            var tipoVeiculo = tipoVeiculoQuery.buscarAtivo(regra.idTipoVeiculo());
-            if (!TipoVeiculo.ehCarro(tipoVeiculo.nome())) {
+            var tipoVeiculo = porta.buscarPorId(regra.idTipoVeiculo())
+        .orElseThrow(()-> new TipoListaNaoEncontradoException(regra.idTipoVeiculo()));
+            if (tipoVeiculo) {
                 throw new RegraDeNegocioException(
                         "A regra de separação só pode ser aplicada a tipos de veículo Carro.");
             }

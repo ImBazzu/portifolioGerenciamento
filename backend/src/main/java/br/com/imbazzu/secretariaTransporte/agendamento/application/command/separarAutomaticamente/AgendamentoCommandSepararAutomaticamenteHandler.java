@@ -13,12 +13,12 @@ import org.springframework.transaction.annotation.Transactional;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.AgendamentoCompatibilidadeResolver;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.model.ResultadoSeparacaoAutomatica;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
-import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.VeiculoAberto;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.TipoVeiculoAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.AgendamentoCommandPorta;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.AgendamentoQueryPorta;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.AgendamentoValidacao;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.CompatibilidadeVeiculoAgendamento;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 import lombok.RequiredArgsConstructor;
 
 @Service

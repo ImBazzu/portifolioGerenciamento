@@ -230,6 +230,8 @@
                                             <span th:text="${veiculo.identificacao() == null ? 'Sem identificação' : veiculo.identificacao()}"></span>
                                             <span> · </span>
                                             <span th:text="${veiculo.assentosOcupados() + ' / ' + veiculo.capacidade() + ' lugares'}"></span>
+                                            <span> · </span>
+                                            <span th:text="${veiculo.horarioSaida() == null ? 'Saída a definir' : 'Saída ' + veiculo.horarioSaida()}"></span>
                                         </div>
                                     </div>
                                     <div class="d-flex flex-column align-items-end gap-2">

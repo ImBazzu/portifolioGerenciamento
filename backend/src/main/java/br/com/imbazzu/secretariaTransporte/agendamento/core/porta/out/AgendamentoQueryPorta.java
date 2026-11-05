@@ -7,11 +7,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
-import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.VeiculoAberto;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.DestinoAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.PessoaAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.RegraCadastroAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.TipoVeiculoAgendaDados;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 
 public interface AgendamentoQueryPorta {
 

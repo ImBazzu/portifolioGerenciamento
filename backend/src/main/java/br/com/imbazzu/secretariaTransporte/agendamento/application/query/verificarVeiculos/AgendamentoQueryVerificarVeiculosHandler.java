@@ -15,7 +15,7 @@ import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.Agendament
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.AgendamentoValidacao;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.RegraCadastroAgendamento;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.DadosInvalidosException;
-import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.VeiculoAberto;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 import lombok.RequiredArgsConstructor;
 
 @Service

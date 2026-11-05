@@ -156,10 +156,10 @@ public class PessoaController {
 
     @HxRequest
     @PatchMapping("/{id}/arquivar")
-    @HxTriggerAfterSettle({"atualizar-pessoas", "fechar-formulario"})
-    @ResponseBody
-    public void arquivar(@PathVariable UUID id) {
+    @HxTriggerAfterSettle("atualizar-pessoas")
+    public String arquivar(@PathVariable UUID id) {
         application.arquivar(id);
+        return "layout/vazio :: vazio";
     }
 
     @HxRequest

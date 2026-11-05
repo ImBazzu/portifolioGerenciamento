@@ -2,6 +2,6 @@ package br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.command.arqu
 
 import java.util.UUID;
 
-public record TipoVeiculoCommandArquivar(UUID idVeiculo) {
+public record TipoVeiculoCommandArquivar(UUID idTipoVeiculo) {
 
 }

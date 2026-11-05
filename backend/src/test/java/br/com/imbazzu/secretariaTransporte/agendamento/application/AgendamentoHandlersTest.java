@@ -43,7 +43,6 @@ import br.com.imbazzu.secretariaTransporte.agendamento.application.query.model.V
 import br.com.imbazzu.secretariaTransporte.agendamento.application.query.verificarVeiculos.AgendamentoQueryVerificarVeiculos;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.query.verificarVeiculos.AgendamentoQueryVerificarVeiculosHandler;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
-import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.VeiculoAberto;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.DestinoAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.PessoaAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.RegraCadastroAgendaDados;
@@ -54,6 +53,7 @@ import br.com.imbazzu.secretariaTransporte.agendamento.core.service.Compatibilid
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.OperacaoNaoPermitidaException;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.DadosInvalidosException;
 import br.com.imbazzu.secretariaTransporte.pessoa.core.domain.EnumPrioridade;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 
 @ExtendWith(MockitoExtension.class)
 class AgendamentoHandlersTest {

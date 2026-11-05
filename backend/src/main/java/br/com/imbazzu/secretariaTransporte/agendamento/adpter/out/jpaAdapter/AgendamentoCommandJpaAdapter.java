@@ -9,13 +9,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.entidadeJpa.AgendamentoJpa;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.entidadeJpa.DiaAgendamentoJpa;
-import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.entidadeJpa.VeiculoAgendaJpa;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.AgendamentoRepository;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.DiaAgendamentoRepository;
-import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.VeiculoAgendaRepository;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
-import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.VeiculoAberto;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.AgendamentoCommandPorta;
+import br.com.imbazzu.secretariaTransporte.veiculo.adpter.out.entidadeJpa.VeiculoAgendaJpa;
+import br.com.imbazzu.secretariaTransporte.veiculo.adpter.out.repositorio.VeiculoAgendaRepository;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 import lombok.RequiredArgsConstructor;
 
 @Repository

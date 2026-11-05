@@ -38,7 +38,7 @@
                 <button class="btn btn-sm btn-outline-warning"
                         th:attr="hx-patch=@{/pessoas/{id}/arquivar(id=${pessoa.id})}"
                         hx-confirm="Deseja arquivar esta pessoa?"
-                        hx-swap="none">
+                        hx-target="#modal" hx-swap="innerHTML">
                     <i class="bi bi-archive me-1"></i>Arquivar
                 </button>
                 <div class="d-flex gap-2">

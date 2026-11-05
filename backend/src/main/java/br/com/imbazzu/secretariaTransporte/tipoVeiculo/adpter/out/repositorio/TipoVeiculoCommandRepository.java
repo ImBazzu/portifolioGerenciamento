@@ -8,8 +8,6 @@ import br.com.imbazzu.secretariaTransporte.tipoVeiculo.adpter.out.entidadeJpa.Ti
 
 public interface TipoVeiculoCommandRepository extends JpaRepository<TipoVeiculoJpa, UUID> {
 
-    boolean existsByNome(String nome);
 
-    boolean existsByNomeAndIdNot(String nome, UUID id);
 
 }

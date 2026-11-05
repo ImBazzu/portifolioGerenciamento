@@ -8,6 +8,8 @@ import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.excecoes.TipoVeiculo
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.model.TipoVeiculo;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.model.valueobject.NomeVeiculo;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.porta.out.TipoVeiculoCommandPorta;
+import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.service.TipoVeiculoServiceBuscarEntidade;
+import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.service.TipoVeiculoServiceSalvarEntidade;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -16,13 +18,13 @@ public class TipoVeiculoCommandSalvarHandle {
 
     private final TipoVeiculoCommandPorta commandPorta;
 
-    public UUID handler(TipoVeiculoCommandSalvar dto) {
-        var veiculo = TipoVeiculo.criar(new NomeVeiculo(dto.nome()), dto.capacidade());
+    private final TipoVeiculoServiceSalvarEntidade serviceSalvarEntidade;
 
-        var nomeDuplicado = commandPorta.verificarPorNome(veiculo.getNome());
-        if (nomeDuplicado) {
-            throw new TipoVeiculoDuplicadoException(veiculo.getNome());
-        }
+
+    public UUID handler(TipoVeiculoCommandSalvar dto) {
+        // Cria uma nova instância de TipoVeiculo usando o serviço de salvar entidade
+        var veiculo = serviceSalvarEntidade.executar(dto.nome(), dto.capacidade());
+        // Salva a entidade no repositório e retorna o ID gerado
         return commandPorta.salvar(veiculo);
 
     }

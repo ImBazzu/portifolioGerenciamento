@@ -3,6 +3,7 @@ package br.com.imbazzu.frontSpring.agendamento.adpter.in.controller;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -539,6 +540,13 @@ public class AgendamentoController {
                             ? veiculo.id().equals(idVeiculo)
                             : ehCarro(veiculo.nomeTipoVeiculo()) == carros)
                     .toList();
+            if (carros && idVeiculo == null) {
+                veiculos = veiculos.stream()
+                        .sorted(Comparator.comparing(
+                                VeiculoAbertoResponseDto::horarioSaida,
+                                Comparator.nullsLast(Comparator.naturalOrder())))
+                        .toList();
+            }
             if (idVeiculo != null && veiculos.isEmpty()) {
                 throw new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Veículo não encontrado nesta agenda.");

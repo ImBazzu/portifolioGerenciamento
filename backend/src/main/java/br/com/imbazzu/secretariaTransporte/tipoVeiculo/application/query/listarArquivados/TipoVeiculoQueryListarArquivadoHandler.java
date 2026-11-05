@@ -14,6 +14,7 @@ public class TipoVeiculoQueryListarArquivadoHandler {
     private final TipoVeiculoQueryPorta queryPorta;
 
     public ResultadoPaginado<TipoVeiculoArquivadoOutput> handler(TipoVeiculoQueryListarArquivado dto) {
+        //Busca os tipos de veículos arquivados com base nos critérios fornecidos no DTO
         return queryPorta.listarArquivado(dto.filtro(), dto.pagina(), dto.tamanho());
     }
 }

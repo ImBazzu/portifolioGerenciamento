@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
-import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.VeiculoAberto;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 
 public final class CompatibilidadeVeiculoAgendamento {
 

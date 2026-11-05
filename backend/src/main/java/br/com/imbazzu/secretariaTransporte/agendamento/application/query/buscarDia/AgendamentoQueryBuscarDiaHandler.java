@@ -14,10 +14,10 @@ import br.com.imbazzu.secretariaTransporte.agendamento.application.query.model.A
 import br.com.imbazzu.secretariaTransporte.agendamento.application.query.model.AgendamentoAgenda;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.query.model.VeiculoAgenda;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
-import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.VeiculoAberto;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.AgendamentoQueryPorta;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.AgendamentoValidacao;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.CompatibilidadeVeiculoAgendamento;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 import lombok.RequiredArgsConstructor;
 
 @Service

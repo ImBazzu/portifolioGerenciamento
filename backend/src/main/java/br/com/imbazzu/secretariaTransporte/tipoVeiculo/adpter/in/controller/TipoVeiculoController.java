@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.adpter.in.controller.dto.TipoVeiculoArquivadoResponseDto;
-import br.com.imbazzu.secretariaTransporte.tipoVeiculo.adpter.in.controller.dto.TipoVeiculoHistoricoResponseDto;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.adpter.in.controller.dto.TipoVeiculoRequestDto;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.adpter.in.controller.dto.TipoVeiculoResponseDto;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.command.arquivar.TipoVeiculoCommandArquivar;
@@ -34,8 +33,6 @@ import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.buscar.
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.buscar.TipoVeiculoQueryBuscarHandler;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.buscarArquivado.TipoVeiculoQueryBuscarArquivado;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.buscarArquivado.TipoVeiculoQueryBuscarArquivadoHandler;
-import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.historico.TipoVeiculoQueryHistorico;
-import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.historico.TipoVeiculoQueryHistoricoHandler;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.listarArquivados.TipoVeiculoQueryListarArquivado;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.listarArquivados.TipoVeiculoQueryListarArquivadoHandler;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.listarAtivos.TipoVeiculoQueryListarAtivoHandler;
@@ -69,7 +66,6 @@ public class TipoVeiculoController {
     private final TipoVeiculoQueryBuscarArquivadoHandler buscarArquivadoHandler;
     private final TipoVeiculoQueryListarAtivoHandler listarAtivoHandler;
     private final TipoVeiculoQueryListarArquivadoHandler listarArquivadoHandler;
-    private final TipoVeiculoQueryHistoricoHandler listarHistorico;
 
     // Command
     @PatchMapping("/{id}/arquivar")
@@ -147,18 +143,6 @@ public class TipoVeiculoController {
         var result = listarArquivadoHandler.handler(new TipoVeiculoQueryListarArquivado(nome, pagina, tamanho));
         var response = result
                 .map(v -> new TipoVeiculoArquivadoResponseDto(v.id(), v.nome(), v.capacidade(), v.dataArquivado()));
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/{id}/historico")
-    public ResponseEntity<ResultadoPaginado<TipoVeiculoHistoricoResponseDto>> listarHistorico(
-            @PathVariable UUID id,
-            @RequestParam(defaultValue = "0") int pagina,
-            @RequestParam(defaultValue = "20") int tamanho) {
-        var result = listarHistorico.handler(new TipoVeiculoQueryHistorico(id, pagina, tamanho));
-        var response = result
-                .map(v -> new TipoVeiculoHistoricoResponseDto(v.id(), v.data(), v.quantidadeVeiculos(),
-                        v.destinos(), v.totalPassageiro()));
         return ResponseEntity.ok(response);
     }
 

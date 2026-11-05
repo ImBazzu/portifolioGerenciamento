@@ -36,4 +36,16 @@ class PessoaControllerTest {
         assertSame(pessoa, model.getAttribute("pessoa"));
         verify(application).buscar(id);
     }
+
+    @Test
+    void arquivaPessoaEFechaModalComFragmentoVazio() {
+        var application = mock(PessoaApplicationPorta.class);
+        var controller = new PessoaController(application, new ObjectMapper());
+        var id = UUID.randomUUID();
+
+        var view = controller.arquivar(id);
+
+        assertEquals("layout/vazio :: vazio", view);
+        verify(application).arquivar(id);
+    }
 }

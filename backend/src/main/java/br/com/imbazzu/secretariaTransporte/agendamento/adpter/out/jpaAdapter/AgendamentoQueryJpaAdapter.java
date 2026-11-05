@@ -17,17 +17,17 @@ import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.Di
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.PessoaAgendaQueryRepository;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.TipoListaAgendaQueryRepository;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.TipoVeiculoAgendaQueryRepository;
-import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.VeiculoAgendaQueryRepository;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.AgendamentoProjecao;
-import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.VeiculoAgendaProjecao;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
-import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.VeiculoAberto;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.DestinoAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.PessoaAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.RegraCadastroAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.TipoVeiculoAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.AgendamentoQueryPorta;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.EntidadeNaoEncontradoException;
+import br.com.imbazzu.secretariaTransporte.veiculo.adpter.out.repositorio.VeiculoAgendaQueryRepository;
+import br.com.imbazzu.secretariaTransporte.veiculo.adpter.out.repositorio.projecoes.VeiculoAgendaProjecao;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 import lombok.RequiredArgsConstructor;
 
 @Repository

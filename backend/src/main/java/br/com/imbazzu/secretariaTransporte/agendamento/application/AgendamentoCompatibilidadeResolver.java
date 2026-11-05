@@ -12,8 +12,8 @@ import br.com.imbazzu.secretariaTransporte.agendamento.core.model.DestinoAgendaD
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.PessoaAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.RegraCadastroAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.AgendamentoQueryPorta;
-import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.VeiculoAberto;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.RegraCadastroAgendamento;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 
 public final class AgendamentoCompatibilidadeResolver {
 

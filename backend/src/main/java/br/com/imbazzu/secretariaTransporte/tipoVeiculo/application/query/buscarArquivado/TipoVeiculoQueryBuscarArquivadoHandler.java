@@ -3,6 +3,7 @@ package br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.buscar
 import org.springframework.stereotype.Service;
 
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.model.TipoVeiculoArquivadoOutput;
+import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.excecoes.TipoVeiculoNaoEncontradoException;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.porta.out.TipoVeiculoQueryPorta;
 import lombok.RequiredArgsConstructor;
 
@@ -13,6 +14,9 @@ public class TipoVeiculoQueryBuscarArquivadoHandler {
     private final TipoVeiculoQueryPorta queryPorta;
 
     public TipoVeiculoArquivadoOutput handler(TipoVeiculoQueryBuscarArquivado dto) {
-        return queryPorta.buscarArquivado(dto.id());
+        //Busca o tipo de veículo arquivado pelo ID fornecido no DTO.
+        // Se não for encontrado, lança uma exceção TipoVeiculoNaoEncontradoException.
+        return queryPorta.buscarArquivado(dto.id()).orElseThrow(
+            ()->new TipoVeiculoNaoEncontradoException(dto.id()));
     }
 }

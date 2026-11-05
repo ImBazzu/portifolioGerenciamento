@@ -14,6 +14,7 @@ public class TipoVeiculoQueryListarAtivoHandler {
     private final TipoVeiculoQueryPorta queryPorta;
 
     public ResultadoPaginado<TipoVeiculoOutput> handler(TipoVeiculoQueryListarAtivo dto) {
+        //Busca os tipos de veículos ativos com base nos critérios fornecidos no DTO
         return queryPorta.listar(dto.filtro(), dto.pagina(), dto.tamanho());
     }
 }
