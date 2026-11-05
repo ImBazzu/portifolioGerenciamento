@@ -92,10 +92,9 @@ public class ListaQueryBuscarHandler {
     }
 
     private String nomeVeiculo(UUID idTipoVeiculo) {
-        var veiculo = tipoVeiculoQueryPorta.buscarAtivo(idTipoVeiculo);
-        if(veiculo==null){
-                throw new  EntidadeNaoEncontradoException("Tipo de veículo não encontrado: " + idTipoVeiculo);
-        }
-        return veiculo.nome();
+        return tipoVeiculoQueryPorta.buscarAtivo(idTipoVeiculo)
+                .map(veiculo -> veiculo.nome())
+                .orElseThrow(() -> new EntidadeNaoEncontradoException(
+                        "Tipo de veículo não encontrado: " + idTipoVeiculo));
     }
 }

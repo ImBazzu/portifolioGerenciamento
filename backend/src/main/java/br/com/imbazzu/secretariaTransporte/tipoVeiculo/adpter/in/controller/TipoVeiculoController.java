@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
+import br.com.imbazzu.secretariaTransporte.veiculo.adpter.in.TipoVeiculoHistoricoResponseDto;
+import br.com.imbazzu.secretariaTransporte.veiculo.application.query.historico.TipoVeiculoQueryHistorico;
+import br.com.imbazzu.secretariaTransporte.veiculo.application.query.historico.TipoVeiculoQueryHistoricoHandler;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.adpter.in.controller.dto.TipoVeiculoArquivadoResponseDto;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.adpter.in.controller.dto.TipoVeiculoRequestDto;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.adpter.in.controller.dto.TipoVeiculoResponseDto;
@@ -66,6 +69,7 @@ public class TipoVeiculoController {
     private final TipoVeiculoQueryBuscarArquivadoHandler buscarArquivadoHandler;
     private final TipoVeiculoQueryListarAtivoHandler listarAtivoHandler;
     private final TipoVeiculoQueryListarArquivadoHandler listarArquivadoHandler;
+    private final TipoVeiculoQueryHistoricoHandler historicoHandler;
 
     // Command
     @PatchMapping("/{id}/arquivar")
@@ -143,6 +147,21 @@ public class TipoVeiculoController {
         var result = listarArquivadoHandler.handler(new TipoVeiculoQueryListarArquivado(nome, pagina, tamanho));
         var response = result
                 .map(v -> new TipoVeiculoArquivadoResponseDto(v.id(), v.nome(), v.capacidade(), v.dataArquivado()));
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/historico")
+    public ResponseEntity<ResultadoPaginado<TipoVeiculoHistoricoResponseDto>> buscarHistorico(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "20") int tamanho) {
+        var historico = historicoHandler.handler(new TipoVeiculoQueryHistorico(id, pagina, tamanho));
+        var response = historico.map(item -> new TipoVeiculoHistoricoResponseDto(
+                item.id(),
+                item.data(),
+                item.quantidadeVeiculos(),
+                item.destinos(),
+                item.totalPassageiro()));
         return ResponseEntity.ok(response);
     }
 

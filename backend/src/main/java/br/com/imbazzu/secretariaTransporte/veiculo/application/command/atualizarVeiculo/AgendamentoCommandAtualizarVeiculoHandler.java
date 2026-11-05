@@ -1,4 +1,4 @@
-package br.com.imbazzu.secretariaTransporte.agendamento.application.command.atualizarVeiculo;
+package br.com.imbazzu.secretariaTransporte.veiculo.application.command.atualizarVeiculo;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,4 +1,4 @@
-package br.com.imbazzu.secretariaTransporte.agendamento.application.command.atribuirVeiculo;
+package br.com.imbazzu.secretariaTransporte.veiculo.application.command.atribuirVeiculo;
 
 import java.time.Duration;
 import java.util.List;

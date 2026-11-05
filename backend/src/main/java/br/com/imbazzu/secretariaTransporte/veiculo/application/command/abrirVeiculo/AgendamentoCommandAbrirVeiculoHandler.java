@@ -1,4 +1,4 @@
-package br.com.imbazzu.secretariaTransporte.agendamento.application.command.abrirVeiculo;
+package br.com.imbazzu.secretariaTransporte.veiculo.application.command.abrirVeiculo;
 
 import java.util.UUID;
 

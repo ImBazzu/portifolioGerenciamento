@@ -7,8 +7,9 @@ import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.Ob
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.RegraDeNegocioException;
 import br.com.imbazzu.secretariaTransporte.lista.core.excecoes.TipoListaNaoEncontradoException;
 import br.com.imbazzu.secretariaTransporte.lista.core.porta.out.TipoListaPorta;
-import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.model.TipoVeiculo;
+import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.excecoes.TipoVeiculoNaoEncontradoException;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.porta.out.TipoVeiculoQueryPorta;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -24,9 +25,9 @@ public class TipoListaCommandAtualizarRegrasHandler {
                 .orElseThrow(() -> new TipoListaNaoEncontradoException(command.id()));
 
         command.regrasSeparacao().forEach(regra -> {
-            var tipoVeiculo = porta.buscarPorId(regra.idTipoVeiculo())
-        .orElseThrow(()-> new TipoListaNaoEncontradoException(regra.idTipoVeiculo()));
-            if (tipoVeiculo) {
+            var tipoVeiculo = tipoVeiculoQuery.buscarAtivo(regra.idTipoVeiculo())
+                    .orElseThrow(() -> new TipoVeiculoNaoEncontradoException(regra.idTipoVeiculo()));
+            if (!VeiculoAberto.tipoCalculaHorarioSaida(tipoVeiculo.nome())) {
                 throw new RegraDeNegocioException(
                         "A regra de separação só pode ser aplicada a tipos de veículo Carro.");
             }

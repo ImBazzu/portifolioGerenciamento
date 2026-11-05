@@ -1,4 +1,4 @@
-package br.com.imbazzu.secretariaTransporte.agendamento.application.command.atualizarVeiculo;
+package br.com.imbazzu.secretariaTransporte.veiculo.application.command.atualizarVeiculo;
 
 import java.time.LocalTime;
 import java.util.UUID;

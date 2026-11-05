@@ -1,4 +1,4 @@
-package br.com.imbazzu.secretariaTransporte.agendamento.application.command.removerVeiculoAberto;
+package br.com.imbazzu.secretariaTransporte.veiculo.application.command.removerVeiculoAberto;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

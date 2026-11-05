@@ -1,19 +1,21 @@
 package br.com.imbazzu.secretariaTransporte.veiculo.application.query.historico;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
-import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.model.TipoVeiculoHistoricoOutput;
-import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.porta.out.TipoVeiculoQueryPorta;
+import br.com.imbazzu.secretariaTransporte.veiculo.application.query.model.VeiculoHistoricoOutput;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.porta.out.VeiculoQueryPorta;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class TipoVeiculoQueryHistoricoHandler {
 
-    private final TipoVeiculoQueryPorta queryPorta;
+    private final VeiculoQueryPorta queryPorta;
 
-    public ResultadoPaginado<TipoVeiculoHistoricoOutput> handler(TipoVeiculoQueryHistorico dto) {
-        return queryPorta.listarHistorico(dto.idVeiculo(), dto.pagina(), dto.tamanho());
+    @Transactional(readOnly = true)
+    public ResultadoPaginado<VeiculoHistoricoOutput> handler(TipoVeiculoQueryHistorico query) {
+        return queryPorta.buscarHistorico(query.idTipoVeiculo(), query.pagina(), query.tamanho());
     }
 }

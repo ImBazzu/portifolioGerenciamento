@@ -1,4 +1,4 @@
-package br.com.imbazzu.secretariaTransporte.agendamento.application.command.atualizar;
+package br.com.imbazzu.secretariaTransporte.veiculo.application.command.atualizar;
 
 import java.util.HashMap;
 import java.util.UUID;

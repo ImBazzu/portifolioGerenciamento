@@ -35,7 +35,7 @@ class TipoListaCommandAtualizarRegrasHandlerTest {
         var idVan = UUID.randomUUID();
         lista.criarRegraSeparacao(idCarro, Duration.ofMinutes(10));
         when(listaPorta.buscarPorId(idLista)).thenReturn(Optional.of(lista));
-        when(tipoVeiculoQuery.buscarAtivo(idVan)).thenReturn(new TipoVeiculoOutput(idVan, "Van", 15));
+        when(tipoVeiculoQuery.buscarAtivo(idVan)).thenReturn(Optional.of(new TipoVeiculoOutput(idVan, "Van", 15)));
         var handler = new TipoListaCommandAtualizarRegrasHandler(listaPorta, tipoVeiculoQuery);
         var command = new TipoListaCommandAtualizarRegras(
                 idLista, List.of(), List.of(new RegraSeparacaoInput(idVan, Duration.ofMinutes(5))));
@@ -54,7 +54,7 @@ class TipoListaCommandAtualizarRegrasHandlerTest {
         var idLista = lista.getId();
         var idCarro = UUID.randomUUID();
         when(listaPorta.buscarPorId(idLista)).thenReturn(Optional.of(lista));
-        when(tipoVeiculoQuery.buscarAtivo(idCarro)).thenReturn(new TipoVeiculoOutput(idCarro, "Carro", 4));
+        when(tipoVeiculoQuery.buscarAtivo(idCarro)).thenReturn(Optional.of(new TipoVeiculoOutput(idCarro, "Carro", 4)));
         var handler = new TipoListaCommandAtualizarRegrasHandler(listaPorta, tipoVeiculoQuery);
 
         handler.handler(new TipoListaCommandAtualizarRegras(
