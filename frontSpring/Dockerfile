@@ -4,14 +4,14 @@ WORKDIR /app
 
 COPY . .
 
-RUN mvn -B clean package -DskipTests
+RUN mvn -B clean package -Dmaven.test.skip=true
 
-FROM eclipse-temurin:27-jdk-alpine
+FROM eclipse-temurin:27-jre-alpine
 
 WORKDIR /app
 
-COPY --from=builder /app/target/frontSpring-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=builder /app/target/*.jar app.jar
 
-EXPOSE 80
+EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

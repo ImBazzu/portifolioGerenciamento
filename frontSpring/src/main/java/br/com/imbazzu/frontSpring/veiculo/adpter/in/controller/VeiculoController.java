@@ -3,6 +3,8 @@ package br.com.imbazzu.frontSpring.veiculo.adpter.in.controller;
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
+import io.github.wimdeblauwe.htmx.spring.boot.mvc.HtmxResponse;
+import io.github.wimdeblauwe.htmx.spring.boot.mvc.HtmxReswap;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxRequest;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxTriggerAfterSettle;
 import org.springframework.stereotype.Controller;
@@ -44,10 +46,18 @@ public class VeiculoController {
 
     @PatchMapping("/{id}/arquivar")
     @HxRequest
-    @HxTriggerAfterSettle({"listar-ativos","fechar-formulario"})
-    @ResponseBody
-    public void arquivarVeiculo(@PathVariable UUID id) {
-        application.arquivar(id);
+    public String arquivarVeiculo(@PathVariable UUID id, Model model, HtmxResponse response) {
+        try{
+            application.arquivar(id);
+            response.addTriggerAfterSettle("listar-ativos");
+            response.addTriggerAfterSettle("fechar-formulario");
+            return "layout/vazio::vazio";
+        } catch (Exception e){
+            model.addAttribute("erro", e.getMessage());
+            response.setRetarget("#msgError");
+            response.setReswap(HtmxReswap.outerHtml());
+            return "veiculo/detalhesVeiculo :: msgerror";
+        }
     }
 
     @GetMapping("/limpar-modal")

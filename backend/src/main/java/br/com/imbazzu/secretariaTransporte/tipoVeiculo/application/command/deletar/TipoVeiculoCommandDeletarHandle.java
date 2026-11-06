@@ -3,7 +3,6 @@ package br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.command.dele
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.OperacaoNaoPermitidaException;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.porta.out.TipoVeiculoCommandPorta;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.service.TipoVeiculoServiceBuscarEntidade;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.service.TipoVeiculoServiceValidarExclusao;

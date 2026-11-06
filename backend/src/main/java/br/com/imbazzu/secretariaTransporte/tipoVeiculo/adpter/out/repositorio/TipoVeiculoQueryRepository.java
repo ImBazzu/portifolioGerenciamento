@@ -15,10 +15,6 @@ import br.com.imbazzu.secretariaTransporte.tipoVeiculo.adpter.out.repositorio.pr
 
 public interface TipoVeiculoQueryRepository extends JpaRepository<TipoVeiculoJpa, UUID> {
 
-
-        //Busca por ID, retornando um Optional para lidar com a possibilidade de não encontrar o registro
-        Optional<TipoVeiculoJpa> buscarPorId(UUID id);
-
         // Verifica se existe algum veículo usando o tipo de veículo especificado
         @Query ("""
                         SELECT CASE 

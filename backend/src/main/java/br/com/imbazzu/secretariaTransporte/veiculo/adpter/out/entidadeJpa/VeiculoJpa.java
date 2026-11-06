@@ -19,7 +19,7 @@ import lombok.Setter;
  * à qual os passageiros pertencem — não é armazenada aqui.
  */
 @Entity
-@Table(name = "viagens")
+@Table(name="veiculos")
 @Getter
 @Setter
 @NoArgsConstructor

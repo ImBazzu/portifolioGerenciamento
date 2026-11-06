@@ -10,10 +10,8 @@ import lombok.RequiredArgsConstructor;
 import java.util.UUID;
 
 import org.springframework.dao.DataAccessException;
-import org.springframework.stereotype.Repository;
 
 @RequiredArgsConstructor
-@Repository
 public class TipoVeiculoCommandAdapter implements TipoVeiculoCommandPorta {
 
     private final TipoVeiculoCommandRepository repo;

@@ -17,7 +17,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 @RequiredArgsConstructor
-@Repository
 public class TipoVeiculoQueryAdapter implements TipoVeiculoQueryPorta {
 
     private final TipoVeiculoQueryRepository repo;
@@ -26,7 +25,7 @@ public class TipoVeiculoQueryAdapter implements TipoVeiculoQueryPorta {
     @Override
     public Optional<TipoVeiculo> buscarEntidadePorId(UUID id) {
         //Entidade Jpa buscada no banco
-        var jpaTipoVeiculo = repo.buscarPorId(id);
+        var jpaTipoVeiculo = repo.findById(id);
         //Mapeando para o modelo de domínio
          return jpaTipoVeiculo.map(
             v -> TipoVeiculo.recriar(

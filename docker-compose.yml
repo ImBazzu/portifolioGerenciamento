@@ -1,40 +1,52 @@
 services:
+
     mysql:
-        image: mysql:8
+        image: mysql:8.4
+        container_name: secretaria-mysql
+        restart: unless-stopped
         environment:
-            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Configure MYSQL_ROOT_PASSWORD}
             MYSQL_DATABASE: ${DB_BANCO:-secretaria_transporte}
-            MYSQL_USER: ${DB_USER:?Configure DB_USER no .env.prod}
-            MYSQL_PASSWORD: ${DB_PASSWORD:?Configure DB_PASSWORD no .env.prod}
-        env_file:
-            - .env.prod
+            MYSQL_USER: ${DB_USER:?Configure DB_USER}
+            MYSQL_PASSWORD: ${DB_PASSWORD:?Configure DB_PASSWORD}
         volumes:
             - mysql_data:/var/lib/mysql
         networks:
             - app-network
         healthcheck:
-            test: ["CMD-SHELL", "mysqladmin ping --host=127.0.0.1 --user=root --password=\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+            test:
+                - CMD-SHELL
+                - mysqladmin ping --host=127.0.0.1 --user=root --password="$${MYSQL_ROOT_PASSWORD}" --silent
             interval: 5s
             timeout: 5s
             retries: 20
             start_period: 20s
 
     backend:
-        build: ./backend
-        env_file:
-            - .env.prod
+        build:
+            context: ./backend
+        container_name: secretaria-backend
+        restart: unless-stopped
         environment:
             DB_HOST: mysql
             DB_PORT: "3306"
+            DB_BANCO: ${DB_BANCO:-secretaria_transporte}
+            DB_USER: ${DB_USER:?Configure DB_USER}
+            DB_PASSWORD: ${DB_PASSWORD:?Configure DB_PASSWORD}
+            JWT_SECRETS: ${JWT_SECRETS:?Configure JWT_SECRETS}
+            JWT_ASSINATURA: ${JWT_ASSINATURA:?Configure JWT_ASSINATURA}
+            API_CORS_ORIGINS: ${API_CORS_ORIGINS:?Configure API_CORS_ORIGINS}
         depends_on:
             mysql:
                 condition: service_healthy
-        ports:
-            - "8080:8080"
+        expose:
+            - "8080"
         networks:
             - app-network
         healthcheck:
-            test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/api/v3/api-docs"]
+            test:
+                - CMD-SHELL
+                - wget -q -O /dev/null http://127.0.0.1:8080/api/v3/api-docs || exit 1
             interval: 10s
             timeout: 5s
             retries: 12
@@ -43,13 +55,16 @@ services:
     frontend:
         build:
             context: ./frontSpring
+        container_name: secretaria-frontend
+        restart: unless-stopped
         environment:
             API_BASE_URL: http://backend:8080/api
-        ports:
-            - "8081:80"
+            SERVER_PORT: "8080"
         depends_on:
             backend:
                 condition: service_healthy
+        expose:
+            - "8080"
         networks:
             - app-network
 

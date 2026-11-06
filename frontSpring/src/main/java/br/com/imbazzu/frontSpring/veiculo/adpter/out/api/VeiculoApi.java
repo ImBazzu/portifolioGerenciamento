@@ -39,6 +39,8 @@ public class VeiculoApi implements VeiculoApiPorta {
                 .retrieve()
                 .onStatus(status->status.isSameCodeAs(HttpStatus.NOT_FOUND),
                         (r,p)->{throw new VeiculoNaoEncontradoException(id);})
+                .onStatus(status->status.isSameCodeAs(HttpStatus.UNAUTHORIZED),
+                        (r,p)->{throw new RuntimeException("Ação não autorizada");})
                 .toBodilessEntity());
     }
 

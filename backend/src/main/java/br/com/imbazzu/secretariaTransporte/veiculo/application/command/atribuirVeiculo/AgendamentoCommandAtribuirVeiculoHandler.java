@@ -1,7 +1,6 @@
 package br.com.imbazzu.secretariaTransporte.veiculo.application.command.atribuirVeiculo;
 
 import java.time.Duration;
-import java.util.List;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

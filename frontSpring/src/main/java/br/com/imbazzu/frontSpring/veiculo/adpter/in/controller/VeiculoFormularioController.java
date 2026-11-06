@@ -45,7 +45,6 @@ public class VeiculoFormularioController {
             @RequestParam(defaultValue = "false") boolean arquivado,
             Model model) {
         try {
-            // BUG 5 CORRIGIDO: busca pelo DTO correto conforme o contexto
             TipoVeiculoRequestDto dto;
             if (arquivado) {
                 TipoVeiculoArquivadoResponseDto v = application.buscarArquivado(id);
@@ -96,7 +95,7 @@ public class VeiculoFormularioController {
             @PathVariable UUID id,
             @Valid @ModelAttribute("veiculo") TipoVeiculoRequestDto veiculo,
             BindingResult result,
-            @RequestParam(defaultValue = "false") boolean arquivado, // BUG 5 CORRIGIDO: recebe contexto de origem
+            @RequestParam(defaultValue = "false") boolean arquivado,
             Model model) {
 
         if (result.hasErrors()) {
@@ -105,7 +104,7 @@ public class VeiculoFormularioController {
 
         try {
             application.editar(id, veiculo);
-            return detalhesVeiculo(id, arquivado, model); // BUG 5 CORRIGIDO: era hardcoded "false"; agora usa o contexto real
+            return detalhesVeiculo(id, arquivado, model); 
         } catch (VeiculoDuplicadoException e) {
             result.rejectValue("nome", "duplicado", "Já existe um veículo cadastrado com este nome.");
             return "veiculo/formVeiculo :: formVeiculo";

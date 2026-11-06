@@ -25,7 +25,7 @@
             <!-- Formulário -->
             <form th:object="${veiculo}"
                   hx:post="${!edicao} ? @{/veiculo} : null"
-                  hx:put="${edicao} ? @{/veiculo/{id}(id=${id}, arquivado=${arquivado != null ? arquivado : false})} : null"
+                  hx:put="${edicao} ? @{/veiculo/{id}(id=${id}, arquivado=${arquivado})} : null"
                   hx-target="#modal"
                   hx-swap="innerHTML">
 

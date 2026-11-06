@@ -13,5 +13,5 @@ public interface VeiculoAgendaRepository extends JpaRepository<VeiculoAgendaJpa,
     List<VeiculoAgendaJpa> findByDataOrderById(LocalDate data);
 
     
-    boolean existsByTipoVeiculoId(UUID tipoVeiculoId);
+    boolean existsByIdTipoVeiculo(UUID idTipoVeiculo);
 }
