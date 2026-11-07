@@ -56,6 +56,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRETS: ${JWT_SECRETS:?defina JWT_SECRETS no .env}
       JWT_ASSINATURA: ${JWT_ASSINATURA:?defina JWT_ASSINATURA no .env}
+      CORS_ORIGENS: ${API_CORS_ORIGINS:?defina API_CORS_ORIGINS no .env}
       TZ: America/Bahia
       JAVA_TOOL_OPTIONS: "-Duser.timezone=America/Bahia -XX:MaxRAMPercentage=60"
     depends_on:
