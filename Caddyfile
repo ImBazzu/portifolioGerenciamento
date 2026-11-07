@@ -1,0 +1,24 @@
+# Caddyfile — HTTPS automático (Let's Encrypt) + proxy para o BFF
+#
+# Antes de subir:
+#  - o DNS (registro A) do domínio precisa apontar para o IP do VPS;
+#  - as portas 80 e 443 precisam estar liberadas (firewall da Hostinger).
+
+{
+	email {$ACME_EMAIL}
+
+	# Enquanto estiver testando, descomente a linha abaixo para usar o ambiente
+	# de TESTE do Let's Encrypt (evita bloqueio por excesso de tentativas).
+	# Depois comente de novo e rode: docker compose restart caddy
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+{$DOMINIO} {
+	encode zstd gzip
+	reverse_proxy frontend:8080
+}
+
+# Se criar também o registro DNS de "www", descomente:
+# www.{$DOMINIO} {
+# 	redir https://{$DOMINIO}{uri} permanent
+# }

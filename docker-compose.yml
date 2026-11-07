@@ -1,76 +1,126 @@
+# docker-compose.yml — PRODUÇÃO (VPS Hostinger)
+#
+# Uso (na pasta do projeto, com o arquivo .env ao lado deste):
+#   docker compose up -d --build
+#
+# Regra de ouro: SÓ o Caddy publica portas (80/443).
+# MySQL, backend e BFF ficam na rede interna "app-network".
+#
+# Limites de memória: ponto de partida para um VPS de ~4 GB de RAM
+# (mysql 1g + backend 768m + front 640m). Confira com: docker stats --no-stream
+
+name: secretaria-transporte
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"   # sem isso os logs crescem até encher o disco
+    max-file: "3"
+
 services:
+  mysql:
+    image: mysql:8.4            # LTS. Evite tag flutuante (mysql:8)
+    restart: unless-stopped
+    # Sem env_file: o banco só recebe o que precisa (não enxerga JWT_SECRETS etc.)
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?defina MYSQL_ROOT_PASSWORD no .env}
+      MYSQL_DATABASE: ${DB_BANCO:?defina DB_BANCO no .env}
+      MYSQL_USER: ${DB_USER:?defina DB_USER no .env}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no .env}
+      TZ: America/Bahia
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping --host=127.0.0.1 --user=root --password=\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    logging: *default-logging
 
-    mysql:
-        image: mysql:8.4
-        container_name: secretaria-mysql
-        restart: unless-stopped
-        environment:
-            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Configure MYSQL_ROOT_PASSWORD}
-            MYSQL_DATABASE: ${DB_BANCO:-secretaria_transporte}
-            MYSQL_USER: ${DB_USER:?Configure DB_USER}
-            MYSQL_PASSWORD: ${DB_PASSWORD:?Configure DB_PASSWORD}
-        volumes:
-            - mysql_data:/var/lib/mysql
-        networks:
-            - app-network
-        healthcheck:
-            test:
-                - CMD-SHELL
-                - mysqladmin ping --host=127.0.0.1 --user=root --password="$${MYSQL_ROOT_PASSWORD}" --silent
-            interval: 5s
-            timeout: 5s
-            retries: 20
-            start_period: 20s
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_BANCO: ${DB_BANCO}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRETS: ${JWT_SECRETS:?defina JWT_SECRETS no .env}
+      JWT_ASSINATURA: ${JWT_ASSINATURA:?defina JWT_ASSINATURA no .env}
+      TZ: America/Bahia
+      JAVA_TOOL_OPTIONS: "-Duser.timezone=America/Bahia -XX:MaxRAMPercentage=60"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    # SEM "ports": a API só é alcançável pelo BFF, dentro da rede do Docker.
+    networks:
+      - app-network
+    healthcheck:
+      # Quando adicionar o Actuator, troque por /api/actuator/health
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/api/v3/api-docs"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 768m
+    logging: *default-logging
 
-    backend:
-        build:
-            context: ./backend
-        container_name: secretaria-backend
-        restart: unless-stopped
-        environment:
-            DB_HOST: mysql
-            DB_PORT: "3306"
-            DB_BANCO: ${DB_BANCO:-secretaria_transporte}
-            DB_USER: ${DB_USER:?Configure DB_USER}
-            DB_PASSWORD: ${DB_PASSWORD:?Configure DB_PASSWORD}
-            JWT_SECRETS: ${JWT_SECRETS:?Configure JWT_SECRETS}
-            JWT_ASSINATURA: ${JWT_ASSINATURA:?Configure JWT_ASSINATURA}
-            API_CORS_ORIGINS: ${API_CORS_ORIGINS:?Configure API_CORS_ORIGINS}
-        depends_on:
-            mysql:
-                condition: service_healthy
-        expose:
-            - "8080"
-        networks:
-            - app-network
-        healthcheck:
-            test:
-                - CMD-SHELL
-                - wget -q -O /dev/null http://127.0.0.1:8080/api/v3/api-docs || exit 1
-            interval: 10s
-            timeout: 5s
-            retries: 12
-            start_period: 45s
+  frontend:
+    build: ./frontSpring
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      API_BASE_URL: http://backend:8080/api
+      TZ: America/Bahia
+      JAVA_TOOL_OPTIONS: "-Duser.timezone=America/Bahia -XX:MaxRAMPercentage=60"
+    depends_on:
+      backend:
+        condition: service_healthy
+    # SEM "ports": quem fala com o BFF é o Caddy, pela rede interna.
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 640m
+    logging: *default-logging
 
-    frontend:
-        build:
-            context: ./frontSpring
-        container_name: secretaria-frontend
-        restart: unless-stopped
-        environment:
-            API_BASE_URL: http://backend:8080/api
-            SERVER_PORT: "8080"
-        depends_on:
-            backend:
-                condition: service_healthy
-        expose:
-            - "8080"
-        networks:
-            - app-network
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMINIO: ${DOMINIO:?defina DOMINIO no .env}
+      ACME_EMAIL: ${ACME_EMAIL:?defina ACME_EMAIL no .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data        # certificados e chaves: não apague
+      - caddy_config:/config
+    depends_on:
+      - frontend
+    networks:
+      - app-network
+    logging: *default-logging
 
 volumes:
-    mysql_data:
+  mysql_data:
+  caddy_data:
+  caddy_config:
 
 networks:
-    app-network:
-        driver: bridge
+  app-network:
+    driver: bridge
