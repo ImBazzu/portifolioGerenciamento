@@ -41,7 +41,7 @@ public class PessoaJpa {
     @Column(name = "endereco", length = 250)
     private String endereco;
 
-    @Column(name = "cpf", nullable = false, length = 11)
+    @Column(name = "cpf", length = 11)
     private String cpf;
 
     @Column(name = "telefone", nullable = false, length = 11)

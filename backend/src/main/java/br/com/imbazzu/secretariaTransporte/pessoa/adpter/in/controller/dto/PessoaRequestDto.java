@@ -10,6 +10,6 @@ public record PessoaRequestDto(
         @Size(max = 249) String observacao,
         @NotNull EnumPrioridade prioridade,
         @Size(max = 249) String endereco,
-        @NotBlank String cpf,
+        String cpf,
         @NotBlank String telefone) {
 }

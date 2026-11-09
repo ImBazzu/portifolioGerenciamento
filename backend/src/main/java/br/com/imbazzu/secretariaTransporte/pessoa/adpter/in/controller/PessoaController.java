@@ -129,7 +129,7 @@ public class PessoaController {
                 pessoa.getPrioridade(),
                 pessoa.getDataArquivado(),
                 pessoa.getEndereco() == null ? null : pessoa.getEndereco().valor(),
-                pessoa.getCpf().valor(),
+                pessoa.getCpf() == null ? null : pessoa.getCpf().valor(),
                 pessoa.getTelefone().valor());
     }
 }

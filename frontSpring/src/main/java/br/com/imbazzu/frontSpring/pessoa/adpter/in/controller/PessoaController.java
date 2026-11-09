@@ -121,7 +121,7 @@ public class PessoaController {
             return "layout/vazio :: vazio";
         } catch (PessoaDuplicadaException e) {
             result.rejectValue("cpf", "duplicado", e.getMessage());
-        } catch (PessoaDadosInvalidosException e) {
+        } catch (Exception e) {
             model.addAttribute("erroGlobal", e.getMessage());
         }
         model.addAttribute("id", null);
@@ -146,9 +146,7 @@ public class PessoaController {
             return "layout/vazio :: vazio";
         } catch (PessoaDuplicadaException e) {
             result.rejectValue("cpf", "duplicado", e.getMessage());
-        } catch (PessoaDadosInvalidosException e) {
-            model.addAttribute("erroGlobal", e.getMessage());
-        } catch (PessoaNaoEncontradaException e) {
+        } catch (Exception e) {
             model.addAttribute("erroGlobal", e.getMessage());
         }
         return "paginas/pessoa/formPessoa :: formPessoa";

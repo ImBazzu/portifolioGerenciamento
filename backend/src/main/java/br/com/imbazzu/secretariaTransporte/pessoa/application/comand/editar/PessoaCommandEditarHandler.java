@@ -25,10 +25,16 @@ public class PessoaCommandEditarHandler {
         var pessoa = porta.buscarPorId(command.id()).orElseThrow(
             ()->new PessoaNaoEncontradoException(command.id())
         );
-        var novoCpf = new Cpf(command.cpf());
         
-        if(porta.existeCpf(novoCpf.valor(), command.id())){
-            throw new PessoaDuplicadoException(novoCpf);
+
+        var novoCpf = command.cpf()==null || command.cpf().isBlank()
+                ? null
+                : new Cpf(command.cpf());
+        
+        if(novoCpf != null){
+            if(porta.existeCpf(novoCpf.valor(), command.id())){
+                throw new PessoaDuplicadoException(novoCpf);
+            }
         }
 
         var observacao = command.observacao() == null || command.observacao().isBlank() ? null : new Observacao(command.observacao());

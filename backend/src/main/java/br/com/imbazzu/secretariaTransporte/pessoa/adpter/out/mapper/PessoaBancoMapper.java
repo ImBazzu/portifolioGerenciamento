@@ -21,7 +21,7 @@ public final class PessoaBancoMapper {
                 entidade.getPrioridade(),
                 entidade.getDataArquivado(),
                 enderecoOpcional(entidade.getEndereco()),
-                new Cpf(entidade.getCpf()),
+                cpfOpcional(entidade.getCpf()),
                 new Telefone(entidade.getTelefone()));
     }
 
@@ -32,7 +32,7 @@ public final class PessoaBancoMapper {
         entidade.setPrioridade(dominio.getPrioridade());
         entidade.setDataArquivado(dominio.getDataArquivado());
         entidade.setEndereco(dominio.getEndereco() == null ? null : dominio.getEndereco().valor());
-        entidade.setCpf(dominio.getCpf().valor());
+        entidade.setCpf(dominio.getCpf()==null?null:dominio.getCpf().valor());
         entidade.setTelefone(dominio.getTelefone().valor());
     }
 
@@ -42,5 +42,9 @@ public final class PessoaBancoMapper {
 
     private static Endereco enderecoOpcional(String valor) {
         return valor == null || valor.isBlank() ? null : new Endereco(valor);
+    }
+
+    private static Cpf cpfOpcional(String valor) {
+        return valor == null || valor.isBlank() ? null : new Cpf(valor);
     }
 }

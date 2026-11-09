@@ -25,7 +25,7 @@
                         <label for="cpf" class="form-label fw-bold">CPF</label>
                         <input id="cpf" type="text" th:field="*{cpf}" class="form-control"
                                th:classappend="${#fields.hasErrors('cpf')} ? 'is-invalid'"
-                               inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" required>
+                               inputmode="numeric" autocomplete="off" placeholder="000.000.000-00">
                         <div class="invalid-feedback" th:if="${#fields.hasErrors('cpf')}"
                              th:errors="*{cpf}"></div>
                     </div>

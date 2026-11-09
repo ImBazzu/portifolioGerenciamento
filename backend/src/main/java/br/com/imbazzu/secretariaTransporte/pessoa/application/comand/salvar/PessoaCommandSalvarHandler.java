@@ -27,10 +27,14 @@ public class PessoaCommandSalvarHandler {
         var observacao = command.observacao() == null || command.observacao().isBlank()
                 ? null
                 : new Observacao(command.observacao());
-        var cpf = new Cpf(command.cpf());
+        var cpf = command.cpf()==null || command.cpf().isBlank()
+                ? null
+                : new Cpf(command.cpf());
         
-        if(porta.existeCpf(cpf.valor(), null)){
-            throw new PessoaDuplicadoException(cpf);
+        if(cpf != null){
+            if(porta.existeCpf(cpf.valor(), null)){
+                throw new PessoaDuplicadoException(cpf);
+            }
         }
 
         var endereco = command.endereco() == null || command.endereco().isBlank()
