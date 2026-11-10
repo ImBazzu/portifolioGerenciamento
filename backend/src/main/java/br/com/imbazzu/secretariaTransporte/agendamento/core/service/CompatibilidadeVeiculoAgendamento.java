@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
@@ -68,6 +69,10 @@ public final class CompatibilidadeVeiculoAgendamento {
         long lugaresOcupados = ocupantes.stream().mapToLong(Agendamento::quantidadePessoas).sum();
         return (int) (veiculo.capacidade() - lugaresOcupados - novo.quantidadePessoas());
     }
+
+    public static boolean compativelDestino(List<Agendamento> ocupantes, Agendamento novo) {
+        return ocupantes.stream()
+                 .allMatch(v->Objects.equals(v.getIdDestino(), novo.getIdDestino()));}
 
     public static Slot criarSlot(Agendamento agendamento) {
         return criarSlot(agendamento, agendamento.getToleranciaSeparacao());
