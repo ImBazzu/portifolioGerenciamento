@@ -70,9 +70,24 @@ public final class CompatibilidadeVeiculoAgendamento {
         return (int) (veiculo.capacidade() - lugaresOcupados - novo.quantidadePessoas());
     }
 
-    public static boolean compativelDestino(List<Agendamento> ocupantes, Agendamento novo) {
-        return ocupantes.stream()
-                 .allMatch(v->Objects.equals(v.getIdDestino(), novo.getIdDestino()));}
+ public static boolean compativelCidade(Map<UUID, List<UUID>> destinosPorCidadeId,
+                                        List<Agendamento> ocupantes,
+                                        Agendamento novo) {
+    UUID cidadeNovo = cidadeDoDestino(destinosPorCidadeId, novo.getIdDestino());
+
+    return ocupantes.stream()
+            .allMatch(ocupante ->
+                    cidadeNovo.equals(cidadeDoDestino(destinosPorCidadeId, ocupante.getIdDestino())));
+}
+
+private static UUID cidadeDoDestino(Map<UUID, List<UUID>> destinosPorCidadeId, UUID destinoId) {
+    return destinosPorCidadeId.entrySet().stream()
+            .filter(entry -> entry.getValue().contains(destinoId))
+            .map(Map.Entry::getKey)
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException(
+                    "Destino sem cidade associada: " + destinoId));
+}
 
     public static Slot criarSlot(Agendamento agendamento) {
         return criarSlot(agendamento, agendamento.getToleranciaSeparacao());

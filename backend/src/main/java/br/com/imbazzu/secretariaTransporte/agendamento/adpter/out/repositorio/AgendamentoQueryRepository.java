@@ -1,6 +1,7 @@
 package br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -11,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.entidadeJpa.AgendamentoJpa;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.AgendamentoProjecao;
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.DestinoPorCidadeProjecao;
 
 public interface AgendamentoQueryRepository extends Repository<AgendamentoJpa, UUID> {
 
@@ -50,4 +52,13 @@ public interface AgendamentoQueryRepository extends Repository<AgendamentoJpa, U
             ORDER BY a.horarioChegada ASC
             """)
     List<AgendamentoProjecao> listarProjecoesPorData(@Param("data") LocalDate data);
+
+        @Query("""
+                SELECT DISTINCT
+                        d.cidadeId AS cidadeId,
+                        a.idDestino AS destinoId
+                FROM AgendamentoJpa a
+                JOIN DestinoJpa d ON d.id = a.idDestino
+                WHERE a.data = :data""")
+     List<DestinoPorCidadeProjecao> buscarDestinosPorCidadeId(@Param("data") LocalDate data);
 }

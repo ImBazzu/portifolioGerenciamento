@@ -28,6 +28,8 @@ public class AgendamentoCommandSepararAutomaticamenteHandler {
     private final AgendamentoCommandPorta comandos;
     private final AgendamentoQueryPorta consultas;
 
+    
+
     @Transactional
     public ResultadoSeparacaoAutomatica handler(AgendamentoCommandSepararAutomaticamente command) {
         AgendamentoValidacao.exigirDiaAberto(consultas, command.data());
@@ -52,6 +54,7 @@ public class AgendamentoCommandSepararAutomaticamenteHandler {
         var ocupantesPorVeiculo = ocupantesPorVeiculo(todos);
         var toleranciasPorTipo = AgendamentoCompatibilidadeResolver.toleranciasPorTipo(consultas, todos);
         var tiposVeiculoPorId = new HashMap<UUID, TipoVeiculoAgendaDados>();
+        var destinosPorCidadeId = consultas.buscarDestinosPorCidadeId(command.data());
 
         int alocados = 0;
         for (var slot : pendentes) {
@@ -64,8 +67,10 @@ public class AgendamentoCommandSepararAutomaticamenteHandler {
             var veiculoEscolhido = veiculos.stream()
                     .filter(veiculo -> VeiculoAberto.tipoCalculaHorarioSaida(veiculo.nomeTipoVeiculo()))
                     .filter(veiculo -> tolerancias.containsKey(veiculo.idTipoVeiculo()))
-                    .filter(v->CompatibilidadeVeiculoAgendamento.compativelDestino(
-                            ocupantesPorVeiculo.getOrDefault(v.id(), List.of()), slot.agendamento()))
+                    .filter(v->CompatibilidadeVeiculoAgendamento.compativelCidade(
+                            destinosPorCidadeId,
+                            ocupantesPorVeiculo.getOrDefault(v.id(), List.of()),
+                            slot.agendamento()))
                     .filter(veiculo -> CompatibilidadeVeiculoAgendamento.compativel(
                             veiculo,
                             ocupantesPorVeiculo.getOrDefault(veiculo.id(), List.of()),

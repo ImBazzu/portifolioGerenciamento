@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -18,6 +19,7 @@ import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.Pe
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.TipoListaAgendaQueryRepository;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.TipoVeiculoAgendaQueryRepository;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.AgendamentoProjecao;
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.DestinoPorCidadeProjecao;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.DestinoAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.PessoaAgendaDados;
@@ -180,5 +182,19 @@ public class AgendamentoQueryJpaAdapter implements AgendamentoQueryPorta {
                 projeccao.getIdentificacao(),
                 projeccao.getHorarioSaida(),
                 projeccao.isHorarioSaidaCalculado());
+    }
+
+    @Override 
+    @Transactional (readOnly = true)
+    public Map<UUID, List<UUID>> buscarDestinosPorCidadeId(LocalDate data) {
+        if(data == null) {
+            return Map.of();
+        }
+        return agendamentoRepository.buscarDestinosPorCidadeId(data)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        DestinoPorCidadeProjecao::getCidadeId,
+                        Collectors.mapping(DestinoPorCidadeProjecao::getDestinoId, Collectors.toList())))
+                ;
     }
 }
