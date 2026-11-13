@@ -14,10 +14,15 @@
                     <h1>Agendamentos</h1>
                     <p>Abra os veículos do dia, agende passageiros e organize a separação.</p>
                 </div>
-                <button class="btn btn-outline-primary" type="button"
-                        data-bs-toggle="modal" data-bs-target="#consultarDiaModal">
-                    <i class="bi bi-calendar2-week me-1"></i>Consultar dia
-                </button>
+                <div class="d-flex gap-2">
+                    <a class="btn btn-outline-primary" th:href="@{/agendamentos/carros(data=${data})}">
+                        <i class="bi bi-car-front me-1"></i>Página de Carros
+                    </a>
+                    <button class="btn btn-outline-secondary" type="button"
+                            data-bs-toggle="modal" data-bs-target="#consultarDiaModal">
+                        <i class="bi bi-calendar2-week me-1"></i>Consultar dia
+                    </button>
+                </div>
             </header>
 
             <div class="modal fade" id="consultarDiaModal" tabindex="-1" aria-labelledby="consultarDiaTitulo"
@@ -89,22 +94,159 @@
             </div>
 
             <th:block th:if="${agenda != null}">
-                <section class="card border-0 shadow-sm mb-4">
-                    <div class="card-body">
-                        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
-                            <div>
-                                <h2 class="h5 mb-1">Abrir veículo físico</h2>
-                                <p class="text-secondary mb-0">Registre ônibus, vans e demais veículos para esta data.</p>
+                <!-- AÇÕES DE ABERTURA E AGENDAMENTO -->
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    <button class="btn btn-primary" type="button"
+                            data-bs-toggle="modal" data-bs-target="#abrirVeiculoModal">
+                        <i class="bi bi-plus-lg me-1"></i>Abrir veículo físico
+                    </button>
+                    <button class="btn btn-success" type="button"
+                            data-bs-toggle="modal" data-bs-target="#agendamentoModal">
+                        <i class="bi bi-person-plus me-1"></i>Iniciar agendamento
+                    </button>
+                </div>
+
+                <!-- QUADRADOS REPRESENTANDO CADA VEÍCULO NO TOPO (COM AGRUPAMENTO DE CARROS E BOTÃO DE PDF) -->
+                <section class="mb-4">
+                    <h2 class="h5 mb-3">Resumo dos Veículos do Dia</h2>
+                    <div th:if="${#lists.isEmpty(agenda.veiculos())}" class="alert alert-info">
+                        Nenhum veículo aberto para esta data.
+                    </div>
+                    <div class="row g-3" th:if="${!#lists.isEmpty(agenda.veiculos())}">
+                        <!-- CARD PARA VEÍCULOS NORMAIS (ÔNIBUS/VANS) -->
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-3" th:each="veiculo : ${veiculosNaoCarro}">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h3 class="h6 mb-0 text-primary fw-bold" th:text="${veiculo.nomeTipoVeiculo()}"></h3>
+                                            <span class="badge bg-light text-dark border"
+                                                  th:text="${veiculo.identificacao() != null ? veiculo.identificacao() : 'S/ ID'}"></span>
+                                        </div>
+
+                                        <div class="mt-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <small class="text-secondary">Ocupação:</small>
+                                                <span class="fw-bold small" th:text="${veiculo.assentosOcupados() + ' / ' + veiculo.capacidade() + ' vagas'}"></span>
+                                            </div>
+                                            <div class="progress" style="height: 6px;">
+                                                <div class="progress-bar" role="progressbar"
+                                                     th:style="'width: ' + (${veiculo.capacidade() > 0 ? (veiculo.assentosOcupados() * 100 / veiculo.capacidade()) : 0}) + '%'"
+                                                     th:classappend="${veiculo.assentosOcupados() >= veiculo.capacidade() ? 'bg-danger' : 'bg-success'}"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-3 pt-2 border-top d-flex justify-content-between align-items-center small text-secondary">
+                                            <span>Saída:</span>
+                                            <strong th:text="${veiculo.horarioSaida() != null ? veiculo.horarioSaida() : 'A definir'}"></strong>
+                                        </div>
+                                    </div>
+
+                                    <!-- BOTÕES DE AÇÃO DO VEÍCULO (INCLUINDO PDF E INSERIR PASSAGEIRO) -->
+                                    <div class="mt-3 pt-2 border-top d-flex gap-2">
+                                        <a class="btn btn-sm btn-outline-secondary w-50"
+                                           th:href="@{/agendamentos/pdf/veiculos/{id}(id=${veiculo.id()}, data=${data})}"
+                                           target="_blank">
+                                            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-primary w-50" type="button"
+                                                data-bs-toggle="modal"
+                                                th:attr="data-bs-target='#atribuirPassageiroModal-' + ${veiculo.id()}">
+                                            <i class="bi bi-person-plus me-1"></i>Inserir
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                            <button class="btn btn-primary align-self-start" type="button"
-                                    data-bs-toggle="modal" data-bs-target="#abrirVeiculoModal">
-                                <i class="bi bi-plus-lg me-1"></i>Abrir veículo
-                            </button>
                         </div>
-                        <div class="form-text mt-2">Carros são abertos na página de passageiros de carros.</div>
+
+                        <!-- CARD CONSOLIDADO PARA CARROS (MOSTRA TOTAL DE CARROS E TOTAL DE PASSAGEIROS) -->
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-3" th:if="${!#lists.isEmpty(veiculosCarro)}">
+                            <div class="card border-0 shadow-sm h-100 bg-light">
+                                <div class="card-body d-flex flex-column justify-content-between">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h3 class="h6 mb-0 text-success fw-bold">Carros (Total)</h3>
+                                            <span class="badge bg-success text-white" 
+                                                  th:text="${veiculosCarro.size() + ' carro(s) aberto(s)'}"></span>
+                                        </div>
+
+                                        <div class="mt-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <small class="text-secondary">Passageiros acomodados:</small>
+                                                <span class="fw-bold small" th:text="${#aggregates.sum(veiculosCarro.![assentosOcupados()]) + ' / ' + #aggregates.sum(veiculosCarro.![capacidade()]) + ' vagas'}"></span>
+                                            </div>
+                                            <div class="progress" style="height: 6px;">
+                                                <div class="progress-bar bg-success" role="progressbar" 
+                                                     th:style="'width: 100%'"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-3 pt-2 border-top small text-secondary">
+                                            <span>Gerencie as atribuições individuais na página específica.</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3 pt-2 border-top">
+                                        <a class="btn btn-sm btn-outline-success w-100"
+                                           th:href="@{/agendamentos/pdf/carros(data=${data})}"
+                                           target="_blank">
+                                            <i class="bi bi-file-earmark-pdf me-1"></i>PDF Geral de Carros
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
 
+                <!-- MODAIS DE INSERÇÃO DE PASSAGEIRO POR BUSCA DIRETA NO VEÍCULO -->
+                <th:block th:each="veiculo : ${agenda.veiculos()}">
+                    <div class="modal fade" th:id="'atribuirPassageiroModal-' + ${veiculo.id()}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form method="post" th:action="@{/agendamentos/atribuir-direto}">
+                                    <input type="hidden" name="data" th:value="${data}">
+                                    <input type="hidden" name="idVeiculo" th:value="${veiculo.id()}">
+                                    <div class="modal-header">
+                                        <h2 class="modal-title fs-5" th:text="'Inserir passageiro em: ' + (${veiculo.identificacao() != null ? veiculo.identificacao() : veiculo.nomeTipoVeiculo()})"></h2>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <label class="form-label" th:for="'buscaPassageiroInput-' + ${veiculo.id()}">
+                                            Filtrar passageiro pendente
+                                        </label>
+                                        <input type="search" class="form-control mb-2 busca-passageiro-input"
+                                            th:id="'buscaPassageiroInput-' + ${veiculo.id()}"
+                                            placeholder="Digite o nome ou a cidade..."
+                                            autocomplete="off">
+
+                                        <div class="list-group" style="max-height: 300px; overflow-y: auto;">
+                                            <label class="list-group-item list-group-item-action item-passageiro"
+                                                th:each="p : ${agenda.passageirosPendentes()}"
+                                                th:data-busca="${detalhesPassageiros.get(p.idPessoa()).nome() + ' ' + detalhesPassageiros.get(p.idPessoa()).cidade()}">
+                                                <input class="form-check-input me-2" type="radio" name="idAgendamento"
+                                                    th:value="${p.id()}" required>
+                                                <strong th:text="${detalhesPassageiros.get(p.idPessoa()).nome()}"></strong>
+                                                <span class="text-secondary small"
+                                                    th:text="${' · ' + detalhesPassageiros.get(p.idPessoa()).cidade() + ' · ' + p.acompanhantes() + ' acomp.'}"></span>
+                                            </label>
+                                        </div>
+
+                                        <div class="text-secondary small mt-2 d-none sem-resultados">
+                                            Nenhum passageiro encontrado.
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancelar</button>
+                                        <button class="btn btn-primary" type="submit">Atribuir ao veículo</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </th:block>
+
+                <!-- MODAL ABRIR VEÍCULO -->
                 <div class="modal fade" id="abrirVeiculoModal" tabindex="-1" aria-labelledby="abrirVeiculoTitulo"
                      aria-hidden="true">
                     <div class="modal-dialog">
@@ -121,7 +263,7 @@
                                         <select class="form-select" name="idTipoVeiculo" id="tipoVeiculo" required>
                                             <option value="">Selecione</option>
                                             <option th:each="tipo : ${tiposVeiculoNaoCarro}" th:value="${tipo.id()}"
-                                                    th:text="${tipo.nome() + ' — ' + tipo.capacidade() + ' lugares'}"
+                                                    th:text="${tipo.nome() + ' — ' + tipo.capacidade() + ' lugares'}">
                                             </option>
                                         </select>
                                     </div>
@@ -147,21 +289,9 @@
                     </div>
                 </div>
 
-                <section class="card border-0 shadow-sm mb-4">
-                    <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-                        <div>
-                            <h2 class="h5 mb-1">Agendar passageiro</h2>
-                            <p class="text-secondary mb-0">Cadastre o passageiro e verifique os tipos aprovados pelas regras.</p>
-                        </div>
-                        <button class="btn btn-success" type="button"
-                                data-bs-toggle="modal" data-bs-target="#agendamentoModal">
-                            <i class="bi bi-person-plus me-1"></i>Iniciar agendamento
-                        </button>
-                    </div>
-                </section>
-
+                <!-- MODAL AGENDAMENTO -->
                 <div class="modal fade" id="agendamentoModal" tabindex="-1" aria-labelledby="agendamentoModalTitulo"
-                     aria-hidden="true">
+                     aria-hidden="true" data-bs-focus="false">
                     <div class="modal-dialog modal-xl modal-dialog-scrollable">
                         <div class="modal-content">
                             <div class="modal-header">
@@ -294,642 +424,321 @@
                                 </div>
                             </form>
 
-                        <div id="resultadoVerificacao" th:fragment="resultadoVerificacao"
-                             th:hidden="${verificacao == null and erroVerificacao == null}"
-                             class="border-top pt-3 mt-3">
-                            <button th:if="${verificacao != null or erroVerificacao != null}"
-                                    id="editarDadosAgendamento" type="button"
-                                    class="btn btn-sm btn-outline-secondary mb-3">
-                                Alterar dados do passageiro
-                            </button>
-                            <div th:if="${erroVerificacao}" class="alert alert-danger py-2"
-                                 th:text="${erroVerificacao}"></div>
-                            <th:block th:if="${verificacao != null}">
-                                <h3 class="h6">Resultado das regras</h3>
-                                <div th:if="${!#lists.isEmpty(verificacao.veiculosPermitidos())}"
-                                     class="alert alert-success py-2">
-                                    A pessoa pode ser cadastrada nos tipos de veículo abaixo. A regra aprovada será definida automaticamente.
-                                </div>
-                                <div th:if="${#lists.isEmpty(verificacao.veiculosPermitidos())}"
-                                     class="alert alert-warning py-2">
-                                    Nenhum tipo de veículo está disponível para este agendamento. Confira os motivos abaixo.
-                                </div>
-                                <ul th:if="${!#lists.isEmpty(verificacao.motivosReprovacao())}" class="small text-secondary">
-                                    <li th:each="motivo : ${verificacao.motivosReprovacao()}" th:text="${motivo}"></li>
-                                </ul>
+                            <div id="resultadoVerificacao" th:fragment="resultadoVerificacao"
+                                 th:hidden="${verificacao == null and erroVerificacao == null}"
+                                 class="border-top pt-3 mt-3">
+                                <button th:if="${verificacao != null or erroVerificacao != null}"
+                                        id="editarDadosAgendamento" type="button"
+                                        class="btn btn-sm btn-outline-secondary mb-3">
+                                    Alterar dados do passageiro
+                                </button>
+                                <div th:if="${erroVerificacao}" class="alert alert-danger py-2"
+                                     th:text="${erroVerificacao}"></div>
+                                <th:block th:if="${verificacao != null}">
+                                    <h3 class="h6">Resultado das regras</h3>
+                                    <div th:if="${!#lists.isEmpty(verificacao.veiculosPermitidos())}"
+                                         class="alert alert-success py-2">
+                                        A pessoa pode ser cadastrada nos tipos de veículo abaixo. A regra aprovada será definida automaticamente.
+                                    </div>
+                                    <div th:if="${#lists.isEmpty(verificacao.veiculosPermitidos())}"
+                                         class="alert alert-warning py-2">
+                                        Nenhum tipo de veículo está disponível para este agendamento. Confira os motivos abaixo.
+                                    </div>
+                                    <ul th:if="${!#lists.isEmpty(verificacao.motivosReprovacao())}" class="small text-secondary">
+                                        <li th:each="motivo : ${verificacao.motivosReprovacao()}" th:text="${motivo}"></li>
+                                    </ul>
 
-                                <section th:if="${passageiroVerificado != null}" class="card bg-light border-0 mb-3">
-                                    <div class="card-body py-2">
-                                        <h4 class="h6 mb-2">Passageiro selecionado</h4>
-                                        <strong th:text="${passageiroVerificado.nome()}"></strong>
-                                        <span class="text-secondary" th:text="${' · ' + passageiroVerificado.telefone()}"></span>
-                                        <div th:text="${passageiroVerificado.cidade() + ' · ' + passageiroVerificado.destino()}"></div>
-                                        <div>
-                                            <span th:text="${'Chegada ' + passageiroVerificado.horarioChegada()}"></span>
-                                            <span> · </span>
-                                            <span th:text="${passageiroVerificado.buscarNaResidencia() ? 'Buscar na residência' : 'Sem busca na residência'}"></span>
-                                            <span> · </span>
-                                            <span th:text="${passageiroVerificado.acompanhantes() + ' acompanhante(s)'}"></span>
-                                        </div>
-                                    </div>
-                                </section>
-
-                                <form th:if="${!#lists.isEmpty(verificacao.veiculosPermitidos())}"
-                                      method="post" th:action="@{/agendamentos/passageiros}" class="row g-3">
-                                    <input type="hidden" name="data" th:value="${data}">
-                                    <input type="hidden" name="idPessoa" th:value="${idPessoaSelecionada}">
-                                    <input type="hidden" name="idLista" th:value="${idListaSelecionada}">
-                                    <input type="hidden" name="idDestino" th:value="${idDestinoSelecionado}">
-                                    <input type="hidden" name="horarioChegada" th:value="${horarioChegadaSelecionado}">
-                                    <input type="hidden" name="acompanhantes" th:value="${acompanhantesSelecionados}">
-                                    <input type="hidden" name="buscarNaResidencia"
-                                           th:value="${buscarNaResidenciaSelecionado == true}">
-                                    <div class="col-12">
-                                        <label class="form-label" for="tipoPermitido">Tipo inicial do agendamento</label>
-                                        <select class="form-select" name="idTipoVeiculo" id="tipoPermitido" required>
-                                            <option value="">Selecione um tipo aprovado</option>
-                                            <option th:each="tipo : ${verificacao.veiculosPermitidos()}"
-                                                    th:value="${tipo.idTipoVeiculo()}"
-                                                    th:text="${tipo.nome() + ' — ' + tipo.capacidade() + ' lugares'}"
-                                                    th:selected="${tipo.idTipoVeiculo() == idTipoVeiculoSelecionado}"
-                                                    th:attr="data-carro=${#strings.toLowerCase(tipo.nome()).startsWith('carro')}">
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div id="veiculoFisicoContainer" class="col-12 d-none">
-                                        <label class="form-label" for="veiculoFisico">Veículo físico</label>
-                                        <select class="form-select" id="veiculoFisico" name="idVeiculo" disabled>
-                                            <option value="">Selecione o veículo físico</option>
-                                            <option th:each="veiculo : ${agenda.veiculos()}"
-                                                    th:if="${!#strings.toLowerCase(veiculo.nomeTipoVeiculo()).startsWith('carro')}"
-                                                    th:value="${veiculo.id()}"
-                                                    th:text="${veiculo.nomeTipoVeiculo() + (veiculo.identificacao() == null ? '' : ' — ' + veiculo.identificacao()) + ' · ' + (veiculo.capacidade() - veiculo.assentosOcupados()) + ' lugar(es) disponível(is)'}"
-                                                    th:selected="${veiculo.id() == idVeiculoSelecionado}"
-                                                    th:attr="data-tipo=${veiculo.idTipoVeiculo()}">
-                                            </option>
-                                        </select>
-                                        <div class="form-text">Ônibus, vans e outros tipos não carro serão atribuídos ao veículo físico selecionado assim que o agendamento for confirmado.</div>
-                                    </div>
-                                    <div class="col-12">
-                                        <button class="btn btn-success" type="submit">
-                                            <i class="bi bi-person-plus me-1"></i>Confirmar agendamento
-                                        </button>
-                                    </div>
-                                </form>
-                            </th:block>
-                        </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
-                    <div>
-                        <h2 class="h4 mb-1">Agenda de <span th:text="${#temporals.format(data, 'dd/MM/yyyy')}"></span></h2>
-                        <span class="text-secondary" th:text="${passageirosPendentesNaoCarro.size() + ' passageiro(s) sem veículo físico'}"></span>
-                    </div>
-                    <div class="d-flex flex-wrap gap-2">
-                        <a class="btn btn-outline-primary"
-                           th:href="@{/agendamentos/carros(data=${data})}">
-                            <i class="bi bi-car-front me-1"></i>Passageiros de carros
-                        </a>
-                        <a class="btn btn-outline-secondary"
-                           th:href="@{/agendamentos/pdf/carros(data=${data})}" target="_blank">
-                            <i class="bi bi-file-earmark-pdf me-1"></i>PDF geral de carros
-                        </a>
-                    </div>
-                </div>
-
-                <div th:if="${pendencias != null and !#lists.isEmpty(pendencias)}"
-                     class="alert alert-warning">
-                    <strong>Passageiros que permaneceram pendentes:</strong>
-                    <ul class="mb-0 mt-2">
-                        <li th:each="pendencia : ${pendencias}"
-                            th:text="${pendencia.idAgendamento() + ' — ' + pendencia.motivo()}"></li>
-                    </ul>
-                </div>
-
-                <section th:if="${#lists.isEmpty(veiculosNaoCarro)}" class="alert alert-info">
-                    Nenhum ônibus, van ou veículo não carro foi aberto para esta data.
-                </section>
-
-                <section class="row g-3 mb-4" aria-label="Veículos abertos">
-                    <div class="col-12 col-xl-6" th:each="veiculo : ${veiculosNaoCarro}">
-                        <article class="card border-0 shadow-sm h-100">
-                            <div class="card-header bg-white d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h3 class="h6 mb-1" th:text="${veiculo.nomeTipoVeiculo()}"></h3>
-                                    <div class="small text-secondary">
-                                        <span th:if="${veiculo.identificacao() != null}"
-                                              th:text="${veiculo.identificacao() + ' · '}"></span>
-                                        <span th:text="${veiculo.assentosOcupados() + ' / ' + veiculo.capacidade() + ' lugares'}"></span>
-                                    </div>
-                                </div>
-                                <div class="d-flex flex-column align-items-end gap-2">
-                                    <span class="badge text-bg-light"
-                                          th:text="${veiculo.horarioSaida() == null ? 'Saída a definir' : 'Saída ' + veiculo.horarioSaida()}"></span>
-                                    <a class="btn btn-sm btn-outline-secondary"
-                                       th:href="@{/agendamentos/pdf/veiculos/{id}(id=${veiculo.id()}, data=${data})}"
-                                       target="_blank">
-                                        <i class="bi bi-file-earmark-pdf me-1"></i>PDF deste veículo
-                                    </a>
-                                    <div th:replace="~{agendamento/controlesVeiculo :: controles(${veiculo}, ${data}, false)}"></div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div th:if="${#lists.isEmpty(veiculo.passageiros())}" class="text-secondary small">
-                                    Nenhum passageiro atribuído.
-                                </div>
-                                <div th:each="passageiro : ${veiculo.passageiros()}"
-                                     class="border-bottom py-2 d-flex justify-content-between gap-2">
-                                    <div class="small">
-                                        <strong th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></strong>
-                                        <div class="text-secondary"
-                                             th:text="${detalhesPassageiros.get(passageiro.idPessoa()).telefone()}"></div>
-                                        <div>
-                                            <span th:text="${detalhesPassageiros.get(passageiro.idPessoa()).cidade()}"></span>
-                                            <span> · </span>
-                                            <span th:text="${detalhesPassageiros.get(passageiro.idPessoa()).destino()}"></span>
-                                        </div>
-                                        <strong th:text="${'Chegada ' + passageiro.horarioChegada()}"></strong>
-                                        <span th:text="${' · saída necessária ' + passageiro.horarioSaidaNecessario()}"></span>
-                                        <span th:if="${passageiro.buscarNaResidencia()}" class="badge text-bg-info">Buscar na residência</span>
-                                        <span th:unless="${passageiro.buscarNaResidencia()}" class="badge text-bg-light">Sem busca na residência</span>
-                                        <div th:text="${passageiro.acompanhantes() + ' acompanhante(s)'}"></div>
-                                    </div>
-                                    <div class="d-flex flex-column gap-2">
-                                        <button class="btn btn-sm btn-outline-primary" type="button"
-                                                data-bs-toggle="modal"
-                                                th:attr="data-bs-target='#editarAgendamentoModal-' + ${passageiro.id()}">
-                                            Editar
-                                        </button>
-                                    <button class="btn btn-sm btn-outline-secondary" type="button"
-                                            data-bs-toggle="modal"
-                                            th:attr="data-bs-target='#removerVeiculoModal-' + ${passageiro.id()}">Remover</button>
-                                    </div>
-                                    <div th:replace="~{agendamento/modalEditar :: modal(${passageiro}, ${data}, ${tiposVeiculoNaoCarro}, ${destinos}, ${agenda.veiculos()}, false)}"></div>
-                                    <div class="modal fade" th:id="'removerVeiculoModal-' + ${passageiro.id()}"
-                                         tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <form method="post"
-                                                      th:action="@{/agendamentos/{id}/remover-veiculo(id=${passageiro.id()})}">
-                                                    <input type="hidden" name="data" th:value="${data}">
-                                                    <div class="modal-header">
-                                                        <h2 class="modal-title fs-5">Remover do veículo</h2>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                                                    </div>
-                                                    <div class="modal-body">Confirma a remoção deste passageiro do veículo?</div>
-                                                    <div class="modal-footer">
-                                                        <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancelar</button>
-                                                        <button class="btn btn-outline-secondary" type="submit">Remover</button>
-                                                    </div>
-                                                </form>
+                                    <section th:if="${passageiroVerificado != null}" class="card bg-light border-0 mb-3">
+                                        <div class="card-body py-2">
+                                            <h4 class="h6 mb-2">Passageiro selecionado</h4>
+                                            <strong th:text="${passageiroVerificado.nome()}"></strong>
+                                            <span class="text-secondary" th:text="${' · ' + passageiroVerificado.telefone()}"></span>
+                                            <div th:text="${passageiroVerificado.cidade() + ' · ' + passageiroVerificado.destino()}"></div>
+                                            <div>
+                                                <span th:text="${'Chegada ' + passageiroVerificado.horarioChegada()}"></span>
+                                                <span> · </span>
+                                                <span th:text="${passageiroVerificado.buscarNaResidencia() ? 'Buscar na residência' : 'Sem busca na residência'}"></span>
+                                                <span> · </span>
+                                                <span th:text="${passageiroVerificado.acompanhantes() + ' acompanhante(s)'}"></span>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </article>
-                    </div>
-                </section>
+                                    </section>
 
-                <section class="card border-0 shadow-sm">
-                    <div class="card-header bg-white">
-                        <h2 class="h5 mb-0">Passageiros sem veículo físico</h2>
-                    </div>
-                    <div th:if="${#lists.isEmpty(passageirosPendentesNaoCarro)}" class="card-body text-secondary">
-                        Todos os passageiros de ônibus, vans e demais tipos estão atribuídos. Passageiros de carros são organizados na página específica.
-                    </div>
-                    <div th:if="${!#lists.isEmpty(passageirosPendentesNaoCarro)}"
-                         class="card-body d-grid gap-3 agendamento-pendentes">
-                        <article th:each="passageiro : ${passageirosPendentesNaoCarro}"
-                                 class="card agendamento-pendente-card">
-                            <div class="card-body">
-                                <div class="d-flex flex-column flex-md-row justify-content-between gap-3">
-                                    <div class="agendamento-pendente-identificacao">
-                                        <h3 class="h6 mb-1"
-                                            th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></h3>
-                                        <div class="small text-secondary"
-                                             th:text="${detalhesPassageiros.get(passageiro.idPessoa()).telefone()}"></div>
-                                    </div>
-                                    <div class="d-flex flex-wrap gap-2 align-items-start">
-                                        <button class="btn btn-sm btn-outline-primary" type="button"
-                                                data-bs-toggle="modal"
-                                                th:attr="data-bs-target='#editarAgendamentoModal-' + ${passageiro.id()}">
-                                            <i class="bi bi-pencil me-1"></i>Editar
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger" type="button"
-                                                aria-label="Excluir agendamento"
-                                                data-bs-toggle="modal"
-                                                th:attr="data-bs-target='#excluirAgendamentoModal-' + ${passageiro.id()}">
-                                            <i class="bi bi-trash me-1"></i>Excluir
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <dl class="row g-2 mt-2 mb-3 agendamento-pendente-dados">
-                                    <div class="col-12 col-sm-6 col-lg-4">
-                                        <dt>Cidade</dt>
-                                        <dd th:text="${detalhesPassageiros.get(passageiro.idPessoa()).cidade()}"></dd>
-                                    </div>
-                                    <div class="col-12 col-sm-6 col-lg-4">
-                                        <dt>Destino</dt>
-                                        <dd th:text="${detalhesPassageiros.get(passageiro.idPessoa()).destino()}"></dd>
-                                    </div>
-                                    <div class="col-6 col-lg-2">
-                                        <dt>Chegada</dt>
-                                        <dd th:text="${passageiro.horarioChegada()}"></dd>
-                                    </div>
-                                    <div class="col-6 col-lg-2">
-                                        <dt>Tipo necessário</dt>
-                                        <dd>
-                                            <span th:each="tipo : ${tiposVeiculo}"
-                                                  th:if="${tipo.id() == passageiro.idTipoVeiculo()}"
-                                                  th:text="${tipo.nome()}"></span>
-                                        </dd>
-                                    </div>
-                                    <div class="col-6 col-lg-3">
-                                        <dt>Busca na residência</dt>
-                                        <dd th:text="${passageiro.buscarNaResidencia() ? 'Sim' : 'Não'}"></dd>
-                                    </div>
-                                    <div class="col-6 col-lg-3">
-                                        <dt>Acompanhantes</dt>
-                                        <dd th:text="${passageiro.acompanhantes() + ' acompanhante(s)'}"></dd>
-                                    </div>
-                                </dl>
-
-                                <form th:if="${!#lists.isEmpty(veiculosDisponiveisParaAtribuicaoManual.get(passageiro.id()))}"
-                                      method="post"
-                                      th:action="@{/agendamentos/{id}/veiculo(id=${passageiro.id()})}"
-                                      class="row g-2 align-items-end">
-                                    <input type="hidden" name="data" th:value="${data}">
-                                    <div class="col-12 col-md">
-                                        <label class="form-label small fw-semibold"
-                                               th:for="'veiculo-' + ${passageiro.id()}">Atribuir manualmente a qualquer veículo com assentos</label>
-                                        <select class="form-select form-select-sm" name="idVeiculo"
-                                                th:id="'veiculo-' + ${passageiro.id()}" required>
-                                            <option value="">Selecione um veículo</option>
-                                            <option th:each="veiculo : ${agenda.veiculos()}"
-                                                    th:if="${veiculosDisponiveisParaAtribuicaoManual.get(passageiro.id()).contains(veiculo.id())}"
-                                                    th:value="${veiculo.id()}"
-                                                    th:text="${(veiculo.identificacao() == null ? veiculo.nomeTipoVeiculo() : veiculo.identificacao() + ' — ' + veiculo.nomeTipoVeiculo()) + ' (' + veiculo.assentosOcupados() + '/' + veiculo.capacidade() + ')'}">
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div class="col-12 col-md-auto">
-                                        <button class="btn btn-sm btn-primary w-100" type="submit">
-                                            <i class="bi bi-check-lg me-1"></i>Atribuir veículo
-                                        </button>
-                                    </div>
-                                </form>
-                                <p th:if="${#lists.isEmpty(veiculosDisponiveisParaAtribuicaoManual.get(passageiro.id()))}"
-                                   class="alert alert-warning small mb-0">
-                                    Nenhum veículo aberto possui assentos suficientes para este passageiro e seus acompanhantes.
-                                </p>
-                            </div>
-                        </article>
-                    </div>
-                    <th:block th:each="passageiro : ${passageirosPendentesNaoCarro}">
-                        <div class="modal fade" th:id="'excluirAgendamentoModal-' + ${passageiro.id()}"
-                             tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <form method="post"
-                                          th:action="@{/agendamentos/{id}/excluir(id=${passageiro.id()})}">
+                                    <form th:if="${!#lists.isEmpty(verificacao.veiculosPermitidos())}"
+                                          method="post" th:action="@{/agendamentos/passageiros}" class="row g-3">
                                         <input type="hidden" name="data" th:value="${data}">
-                                        <div class="modal-header">
-                                            <h2 class="modal-title fs-5">Excluir agendamento</h2>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                                        <input type="hidden" name="idPessoa" th:value="${idPessoaSelecionada}">
+                                        <input type="hidden" name="idLista" th:value="${idListaSelecionada}">
+                                        <input type="hidden" name="idDestino" th:value="${idDestinoSelecionado}">
+                                        <input type="hidden" name="horarioChegada" th:value="${horarioChegadaSelecionado}">
+                                        <input type="hidden" name="acompanhantes" th:value="${acompanhantesSelecionados}">
+                                        <input type="hidden" name="buscarNaResidencia"
+                                               th:value="${buscarNaResidenciaSelecionado == true}">
+                                        <div class="col-12">
+                                            <label class="form-label" for="tipoPermitido">Tipo inicial do agendamento</label>
+                                            <select class="form-select" name="idTipoVeiculo" id="tipoPermitido" required>
+                                                <option value="">Selecione um tipo aprovado</option>
+                                                <option th:each="tipo : ${verificacao.veiculosPermitidos()}"
+                                                        th:value="${tipo.idTipoVeiculo()}"
+                                                        th:text="${tipo.nome() + ' — ' + tipo.capacidade() + ' lugares'}"
+                                                        th:selected="${tipo.idTipoVeiculo() == idTipoVeiculoSelecionado}"
+                                                        th:attr="data-carro=${#strings.toLowerCase(tipo.nome()).startsWith('carro')}">
+                                                </option>
+                                            </select>
                                         </div>
-                                        <div class="modal-body">
-                                            Confirma a exclusão do agendamento de
-                                            <strong th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></strong>?
+                                        <div id="veiculoFisicoContainer" class="col-12 d-none">
+                                            <label class="form-label" for="veiculoFisico">Veículo físico</label>
+                                            <select class="form-select" id="veiculoFisico" name="idVeiculo" disabled>
+                                                <option value="">Selecione o veículo físico</option>
+                                                <option th:each="veiculo : ${agenda.veiculos()}"
+                                                        th:if="${!#strings.toLowerCase(veiculo.nomeTipoVeiculo()).startsWith('carro')}"
+                                                        th:value="${veiculo.id()}"
+                                                        th:text="${veiculo.nomeTipoVeiculo() + (veiculo.identificacao() == null ? '' : ' — ' + veiculo.identificacao()) + ' · ' + (veiculo.capacidade() - veiculo.assentosOcupados()) + ' lugar(es) disponível(is)'}"
+                                                        th:selected="${veiculo.id() == idVeiculoSelecionado}"
+                                                        th:attr="data-tipo=${veiculo.idTipoVeiculo()}">
+                                                </option>
+                                            </select>
+                                            <div class="form-text">Ônibus, vans e outros tipos não carro serão atribuídos ao veículo físico selecionado assim que o agendamento for confirmado.</div>
                                         </div>
-                                        <div class="modal-footer">
-                                            <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancelar</button>
-                                            <button class="btn btn-danger" type="submit">Excluir</button>
+                                        <div class="col-12">
+                                            <button class="btn btn-success" type="submit">
+                                                <i class="bi bi-person-plus me-1"></i>Confirmar agendamento
+                                            </button>
                                         </div>
                                     </form>
+                                </th:block>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABELA ÚNICA DE PASSAGEIROS CADASTRADOS COM FILTROS -->
+                <section class="card border-0 shadow-sm mt-4">
+                    <div class="card-header bg-white py-3">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-12 col-md-3">
+                                <h2 class="h5 mb-0">Passageiros Cadastrados</h2>
+                            </div>
+                            <!-- FILTROS -->
+                            <div class="col-12 col-md-9">
+                                <div class="row g-2">
+                                    <div class="col-12 col-sm-4">
+                                        <input type="text" id="filtroTexto" class="form-control form-control-sm" placeholder="Filtrar por nome ou telefone...">
+                                    </div>
+                                    <div class="col-6 col-sm-3">
+                                        <input type="text" id="filtroCidade" class="form-control form-control-sm" placeholder="Filtrar por cidade...">
+                                    </div>
+                                    <div class="col-6 col-sm-3">
+                                        <select id="filtroStatus" class="form-select form-select-sm">
+                                            <option value="">Todos os status</option>
+                                            <option value="pendente">Somente Pendentes</option>
+                                            <option value="atribuido">Somente Atribuídos</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-sm-2">
+                                        <button type="button" id="btnLimparFiltros" class="btn btn-sm btn-outline-secondary w-100">Limpar</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div th:replace="~{agendamento/modalEditar :: modal(${passageiro}, ${data}, ${tiposVeiculoNaoCarro}, ${destinos}, ${agenda.veiculos()}, false)}"></div>
-                    </th:block>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(passageirosCadastrados)}" class="card-body text-secondary">
+                        Nenhum passageiro cadastrado para esta data.
+                    </div>
+
+                    <div th:if="${!#lists.isEmpty(passageirosCadastrados)}" class="table-responsive">
+                        <table class="table align-middle mb-0" id="tabelaPassageiros">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Passageiro / Telefone</th>
+                                <th>Cidade / Destino</th>
+                                <th>Horário</th>
+                                <th>Acomp.</th>
+                                <th>Busca Residência</th>
+                                <th>Veículo Atribuído</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="passageiro : ${passageirosCadastrados}"
+                                class="linha-passageiro"
+                                th:data-nome="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"
+                                th:data-telefone="${detalhesPassageiros.get(passageiro.idPessoa()).telefone()}"
+                                th:data-cidade="${detalhesPassageiros.get(passageiro.idPessoa()).cidade()}"
+                                th:data-destino="${detalhesPassageiros.get(passageiro.idPessoa()).destino()}"
+                                th:data-status="${passageiro.idVeiculoAberto() == null ? 'pendente' : 'atribuido'}">
+                                <td>
+                                    <strong th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></strong>
+                                    <div class="small text-secondary" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).telefone()}"></div>
+                                </td>
+                                <td>
+                                    <span th:text="${detalhesPassageiros.get(passageiro.idPessoa()).cidade()}"></span>
+                                    <div class="small text-secondary" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).destino()}"></div>
+                                </td>
+                                <td th:text="${passageiro.horarioChegada()}"></td>
+                                <td>
+                                    <span class="badge bg-light text-dark border" th:text="${passageiro.acompanhantes()}"></span>
+                                </td>
+                                <td>
+                                    <span th:if="${passageiro.buscarNaResidencia()}" class="badge text-bg-info">Sim</span>
+                                    <span th:unless="${passageiro.buscarNaResidencia()}" class="badge text-bg-light">Não</span>
+                                </td>
+                                <td>
+                                    <span th:if="${passageiro.idVeiculoAberto() == null}" class="badge text-bg-warning">
+                                        <i class="bi bi-clock me-1"></i>Pendente
+                                    </span>
+                                        <th:block th:unless="${passageiro.idVeiculoAberto() == null}"
+                                                th:with="veiculo=${veiculoAtribuido.get(passageiro.id())}">
+                                            <span class="badge text-bg-success">
+                                                <i class="bi bi-truck me-1"></i>
+                                                <span th:text="${veiculo.nome()}"></span>
+                                            </span>
+                                            <div class="small text-secondary mt-1">
+                                                Saída:
+                                                <strong th:text="${veiculo.horarioSaida() != null
+                                                        ? #temporals.format(veiculo.horarioSaida(), 'HH:mm')
+                                                        : 'A definir'}"></strong>
+                                            </div>
+                                        </th:block>
+                                </td>
+                                <!-- DEPOIS -->
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button class="btn btn-sm btn-outline-info" type="button"
+                                                data-bs-toggle="modal"
+                                                th:attr="data-bs-target='#editarAgendamentoModal-' + ${passageiro.id()}">
+                                            <i class="bi bi-info-circle me-1"></i>Detalhes
+                                        </button>
+                                    </div>
+                                    <!-- O modal reaproveitado agora funcionará como painel de Detalhes e Edição -->
+                                    <div th:replace="~{agendamento/modalEditar :: modal(${passageiro}, ${data}, ${tiposVeiculo}, ${destinos}, ${agenda.veiculos()}, false)}"></div>
+                                </td>
+                            </tr>
+                            <tr id="semResultadosFiltro" class="d-none">
+                                <td colspan="7" class="text-center py-4 text-secondary">
+                                    Nenhum passageiro encontrado com os filtros aplicados.
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </section>
+
+                <!-- MODAIS DE EXCLUSÃO PARA CADA PASSAGEIRO -->
+                <th:block th:each="passageiro : ${passageirosCadastrados}">
+                    <div class="modal fade" th:id="'excluirAgendamentoModal-' + ${passageiro.id()}"
+                         tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form method="post"
+                                      th:action="@{/agendamentos/{id}/excluir(id=${passageiro.id()})}">
+                                    <input type="hidden" name="data" th:value="${data}">
+                                    <div class="modal-header">
+                                        <h2 class="modal-title fs-5">Excluir agendamento</h2>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Confirma a exclusão do agendamento de
+                                        <strong th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></strong>?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancelar</button>
+                                        <button class="btn btn-danger" type="submit">Excluir</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </th:block>
             </th:block>
 
-            <script>
-                (() => {
-                    const pessoaBusca = document.getElementById("pessoaBusca");
-                    const pessoaId = document.getElementById("idPessoaAgendamento");
-                    const pessoaResultados = document.getElementById("pessoaResultados");
-                    const pessoaMensagem = document.getElementById("pessoaBuscaMensagem");
-                    const pessoaSelecionada = document.getElementById("pessoaSelecionada");
-                    const verificarForm = document.getElementById("verificarAgendamentoForm");
-                    const resultadoVerificacao = document.getElementById("resultadoVerificacao");
-                    const agendamentoModal = document.getElementById("agendamentoModal");
-                    const ocultarResultadoVerificacao = () => {
-                        const resultado = document.getElementById("resultadoVerificacao");
-                        if (resultado) resultado.hidden = true;
-                    };
-                    let modalAgendamentoPausado = false;
-                    let buscaPessoasTimer;
-                    let buscaPessoasSequencia = 0;
+         <!-- SCRIPT DE FILTRAGEM EM TEMPO REAL -->
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const normalizar = text =>
+            text ? text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
 
-                    const limparResultadosPessoa = () => {
-                        pessoaResultados?.replaceChildren();
-                    };
-                    const buscarPessoas = async (termo, pagina = 0, acrescentar = false) => {
-                        const sequencia = ++buscaPessoasSequencia;
-                        try {
-                            const url = new URL(pessoaBusca.dataset.url, window.location.origin);
-                            url.searchParams.set("termo", termo);
-                            url.searchParams.set("pagina", pagina);
-                            const resposta = await fetch(url);
-                            if (!resposta.ok) throw new Error("Não foi possível buscar pessoas.");
-                            const dados = await resposta.json();
-                            if (sequencia !== buscaPessoasSequencia) return;
-                            if (!acrescentar) limparResultadosPessoa();
-                            for (const pessoa of dados.pessoas) {
-                                const opcao = document.createElement("button");
-                                opcao.type = "button";
-                                opcao.className = "list-group-item list-group-item-action";
-                                opcao.dataset.id = pessoa.id;
-                                opcao.dataset.nome = pessoa.nome;
-                                opcao.dataset.prioridade = pessoa.prioridade;
-                                opcao.dataset.cpf = pessoa.cpf;
-                                opcao.dataset.telefone = pessoa.telefone;
-                                const nome = document.createElement("strong");
-                                nome.textContent = pessoa.nome;
-                                const detalhes = document.createElement("div");
-                                detalhes.className = "small text-secondary";
-                                detalhes.textContent = `${pessoa.prioridade} · CPF ${pessoa.cpf} · Telefone ${pessoa.telefone}`;
-                                opcao.append(nome, detalhes);
-                                pessoaResultados.append(opcao);
-                            }
-                            if (dados.temMais) {
-                                const mais = document.createElement("button");
-                                mais.type = "button";
-                                mais.className = "list-group-item list-group-item-action text-center";
-                                mais.textContent = "Carregar mais resultados";
-                                mais.addEventListener("click", () => buscarPessoas(termo, pagina + 1, true));
-                                pessoaResultados.append(mais);
-                            }
-                            pessoaMensagem.textContent = dados.pessoas.length
-                                ? "Selecione uma pessoa nos resultados."
-                                : "Nenhuma pessoa ativa encontrada.";
-                        } catch (erro) {
-                            if (sequencia !== buscaPessoasSequencia) return;
-                            limparResultadosPessoa();
-                            pessoaMensagem.textContent = erro.message;
-                        }
-                    };
+        // ---- Filtros da tabela "Passageiros Cadastrados" ----
+        const filtroTexto = document.getElementById("filtroTexto");
+        const filtroCidade = document.getElementById("filtroCidade");
+        const filtroStatus = document.getElementById("filtroStatus");
+        const btnLimpar = document.getElementById("btnLimparFiltros");
+        const linhas = document.querySelectorAll(".linha-passageiro");
+        const semResultados = document.getElementById("semResultadosFiltro");
 
-                    pessoaBusca?.addEventListener("input", () => {
-                        pessoaId.value = "";
-                        pessoaSelecionada.textContent = "";
-                        pessoaSelecionada.classList.add("d-none");
-                        ocultarResultadoVerificacao();
-                        buscaPessoasSequencia++;
-                        clearTimeout(buscaPessoasTimer);
-                        limparResultadosPessoa();
-                        const termo = pessoaBusca.value.trim();
-                        if (termo.length < 2) {
-                            buscaPessoasSequencia++;
-                            pessoaMensagem.textContent = "Digite pelo menos 2 caracteres para buscar.";
-                            return;
-                        }
-                        pessoaMensagem.textContent = "Buscando...";
-                        buscaPessoasTimer = setTimeout(() => buscarPessoas(termo), 250);
-                    });
+        const aplicarFiltros = () => {
+            const txt = normalizar(filtroTexto?.value);
+            const cid = normalizar(filtroCidade?.value);
+            const st = filtroStatus?.value;
+            let visiveis = 0;
 
-                    pessoaResultados?.addEventListener("click", (evento) => {
-                        const opcao = evento.target.closest("button[data-id]");
-                        if (!opcao) return;
-                        pessoaId.value = opcao.dataset.id;
-                        pessoaBusca.value = opcao.dataset.nome;
-                        pessoaSelecionada.textContent = `${opcao.dataset.nome} — ${opcao.dataset.prioridade}`;
-                        pessoaSelecionada.classList.remove("d-none");
-                        pessoaMensagem.textContent = "Pessoa selecionada.";
-                        limparResultadosPessoa();
-                        ocultarResultadoVerificacao();
-                    });
+            linhas.forEach(linha => {
+                const nome = normalizar(linha.dataset.nome);
+                const tel = normalizar(linha.dataset.telefone);
+                const cidade = normalizar(linha.dataset.cidade);
+                const destino = normalizar(linha.dataset.destino);
+                const status = linha.dataset.status;
 
-                    verificarForm?.addEventListener("submit", (evento) => {
-                        if (!pessoaId.value) {
-                            evento.preventDefault();
-                            pessoaMensagem.textContent = "Busque e selecione uma pessoa antes de verificar.";
-                            pessoaBusca.focus();
-                            return;
-                        }
-                        if (!cidadeId.value) {
-                            evento.preventDefault();
-                            cidadeMensagem.textContent = "Busque e selecione uma cidade antes de continuar.";
-                            cidade.focus();
-                            return;
-                        }
-                        if (!destinoId.value) {
-                            evento.preventDefault();
-                            destinoMensagem.textContent = "Busque e selecione um destino antes de continuar.";
-                            destino.focus();
-                        }
-                    });
+                const bateTexto = !txt || nome.includes(txt) || tel.includes(txt) || destino.includes(txt);
+                const bateCidade = !cid || cidade.includes(cid);
+                const bateStatus = !st || status === st;
 
-                    verificarForm?.addEventListener("change", (evento) => {
-                        if (evento.target.id !== "pessoaBusca") {
-                            ocultarResultadoVerificacao();
-                        }
-                    });
+                const mostrar = bateTexto && bateCidade && bateStatus;
+                linha.classList.toggle("d-none", !mostrar);
+                if (mostrar) visiveis++;
+            });
 
-                    const cidade = document.getElementById("cidadeAgendamento");
-                    const cidadeId = document.getElementById("idCidadeAgendamento");
-                    const cidadeResultados = document.getElementById("cidadeResultados");
-                    const cidadeMensagem = document.getElementById("cidadeBuscaMensagem");
-                    const destino = document.getElementById("destinoAgendamento");
-                    const destinoId = document.getElementById("idDestinoAgendamento");
-                    const destinoResultados = document.getElementById("destinoResultados");
-                    const destinoMensagem = document.getElementById("destinoBuscaMensagem");
-                    const cadastroDestino = document.getElementById("abrirCadastroDestino");
-                    const cadastroPessoa = document.getElementById("abrirCadastroPessoa");
-                    const normalizarBusca = valor => valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase();
-                    const filtrarOpcoes = (resultados, termo, filtrarCidade = false) => {
-                        if (!resultados) return 0;
-                        const consulta = normalizarBusca(termo.trim());
-                        let disponiveis = 0;
-                        for (const opcao of resultados.querySelectorAll("button[data-id]")) {
-                            const correspondeCidade = !filtrarCidade || opcao.dataset.cidade === cidadeId.value;
-                            const correspondeTexto = consulta.length >= 2
-                                && normalizarBusca(opcao.textContent).includes(consulta);
-                            opcao.hidden = !correspondeCidade || !correspondeTexto;
-                            if (!opcao.hidden) disponiveis++;
-                        }
-                        resultados.hidden = disponiveis === 0;
-                        return disponiveis;
-                    };
-                    cidade?.addEventListener("input", () => {
-                        cidadeId.value = "";
-                        destino.value = "";
-                        destinoId.value = "";
-                        destino.disabled = true;
-                        destino.placeholder = "Selecione uma cidade primeiro";
-                        destinoResultados.hidden = true;
-                        destinoMensagem.textContent = "Selecione uma cidade antes de pesquisar o destino.";
-                        ocultarResultadoVerificacao();
-                        const disponiveis = filtrarOpcoes(cidadeResultados, cidade.value);
-                        cidadeMensagem.textContent = cidade.value.trim().length < 2
-                            ? "Digite pelo menos 2 caracteres para buscar."
-                            : disponiveis ? "Selecione uma cidade nos resultados." : "Nenhuma cidade encontrada.";
-                    });
-                    cidadeResultados?.addEventListener("click", evento => {
-                        const opcao = evento.target.closest("button[data-id]");
-                        if (!opcao) return;
-                        cidadeId.value = opcao.dataset.id;
-                        cidade.value = `${opcao.dataset.nome} - ${opcao.dataset.estado}`;
-                        cidadeResultados.hidden = true;
-                        cidadeMensagem.textContent = "Cidade selecionada.";
-                        destino.value = "";
-                        destinoId.value = "";
-                        destino.disabled = false;
-                        destino.placeholder = "Digite o nome do destino";
-                        destino.focus();
-                        ocultarResultadoVerificacao();
-                    });
-                    destino?.addEventListener("input", () => {
-                        destinoId.value = "";
-                        ocultarResultadoVerificacao();
-                        const disponiveis = cidadeId.value
-                            ? filtrarOpcoes(destinoResultados, destino.value, true)
-                            : 0;
-                        destinoMensagem.textContent = !cidadeId.value
-                            ? "Selecione uma cidade antes de pesquisar o destino."
-                            : destino.value.trim().length < 2
-                                ? "Digite pelo menos 2 caracteres para buscar."
-                                : disponiveis ? "Selecione um destino nos resultados." : "Nenhum destino encontrado para esta cidade.";
-                    });
-                    destinoResultados?.addEventListener("click", evento => {
-                        const opcao = evento.target.closest("button[data-id]");
-                        if (!opcao) return;
-                        destinoId.value = opcao.dataset.id;
-                        destino.value = opcao.textContent.trim();
-                        destinoResultados.hidden = true;
-                        destinoMensagem.textContent = "Destino selecionado.";
-                        ocultarResultadoVerificacao();
-                    });
-                    cidade?.addEventListener("focus", () => {
-                        if (!cidadeId.value && cidade.value.trim().length >= 2) {
-                            filtrarOpcoes(cidadeResultados, cidade.value);
-                        }
-                    });
-                    destino?.addEventListener("focus", () => {
-                        if (cidadeId.value && !destinoId.value && destino.value.trim().length >= 2) {
-                            filtrarOpcoes(destinoResultados, destino.value, true);
-                        }
-                    });
-                    cadastroPessoa?.addEventListener("click", () => {
-                        modalAgendamentoPausado = true;
-                        bootstrap.Modal.getOrCreateInstance(agendamentoModal).hide();
-                    });
+            semResultados?.classList.toggle("d-none", visiveis > 0);
+        };
 
-                    cadastroDestino?.addEventListener("click", () => {
-                        if (!cidadeId?.value) {
-                            cidade?.focus();
-                            cidadeMensagem.textContent = "Selecione uma cidade antes de cadastrar um destino.";
-                            return;
-                        }
-                        modalAgendamentoPausado = true;
-                        bootstrap.Modal.getOrCreateInstance(agendamentoModal).hide();
-                        const url = `${cadastroDestino.dataset.urlPrefix}${encodeURIComponent(cidadeId.value)}${cadastroDestino.dataset.urlSuffix}`;
-                        htmx.ajax("GET", url, {target: "#modal", swap: "innerHTML"});
-                    });
+        filtroTexto?.addEventListener("input", aplicarFiltros);
+        filtroCidade?.addEventListener("input", aplicarFiltros);
+        filtroStatus?.addEventListener("change", aplicarFiltros);
 
-                    document.body.addEventListener("htmx:afterSwap", evento => {
-                        if (evento.detail.target.id === "resultadoVerificacao") {
-                            const formularioDados = document.getElementById("verificarAgendamentoForm");
-                            const resultado = document.getElementById("resultadoVerificacao");
-                            const editarDados = document.getElementById("editarDadosAgendamento");
-                            if (formularioDados) formularioDados.hidden = !resultado.hidden;
-                            if (editarDados) editarDados.hidden = resultado.hidden;
-                            atualizarVeiculoAgendamento();
-                        }
-                        if (evento.detail.target.id !== "modal"
-                                || evento.detail.target.innerHTML.trim()
-                                || !modalAgendamentoPausado) return;
-                        modalAgendamentoPausado = false;
-                        bootstrap.Modal.getOrCreateInstance(agendamentoModal).show();
-                    });
+        btnLimpar?.addEventListener("click", () => {
+            if (filtroTexto) filtroTexto.value = "";
+            if (filtroCidade) filtroCidade.value = "";
+            if (filtroStatus) filtroStatus.value = "";
+            aplicarFiltros();
+        });
 
-                    document.body.addEventListener("pessoa-criada", evento => {
-                        if (!pessoaId || !pessoaBusca || !pessoaSelecionada || !pessoaMensagem) return;
-                        pessoaId.value = evento.detail.id;
-                        pessoaBusca.value = evento.detail.nome;
-                        pessoaSelecionada.textContent = `${evento.detail.nome} — ${evento.detail.prioridade}`;
-                        pessoaSelecionada.classList.remove("d-none");
-                        pessoaMensagem.textContent = "Pessoa cadastrada e selecionada.";
-                        limparResultadosPessoa();
-                        ocultarResultadoVerificacao();
-                    });
+        // ---- Filtro dos modais "Inserir passageiro" ----
+        function filtrarModal(modal, termoBruto) {
+            const termo = normalizar(termoBruto).trim();
+            let visiveis = 0;
 
-                    document.body.addEventListener("destino-criado", evento => {
-                        if (!cidade || !cidadeId || !destino || !destinoId) return;
-                        const cidadeOpcao = cidadeResultados?.querySelector(`button[data-id="${evento.detail.idCidade}"]`);
-                        if (cidadeOpcao) {
-                            cidadeId.value = cidadeOpcao.dataset.id;
-                            cidade.value = `${cidadeOpcao.dataset.nome} - ${cidadeOpcao.dataset.estado}`;
-                        }
-                        destinoId.value = evento.detail.id;
-                        destino.value = evento.detail.nome;
-                        destino.disabled = false;
-                        destinoMensagem.textContent = "Destino cadastrado e selecionado.";
-                        destinoResultados.hidden = true;
-                        ocultarResultadoVerificacao();
-                    });
+            modal.querySelectorAll(".item-passageiro").forEach(item => {
+                const combina = !termo || normalizar(item.dataset.busca).includes(termo);
+                item.classList.toggle("d-none", !combina);
+                if (combina) visiveis++;
+            });
 
-                    const atualizarVeiculoAgendamento = () => {
-                        const tipoPermitido = document.getElementById("tipoPermitido");
-                        const veiculoContainer = document.getElementById("veiculoFisicoContainer");
-                        const veiculoFisico = document.getElementById("veiculoFisico");
-                        if (!tipoPermitido || !veiculoContainer || !veiculoFisico) return;
-                        const opcaoTipo = tipoPermitido.selectedOptions[0];
-                        const carro = opcaoTipo?.dataset.carro === "true";
-                        veiculoContainer.classList.toggle("d-none", !tipoPermitido.value || carro);
-                        veiculoFisico.disabled = !tipoPermitido.value || carro;
-                        veiculoFisico.required = Boolean(tipoPermitido.value) && !carro;
-                        let disponiveis = 0;
-                        for (const option of veiculoFisico.options) {
-                            if (!option.value) continue;
-                            option.hidden = option.dataset.tipo !== tipoPermitido.value;
-                            if (!option.hidden) disponiveis++;
-                        }
-                        if (veiculoFisico.selectedOptions[0]?.hidden) veiculoFisico.value = "";
-                        if (tipoPermitido.value && !carro && disponiveis === 0) {
-                            veiculoFisico.setCustomValidity("Não há veículo físico aberto para este tipo.");
-                        } else {
-                            veiculoFisico.setCustomValidity("");
-                        }
-                    };
-                    document.body.addEventListener("change", evento => {
-                        if (evento.target.id === "tipoPermitido") atualizarVeiculoAgendamento();
-                    });
-                    document.body.addEventListener("click", evento => {
-                        if (!evento.target.closest("#editarDadosAgendamento")) return;
-                        const formularioDados = document.getElementById("verificarAgendamentoForm");
-                        const resultado = document.getElementById("resultadoVerificacao");
-                        const editarDados = document.getElementById("editarDadosAgendamento");
-                        if (formularioDados) formularioDados.hidden = false;
-                        if (resultado) resultado.hidden = true;
-                        if (editarDados) editarDados.hidden = true;
-                    });
-                    atualizarVeiculoAgendamento();
+            modal.querySelector(".sem-resultados")
+                 ?.classList.toggle("d-none", visiveis > 0);
+        }
 
-                    if ((resultadoVerificacao && !resultadoVerificacao.hidden) || pessoaId?.value) {
-                        bootstrap.Modal.getOrCreateInstance(agendamentoModal).show();
-                    }
-                })();
-            </script>
+        document.addEventListener("input", e => {
+            if (!e.target.matches(".busca-passageiro-input")) return;
+            filtrarModal(e.target.closest(".modal"), e.target.value);
+        });
+
+        document.addEventListener("show.bs.modal", e => {
+            const input = e.target.querySelector(".busca-passageiro-input");
+            if (!input) return;
+            input.value = "";
+            filtrarModal(e.target, "");
+        });
+
+        document.addEventListener("shown.bs.modal", e => {
+            e.target.querySelector(".busca-passageiro-input")?.focus();
+        });
+    });
+</script>
+            <script th:src="@{/js/agendamento-edicao.js}" defer></script>
         </div>
     </main>
 </div>
-<script th:src="@{/js/agendamento-edicao.js}" defer></script>
 </body>
 </html>

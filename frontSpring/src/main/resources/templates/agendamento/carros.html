@@ -126,7 +126,6 @@
                                 <th>Destino</th>
                                 <th>Chegada</th>
                                 <th>Acompanhantes</th>
-                                <th>Veículo para atribuição manual</th>
                                 <th>Ações</th>
                             </tr>
                             </thead>
@@ -139,32 +138,6 @@
                                 <td th:text="${detalhesPassageiros.get(passageiro.idPessoa()).destino()}"></td>
                                 <td th:text="${passageiro.horarioChegada()}"></td>
                                 <td th:text="${passageiro.acompanhantes() + ' acompanhante(s)'}"></td>
-                                <td>
-                                    <form th:if="${!#lists.isEmpty(veiculosDisponiveisParaAtribuicaoManual.get(passageiro.id()))}"
-                                          method="post"
-                                          th:action="@{/agendamentos/{id}/veiculo(id=${passageiro.id()})}"
-                                          class="d-flex gap-2">
-                                        <input type="hidden" name="data" th:value="${data}">
-                                        <input type="hidden" name="paginaCarros" value="true">
-                                        <select class="form-select form-select-sm"
-                                                name="idVeiculo" required
-                                                th:attr="aria-label='Veículo para ' + ${detalhesPassageiros.get(passageiro.idPessoa()).nome()}">
-                                            <option value="">Selecione</option>
-                                            <option th:each="veiculo : ${agenda.veiculos()}"
-                                                    th:if="${veiculosDisponiveisParaAtribuicaoManual.get(passageiro.id()).contains(veiculo.id())}"
-                                                    th:value="${veiculo.id()}"
-                                                    th:text="${(veiculo.identificacao() == null ? veiculo.nomeTipoVeiculo() : veiculo.identificacao() + ' — ' + veiculo.nomeTipoVeiculo()) + ' (' + veiculo.assentosOcupados() + '/' + veiculo.capacidade() + ')'}">
-                                            </option>
-                                        </select>
-                                        <button class="btn btn-sm btn-outline-primary" type="submit">
-                                            Atribuir
-                                        </button>
-                                    </form>
-                                    <span th:if="${#lists.isEmpty(veiculosDisponiveisParaAtribuicaoManual.get(passageiro.id()))}"
-                                          class="small text-secondary">
-                                        Nenhum veículo aberto possui assentos suficientes.
-                                    </span>
-                                </td>
                                 <td>
                                     <div class="d-flex flex-wrap gap-2">
                                         <button class="btn btn-sm btn-outline-secondary" type="button"
@@ -235,11 +208,18 @@
                                         </div>
                                     </div>
                                     <div class="d-flex flex-column align-items-end gap-2">
-                                        <a class="btn btn-sm btn-outline-secondary"
-                                           th:href="@{/agendamentos/pdf/veiculos/{id}(id=${veiculo.id()}, data=${data})}"
-                                           target="_blank">
-                                            <i class="bi bi-file-earmark-pdf me-1"></i>PDF deste carro
-                                        </a>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-sm btn-outline-primary" type="button"
+                                                    data-bs-toggle="modal"
+                                                    th:attr="data-bs-target='#atribuirPassageiroCarroModal-' + ${veiculo.id()}">
+                                                <i class="bi bi-person-plus me-1"></i>Inserir
+                                            </button>
+                                            <a class="btn btn-sm btn-outline-secondary"
+                                               th:href="@{/agendamentos/pdf/veiculos/{id}(id=${veiculo.id()}, data=${data})}"
+                                               target="_blank">
+                                                <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                                            </a>
+                                        </div>
                                         <div th:replace="~{agendamento/controlesVeiculo :: controles(${veiculo}, ${data}, true)}"></div>
                                     </div>
                                 </div>
@@ -282,10 +262,97 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- MODAIS DE INSERÇÃO DIRETA DE PASSAGEIRO COM INPUT DE BUSCA -->
+                <th:block th:each="veiculo : ${veiculosCarro}">
+                    <div class="modal fade" th:id="'atribuirPassageiroCarroModal-' + ${veiculo.id()}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form method="post" th:action="@{/agendamentos/atribuir-direto}">
+                                    <input type="hidden" name="data" th:value="${data}">
+                                    <input type="hidden" name="idVeiculo" th:value="${veiculo.id()}">
+                                    <input type="hidden" name="paginaCarros" value="true">
+                                    <div class="modal-header">
+                                        <h2 class="modal-title fs-5" th:text="'Inserir em: ' + (${veiculo.identificacao() != null ? veiculo.identificacao() : veiculo.nomeTipoVeiculo()})"></h2>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <label class="form-label" th:for="'buscaPassageiroInput-' + ${veiculo.id()}">
+                                            Filtrar passageiro pendente
+                                        </label>
+                                        <input type="search" class="form-control mb-2 busca-passageiro-input"
+                                            th:id="'buscaPassageiroInput-' + ${veiculo.id()}"
+                                            placeholder="Digite o nome ou a cidade..."
+                                            autocomplete="off">
+
+                                        <div class="list-group lista-passageiros" style="max-height: 300px; overflow-y: auto;">
+                                            <label class="list-group-item list-group-item-action item-passageiro"
+                                                th:each="p : ${passageirosPendentesCarro}"
+                                                th:data-busca="${detalhesPassageiros.get(p.idPessoa()).nome() + ' ' + detalhesPassageiros.get(p.idPessoa()).cidade()}">
+                                                <input class="form-check-input me-2" type="radio" name="idAgendamento"
+                                                    th:value="${p.id()}" required>
+                                                <strong th:text="${detalhesPassageiros.get(p.idPessoa()).nome()}"></strong>
+                                                <span class="text-secondary small"
+                                                    th:text="${' · ' + detalhesPassageiros.get(p.idPessoa()).cidade() + ' · ' + p.acompanhantes() + ' acomp.'}"></span>
+                                            </label>
+                                        </div>
+
+                                        <div class="text-secondary small mt-2 d-none sem-resultados">
+                                            Nenhum passageiro encontrado.
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancelar</button>
+                                        <button class="btn btn-primary" type="submit">Atribuir ao carro</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </th:block>
             </th:block>
         </div>
     </main>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const normalizar = texto =>
+            (texto || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+        function filtrar(modal, termoBruto) {
+            const termo = normalizar(termoBruto).trim();
+            const itens = modal.querySelectorAll(".item-passageiro");
+            let visiveis = 0;
+
+            itens.forEach(item => {
+                const combina = !termo || normalizar(item.dataset.busca).includes(termo);
+                item.classList.toggle("d-none", !combina);
+                if (combina) visiveis++;
+            });
+
+            modal.querySelector(".sem-resultados")
+                 .classList.toggle("d-none", visiveis > 0);
+        }
+
+        // Filtra ao digitar (delegação: um único listener para todos os modais)
+        document.addEventListener("input", e => {
+            if (!e.target.matches(".busca-passageiro-input")) return;
+            filtrar(e.target.closest(".modal"), e.target.value);
+        });
+
+        // Ao abrir o modal: limpa o filtro, mostra todos e foca o input
+        document.addEventListener("show.bs.modal", e => {
+            const input = e.target.querySelector(".busca-passageiro-input");
+            if (!input) return;
+            input.value = "";
+            filtrar(e.target, "");
+        });
+        document.addEventListener("shown.bs.modal", e => {
+            e.target.querySelector(".busca-passageiro-input")?.focus();
+        });
+    });
+</script>
 <script th:src="@{/js/agendamento-edicao.js}" defer></script>
 </body>
-</html>
+</html> 

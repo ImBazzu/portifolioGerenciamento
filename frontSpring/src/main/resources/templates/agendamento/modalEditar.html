@@ -1,79 +1,202 @@
 <div th:fragment="modal(passageiro, data, tiposVeiculo, destinos, veiculos, paginaCarros)"
      class="modal fade" th:id="'editarAgendamentoModal-' + ${passageiro.id()}"
      tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
             <form method="post" th:action="@{/agendamentos/{id}/editar(id=${passageiro.id()})}"
                   class="js-editar-agendamento-form">
                 <input type="hidden" name="data" th:value="${data}">
                 <input th:if="${paginaCarros}" type="hidden" name="paginaCarros" value="true">
-                <div class="modal-header">
-                    <h2 class="modal-title fs-5">Editar agendamento</h2>
+                <!-- Campos exigidos pelo endpoint /editar e que não são editáveis nesta tela -->
+                <input type="hidden" name="idTipoVeiculo" th:value="${passageiro.idTipoVeiculo()}">
+                <input th:if="${passageiro.idVeiculoAberto() != null}" type="hidden" name="idVeiculo"
+                       th:value="${passageiro.idVeiculoAberto()}">
+
+                <!-- CABEÇALHO -->
+                <div class="modal-header bg-light border-bottom px-4 py-3">
+                    <h2 class="modal-title fs-5 fw-bold text-dark m-0">
+                        <i class="bi bi-pencil-square text-primary me-2"></i>Detalhes e Edição do Agendamento
+                    </h2>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
-                <div class="modal-body row g-3">
-                    <div class="col-12 col-md-6">
-                        <label class="form-label" th:for="'editarTipo-' + ${passageiro.id()}">Tipo de veículo</label>
-                        <select class="form-select js-editar-tipo" name="idTipoVeiculo"
-                                th:id="'editarTipo-' + ${passageiro.id()}" required>
-                            <option th:each="tipo : ${tiposVeiculo}" th:value="${tipo.id()}"
-                                    th:text="${tipo.nome() + ' — ' + tipo.capacidade() + ' lugares'}"
-                                    th:selected="${tipo.id() == passageiro.idTipoVeiculo()}"
-                                    th:attr="data-carro=${#strings.toLowerCase(tipo.nome()).startsWith('carro')}">
-                            </option>
-                        </select>
+
+                <!-- CORPO DO MODAL -->
+                <div class="modal-body px-4 py-4">
+
+                    <!-- BLOCO DE CIMA: INFORMAÇÕES DA PESSOA (NOME, CPF, TELEFONE, ENDEREÇO, OBSERVAÇÃO) -->
+                    <div class="card bg-light border-0 shadow-sm mb-3">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="text-uppercase fs-7 text-muted fw-bold tracking-wide">Informações da Pessoa</span>
+                                <!-- BOTÃO PARA EDITAR INFORMAÇÕES DA PESSOA -->
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        hx:get="@{/pessoas/abrirFormulario(id=${passageiro.idPessoa()}, contextoAgendamento=true)}"
+                                        hx-target="#modal" hx-swap="innerHTML">
+                                    <i class="bi bi-person-gear me-1"></i>Editar Pessoa
+                                </button>
+                            </div>
+
+                            <h6 class="fw-bold text-dark mb-1" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></h6>
+
+                            <div class="row g-2 text-secondary small mt-1">
+                                <div class="col-12 col-md-6">
+                                    <i class="bi bi-card-text me-1"></i><strong>CPF:</strong>
+                                    <span th:text="${detalhesPassageiros.get(passageiro.idPessoa()).cpf() != null ? detalhesPassageiros.get(passageiro.idPessoa()).cpf() : 'Não informado'}"></span>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <i class="bi bi-telephone me-1"></i><strong>Telefone:</strong>
+                                    <span th:text="${detalhesPassageiros.get(passageiro.idPessoa()).telefone()}"></span>
+                                </div>
+                                <div class="col-12">
+                                    <i class="bi bi-geo-alt me-1"></i><strong>Endereço:</strong>
+                                    <span th:text="${detalhesPassageiros.get(passageiro.idPessoa()).endereco()}"></span>
+                                </div>
+                                <div class="col-12">
+                                    <i class="bi bi-chat-left-text me-1"></i><strong>Observação:</strong>
+                                    <span th:text="${detalhesPassageiros.get(passageiro.idPessoa()).observacao() != null ? detalhesPassageiros.get(passageiro.idPessoa()).observacao() : 'Nenhuma'}"></span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-12 col-md-6">
-                        <label class="form-label" th:for="'editarDestino-' + ${passageiro.id()}">Destino</label>
-                        <select class="form-select" name="idDestino"
-                                th:id="'editarDestino-' + ${passageiro.id()}" required>
-                            <option th:each="destino : ${destinos}" th:value="${destino.id()}"
-                                    th:text="${destino.nome() + ' — ' + destino.cidade()}"
-                                    th:selected="${destino.id() == passageiro.idDestino()}">
-                            </option>
-                        </select>
+
+                    <!-- BLOCO ABAIXO: AGENDAMENTO REALIZADO (TIPO, VEÍCULO FÍSICO E HORÁRIO DE SAÍDA COMO LABELS) -->
+                    <div class="card bg-light border-0 shadow-sm mb-4">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-uppercase fs-7 text-muted fw-bold tracking-wide">Agendamento Realizado</span>
+                                <div>
+                                    <span th:if="${passageiro.idVeiculoAberto() == null}" class="badge bg-warning text-dark">Pendente</span>
+                                    <span th:unless="${passageiro.idVeiculoAberto() == null}" class="badge bg-success">Atribuído a Veículo</span>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 text-secondary small">
+                                <div class="col-12 col-md-4">
+                                    <strong class="d-block text-dark">Tipo de veículo:</strong>
+                                    <span th:each="tipo : ${tiposVeiculo}"
+                                          th:if="${tipo.id() == passageiro.idTipoVeiculo()}"
+                                          th:text="${tipo.nome()}">
+                                    </span>
+                                </div>
+
+                                <!-- SEM VEÍCULO: PASSAGEIRO PENDENTE -->
+                                <div th:if="${passageiro.idVeiculoAberto() == null}" class="col-12 col-md-8">
+                                    <strong class="d-block text-dark">Veículo físico:</strong>
+                                    <span>Sem veículo físico (Pendente)</span>
+                                </div>
+
+                                <!-- COM VEÍCULO: nome e horário de saída vêm da lista de veículos recebida pelo fragmento -->
+                                <th:block th:each="veiculo : ${veiculos}"
+                                          th:if="${veiculo.id() == passageiro.idVeiculoAberto()}">
+                                    <div class="col-12 col-md-4">
+                                        <strong class="d-block text-dark">Veículo físico:</strong>
+                                        <span th:text="${veiculo.identificacao() != null
+                                                ? veiculo.identificacao() + ' — ' + veiculo.nomeTipoVeiculo()
+                                                : veiculo.nomeTipoVeiculo()}"></span>
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <strong class="d-block text-dark">Horário de saída:</strong>
+                                        <span th:text="${veiculo.horarioSaida() != null
+                                                ? #temporals.format(veiculo.horarioSaida(), 'HH:mm')
+                                                : 'A definir'}"></span>
+                                    </div>
+                                </th:block>
+
+                                <div class="col-12 mt-2">
+                                    <strong class="d-block text-dark">Destino atual:</strong>
+                                    <span th:text="${detalhesPassageiros.get(passageiro.idPessoa()).cidade() + ' — ' + detalhesPassageiros.get(passageiro.idPessoa()).destino()}"></span>
+                                </div>
+                            </div>
+
+                            <!-- BOTÃO DE REMOVER PASSAGEIRO (EXIBIDO APENAS SE ESTIVER ATRIBUÍDO A UM VEÍCULO) -->
+                            <div th:if="${passageiro.idVeiculoAberto() != null}" class="mt-3 pt-2 border-top">
+                                <button type="submit" class="btn btn-sm btn-outline-danger fw-semibold"
+                                        th:formaction="@{/agendamentos/{id}/remover-veiculo(id=${passageiro.id()})}"
+                                        formnovalidate>
+                                    <i class="bi bi-person-dash me-1"></i>Remover passageiro
+                                </button>
+                            </div>
+
+                            <!-- BOTÃO DE EXCLUIR PASSAGEIRO (EXIBIDO APENAS SE ESTIVER PENDENTE).
+                                 Confirmação em duas etapas dentro do próprio modal: não empilha outro modal. -->
+                            <div th:if="${passageiro.idVeiculoAberto() == null}" class="mt-3 pt-2 border-top">
+                                <button type="button" class="btn btn-sm btn-outline-danger fw-semibold"
+                                        data-bs-toggle="collapse"
+                                        th:data-bs-target="'#confirmarExclusao-' + ${passageiro.id()}"
+                                        th:aria-controls="'confirmarExclusao-' + ${passageiro.id()}"
+                                        aria-expanded="false">
+                                    <i class="bi bi-trash me-1"></i>Excluir passageiro
+                                </button>
+
+                                <div class="collapse mt-2" th:id="'confirmarExclusao-' + ${passageiro.id()}">
+                                    <div class="alert alert-danger py-2 mb-0">
+                                        <p class="mb-2 small">
+                                            Confirma a exclusão do agendamento de
+                                            <strong th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></strong>?
+                                            Esta ação não pode ser desfeita.
+                                        </p>
+                                        <button type="submit" class="btn btn-sm btn-danger fw-semibold"
+                                                th:formaction="@{/agendamentos/{id}/excluir(id=${passageiro.id()})}"
+                                                formnovalidate>
+                                            <i class="bi bi-trash me-1"></i>Sim, excluir
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-light border"
+                                                data-bs-toggle="collapse"
+                                                th:data-bs-target="'#confirmarExclusao-' + ${passageiro.id()}">
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-12 col-md-6">
-                        <label class="form-label" th:for="'editarChegada-' + ${passageiro.id()}">Horário de chegada</label>
-                        <input class="form-control" type="time" name="horarioChegada"
-                               th:id="'editarChegada-' + ${passageiro.id()}"
-                               th:value="${passageiro.horarioChegada()}" required>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <label class="form-label" th:for="'editarAcompanhantes-' + ${passageiro.id()}">Acompanhantes</label>
-                        <input class="form-control" type="number" name="acompanhantes" min="0"
-                               th:id="'editarAcompanhantes-' + ${passageiro.id()}"
-                               th:value="${passageiro.acompanhantes()}" required>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label" th:for="'editarVeiculo-' + ${passageiro.id()}">Veículo físico</label>
-                        <select class="form-select js-editar-veiculo" name="idVeiculo"
-                                th:id="'editarVeiculo-' + ${passageiro.id()}">
-                            <option value="">Sem veículo físico</option>
-                            <option th:each="veiculo : ${veiculos}" th:value="${veiculo.id()}"
-                                    th:text="${veiculo.nomeTipoVeiculo() + (veiculo.identificacao() == null ? '' : ' — ' + veiculo.identificacao())}"
-                                    th:selected="${veiculo.id() == passageiro.idVeiculoAberto()}"
-                                    th:attr="data-tipo=${veiculo.idTipoVeiculo()}">
-                            </option>
-                        </select>
-                        <div class="form-text">Veículos não carro precisam ser selecionados. Para Carro, a atribuição é opcional.</div>
-                    </div>
-                    <div class="col-12">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="buscarNaResidencia" value="true"
-                                   th:id="'editarBusca-' + ${passageiro.id()}"
-                                   th:checked="${passageiro.buscarNaResidencia()}">
-                            <label class="form-check-label" th:for="'editarBusca-' + ${passageiro.id()}">
-                                Buscar passageiro na residência
-                            </label>
+
+                    <!-- CAMPOS DO FORMULÁRIO DE EDIÇÃO -->
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold small text-secondary" th:for="'editarDestino-' + ${passageiro.id()}">Destino</label>
+                            <select class="form-select shadow-none" name="idDestino"
+                                    th:id="'editarDestino-' + ${passageiro.id()}" required>
+                                <option th:each="destino : ${destinos}" th:value="${destino.id()}"
+                                        th:text="${destino.nome() + ' — ' + destino.cidade()}"
+                                        th:selected="${destino.id() == passageiro.idDestino()}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold small text-secondary" th:for="'editarChegada-' + ${passageiro.id()}">Horário de chegada</label>
+                            <input class="form-control shadow-none" type="time" name="horarioChegada"
+                                   th:id="'editarChegada-' + ${passageiro.id()}"
+                                   th:value="${passageiro.horarioChegada()}" required>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold small text-secondary" th:for="'editarAcompanhantes-' + ${passageiro.id()}">Acompanhantes</label>
+                            <input class="form-control shadow-none" type="number" name="acompanhantes" min="0"
+                                   th:id="'editarAcompanhantes-' + ${passageiro.id()}"
+                                   th:value="${passageiro.acompanhantes()}" required>
+                        </div>
+
+                        <div class="col-12 col-md-6 d-flex align-items-end">
+                            <div class="form-check pb-2">
+                                <input class="form-check-input shadow-none" type="checkbox" name="buscarNaResidencia" value="true"
+                                       th:id="'editarBusca-' + ${passageiro.id()}"
+                                       th:checked="${passageiro.buscarNaResidencia()}">
+                                <label class="form-check-label text-secondary small fw-semibold" th:for="'editarBusca-' + ${passageiro.id()}">
+                                    Buscar passageiro na residência
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancelar</button>
-                    <button class="btn btn-primary" type="submit">
+
+                <!-- RODAPÉ COM BOTÕES ALINHADOS À ESQUERDA -->
+                <div class="modal-footer bg-light border-top px-4 py-3 d-flex justify-content-start gap-2">
+                    <button class="btn btn-primary px-4 fw-semibold" type="submit">
                         <i class="bi bi-check-lg me-1"></i>Salvar alterações
                     </button>
+                    <button class="btn btn-light border px-4" type="button" data-bs-dismiss="modal">Cancelar</button>
                 </div>
             </form>
         </div>

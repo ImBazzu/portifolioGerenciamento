@@ -117,6 +117,24 @@ public class AgendamentoController {
             model.addAttribute("agenda", agenda);
             model.addAttribute("detalhesPassageiros", carregarDetalhesPassageiros(agenda, model));
             carregarAgendaDivididaPorTipo(model, agenda);
+
+            // Consolidação da lista única de passageiros e mapa de veículos atribuídos para a página inicial
+            List<AgendamentoResponseDto> todosPassageiros = new ArrayList<>();
+            Map<UUID, VeiculoAtribuidoView> veiculoAtribuido = new HashMap<>();
+            for (var veiculo : agenda.veiculos()) {
+                String nomeVeiculo = veiculo.identificacao() == null
+                        ? veiculo.nomeTipoVeiculo()
+                        : veiculo.identificacao() + " — " + veiculo.nomeTipoVeiculo();
+                var view = new VeiculoAtribuidoView(nomeVeiculo, veiculo.horarioSaida());
+                for (var p : veiculo.passageiros()) {
+                    todosPassageiros.add(p);
+                    veiculoAtribuido.put(p.id(), view);
+                }
+            }
+            todosPassageiros.addAll(agenda.passageirosPendentes());
+            model.addAttribute("passageirosCadastrados", todosPassageiros);
+            model.addAttribute("veiculoAtribuido", veiculoAtribuido);
+
         } catch (RestClientResponseException e) {
             if (e.getStatusCode().value() == 404) {
                 model.addAttribute("agenda", null);
@@ -427,6 +445,22 @@ public class AgendamentoController {
         return redirectCarros(data);
     }
 
+@PostMapping("/atribuir-direto")
+public String atribuirDireto(
+        @RequestParam UUID idAgendamento,
+        @RequestParam UUID idVeiculo,
+        @RequestParam LocalDate data,
+        @RequestParam(defaultValue = "false") boolean paginaCarros,
+        RedirectAttributes redirect) {
+    try {
+        agendamentoApi.atribuir(idAgendamento, idVeiculo);
+        redirect.addFlashAttribute("sucesso", "Passageiro inserido no veículo com sucesso.");
+    } catch (RestClientResponseException e) {
+        redirect.addFlashAttribute("erro", mensagemErro(e));
+    }
+    return paginaCarros ? redirectCarros(data) : redirect(data);
+}
+
     @PostMapping("/{idAgendamento}/veiculo")
     public String atribuirVeiculo(
             @PathVariable UUID idAgendamento,
@@ -653,8 +687,10 @@ public class AgendamentoController {
                     agendamento.idPessoa(),
                     new PassageiroDetalheView(
                             pessoa.nome(),
+                            pessoa.cpf(),
                             pessoa.telefone(),
                             pessoa.endereco(),
+                            pessoa.observacao(),
                             destino == null
                                     ? "Cidade não encontrada (%s)".formatted(agendamento.idDestino())
                                     : destino.cidade(),
@@ -690,6 +726,9 @@ public class AgendamentoController {
         }
         return todos;
     }
+
+    public record VeiculoAtribuidoView(String nome, LocalTime horarioSaida) {
+}
 
     private void adicionarDetalhesLista(List<ListaResponseDto> destino, List<ListaResponseDto> resumos) {
         resumos.stream()
@@ -763,8 +802,9 @@ public class AgendamentoController {
     public record DestinoView(UUID id, UUID idCidade, String cidade, String nome) {
     }
 
+// 1. Atualize a assinatura do record para incluir cpf e observacao
     public record PassageiroDetalheView(
-            String nome, String telefone, String endereco, String cidade, String destino) {
+            String nome, String cpf, String telefone, String endereco, String observacao, String cidade, String destino) {
     }
 
     public record PassageiroVerificadoView(
