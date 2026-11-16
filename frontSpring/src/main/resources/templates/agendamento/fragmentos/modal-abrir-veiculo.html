@@ -1,0 +1,43 @@
+<th:block th:fragment="modalAbrirVeiculo" xmlns:th="http://www.thymeleaf.org">
+                <!-- MODAL ABRIR VEÍCULO -->
+                <div class="modal fade" id="abrirVeiculoModal" tabindex="-1" aria-labelledby="abrirVeiculoTitulo" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content border-0 shadow">
+                            <form method="post" th:action="@{/agendamentos/veiculos}">
+                                <input type="hidden" name="data" th:value="${data}">
+                                <div class="modal-header bg-primary text-white">
+                                    <h2 class="modal-title fs-5" id="abrirVeiculoTitulo">Abrir veículo físico</h2>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold" for="tipoVeiculo">Tipo de veículo</label>
+                                        <select class="form-select" name="idTipoVeiculo" id="tipoVeiculo" required>
+                                            <option value="">Selecione</option>
+                                            <option th:each="tipo : ${tiposVeiculoNaoCarro}" th:value="${tipo.id()}"
+                                                    th:text="${tipo.nome() + ' — ' + tipo.capacidade() + ' lugares'}">
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold" for="identificacaoVeiculo">Identificação</label>
+                                        <input class="form-control" id="identificacaoVeiculo" name="identificacao"
+                                               maxlength="80" placeholder="Ex.: Van 01">
+                                    </div>
+                                    <div>
+                                        <label class="form-label fw-semibold" for="horarioSaidaVeiculo">Horário de saída</label>
+                                        <input class="form-control" type="time" id="horarioSaidaVeiculo"
+                                               name="horarioSaida" required>
+                                    </div>
+                                </div>
+                                <div class="modal-footer bg-light">
+                                    <button class="btn btn-secondary btn-sm" type="button" data-bs-dismiss="modal">Cancelar</button>
+                                    <button class="btn btn-primary btn-sm" type="submit">
+                                        <i class="bi bi-plus-lg me-1"></i>Abrir veículo
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+</th:block>

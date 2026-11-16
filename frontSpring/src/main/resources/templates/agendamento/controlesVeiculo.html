@@ -1,4 +1,17 @@
+<!-- ============================================================
+     Fragmento compatível: continua existindo com a mesma assinatura,
+     então quem já usa `controles(...)` não quebra.
+     ============================================================ -->
 <th:block th:fragment="controles(veiculo, data, paginaCarros)">
+    <th:block th:replace="~{:: botoes(${veiculo})}"></th:block>
+    <th:block th:replace="~{:: modais(${veiculo}, ${data}, ${paginaCarros})}"></th:block>
+</th:block>
+
+
+<!-- ============================================================
+     SÓ OS BOTÕES: pode ficar dentro de card, tabela (<td>), etc.
+     ============================================================ -->
+<th:block th:fragment="botoes(veiculo)">
     <div class="d-flex flex-wrap gap-2">
         <button class="btn btn-sm btn-outline-primary" type="button"
                 data-bs-toggle="modal"
@@ -11,16 +24,27 @@
             <i class="bi bi-trash me-1"></i>Excluir
         </button>
     </div>
+</th:block>
 
+
+<!-- ============================================================
+     SÓ OS MODAIS: incluir UMA vez por veículo, num container no
+     fim da página (fora de card, tabela e de qualquer elemento
+     com transform/overflow/z-index). Cada id aparece uma única vez.
+     ============================================================ -->
+<th:block th:fragment="modais(veiculo, data, paginaCarros)">
+
+    <!-- EDITAR -->
     <div class="modal fade" th:id="'editarVeiculoModal-' + ${veiculo.id()}"
-         tabindex="-1" aria-hidden="true">
+         tabindex="-1" aria-hidden="true"
+         th:aria-labelledby="'editarVeiculoTitulo-' + ${veiculo.id()}">
         <div class="modal-dialog">
             <div class="modal-content">
                 <form method="post" th:action="@{/agendamentos/veiculos/{id}/editar(id=${veiculo.id()})}">
                     <input type="hidden" name="data" th:value="${data}">
                     <input th:if="${paginaCarros}" type="hidden" name="paginaCarros" value="true">
                     <div class="modal-header">
-                        <h2 class="modal-title fs-5">Editar veículo</h2>
+                        <h2 class="modal-title fs-5" th:id="'editarVeiculoTitulo-' + ${veiculo.id()}">Editar veículo</h2>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                     </div>
                     <div class="modal-body">
@@ -55,15 +79,17 @@
         </div>
     </div>
 
+    <!-- EXCLUIR -->
     <div class="modal fade" th:id="'excluirVeiculoModal-' + ${veiculo.id()}"
-         tabindex="-1" aria-hidden="true">
+         tabindex="-1" aria-hidden="true"
+         th:aria-labelledby="'excluirVeiculoTitulo-' + ${veiculo.id()}">
         <div class="modal-dialog">
             <div class="modal-content">
                 <form method="post" th:action="@{/agendamentos/veiculos/{id}/excluir(id=${veiculo.id()})}">
                     <input type="hidden" name="data" th:value="${data}">
                     <input th:if="${paginaCarros}" type="hidden" name="paginaCarros" value="true">
                     <div class="modal-header">
-                        <h2 class="modal-title fs-5">Excluir veículo</h2>
+                        <h2 class="modal-title fs-5" th:id="'excluirVeiculoTitulo-' + ${veiculo.id()}">Excluir veículo</h2>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                     </div>
                     <div class="modal-body">
@@ -77,6 +103,71 @@
                     <div class="modal-footer">
                         <button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancelar</button>
                         <button class="btn btn-danger" type="submit">Excluir veículo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</th:block>
+
+
+<th:block th:fragment="modalExcluir(veiculo, data, paginaCarros)">
+    <div class="modal fade"
+         th:id="'excluirVeiculoModal-' + ${veiculo.id()}"
+         tabindex="-1"
+         aria-hidden="true"
+         th:aria-labelledby="'excluirVeiculoTitulo-' + ${veiculo.id()}">
+
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post"
+                      th:action="@{/agendamentos/veiculos/{id}/excluir(id=${veiculo.id()})}">
+
+                    <input type="hidden" name="data" th:value="${data}">
+
+                    <input th:if="${paginaCarros}"
+                           type="hidden"
+                           name="paginaCarros"
+                           value="true">
+
+                    <div class="modal-header">
+                        <h2 class="modal-title fs-5"
+                            th:id="'excluirVeiculoTitulo-' + ${veiculo.id()}">
+                            Excluir veículo
+                        </h2>
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Fechar">
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <p>
+                            Confirma a exclusão de
+                            <strong th:text="${veiculo.identificacao() == null
+                                ? veiculo.nomeTipoVeiculo()
+                                : veiculo.identificacao()}"></strong>?
+                        </p>
+
+                        <p class="mb-0 text-secondary">
+                            Os agendamentos serão preservados e os passageiros
+                            voltarão à lista de pendentes.
+                        </p>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-light"
+                                type="button"
+                                data-bs-dismiss="modal">
+                            Cancelar
+                        </button>
+
+                        <button class="btn btn-danger" type="submit">
+                            Excluir veículo
+                        </button>
                     </div>
                 </form>
             </div>

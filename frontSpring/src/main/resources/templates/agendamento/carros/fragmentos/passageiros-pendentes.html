@@ -1,0 +1,85 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="passageirosPendentes">
+                <!-- SEÇÃO DE PASSAGEIROS PENDENTES (COM TROCA DIRETA DE TIPO DE VEÍCULO) -->
+                <section class="card border-0 shadow-sm mb-4 rounded-4 overflow-hidden">
+                    <div class="card-header bg-white py-3 border-0">
+                        <h2 class="h5 mb-0 fw-bold text-dark">Passageiros pendentes de carro</h2>
+                    </div>
+                    <div th:if="${#lists.isEmpty(passageirosPendentesCarro)}" class="card-body text-muted p-4">
+                        Não há passageiros de carro aguardando atribuição.
+                    </div>
+                    <div th:if="${!#lists.isEmpty(passageirosPendentesCarro)}" class="table-responsive">
+                        <table class="table align-middle mb-0 table-hover">
+                            <thead class="table-light">
+                            <tr>
+                                <th class="py-3">Passageiro</th>
+                                <th class="py-3">Telefone</th>
+                                <th class="py-3">Cidade / Destino</th>
+                                <th class="py-3">Chegada</th>
+                                <th class="py-3">Acomp.</th>
+                                <th class="py-3">Tipo de Veículo (Troca Rápida)</th>
+                                <th class="py-3 text-end">Ações</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="passageiro : ${passageirosPendentesCarro}">
+                                <td class="fw-semibold text-dark" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></td>
+                                <td class="text-muted" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).telefone()}"></td>
+                                <td>
+                                    <span th:text="${detalhesPassageiros.get(passageiro.idPessoa()).cidade()}"></span>
+                                    <div class="small text-muted" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).destino()}"></div>
+                                </td>
+                                <td th:text="${passageiro.horarioChegada()}"></td>
+                                <td>
+                                    <span class="badge bg-light text-dark border px-2 py-1" th:text="${passageiro.acompanhantes() + ' acomp.'}"></span>
+                                </td>
+
+                                <!-- TROCA DIRETA DO TIPO DE VEÍCULO NA TABELA -->
+                                <td>
+                                    <form method="post" th:action="@{/agendamentos/{id}/editar(id=${passageiro.id()})}" class="m-0">
+                                        <input type="hidden" name="data" th:value="${data}">
+                                        <input type="hidden" name="paginaCarros" value="true">
+                                        <input type="hidden" name="idDestino" th:value="${passageiro.idDestino()}">
+                                        <input type="hidden" name="horarioChegada" th:value="${passageiro.horarioChegada()}">
+                                        <input type="hidden" name="acompanhantes" th:value="${passageiro.acompanhantes()}">
+                                        <input th:if="${passageiro.buscarNaResidencia()}" type="hidden" name="buscarNaResidencia" value="true">
+                                        
+                                        <select class="form-select form-select-sm border-primary-subtle shadow-none js-troca-rapida-tipo"
+                                                name="idTipoVeiculo"
+                                                aria-label="Tipo de veículo do passageiro">
+                                            <option th:each="tipo : ${tiposVeiculo}"
+                                                    th:value="${tipo.id()}"
+                                                    th:text="${tipo.nome()}"
+                                                    th:selected="${tipo.id() == passageiro.idTipoVeiculo()}">
+                                            </option>
+                                        </select>
+                                    </form>
+                                </td>
+
+                                <td class="text-end">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <button class="btn btn-sm btn-outline-primary btn-abrir-edicao" type="button"
+                                                data-bs-toggle="modal"
+                                                th:attr="data-bs-target='#editarAgendamentoModal-' + ${passageiro.id()},
+                                                         data-passageiro-id=${passageiro.id()},
+                                                         data-destino-id=${passageiro.idDestino()},
+                                                         data-horario=${passageiro.horarioChegada()},
+                                                         data-acompanhantes=${passageiro.acompanhantes()},
+                                                         data-residencia=${passageiro.buscarNaResidencia()},
+                                                         data-veiculo-id=${passageiro.idVeiculoAberto()},
+                                                         data-tipo-veiculo-id=${passageiro.idTipoVeiculo()}">
+                                            <i class="bi bi-pencil-square me-1"></i>Detalhes
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" type="button"
+                                                data-bs-toggle="modal"
+                                                th:attr="data-bs-target='#excluirPassageiroCarroModal-' + ${passageiro.id()}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div th:replace="~{agendamento/modalEditar :: modal(${passageiro}, ${data}, ${tiposVeiculo}, ${agenda.veiculos()}, true)}"></div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+</th:block>

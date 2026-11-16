@@ -1,0 +1,84 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="carrosAtribuidos">
+                <!-- SEÇÃO DE CARROS ABERTOS E ATRIBUÍDOS -->
+                <section>
+                    <h2 class="h5 mb-3 fw-bold text-dark">Carros e passageiros atribuídos</h2>
+                    <div th:if="${#lists.isEmpty(veiculosCarro)}" class="alert alert-info shadow-sm">
+                        Nenhum carro físico foi aberto para esta data.
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12 col-xl-6" th:each="veiculo : ${veiculosCarro}">
+                            <article class="card border-0 shadow-sm h-100 rounded-4">
+                                <div class="card-header bg-white d-flex justify-content-between align-items-start py-3 border-0">
+                                    <div>
+                                        <h3 class="h6 mb-1 fw-bold text-primary" th:text="${veiculo.nomeTipoVeiculo()}"></h3>
+                                        <div class="small text-muted">
+                                            <span class="fw-semibold text-dark" th:text="${veiculo.identificacao() == null ? 'Sem identificação' : veiculo.identificacao()}"></span>
+                                            <span> · </span>
+                                            <span th:text="${veiculo.assentosOcupados() + ' / ' + veiculo.capacidade() + ' lugares'}"></span>
+                                            <span> · </span>
+                                            <span th:text="${veiculo.horarioSaida() == null ? 'Saída a definir' : 'Saída ' + veiculo.horarioSaida()}"></span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex flex-column align-items-end gap-2">
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-sm btn-outline-primary" type="button"
+                                                    data-bs-toggle="modal"
+                                                    th:attr="data-bs-target='#atribuirPassageiroCarroModal-' + ${veiculo.id()}">
+                                                <i class="bi bi-person-plus me-1"></i>Inserir
+                                            </button>
+                                            <a class="btn btn-sm btn-outline-secondary"
+                                               th:href="@{/agendamentos/pdf/veiculos/{id}(id=${veiculo.id()}, data=${data})}"
+                                               target="_blank">
+                                                <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                                            </a>
+                                        </div>
+                                        <div th:replace="~{agendamento/controlesVeiculo :: controles(${veiculo}, ${data}, true)}"></div>
+                                    </div>
+                                </div>
+                                <div class="card-body border-top">
+                                    <div th:if="${#lists.isEmpty(veiculo.passageiros())}" class="text-muted small py-2">
+                                        Nenhum passageiro atribuído.
+                                    </div>
+                                    <div th:each="passageiro : ${veiculo.passageiros()}"
+                                         class="border-bottom py-3 d-flex justify-content-between align-items-center gap-2">
+                                        <div class="small">
+                                            <strong class="text-dark" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></strong>
+                                            <div class="text-muted" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).telefone()}"></div>
+                                            <div class="text-muted" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).cidade() + ' · ' + detalhesPassageiros.get(passageiro.idPessoa()).destino()}"></div>
+                                            <div class="text-muted mt-1">
+                                                <span th:text="${'Chegada ' + passageiro.horarioChegada()}"></span>
+                                                <span> · </span>
+                                                <span th:text="${passageiro.buscarNaResidencia() ? 'Buscar na residência' : 'Sem busca'}"></span>
+                                                <span> · </span>
+                                                <span th:text="${passageiro.acompanhantes() + ' acomp.'}"></span>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex flex-column gap-2">
+                                            <button class="btn btn-sm btn-outline-primary btn-abrir-edicao" type="button"
+                                                    data-bs-toggle="modal"
+                                                    th:attr="data-bs-target='#editarAgendamentoModal-' + ${passageiro.id()},
+                                                             data-passageiro-id=${passageiro.id()},
+                                                             data-destino-id=${passageiro.idDestino()},
+                                                             data-horario=${passageiro.horarioChegada()},
+                                                             data-acompanhantes=${passageiro.acompanhantes()},
+                                                             data-residencia=${passageiro.buscarNaResidencia()},
+                                                             data-veiculo-id=${passageiro.idVeiculoAberto()},
+                                                             data-tipo-veiculo-id=${passageiro.idTipoVeiculo()}">
+                                                <i class="bi bi-pencil-square me-1"></i>Detalhes
+                                            </button>
+                                            <form method="post"
+                                                  th:action="@{/agendamentos/{id}/remover-veiculo(id=${passageiro.id()})}"
+                                                  onsubmit="return confirm('Retirar este passageiro do carro?')">
+                                                <input type="hidden" name="data" th:value="${data}">
+                                                <input type="hidden" name="paginaCarros" value="true">
+                                                <button class="btn btn-sm btn-outline-secondary w-100" type="submit">Retirar</button>
+                                            </form>
+                                        </div>
+                                        <div th:replace="~{agendamento/modalEditar :: modal(${passageiro}, ${data}, ${tiposVeiculo}, ${agenda.veiculos()}, true)}"></div>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </section>
+</th:block>

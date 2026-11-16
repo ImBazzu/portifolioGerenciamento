@@ -1,0 +1,557 @@
+<th:block th:fragment="modalAgendamento"
+          xmlns:th="http://www.thymeleaf.org"
+          xmlns:hx="https://htmx.org">
+
+    <!-- MODAL AGENDAMENTO -->
+    <div class="modal fade"
+         id="agendamentoModal"
+         tabindex="-1"
+         aria-labelledby="agendamentoModalTitulo"
+         aria-hidden="true"
+         data-bs-focus="false">
+
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+
+                <!-- CABEÇALHO -->
+                <div class="modal-header bg-success text-white">
+                    <div>
+                        <h2 class="modal-title fs-5" id="agendamentoModalTitulo">
+                            Agendar passageiro
+                        </h2>
+                        <p class="text-white-50 small mb-0">
+                            Informe os dados e verifique os tipos permitidos pelas regras da lista.
+                        </p>
+                    </div>
+
+                    <button type="button"
+                            class="btn-close btn-close-white"
+                            tabindex="-1"
+                            data-bs-dismiss="modal"
+                            aria-label="Fechar">
+                    </button>
+                </div>
+
+                <!-- CORPO -->
+                <div class="modal-body p-4">
+
+                    <!-- FORMULÁRIO DE VERIFICAÇÃO -->
+                    <form id="verificarAgendamentoForm"
+                          method="post"
+                          th:action="@{/agendamentos/verificar-veiculos}"
+                          hx:post="@{/agendamentos/verificar-veiculos}"
+                          hx-target="#resultadoVerificacao"
+                          hx-swap="outerHTML"
+                          hx-sync="this:replace"
+                          th:hidden="${verificacao != null}"
+                          class="row g-3">
+
+                        <input type="hidden"
+                               name="data"
+                               th:value="${data}">
+
+                        <!-- PESSOA (busca via htmx) -->
+                        <div class="col-12 col-md-6 position-relative">
+
+                            <label class="form-label fw-semibold" for="pessoaBusca">
+                                Pessoa
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <input type="search"
+                                   id="pessoaBusca"
+                                   name="termo"
+                                   class="form-control"
+                                   placeholder="Digite o nome ou CPF da pessoa"
+                                   autocomplete="off"
+                                   aria-controls="pessoaResultados"
+                                   aria-autocomplete="list"
+                                   hx:get="@{/agendamentos/buscar-pessoas}"
+                                   hx-trigger="input changed delay:300ms, search"
+                                   hx-target="#pessoaResultados"
+                                   hx-swap="innerHTML"
+                                   hx-sync="this:replace"
+                                   hx-indicator="#pessoaBuscaLoading">
+
+                            <!-- Preenchido pelo servidor (htmx). Fica logo abaixo do input: sem top-100, que o
+                                 empurrava para o fim da coluna (depois do botão "Cadastrar pessoa").
+                                 Manter SEM espaços/quebras dentro; o CSS esconde a lista quando não há filhos. -->
+                            <div id="pessoaResultados"
+                                 class="list-group position-absolute w-100 shadow rounded-3"
+                                 style="z-index: 1060; max-height: 18rem; overflow-y: auto;"
+                                 role="listbox"></div>
+
+                            <div id="pessoaBuscaLoading"
+                                 class="htmx-indicator small text-muted mt-2">
+                                <span class="spinner-border spinner-border-sm me-1"
+                                      aria-hidden="true"></span>
+                                Pesquisando pessoas...
+                            </div>
+
+                            <input type="hidden"
+                                   id="idPessoaAgendamento"
+                                   name="idPessoa"
+                                   th:value="${idPessoaSelecionada}">
+
+                            <div id="pessoaSelecionada"
+                                 class="form-text fw-semibold text-success"
+                                 th:classappend="${pessoaSelecionada == null ? ' d-none' : ''}"
+                                 th:text="${pessoaSelecionada == null ? '' : pessoaSelecionada.nome() + ' — ' + pessoaSelecionada.prioridade()}">
+                            </div>
+
+                            <div id="pessoaBuscaMensagem"
+                                 class="form-text"
+                                 aria-live="polite">
+                                Digite para pesquisar e selecione uma pessoa nos resultados.
+                            </div>
+
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary mt-2"
+                                    id="abrirCadastroPessoa"
+                                    hx:get="@{/pessoas/abrirFormulario(contextoAgendamento=true)}"
+                                    hx-target="#modal"
+                                    hx-swap="innerHTML">
+                                <i class="bi bi-person-plus me-1"></i>
+                                Cadastrar pessoa
+                            </button>
+
+                        </div>
+
+                        <!-- LISTA -->
+                        <div class="col-12 col-md-6">
+
+                            <label class="form-label fw-semibold"
+                                   for="listaAgendamento">
+                                Lista
+                            </label>
+
+                            <select class="form-select"
+                                    id="listaAgendamento"
+                                    name="idLista"
+                                    required>
+
+                                <option value="">
+                                    Selecione uma lista
+                                </option>
+
+                                <option th:each="lista : ${listas}"
+                                        th:value="${lista.id()}"
+                                        th:text="${lista.nome()}"
+                                        th:selected="${lista.id() == idListaSelecionada}">
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <!-- CIDADE (busca via htmx) -->
+                        <div class="col-12 col-md-4 position-relative">
+
+                            <label class="form-label fw-semibold"
+                                   for="cidadeAgendamento">
+                                Cidade de destino
+                            </label>
+
+                            <input class="form-control"
+                                   id="cidadeAgendamento"
+                                   type="search"
+                                   name="termoCidade"
+                                   autocomplete="off"
+                                   placeholder="Digite o nome da cidade"
+                                   th:value="${cidadeSelecionada}"
+                                   hx:get="@{/agendamentos/buscar-cidades}"
+                                   hx-trigger="input changed delay:300ms, search"
+                                   hx-target="#cidadeResultados"
+                                   hx-swap="innerHTML"
+                                   hx-sync="this:replace"
+                                   aria-controls="cidadeResultados"
+                                   aria-autocomplete="list">
+
+                            <!-- name="idCidade": usado pelo hx-include da busca de destino -->
+                            <input type="hidden"
+                                   id="idCidadeAgendamento"
+                                   name="idCidade"
+                                   th:value="${idCidadeSelecionada}">
+
+                            <div id="cidadeResultados"
+                                 class="list-group position-absolute w-100 shadow rounded-3"
+                                 style="z-index: 1055; max-height: 18rem; overflow-y: auto;"
+                                 role="listbox"></div>
+
+                            <div id="cidadeBuscaMensagem"
+                                 class="form-text"
+                                 aria-live="polite">
+                                Pesquise e selecione uma cidade.
+                            </div>
+
+                        </div>
+
+                        <!-- DESTINO (busca via htmx, depende da cidade) -->
+                        <div class="col-12 col-md-4 position-relative">
+
+                            <label class="form-label fw-semibold"
+                                   for="destinoAgendamento">
+                                Destino
+                            </label>
+
+                            <input class="form-control"
+                                   id="destinoAgendamento"
+                                   type="search"
+                                   name="termoDestino"
+                                   autocomplete="off"
+                                   placeholder="Selecione uma cidade primeiro"
+                                   th:value="${destinoSelecionado}"
+                                   th:disabled="${idCidadeSelecionada == null}"
+                                   hx:get="@{/agendamentos/buscar-destinos}"
+                                   hx-include="#idCidadeAgendamento"
+                                   hx-trigger="input changed delay:300ms, search"
+                                   hx-target="#destinoResultados"
+                                   hx-swap="innerHTML"
+                                   hx-sync="this:replace"
+                                   aria-controls="destinoResultados"
+                                   aria-autocomplete="list">
+
+                            <input type="hidden"
+                                   id="idDestinoAgendamento"
+                                   name="idDestino"
+                                   th:value="${idDestinoSelecionado}">
+
+                            <div id="destinoResultados"
+                                 class="list-group position-absolute w-100 shadow rounded-3"
+                                 style="z-index: 1055; max-height: 18rem; overflow-y: auto;"
+                                 role="listbox"></div>
+
+                            <div id="destinoBuscaMensagem"
+                                 class="form-text"
+                                 aria-live="polite">
+                                Selecione uma cidade antes de pesquisar o destino.
+                            </div>
+
+                            <!-- CADASTRAR DESTINO -->
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary mt-2"
+                                    id="abrirCadastroDestino"
+                                    tabindex="-1"
+                                    th:data-url-prefix="@{/localidade/}"
+                                    data-url-suffix="/destinos/abrirFormulario?contextoAgendamento=true">
+
+                                <i class="bi bi-geo-alt me-1"></i>
+                                Cadastrar destino
+                            </button>
+
+                        </div>
+
+                        <!-- HORÁRIO -->
+                        <div class="col-6 col-md-2">
+
+                            <label class="form-label fw-semibold"
+                                   for="chegadaAgendamento">
+                                Chegada desejada
+                            </label>
+
+                            <input class="form-control"
+                                   type="time"
+                                   id="chegadaAgendamento"
+                                   name="horarioChegada"
+                                   th:value="${horarioChegadaSelecionado}"
+                                   required>
+
+                        </div>
+
+                        <!-- ACOMPANHANTES -->
+                        <div class="col-6 col-md-2">
+
+                            <label class="form-label fw-semibold"
+                                   for="acompanhantesVerificar">
+                                Acompanhantes
+                            </label>
+
+                            <input class="form-control"
+                                   type="number"
+                                   id="acompanhantesVerificar"
+                                   name="acompanhantes"
+                                   min="0"
+                                   th:value="${acompanhantesSelecionados == null ? 0 : acompanhantesSelecionados}"
+                                   required>
+
+                        </div>
+
+                        <!-- BUSCA NA RESIDÊNCIA -->
+                        <div class="col-12">
+                            <div class="border rounded-3 p-3 bg-light">
+
+                                <label class="form-label fw-bold mb-3">
+                                    <i class="bi bi-house-door-fill me-1"></i>
+                                    O paciente precisa ser buscado na residência?
+                                    <span class="text-danger">*</span>
+                                </label>
+
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <input type="radio"
+                                               class="btn-check"
+                                               name="buscarNaResidencia"
+                                               id="buscarNaResidenciaSim"
+                                               value="true"
+                                               required
+                                               th:checked="${buscarNaResidenciaSelecionado == true}">
+
+                                        <label class="btn btn-outline-success w-100 py-3 fw-bold"
+                                               for="buscarNaResidenciaSim">
+                                            <i class="bi bi-check-circle-fill me-2"></i>
+                                            SIM
+                                        </label>
+                                    </div>
+
+                                    <div class="col-6">
+                                        <input type="radio"
+                                               class="btn-check"
+                                               name="buscarNaResidencia"
+                                               id="buscarNaResidenciaNao"
+                                               value="false"
+                                               required
+                                               th:checked="${buscarNaResidenciaSelecionado != null and buscarNaResidenciaSelecionado == false}">
+
+                                        <label class="btn btn-outline-secondary w-100 py-3 fw-bold"
+                                               for="buscarNaResidenciaNao">
+                                            <i class="bi bi-x-circle-fill me-2"></i>
+                                            NÃO
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="form-text mt-2">
+                                    Selecione obrigatoriamente uma das opções para continuar.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- VERIFICAÇÃO -->
+                        <div class="col-12">
+
+                            <div class="form-text mb-2 text-muted">
+                                Para um tipo ser aprovado, abra um veículo físico para o dia e configure na lista uma regra compatível com a pessoa, cidade e horário, além da tolerância de separação.
+                            </div>
+
+                            <button class="btn btn-outline-primary shadow-sm"
+                                    type="submit">
+
+                                <i class="bi bi-search me-1"></i>
+                                Verificar veículos permitidos
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                    <!-- RESULTADO DA VERIFICAÇÃO -->
+                    <div id="resultadoVerificacao"
+                         th:fragment="resultadoVerificacao"
+                         th:hidden="${verificacao == null and erroVerificacao == null}"
+                         class="border-top pt-3 mt-3">
+
+                        <button th:if="${verificacao != null or erroVerificacao != null}"
+                                id="editarDadosAgendamento"
+                                type="button"
+                                class="btn btn-sm btn-outline-secondary mb-3">
+
+                            Alterar dados do passageiro
+
+                        </button>
+
+                        <!-- ERRO -->
+                        <div th:if="${erroVerificacao != null}"
+                             class="alert alert-danger py-2"
+                             th:text="${erroVerificacao}">
+                        </div>
+
+                        <th:block th:if="${verificacao != null}">
+
+                            <h3 class="h6 fw-bold">
+                                Resultado das regras
+                            </h3>
+
+                            <div th:if="${!#lists.isEmpty(verificacao.veiculosPermitidos())}"
+                                 class="alert alert-success py-2">
+
+                                A pessoa pode ser cadastrada nos tipos de veículo abaixo.
+                                A regra aprovada será definida automaticamente.
+
+                            </div>
+
+                            <div th:if="${#lists.isEmpty(verificacao.veiculosPermitidos())}"
+                                 class="alert alert-warning py-2">
+
+                                Nenhum tipo de veículo está disponível para este agendamento.
+                                Confira os motivos abaixo.
+
+                            </div>
+
+                            <ul th:if="${!#lists.isEmpty(verificacao.motivosReprovacao())}"
+                                class="small text-muted">
+
+                                <li th:each="motivo : ${verificacao.motivosReprovacao()}"
+                                    th:text="${motivo}">
+                                </li>
+
+                            </ul>
+
+                            <!-- PASSAGEIRO VERIFICADO -->
+                            <section th:if="${passageiroVerificado != null}"
+                                     class="card bg-light border-0 mb-3 rounded-3">
+
+                                <div class="card-body py-3">
+
+                                    <h4 class="h6 mb-2 fw-bold text-dark">
+                                        Passageiro selecionado
+                                    </h4>
+
+                                    <strong th:text="${passageiroVerificado.nome()}"></strong>
+
+                                    <span class="text-muted"
+                                          th:text="${' · ' + passageiroVerificado.telefone()}">
+                                    </span>
+
+                                    <div th:text="${passageiroVerificado.cidade() + ' · ' + passageiroVerificado.destino()}">
+                                    </div>
+
+                                    <div>
+
+                                        <span th:text="${'Chegada ' + passageiroVerificado.horarioChegada()}"></span>
+
+                                        <span> · </span>
+
+                                        <span th:text="${passageiroVerificado.buscarNaResidencia() ? 'Buscar na residência' : 'Sem busca na residência'}"></span>
+
+                                        <span> · </span>
+
+                                        <span th:text="${passageiroVerificado.acompanhantes() + ' acompanhante(s)'}"></span>
+
+                                    </div>
+
+                                </div>
+
+                            </section>
+
+                            <!-- CONFIRMAÇÃO DO AGENDAMENTO -->
+                            <form th:if="${!#lists.isEmpty(verificacao.veiculosPermitidos())}"
+                                  method="post"
+                                  th:action="@{/agendamentos/passageiros}"
+                                  class="row g-3">
+
+                                <input type="hidden"
+                                       name="data"
+                                       th:value="${data}">
+
+                                <input type="hidden"
+                                       name="idPessoa"
+                                       th:value="${idPessoaSelecionada}">
+
+                                <input type="hidden"
+                                       name="idLista"
+                                       th:value="${idListaSelecionada}">
+
+                                <input type="hidden"
+                                       name="idDestino"
+                                       th:value="${idDestinoSelecionado}">
+
+                                <input type="hidden"
+                                       name="horarioChegada"
+                                       th:value="${horarioChegadaSelecionado}">
+
+                                <input type="hidden"
+                                       name="acompanhantes"
+                                       th:value="${acompanhantesSelecionados}">
+
+                                <input type="hidden"
+                                       name="buscarNaResidencia"
+                                       th:value="${buscarNaResidenciaSelecionado == true}">
+
+                                <!-- TIPO DE VEÍCULO -->
+                                <div class="col-12">
+
+                                    <label class="form-label fw-semibold"
+                                           for="tipoPermitido">
+                                        Tipo inicial do agendamento
+                                    </label>
+
+                                    <select class="form-select"
+                                            name="idTipoVeiculo"
+                                            id="tipoPermitido"
+                                            required>
+
+                                        <option value="">
+                                            Selecione um tipo aprovado
+                                        </option>
+
+                                        <option th:each="tipo : ${verificacao.veiculosPermitidos()}"
+                                                th:value="${tipo.idTipoVeiculo()}"
+                                                th:text="${tipo.nome() + ' — ' + tipo.capacidade() + ' lugares'}"
+                                                th:selected="${tipo.idTipoVeiculo() == idTipoVeiculoSelecionado}"
+                                                th:data-carro="${#strings.toLowerCase(tipo.nome()).startsWith('carro')}">
+                                        </option>
+
+                                    </select>
+
+                                </div>
+
+                                <!-- VEÍCULO FÍSICO -->
+                                <div id="veiculoFisicoContainer"
+                                     class="col-12 d-none">
+
+                                    <label class="form-label fw-semibold"
+                                           for="veiculoFisico">
+                                        Veículo físico
+                                    </label>
+
+                                    <select class="form-select"
+                                            id="veiculoFisico"
+                                            name="idVeiculo"
+                                            disabled>
+
+                                        <option value="">
+                                            Selecione o veículo físico
+                                        </option>
+
+                                        <option th:each="veiculo : ${agenda.veiculos()}"
+                                                th:if="${!#strings.toLowerCase(veiculo.nomeTipoVeiculo()).startsWith('carro')}"
+                                                th:value="${veiculo.id()}"
+                                                th:text="${veiculo.nomeTipoVeiculo() + (veiculo.identificacao() == null ? '' : ' — ' + veiculo.identificacao()) + ' · ' + (veiculo.capacidade() - veiculo.assentosOcupados()) + ' lugar(es) disponível(is)'}"
+                                                th:selected="${veiculo.id() == idVeiculoSelecionado}"
+                                                th:data-tipo="${veiculo.idTipoVeiculo()}">
+                                        </option>
+
+                                    </select>
+
+                                    <div class="form-text">
+                                        Ônibus, vans e outros tipos não carro serão atribuídos ao veículo físico selecionado assim que o agendamento for confirmado.
+                                    </div>
+
+                                </div>
+
+                                <!-- CONFIRMAR -->
+                                <div class="col-12">
+
+                                    <button class="btn btn-success shadow-sm"
+                                            type="submit">
+
+                                        <i class="bi bi-person-plus me-1"></i>
+                                        Confirmar agendamento
+
+                                    </button>
+
+                                </div>
+
+                            </form>
+
+                        </th:block>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</th:block>

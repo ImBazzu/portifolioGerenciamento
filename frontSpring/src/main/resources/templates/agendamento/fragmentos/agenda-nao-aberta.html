@@ -1,0 +1,38 @@
+<th:block th:fragment="agendaNaoAberta" xmlns:th="http://www.thymeleaf.org">
+            <!-- SE AGENDA NÃO ABERTA -->
+            <section th:if="${agenda == null and erroConsultaAgenda != true}" class="card border-0 shadow-sm mb-4 rounded-4">
+                <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 p-4">
+                    <div>
+                        <h2 class="h5 mb-1 text-danger fw-bold">Agenda ainda não aberta</h2>
+                        <p class="text-muted mb-0">Abra o dia antes de cadastrar os veículos e passageiros.</p>
+                    </div>
+                    <button class="btn btn-primary" type="button"
+                            data-bs-toggle="modal" data-bs-target="#abrirAgendaModal">
+                        <i class="bi bi-unlock me-1"></i>Abrir agenda do dia
+                    </button>
+                </div>
+            </section>
+
+            <!-- MODAL ABRIR AGENDA -->
+            <div class="modal fade" id="abrirAgendaModal" tabindex="-1" aria-labelledby="abrirAgendaTitulo"
+                 aria-hidden="true" th:if="${agenda == null and erroConsultaAgenda != true}">
+                <div class="modal-dialog">
+                    <div class="modal-content border-0 shadow">
+                        <form method="post" th:action="@{/agendamentos/dias/abrir}">
+                            <input type="hidden" name="data" th:value="${data}">
+                            <div class="modal-header bg-success text-white">
+                                <h2 class="modal-title fs-5" id="abrirAgendaTitulo">Abrir agenda do dia</h2>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                            </div>
+                            <div class="modal-body">
+                                Confirma a abertura da agenda de <strong th:text="${#temporals.format(data, 'dd/MM/yyyy')}"></strong>?
+                            </div>
+                            <div class="modal-footer bg-light">
+                                <button class="btn btn-secondary btn-sm" type="button" data-bs-dismiss="modal">Cancelar</button>
+                                <button class="btn btn-success btn-sm" type="submit">Abrir agenda</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+</th:block>

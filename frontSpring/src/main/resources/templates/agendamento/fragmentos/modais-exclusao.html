@@ -1,0 +1,28 @@
+<th:block th:fragment="modaisExclusao" xmlns:th="http://www.thymeleaf.org">
+                <!-- MODAIS DE EXCLUSÃO -->
+                <th:block th:each="passageiro : ${passageirosCadastrados}">
+                    <div class="modal fade" th:id="'excluirAgendamentoModal-' + ${passageiro.id()}"
+                         tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content border-0 shadow">
+                                <form method="post"
+                                      th:action="@{/agendamentos/{id}/excluir(id=${passageiro.id()})}">
+                                    <input type="hidden" name="data" th:value="${data}">
+                                    <div class="modal-header bg-danger text-white">
+                                        <h2 class="modal-title fs-5">Excluir agendamento</h2>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Confirma a exclusão do agendamento de
+                                        <strong th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></strong>?
+                                    </div>
+                                    <div class="modal-footer bg-light">
+                                        <button class="btn btn-secondary btn-sm" type="button" data-bs-dismiss="modal">Cancelar</button>
+                                        <button class="btn btn-danger btn-sm" type="submit">Excluir</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </th:block>
+</th:block>

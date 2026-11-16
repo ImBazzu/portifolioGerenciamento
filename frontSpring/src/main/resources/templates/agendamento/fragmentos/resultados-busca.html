@@ -1,0 +1,25 @@
+<!-- Fragmentos devolvidos pelo servidor para as buscas (htmx). Só os <button>; o JS trata o clique. -->
+
+<!-- Cidades: GET /agendamentos/buscar-cidades -->
+<th:block th:fragment="cidades" xmlns:th="http://www.thymeleaf.org">
+    <button th:each="cidade : ${cidades}"
+            type="button"
+            role="option"
+            class="list-group-item list-group-item-action"
+            th:data-id="${cidade.id()}"
+            th:data-nome="${cidade.nome()}"
+            th:data-estado="${cidade.estado()}"
+            th:text="${cidade.nome() + ' - ' + cidade.estado()}">
+    </button>
+</th:block>
+
+<!-- Destinos da cidade informada em idCidade: GET /agendamentos/buscar-destinos -->
+<th:block th:fragment="destinos" xmlns:th="http://www.thymeleaf.org">
+    <button th:each="destino : ${destinos}"
+            type="button"
+            role="option"
+            class="list-group-item list-group-item-action"
+            th:data-id="${destino.id()}"
+            th:text="${destino.nome()}">
+    </button>
+</th:block>

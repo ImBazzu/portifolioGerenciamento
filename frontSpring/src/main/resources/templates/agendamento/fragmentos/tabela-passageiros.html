@@ -1,0 +1,227 @@
+<th:block th:fragment="tabelaPassageiros" xmlns:th="http://www.thymeleaf.org">
+
+                <!-- TABELA DE PASSAGEIROS CADASTRADOS (SEM A TROCA RÁPIDA) -->
+
+                <section class="card border-0 shadow-sm mt-4 rounded-4 overflow-hidden">
+
+                    <div class="card-header bg-white py-3 border-0">
+
+                        <div class="row g-2 align-items-center">
+
+                            <div class="col-12 col-md-3">
+
+                                <h2 class="h5 mb-0 fw-bold text-dark">Passageiros Cadastrados</h2>
+
+                            </div>
+
+                            <div class="col-12 col-md-9">
+
+                                <div class="row g-2">
+
+                                    <div class="col-12 col-sm-4">
+
+                                        <input type="text" id="filtroTexto" class="form-control form-control-sm" placeholder="Filtrar por nome ou telefone...">
+
+                                    </div>
+
+                                    <div class="col-6 col-sm-3">
+
+                                        <input type="text" id="filtroCidade" class="form-control form-control-sm" placeholder="Filtrar por cidade...">
+
+                                    </div>
+
+                                    <div class="col-6 col-sm-3">
+
+                                        <select id="filtroStatus" class="form-select form-select-sm">
+
+                                            <option value="">Todos os status</option>
+
+                                            <option value="pendente">Somente Pendentes</option>
+
+                                            <option value="atribuido">Somente Atribuídos</option>
+
+                                        </select>
+
+                                    </div>
+
+                                    <div class="col-12 col-sm-2">
+
+                                        <button type="button" id="btnLimparFiltros" class="btn btn-sm btn-outline-secondary w-100">Limpar</button>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div th:if="${#lists.isEmpty(passageirosCadastrados)}" class="card-body text-muted p-4">
+
+                        Nenhum passageiro cadastrado para esta data.
+
+                    </div>
+
+
+
+                    <div th:if="${!#lists.isEmpty(passageirosCadastrados)}" class="table-responsive">
+
+                        <table class="table align-middle mb-0 table-hover" id="tabelaPassageiros">
+
+                            <thead class="table-light">
+
+                            <tr>
+
+                                <th class="py-3">Passageiro / Telefone</th>
+
+                                <th class="py-3">Cidade / Destino</th>
+
+                                <th class="py-3">Horário</th>
+
+                                <th class="py-3">Acomp.</th>
+
+                                <th class="py-3">Lista</th>
+
+                                <th class="py-3">Veículo Atribuído</th>
+
+                                <th class="py-3 text-end">Ações</th>
+
+                            </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                            <tr th:each="passageiro : ${passageirosCadastrados}"
+
+                                class="linha-passageiro"
+
+                                th:data-nome="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"
+
+                                th:data-telefone="${detalhesPassageiros.get(passageiro.idPessoa()).telefone()}"
+
+                                th:data-cidade="${detalhesPassageiros.get(passageiro.idPessoa()).cidade()}"
+
+                                th:data-destino="${detalhesPassageiros.get(passageiro.idPessoa()).destino()}"
+
+                                th:data-status="${passageiro.idVeiculoAberto() == null ? 'pendente' : 'atribuido'}">
+
+                                <td>
+
+                                    <strong class="text-dark" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></strong>
+
+                                    <div class="small text-muted" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).telefone()}"></div>
+
+                                </td>
+
+                                <td>
+
+                                    <span class="text-dark" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).cidade()}"></span>
+
+                                    <div class="small text-muted" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).destino()}"></div>
+
+                                </td>
+
+                                <td th:text="${passageiro.horarioChegada()}"></td>
+
+                                <td>
+
+                                    <span class="badge bg-light text-dark border px-2 py-1" th:text="${passageiro.acompanhantes()}"></span>
+
+                                </td>
+
+                                <td>
+
+                                    <span class="text-secondary fw-semibold" th:each="lista : ${listas}"
+
+                                          th:if="${lista.id() == passageiro.idLista()}"
+
+                                          th:text="${lista.nome()}">
+
+                                    </span>
+
+                                </td>
+
+                                <td>
+
+                                    <span th:if="${passageiro.idVeiculoAberto() == null}" class="badge bg-warning text-dark">
+
+                                        <i class="bi bi-clock me-1"></i>Pendente
+
+                                    </span>
+
+                                    <th:block th:unless="${passageiro.idVeiculoAberto() == null}"
+
+                                            th:with="veiculo=${veiculoAtribuido.get(passageiro.id())}">
+
+                                        <span class="badge bg-success">
+
+                                            <i class="bi bi-truck me-1"></i>
+
+                                            <span th:text="${veiculo.nome()}"></span>
+
+                                        </span>
+
+                                        <div class="small text-muted mt-1">
+
+                                            Saída:
+
+                                            <strong th:text="${veiculo.horarioSaida() != null
+
+                                                    ? #temporals.format(veiculo.horarioSaida(), 'HH:mm')
+
+                                                    : 'A definir'}"></strong>
+
+                                        </div>
+
+                                    </th:block>
+
+                                </td>
+
+                                <td class="text-end">
+
+                                    <div class="d-flex justify-content-end gap-2">
+
+                                        <button type="button"
+
+                                                class="btn btn-sm btn-outline-primary"
+
+                                                data-bs-toggle="modal"
+
+                                                th:attr="data-bs-target='#editarAgendamentoModal-' + ${passageiro.id()}">
+
+                                            <i class="bi bi-pencil-square me-1"></i>Detalhes
+
+                                        </button>
+
+                                    </div>
+
+                                    <div th:replace="~{agendamento/modalEditar :: modal(${passageiro}, ${data}, ${tiposVeiculo}, ${agenda.veiculos()}, false)}"></div>
+
+                                </td>
+
+                            </tr>
+
+                            <tr id="semResultadosFiltro" class="d-none">
+
+                                <td colspan="7" class="text-center py-4 text-muted">
+
+                                    Nenhum passageiro encontrado com os filtros aplicados.
+
+                                </td>
+
+                            </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
+
+</th:block> 

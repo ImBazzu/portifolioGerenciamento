@@ -3,13 +3,13 @@ package br.com.imbazzu.secretariaTransporte.lista.core.porta.out;
 import java.util.Optional;
 import java.util.UUID;
 
-import br.com.imbazzu.secretariaTransporte.lista.core.domain.TipoLista;
+import br.com.imbazzu.secretariaTransporte.lista.core.domain.Lista;
 
 public interface TipoListaPorta {
 
-    UUID salvar(TipoLista lista);
+    UUID salvar(Lista lista);
 
-    Optional<TipoLista> buscarPorId(UUID id);
+    Optional<Lista> buscarPorId(UUID id);
 
     void deletar(UUID id);
 }

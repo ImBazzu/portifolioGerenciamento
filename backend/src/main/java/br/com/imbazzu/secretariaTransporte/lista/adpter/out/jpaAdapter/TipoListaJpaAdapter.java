@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import br.com.imbazzu.secretariaTransporte.lista.adpter.out.entidadeJpa.TipoListaJpa;
 import br.com.imbazzu.secretariaTransporte.lista.adpter.out.mapper.TipoListaBancoMapper;
 import br.com.imbazzu.secretariaTransporte.lista.adpter.out.repositorio.TipoListaRepository;
-import br.com.imbazzu.secretariaTransporte.lista.core.domain.TipoLista;
+import br.com.imbazzu.secretariaTransporte.lista.core.domain.Lista;
 import br.com.imbazzu.secretariaTransporte.lista.core.porta.out.TipoListaPorta;
 import lombok.RequiredArgsConstructor;
 
@@ -21,7 +21,7 @@ public class TipoListaJpaAdapter implements TipoListaPorta {
 
     @Override
     @Transactional
-    public UUID salvar(TipoLista lista) {
+    public UUID salvar(Lista lista) {
         var entidade = repository.findById(lista.getId()).orElseGet(TipoListaJpa::new);
         TipoListaBancoMapper.atualizarEntidade(lista, entidade);
         return repository.saveAndFlush(entidade).getId();
@@ -29,7 +29,7 @@ public class TipoListaJpaAdapter implements TipoListaPorta {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<TipoLista> buscarPorId(UUID id) {
+    public Optional<Lista> buscarPorId(UUID id) {
         return repository.findById(id).map(TipoListaBancoMapper::paraDomain);
     }
 

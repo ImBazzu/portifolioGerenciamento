@@ -1,8 +1,6 @@
 package br.com.imbazzu.secretariaTransporte.lista.adpter.out.mapper;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -13,7 +11,7 @@ import br.com.imbazzu.secretariaTransporte.lista.adpter.out.entidadeJpa.RegraSep
 import br.com.imbazzu.secretariaTransporte.lista.adpter.out.entidadeJpa.TipoListaJpa;
 import br.com.imbazzu.secretariaTransporte.lista.core.domain.RegraCadastro;
 import br.com.imbazzu.secretariaTransporte.lista.core.domain.RegraSeparacao;
-import br.com.imbazzu.secretariaTransporte.lista.core.domain.TipoLista;
+import br.com.imbazzu.secretariaTransporte.lista.core.domain.Lista;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.adpter.out.entidadeJpa.TipoVeiculoJpa;
 
 public final class TipoListaBancoMapper {
@@ -21,7 +19,7 @@ public final class TipoListaBancoMapper {
     private TipoListaBancoMapper() {
     }
 
-    public static TipoLista paraDomain(TipoListaJpa entidade) {
+    public static Lista paraDomain(TipoListaJpa entidade) {
         var regrasCadastro = entidade.getRegrasCadastro().stream()
                 .map(regra -> RegraCadastro.recriar(
                         regra.getId(),
@@ -42,7 +40,7 @@ public final class TipoListaBancoMapper {
                         Duration.ofSeconds(regra.getTempoToleranciaSegundos(), regra.getTempoToleranciaNanos())))
                 .toList();
 
-        return TipoLista.recriar(
+        return Lista.recriar(
                 entidade.getId(),
                 new Nome(entidade.getNome()),
                 observacaoOpcional(entidade.getDescricao()),
@@ -51,7 +49,7 @@ public final class TipoListaBancoMapper {
                 entidade.getDataArquivado());
     }
 
-    public static void atualizarEntidade(TipoLista dominio, TipoListaJpa entidade) {
+    public static void atualizarEntidade(Lista dominio, TipoListaJpa entidade) {
         entidade.setId(dominio.getId());
         entidade.setNome(dominio.getNome().valor());
         entidade.setDescricao(valorOpcional(dominio.getDescricao()));

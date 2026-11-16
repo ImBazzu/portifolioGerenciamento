@@ -12,51 +12,83 @@ import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.Ob
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.RegraDeNegocioException;
 import br.com.imbazzu.secretariaTransporte.compartilhados.valueObjects.Nome;
 
-public final class TipoLista {
+/**Lista responsável pela as regras de cadastro */
+public final class Lista {
 
+    //Identificador da Lista
     private final UUID id;
 
+    //Nome da Lista
     private Nome nome;
 
+    //Descrição
     private Observacao descricao;
 
-    private final List<RegraCadastro> listaRegrasCadastro;
+    //Regras de cadastro de passageiro
+    private final List<RegraCadastro> listaRegrasCadastro = new ArrayList<>();
 
-    private final List<RegraSeparacao> listaRegraSeparacao;
+    //Regras para unir e organizar os passageiros criados com a pendencias de veiculo
+    private final List<RegraSeparacao> listaRegraSeparacao = new ArrayList<>();
 
+    //Data do arquivamento, caso seja null então lista não está arquivada
     private LocalDate dataArquivado;
 
-    private TipoLista(UUID id, Nome nome, Observacao descricao, List<RegraCadastro> listaRegrasCadastro,
+    //Privado para se ter um maior controle do Construtor
+    private Lista(UUID id, Nome nome, Observacao descricao, List<RegraCadastro> listaRegrasCadastro,
             List<RegraSeparacao> listaRegraSeparacao, LocalDate dataArquivado) {
+        //Itens obrigatório
         this.id = Objects.requireNonNull(id, "ID é obrigatório");
         this.nome = Objects.requireNonNull(nome, "Nome é obrigatório");
+        
+        //Itens opcionais
         this.descricao = descricao;
-        this.listaRegrasCadastro = new ArrayList<>();
-        this.listaRegraSeparacao = new ArrayList<>();
         this.dataArquivado = dataArquivado;
 
+        //Inserindo as regras criadas
         listaRegrasCadastro.forEach(this::adicionarRegraCadastro);
         listaRegraSeparacao.forEach(this::adicionarRegraSeparacao);
     }
 
-    public static TipoLista criar(Nome nome, Observacao descricao) {
-        return new TipoLista(UUID.randomUUID(), nome, descricao, List.of(), List.of(), null);
+    /**
+     * Criar uma lista
+     * @param nome Titulo - obrigatorio
+     * @param descricao opcional
+     * @return Lista vazia
+     */
+    public static Lista criar(Nome nome, Observacao descricao) {
+        return new Lista(UUID.randomUUID(), nome, descricao, List.of(), List.of(), null);
     }
 
-    public static TipoLista recriar(UUID id, Nome nome, Observacao descricao,
+    /**
+     * Regrar lista com os dados obtido no banco de dados
+     * @param id obrigatório
+     * @param nome obrigatório
+     * @param descricao 
+     * @param listaRegrasCadastro
+     * @param listaRegraSeparacao
+     * @param dataArquivado
+     * @return Lista recriada com os dados obtido do banco
+     */
+    public static Lista recriar(UUID id, Nome nome, Observacao descricao,
             List<RegraCadastro> listaRegrasCadastro, List<RegraSeparacao> listaRegraSeparacao,
             LocalDate dataArquivado) {
+        //Dados obrigatório
         Objects.requireNonNull(listaRegrasCadastro, "Regras de cadastro são obrigatórias");
         Objects.requireNonNull(listaRegraSeparacao, "Regras de separação são obrigatórias");
-        return new TipoLista(id, nome, descricao, listaRegrasCadastro, listaRegraSeparacao, dataArquivado);
+        return new Lista(id, nome, descricao, listaRegrasCadastro, listaRegraSeparacao, dataArquivado);
     }
 
+    /**
+     * edição de dados da lista
+     * @param nome obrigatório
+     * @param descricao
+     */
     public void editar(Nome nome, Observacao descricao) {
         this.nome = Objects.requireNonNull(nome, "Nome é obrigatório");
         this.descricao = descricao;
     }
 
-    public void adicionarRegraCadastro(RegraCadastro regra) {
+    private void adicionarRegraCadastro(RegraCadastro regra) {
         Objects.requireNonNull(regra, "Regra de cadastro é obrigatória");
         validarPertencimento(regra.getIdLista());
         if (listaRegrasCadastro.stream().anyMatch(atual -> atual.getId().equals(regra.getId()))) {

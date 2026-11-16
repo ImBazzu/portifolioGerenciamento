@@ -5,6 +5,8 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -18,9 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaPrioridade;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaRequestDto;
-import br.com.imbazzu.frontSpring.pessoa.core.excecoes.PessoaDadosInvalidosException;
 import br.com.imbazzu.frontSpring.pessoa.core.excecoes.PessoaDuplicadaException;
-import br.com.imbazzu.frontSpring.pessoa.core.excecoes.PessoaNaoEncontradaException;
 import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxRequest;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxTriggerAfterSettle;
@@ -77,10 +77,10 @@ public class PessoaController {
 
     @HxRequest
     @GetMapping("/abrirFormulario/{id}")
-    public String formularioEdicao(@PathVariable UUID id, Model model) {
+    public String formularioEdicao(@PathVariable UUID id, Model model, @RequestParam(defaultValue  = "false") boolean contextoAgendamento) {
         var pessoa = application.buscar(id);
         model.addAttribute("id", id);
-        model.addAttribute("contextoAgendamento", false);
+        model.addAttribute("contextoAgendamento", contextoAgendamento);
         model.addAttribute("pessoa", new PessoaRequestDto(
                 pessoa.nome(), pessoa.observacao(), pessoa.prioridade(), pessoa.endereco(), pessoa.cpf(),
                 pessoa.telefone()));

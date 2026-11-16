@@ -105,6 +105,10 @@ html, body {
 }
 
 
+#pessoaResultados:not(:has(> *)),
+#cidadeResultados:not(:has(> *)),
+#destinoResultados:not(:has(> *)) { display: none; }
+
 /* =========================================================
    SIDEBAR (DESKTOP E DRAWER MOBILE)
    ========================================================= */

@@ -1,0 +1,18 @@
+<th:block th:fragment="resultados">
+
+    <button th:each="pessoa : ${pessoas}"
+            type="button"
+            class="list-group-item list-group-item-action"
+            role="option"
+            th:data-id="${pessoa.id()}"
+            th:data-nome="${pessoa.nome()}"
+            th:data-prioridade="${pessoa.prioridade()}"
+            th:text="${pessoa.nome() + ' — ' + pessoa.prioridade()}">
+    </button>
+
+    <div th:if="${#lists.isEmpty(pessoas)}"
+         class="list-group-item text-muted small">
+        Nenhuma pessoa encontrada.
+    </div>
+
+</th:block>
