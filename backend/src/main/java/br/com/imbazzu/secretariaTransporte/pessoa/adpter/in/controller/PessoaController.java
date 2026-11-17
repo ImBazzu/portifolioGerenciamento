@@ -75,6 +75,7 @@ public class PessoaController {
 
     @GetMapping("/{id}/arquivado")
     public ResponseEntity<PessoaResponseDto> buscarArquivado(@PathVariable UUID id) {
+
         return ResponseEntity.ok(toResponse(buscarArquivadoHandler.handler(new PessoaQueryBuscarArquivado(id))));
     }
 

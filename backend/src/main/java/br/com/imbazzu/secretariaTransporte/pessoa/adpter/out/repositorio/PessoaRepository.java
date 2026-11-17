@@ -15,7 +15,11 @@ public interface PessoaRepository extends JpaRepository<PessoaJpa, UUID> {
 
     Optional<PessoaJpa> findByIdAndDataArquivadoIsNull(UUID id);
 
-    Optional<PessoaJpa> findByIdAndDataArquivadoIsNotNull(UUID id);
+    @Query("""
+        SELECT p FROM PessoaJpa p
+        WHERE p.dataArquivado IS NOT NULL AND p.id = :id
+        """)
+    Optional<PessoaJpa> buscarArquivado(@Param("id") UUID id);
 
     boolean existsByCpf(String cpf);
 

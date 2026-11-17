@@ -41,10 +41,15 @@
                     <td th:text="${pessoa.dataArquivado}">2026-01-01</td>
                     <td class="text-end pe-3">
                         <button class="btn btn-sm btn-outline-success" title="Restaurar"
-                                th:attr="hx-patch=@{/pessoas/{id}/desarquivar(id=${pessoa.id})}"
+                                hx:patch="@{/pessoas/{id}/desarquivar(id=${pessoa.id})}"
                                 hx-confirm="Deseja restaurar esta pessoa?"
                                 hx-target="this" hx-swap="none">
                             <i class="bi bi-arrow-counterclockwise"></i> Restaurar
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary" title="Detalhes"
+                                th:attr="hx-get=@{/pessoas/{id}/detalhes/arquivado(id=${pessoa.id})}"
+                                hx-target="#modal" hx-swap="innerHTML">
+                            <i class="bi bi-info-circle me-1"></i> Detalhes
                         </button>
                     </td>
                 </tr>

@@ -30,7 +30,9 @@ public class PessoaJpaAdapter implements PessoaPorta {
     @Override
     @Transactional(readOnly = true)
     public Optional<Pessoa> buscarArquivado(UUID id) {
-        return repository.findByIdAndDataArquivadoIsNotNull(id).map(PessoaBancoMapper::paraDomain);
+                System.out.println("DEu certo");
+
+        return repository.buscarArquivado(id).map(PessoaBancoMapper::paraDomain);
     }
 
     @Override

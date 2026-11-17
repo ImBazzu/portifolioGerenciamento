@@ -42,7 +42,7 @@ public class LoginController {
         }
         try{
             loginApp.login(dto);
-            return new HtmxRedirectView("/veiculo");
+            return new HtmxRedirectView("/agendamentos");
         }catch (LoginApiBloqueadoException | LoginApiException ex){
             model.addAttribute("usuario",dto.login());
             model.addAttribute("error", ex.getMessage());

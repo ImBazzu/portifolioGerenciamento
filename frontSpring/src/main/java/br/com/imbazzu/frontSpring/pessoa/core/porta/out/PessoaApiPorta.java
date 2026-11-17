@@ -3,6 +3,7 @@ package br.com.imbazzu.frontSpring.pessoa.core.porta.out;
 import java.util.UUID;
 
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
+import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaArquivadoResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaRequestDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 
@@ -18,4 +19,6 @@ public interface PessoaApiPorta {
     void arquivar(UUID id);
 
     void desarquivar(UUID id);
+
+    PessoaArquivadoResponseDto buscarArquivado(UUID id);
 }

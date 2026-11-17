@@ -11,6 +11,7 @@ import org.springframework.web.client.RestClient;
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
 import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
+import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaArquivadoResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaRequestDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.excecoes.PessoaDadosInvalidosException;
@@ -123,4 +124,15 @@ public class PessoaApi implements PessoaApiPorta {
     private <T> T executarComRefresh(Supplier<T> chamadaApi) {
         return retryComRefresh.executar(chamadaApi);
     }
+
+    @Override
+    public PessoaArquivadoResponseDto buscarArquivado(UUID id) {
+                return api.get()
+                .uri("%s/%s/arquivado".formatted(PATH_API, id))
+                .retrieve()
+                .onStatus(status -> status.isSameCodeAs(HttpStatus.NOT_FOUND),
+                        (request, response) -> {
+                            throw new PessoaNaoEncontradaException(id);
+                        })
+                .body(PessoaArquivadoResponseDto.class);    }
 }

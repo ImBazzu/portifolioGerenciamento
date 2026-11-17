@@ -6,7 +6,6 @@ import java.util.Map;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.springframework.boot.context.properties.bind.DefaultValue;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -91,6 +90,14 @@ public class PessoaController {
     @GetMapping("/{id}/detalhes")
     public String detalhes(@PathVariable UUID id, Model model) {
         model.addAttribute("pessoa", application.buscar(id));
+        return "paginas/pessoa/detalhesPessoa :: detalhesPessoa";
+    }
+
+    @HxRequest
+    @GetMapping("/{id}/detalhes/arquivado")
+    public String detalhesArquivado(@PathVariable UUID id, Model model) {
+        model.addAttribute("arquivado", true);
+        model.addAttribute("pessoa", application.buscarArquivado(id));
         return "paginas/pessoa/detalhesPessoa :: detalhesPessoa";
     }
 

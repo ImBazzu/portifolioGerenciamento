@@ -25,22 +25,25 @@
 
     <!-- MENU DE NAVEGAÇÃO -->
     <nav class="nav nav-pills flex-column gap-1" id="sidebar-menu">
-        <a th:href="@{/localidade}" class="nav-link text-white"
-           th:classappend="${pagina == 'localidade' ? 'active' : ''}">
-            <i class="bi bi-geo-alt"></i> Cidades e destinos
+        <a th:href="@{/agendamentos}" class="nav-link text-white"
+           th:classappend="${pagina == 'agendamentos' ? 'active' : ''}">
+            <i class="bi bi-calendar2-check"></i> Agendamentos
         </a>
         <a th:href="@{/pessoas}" class="nav-link text-white"
            th:classappend="${pagina == 'pessoas' ? 'active' : ''}">
             <i class="bi bi-person"></i> Pessoas
         </a>
+        
+        <a th:href="@{/localidade}" class="nav-link text-white"
+           th:classappend="${pagina == 'localidade' ? 'active' : ''}">
+            <i class="bi bi-geo-alt"></i> Cidades e destinos
+        </a>
+
         <a th:href="@{/listas}" class="nav-link text-white"
            th:classappend="${pagina == 'listas' ? 'active' : ''}">
             <i class="bi bi-list-ul"></i> Listas
         </a>
-        <a th:href="@{/agendamentos}" class="nav-link text-white"
-           th:classappend="${pagina == 'agendamentos' ? 'active' : ''}">
-            <i class="bi bi-calendar2-check"></i> Agendamentos
-        </a>
+
         <a th:href="@{/veiculo}" class="nav-link text-white"
            th:classappend="${pagina == 'veiculos' ? 'active' : ''}">
             <i class="bi bi-bus-front"></i> Tipos de veículos

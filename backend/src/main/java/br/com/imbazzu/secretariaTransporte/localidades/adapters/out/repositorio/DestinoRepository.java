@@ -23,7 +23,7 @@ public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
             FROM
                 DestinoJpa d
             LEFT JOIN
-                PassageiroJpa p ON d.id = p.destinoId
+                AgendamentoJpa p ON d.id = p.idDestino
             WHERE
                 d.nome like CONCAT('%',:nome,'%')
                 AND d.cidadeId = :idCidade
@@ -46,17 +46,17 @@ public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
                     d.id as id,
                     d.dataArquivado as dataArquivado,
                     d.nome as nome,
-                    count(p.id) as qtdPassageiros
+                    count(p.id) as qtdViagens
             FROM
                 DestinoJpa d
             LEFT JOIN
-                PassageiroJpa p ON d.id = p.destinoId
+                AgendamentoJpa p ON d.id = p.idDestino
             WHERE d.nome like CONCAT('%',:nome,'%')
                 AND
                 d.cidadeId = :idCidade
                 AND
                 d.dataArquivado is not null
-            GROUP BY d.id, d.nome, d.dataArquivado""", countQuery = """
+            GROUP BY d.id, d.nome""", countQuery = """
             SELECT
                 COUNT(d)
             FROM
