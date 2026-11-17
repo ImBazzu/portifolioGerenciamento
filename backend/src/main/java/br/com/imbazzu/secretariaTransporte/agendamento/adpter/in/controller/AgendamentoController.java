@@ -112,6 +112,7 @@ public class AgendamentoController {
     @GetMapping("/dias/{data}")
     public ResponseEntity<AgendaDiaResponseDto> buscarDia(@PathVariable LocalDate data) {
         var agenda = buscarDiaHandler.handler(new AgendamentoQueryBuscarDia(data));
+                System.out.println("Antes de listar os pendentes");
         return ResponseEntity.ok(toResponse(agenda));
     }
 

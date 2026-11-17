@@ -12,7 +12,7 @@ public interface PessoaApplicationPorta {
 
     PessoaResponseDto buscar(UUID id);
 
-    PessoaArquivadoResponseDto buscarArquivado(UUID id);
+    PessoaResponseDto buscarArquivado(UUID id);
 
     UUID salvar(PessoaRequestDto pessoa);
 

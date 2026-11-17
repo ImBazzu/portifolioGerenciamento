@@ -52,6 +52,6 @@ public class PessoaApplication implements PessoaApplicationPorta {
     }
 
     @Override
-    public PessoaArquivadoResponseDto buscarArquivado(UUID id) {
+    public PessoaResponseDto buscarArquivado(UUID id) {
         return api.buscarArquivado(id);    }
 }

@@ -126,7 +126,8 @@ public class PessoaApi implements PessoaApiPorta {
     }
 
     @Override
-    public PessoaArquivadoResponseDto buscarArquivado(UUID id) {
+    public PessoaResponseDto buscarArquivado(UUID id) {
+
                 return api.get()
                 .uri("%s/%s/arquivado".formatted(PATH_API, id))
                 .retrieve()
@@ -134,5 +135,5 @@ public class PessoaApi implements PessoaApiPorta {
                         (request, response) -> {
                             throw new PessoaNaoEncontradaException(id);
                         })
-                .body(PessoaArquivadoResponseDto.class);    }
+                .body(PessoaResponseDto.class);    }
 }

@@ -20,5 +20,5 @@ public interface PessoaApiPorta {
 
     void desarquivar(UUID id);
 
-    PessoaArquivadoResponseDto buscarArquivado(UUID id);
+    PessoaResponseDto buscarArquivado(UUID id);
 }

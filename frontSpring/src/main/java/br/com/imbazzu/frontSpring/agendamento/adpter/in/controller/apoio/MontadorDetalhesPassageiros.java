@@ -12,6 +12,7 @@ import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.Passagei
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendaDiaResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
+import br.com.imbazzu.frontSpring.pessoa.core.excecoes.PessoaNaoEncontradaException;
 import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
 
 /** Monta o mapa idPessoa -> detalhes usado nas telas e nos PDFs. */
@@ -34,12 +35,22 @@ public class MontadorDetalhesPassageiros {
             OpcoesAgendamento opcoes) {
         var destinosPorId = opcoes.destinosPorId();
         Map<UUID, PassageiroDetalheView> detalhes = new HashMap<>();
+        
+
 
         Stream.concat(passageiros.stream(), pendentes.stream()).forEach(agendamento ->
-                detalhes.computeIfAbsent(agendamento.idPessoa(), idPessoa -> detalhe(
-                        pessoas.buscar(idPessoa),
+                detalhes.computeIfAbsent(agendamento.idPessoa(), idPessoa -> {
+                            PessoaResponseDto buscarPessoa;
+                        try{
+                                buscarPessoa =pessoas.buscar(idPessoa);
+                        }catch(PessoaNaoEncontradaException e){
+                            buscarPessoa =pessoas.buscarArquivado(idPessoa);
+                        }
+                    
+                    return detalhe(buscarPessoa,
                         destinosPorId.get(agendamento.idDestino()),
-                        agendamento.idDestino())));
+                        agendamento.idDestino());
+                    }));
 
         return detalhes;
     }

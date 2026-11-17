@@ -2,7 +2,6 @@ package br.com.imbazzu.secretariaTransporte.agendamento.application.query.buscar
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -30,6 +29,7 @@ public class AgendamentoQueryBuscarDiaHandler {
     public AgendaDia handler(AgendamentoQueryBuscarDia query) {
         AgendamentoValidacao.exigirDiaAberto(consultas, query.data());
         var agendamentos = consultas.listarAgendamentos(query.data());
+
         var veiculos = consultas.listarVeiculos(query.data());
         var toleranciasPorTipo = AgendamentoCompatibilidadeResolver.toleranciasPorTipo(consultas, agendamentos);
         var compativeis = CompatibilidadeVeiculoAgendamento.listarCompativeis(
