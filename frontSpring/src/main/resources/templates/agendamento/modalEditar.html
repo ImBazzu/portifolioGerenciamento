@@ -15,6 +15,8 @@
             <form method="post" th:action="@{/agendamentos/{id}/editar(id=${passageiro.id()})}"
                   class="js-editar-agendamento-form d-flex flex-column overflow-hidden">
                 <input type="hidden" name="data" th:value="${data}">
+                <!-- ADICIONADO: Envia o tipo de veículo atual para o backend não falhar -->
+                <input type="hidden" name="idTipoVeiculo" th:value="${passageiro.idTipoVeiculo()}">
                 <input th:if="${paginaCarros}" type="hidden" name="paginaCarros" value="true">
                 <input th:if="${passageiro.idVeiculoAberto() != null}" type="hidden" name="idVeiculo"
                        th:value="${passageiro.idVeiculoAberto()}">

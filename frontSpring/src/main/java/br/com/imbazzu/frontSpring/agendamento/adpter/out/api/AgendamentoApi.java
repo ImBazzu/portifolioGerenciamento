@@ -10,6 +10,7 @@ import org.springframework.web.client.RestClient;
 
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AbrirVeiculoRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoRequestDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoAtualizarRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendaDiaResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.ResultadoSeparacaoResponseDto;
@@ -37,6 +38,13 @@ public class AgendamentoApi {
                 .uri(PATH + "/dias/{data}/abrir", data)
                 .retrieve()
                 .toBodilessEntity());
+    }
+
+    public AgendamentoResponseDto buscarPorId(UUID id){
+        return executar(()->api.get()
+                .uri("%s/%s".formatted(PATH,id))
+                .retrieve()
+                .body(AgendamentoResponseDto.class));
     }
 
     public void abrirVeiculo(LocalDate data, AbrirVeiculoRequestDto request) {

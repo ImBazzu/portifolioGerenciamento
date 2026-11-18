@@ -169,12 +169,12 @@ public class AgendamentoPassageiroController {
         return AgendamentoRedirect.dia(data);
     }
 
-    @PostMapping("/{idAgendamento}/editar")
+ @PostMapping("/{idAgendamento}/editar")
     public String editar(
             @PathVariable UUID idAgendamento,
             @RequestParam LocalDate data,
             @RequestParam UUID idTipoVeiculo,
-            @RequestParam UUID idDestino,
+            @RequestParam(required = false) UUID idDestino,
             @RequestParam LocalTime horarioChegada,
             @RequestParam(defaultValue = "false") boolean buscarNaResidencia,
             @RequestParam(defaultValue = "0") int acompanhantes,
@@ -182,13 +182,16 @@ public class AgendamentoPassageiroController {
             @RequestParam(defaultValue = "false") boolean paginaCarros,
             RedirectAttributes redirect) {
         try {
-            if (!paginaCarros && TipoVeiculoUtil.ehCarro(tiposVeiculo.buscar(idTipoVeiculo).nome())) {
-                redirect.addFlashAttribute(
-                        "erro", "Agendamentos de Carro só podem ser editados na página de passageiros de carros.");
-                return AgendamentoRedirect.dia(data);
+            // TRATAMENTO DE SEGURANÇA: Se o idDestino vier nulo, busca o agendamento atual e mantém o destino antigo
+            UUID destinoFinal = idDestino;
+            if (destinoFinal == null) {
+                var agendamentoAtual = agendamentoApi.buscarPorId(idAgendamento); // Ajuste para o método que busca o agendamento atual na sua API
+                destinoFinal = agendamentoAtual.idDestino();
             }
+
             agendamentoApi.atualizar(idAgendamento, new AgendamentoAtualizarRequestDto(
-                    idTipoVeiculo, idDestino, horarioChegada, buscarNaResidencia, acompanhantes, idVeiculo));
+                    idTipoVeiculo, destinoFinal, horarioChegada, buscarNaResidencia, acompanhantes, idVeiculo));
+            
             redirect.addFlashAttribute("sucesso", "Agendamento atualizado.");
         } catch (RestClientResponseException e) {
             redirect.addFlashAttribute("erro", mensagemErro.de(e));

@@ -5,7 +5,6 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
-import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaArquivadoResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaRequestDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
