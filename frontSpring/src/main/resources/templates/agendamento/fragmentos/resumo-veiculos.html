@@ -2,13 +2,84 @@
 
                 <!-- RESUMO DOS VEÍCULOS -->
                 <section class="mb-4">
-                    <h2 class="h5 mb-3 fw-bold text-dark">Resumo dos Veículos do Dia</h2>
-                    <div th:if="${#lists.isEmpty(agenda.veiculos())}" class="alert alert-info shadow-sm">
-                        Nenhum veículo aberto para esta data.
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h5 mb-0 fw-bold text-dark">Resumo dos Veículos do Dia</h2>
                     </div>
-                    <div class="row g-3" th:if="${!#lists.isEmpty(agenda.veiculos())}">
+
+                    <div class="row g-3">
                         
-                        <!-- CARD VEÍCULOS NORMAIS -->
+                        <!-- CARD CARROS (SEMPRE VISÍVEL, MESMO COM 0 CARROS ABERTOS) -->
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-3">
+                            <!-- ESTADO COM CARROS ABERTOS -->
+                            <div th:if="${!#lists.isEmpty(veiculosCarro)}"
+                                 class="card border-0 shadow-sm h-100 bg-white rounded-4 border-start border-success border-4">
+                                <div class="card-body d-flex flex-column justify-content-between p-4">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h3 class="h6 mb-0 text-success fw-bold">Carros (Total)</h3>
+                                            <span class="badge bg-success text-white" 
+                                                  th:text="${veiculosCarro.size() + ' carro(s)'}"></span>
+                                        </div>
+
+                                        <div class="mt-3"
+                                             th:with="ocupados=${#aggregates.sum(veiculosCarro.![assentosOcupados()])},
+                                                      capacidadeTotal=${#aggregates.sum(veiculosCarro.![capacidade()])}">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <small class="text-muted">Passageiros acomodados:</small>
+                                                <span class="fw-bold small" th:text="${ocupados + ' / ' + capacidadeTotal + ' vagas'}"></span>
+                                            </div>
+                                            <div class="progress rounded-pill" style="height: 6px;">
+                                                <div class="progress-bar rounded-pill" role="progressbar"
+                                                     th:style="'width: ' + (${capacidadeTotal > 0 ? (ocupados * 100 / capacidadeTotal) : 0}) + '%'"
+                                                     th:classappend="${ocupados >= capacidadeTotal ? 'bg-danger' : 'bg-success'}"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-3 pt-2 border-top small text-muted">
+                                            <span>Gerencie as atribuições individuais na página específica.</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3 pt-2 border-top d-flex gap-2">
+                                        <a class="btn btn-sm btn-outline-primary w-50"
+                                           th:href="@{/agendamentos/carros(data=${data})}">
+                                            <i class="bi bi-car-front me-1"></i>Gerenciar
+                                        </a>
+                                        <a class="btn btn-sm btn-success w-50 shadow-sm"
+                                           th:href="@{/agendamentos/pdf/carros(data=${data})}"
+                                           target="_blank">
+                                            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ESTADO VAZIO (0 CARROS ABERTOS) -->
+                            <div th:if="${#lists.isEmpty(veiculosCarro)}"
+                                 class="card border-0 shadow-sm h-100 bg-white rounded-4 border-start border-warning border-4">
+                                <div class="card-body d-flex flex-column justify-content-between p-4">
+                                    <div>
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h3 class="h6 mb-0 text-dark fw-bold">Carros (Total)</h3>
+                                            <span class="badge bg-warning text-dark">0 abertos</span>
+                                        </div>
+
+                                        <div class="mt-3 small text-muted">
+                                            <p class="mb-0">Nenhum carro físico aberto para hoje. Acesse o painel de carros para abrir o primeiro veículo.</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3 pt-2 border-top">
+                                        <a class="btn btn-sm btn-primary w-100 shadow-sm"
+                                           th:href="@{/agendamentos/carros(data=${data})}">
+                                            <i class="bi bi-car-front me-1"></i>Abrir / Gerenciar Carros
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CARD VEÍCULOS NORMAIS (ÔNIBUS, VANS, ETC.) -->
                         <div class="col-12 col-sm-6 col-md-4 col-xl-3" th:each="veiculo : ${veiculosNaoCarro}">
 
                             <th:block th:replace="~{
@@ -64,48 +135,6 @@
                             </div>
                         </div>
 
-                        <!-- CARD CARROS -->
-                        <div class="col-12 col-sm-6 col-md-4 col-xl-3" th:if="${!#lists.isEmpty(veiculosCarro)}">
-                            <div class="card border-0 shadow-sm h-100 bg-white rounded-4 border-start border-success border-4">
-                                <div class="card-body d-flex flex-column justify-content-between p-4">
-                                    <div>
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <h3 class="h6 mb-0 text-success fw-bold">Carros (Total)</h3>
-                                            <span class="badge bg-success text-white" 
-                                                  th:text="${veiculosCarro.size() + ' carro(s)'}"></span>
-                                        </div>
-
-                                        <div class="mt-3">
-                                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                                <small class="text-muted">Passageiros acomodados:</small>
-                                                <span class="fw-bold small" th:text="${#aggregates.sum(veiculosCarro.![assentosOcupados()]) + ' / ' + #aggregates.sum(veiculosCarro.![capacidade()]) + ' vagas'}"></span>
-                                            </div>
-                                            <div class="progress rounded-pill" style="height: 6px;">
-                                                <div class="progress-bar bg-success rounded-pill" role="progressbar" th:style="'width: 100%'"></div>
-                                            </div>
-                                        </div>
-
-                                        <div class="mt-3 pt-2 border-top small text-muted">
-                                            <span>Gerencie as atribuições individuais na página específica.</span>
-                                        </div>
-                                    </div>
-
-                                    <div class="mt-3 pt-2 border-top d-flex gap-2">
-                                        <a class="btn btn-sm btn-outline-primary w-50"
-                                           th:href="@{/agendamentos/carros(data=${data})}">
-                                            <i class="bi bi-car-front me-1"></i>Carros
-                                        </a>
-                                        <a class="btn btn-sm btn-success w-50 shadow-sm"
-                                           th:href="@{/agendamentos/pdf/carros(data=${data})}"
-                                           target="_blank">
-                                            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </section>
-
-    
 </th:block>

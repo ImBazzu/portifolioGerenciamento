@@ -1,10 +1,9 @@
-
 /**
  * Comportamento da página de Agendamentos.
  *
  * Responsabilidades:
+ *  - Seleção inicial de data e atalhos rápidos (Hoje, Amanhã, +2 dias).
  *  - Troca rápida do tipo de veículo diretamente na tabela.
- *  - Mudança rápida da data no cabeçalho.
  *  - Filtros da tabela de passageiros cadastrados.
  *  - Filtro interno nos modais de atribuição direta.
  *  - Preenchimento do modal de edição de passageiro.
@@ -42,6 +41,31 @@
 
     /** Esvazia uma lista de resultados renderizada pelo servidor (htmx). */
     const limpar = (id) => $(id)?.replaceChildren();
+
+    /* ------------------------------------------------------------------ */
+    /* 0. Seleção Inicial de Data (UX Data-First)                         */
+    /* ------------------------------------------------------------------ */
+
+    function formatarDataLocalISO(diasOffset = 0) {
+        const data = new Date();
+        data.setDate(data.getDate() + diasOffset);
+        const ano = data.getFullYear();
+        const mes = String(data.getMonth() + 1).padStart(2, "0");
+        const dia = String(data.getDate()).padStart(2, "0");
+        return `${ano}-${mes}-${dia}`;
+    }
+
+    function aplicarAtalhoData(botao) {
+        const offset = parseInt(botao.dataset.offset ?? "0", 10);
+        const input = $("inputDataInicial");
+        const form = $("formSelecaoDataInicial");
+        if (!input) return;
+
+        input.value = formatarDataLocalISO(offset);
+        if (form) {
+            form.submit();
+        }
+    }
 
     /* ------------------------------------------------------------------ */
     /* 1. Filtros da Tabela Principal de Passageiros                      */
@@ -150,7 +174,6 @@
             selectTipoVeiculo.value = tipoVeiculoId;
         }
 
-        // O destino volta ao original (hidden idDestino) e os campos de busca são limpos.
         reiniciarEdicaoEndereco(modal);
 
         const inputHorario =
@@ -188,12 +211,6 @@
     /* 4. Seleção de Pessoa (HTMX + Thymeleaf)                            */
     /* ------------------------------------------------------------------ */
 
-    /**
-     * Limpa a seleção anterior quando o usuário altera a busca.
-     *
-     * A lista de resultados NÃO é manipulada aqui.
-     * O HTMX é responsável por atualizá-la.
-     */
     function limparSelecaoPessoa() {
         const id = $("idPessoaAgendamento");
 
@@ -209,15 +226,6 @@
         }
     }
 
-    /**
-     * Seleciona uma pessoa renderizada pelo Thymeleaf.
-     *
-     * Os botões retornados pelo fragmento precisam possuir:
-     *
-     * data-id
-     * data-nome
-     * data-prioridade (opcional)
-     */
     function selecionarPessoa({ id, nome, prioridade }) {
         if (!id || !nome) {
             console.error(
@@ -249,15 +257,9 @@
 
         mensagem("pessoaBuscaMensagem", "Pessoa selecionada.");
 
-        // Limpa os resultados depois que a pessoa foi selecionada.
         $("pessoaResultados")?.replaceChildren();
     }
 
-    /**
-     * O HTMX realiza a busca.
-     * Este listener apenas invalida a seleção anterior quando
-     * o usuário começa a pesquisar outra pessoa.
-     */
     function aoDigitarPessoa() {
         limparSelecaoPessoa();
 
@@ -371,20 +373,20 @@
     }
 
     function adicionarDestinoDinamico({ id, nome, idCidade }) {
-    if (!id || !nome) return;
+        if (!id || !nome) return;
 
-    if (idCidade && $("idCidadeAgendamento")) {
-        $("idCidadeAgendamento").value = idCidade;
-        const destinoInput = $("destinoAgendamento");
-        if (destinoInput) destinoInput.disabled = false;
+        if (idCidade && $("idCidadeAgendamento")) {
+            $("idCidadeAgendamento").value = idCidade;
+            const destinoInput = $("destinoAgendamento");
+            if (destinoInput) destinoInput.disabled = false;
+        }
+
+        if ($("destinoAgendamento")) $("destinoAgendamento").value = nome;
+        if ($("idDestinoAgendamento")) $("idDestinoAgendamento").value = id;
+
+        limpar("destinoResultados");
+        mensagem("destinoBuscaMensagem", "Destino selecionado.");
     }
-
-    if ($("destinoAgendamento")) $("destinoAgendamento").value = nome;
-    if ($("idDestinoAgendamento")) $("idDestinoAgendamento").value = id;
-
-    limpar("destinoResultados");
-    mensagem("destinoBuscaMensagem", "Destino selecionado.");
-}
 
     function abrirCadastroDestino(botao) {
         const idCidade = $("idCidadeAgendamento")?.value;
@@ -416,11 +418,6 @@
     /* 5b. Cidade e Destino nos modais de edição (htmx)                   */
     /* ------------------------------------------------------------------ */
 
-    // Cada modal de edição tem um grupo .js-endereco-edicao com:
-    //  .js-cidade-input / .js-cidade-resultados / [name=idCidade]
-    //  .js-destino-input / .js-destino-resultados / [name=idDestino] (data-original)
-    // O hidden idDestino começa com o destino atual e só muda se o usuário escolher outro.
-
     const grupoEdicao = (el) => el.closest(".js-endereco-edicao");
 
     function limparResultados(grupo) {
@@ -448,7 +445,6 @@
 
         if (!grupo) return;
 
-        // Cidade em edição: o destino escolhido antes deixa de valer.
         grupo.querySelector("[name='idCidade']").value = "";
         bloquearDestino(grupo);
         restaurarDestinoOriginal(grupo);
@@ -498,7 +494,6 @@
     /* Mensagens de apoio depois que o htmx troca os resultados           */
     /* ------------------------------------------------------------------ */
 
-    // Mesmo valor de TERMO_MINIMO no AgendamentoBuscaController.
     const TERMO_MINIMO_CIDADE = 2;
 
     function atualizarMensagemBusca(e) {
@@ -648,7 +643,12 @@
 
         if (!alvo) return;
 
-        // Clique fora de um campo de endereço (modais de edição): fecha as listas dele.
+        const atalhoData = alvo.closest(".js-atalho-data");
+        if (atalhoData) {
+            aplicarAtalhoData(atalhoData);
+            return;
+        }
+
         document
             .querySelectorAll(".modal.show .js-endereco-edicao")
             .forEach((grupo) => {
@@ -718,8 +718,6 @@
             editarDadosAgendamento();
         }
 
-        // Não limpar os resultados de pessoas ao clicar fora.
-        // A lista é controlada pelo HTMX e pelo ciclo de busca.
         if (
             !alvo.closest(
                 "#cidadeAgendamento, #cidadeResultados"
@@ -770,7 +768,6 @@
             ?.focus();
     });
 
-    // Fechou o modal de edição sem salvar: volta o destino original e limpa as buscas.
     document.addEventListener("hidden.bs.modal", (e) => {
         if (e.target.matches?.("[id^='editarAgendamentoModal-']")) {
             reiniciarEdicaoEndereco(e.target);
@@ -809,6 +806,12 @@
     /* ------------------------------------------------------------------ */
 
     function iniciarPagina(raiz) {
+        const inputDataInicial = $("inputDataInicial");
+        if (inputDataInicial && !inputDataInicial.value) {
+            inputDataInicial.value = formatarDataLocalISO(0);
+            inputDataInicial.focus();
+        }
+
         const modal = $("agendamentoModal");
 
         if (!modal || !raiz?.contains?.(modal)) return;

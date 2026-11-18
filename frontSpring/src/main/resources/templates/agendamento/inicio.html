@@ -10,18 +10,24 @@
     <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
         <div th:fragment="conteudo" class="app-page container-fluid px-4 py-4">
 
-            <th:block th:replace="~{agendamento/fragmentos/cabecalho :: cabecalho}"></th:block>
-            <th:block th:replace="~{agendamento/fragmentos/alertas :: alertas}"></th:block>
-            <th:block th:replace="~{agendamento/fragmentos/agenda-nao-aberta :: agendaNaoAberta}"></th:block>
+            <!-- PASSO 1: SELEÇÃO INICIAL DE DATA (Quando não há ?data= na URL) -->
+            <th:block th:replace="~{agendamento/fragmentos/selecao-data :: selecaoData}"></th:block>
 
-            <th:block th:if="${agenda != null}">
-                <th:block th:replace="~{agendamento/fragmentos/acoes :: acoes}"></th:block>
-                <th:block th:replace="~{agendamento/fragmentos/resumo-veiculos :: resumoVeiculos}"></th:block>
-                <th:block th:replace="~{agendamento/fragmentos/modais-insercao :: modaisInsercao}"></th:block>
-                <th:block th:replace="~{agendamento/fragmentos/modal-abrir-veiculo :: modalAbrirVeiculo}"></th:block>
-                <th:block th:replace="~{agendamento/fragmentos/modal-agendamento :: modalAgendamento}"></th:block>
-                <th:block th:replace="~{agendamento/fragmentos/tabela-passageiros :: tabelaPassageiros}"></th:block>
-                <th:block th:replace="~{agendamento/fragmentos/modais-exclusao :: modaisExclusao}"></th:block>
+            <!-- PASSO 2: PAINEL DO DIA (Quando ?data= foi selecionado) -->
+            <th:block th:if="${param.data != null and !#strings.isEmpty(param.data[0])}">
+                <th:block th:replace="~{agendamento/fragmentos/cabecalho :: cabecalho}"></th:block>
+                <th:block th:replace="~{agendamento/fragmentos/alertas :: alertas}"></th:block>
+                <th:block th:replace="~{agendamento/fragmentos/agenda-nao-aberta :: agendaNaoAberta}"></th:block>
+
+                <th:block th:if="${agenda != null}">
+                    <th:block th:replace="~{agendamento/fragmentos/acoes :: acoes}"></th:block>
+                    <th:block th:replace="~{agendamento/fragmentos/resumo-veiculos :: resumoVeiculos}"></th:block>
+                    <th:block th:replace="~{agendamento/fragmentos/modais-insercao :: modaisInsercao}"></th:block>
+                    <th:block th:replace="~{agendamento/fragmentos/modal-abrir-veiculo :: modalAbrirVeiculo}"></th:block>
+                    <th:block th:replace="~{agendamento/fragmentos/modal-agendamento :: modalAgendamento}"></th:block>
+                    <th:block th:replace="~{agendamento/fragmentos/tabela-passageiros :: tabelaPassageiros}"></th:block>
+                    <th:block th:replace="~{agendamento/fragmentos/modais-exclusao :: modaisExclusao}"></th:block>
+                </th:block>
             </th:block>
 
             <script th:src="@{/js/agendamento-edicao.js}" defer></script>

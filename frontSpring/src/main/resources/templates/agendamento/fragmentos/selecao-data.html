@@ -1,0 +1,49 @@
+<th:block th:fragment="selecaoData" xmlns:th="http://www.thymeleaf.org">
+            <section th:if="${param.data == null or #strings.isEmpty(param.data[0])}"
+                     class="d-flex align-items-center justify-content-center py-5" style="min-height: 65vh;">
+                <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 w-100" style="max-width: 480px;">
+                    <div class="text-center mb-4">
+                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary mb-3"
+                              style="width: 3.5rem; height: 3.5rem;">
+                            <i class="bi bi-calendar2-week fs-3"></i>
+                        </span>
+                        <h1 class="h4 fw-bold text-dark mb-1">Gerenciar Agendamentos</h1>
+                        <p class="text-muted small mb-0">Selecione a data para carregar a agenda, veículos e passageiros.</p>
+                    </div>
+
+                    <form id="formSelecaoDataInicial" method="get" th:action="@{/agendamentos}">
+                        <div class="mb-3">
+                            <label for="inputDataInicial" class="form-label fw-semibold text-secondary small">
+                                Data da agenda
+                            </label>
+                            <input type="date"
+                                   class="form-control form-control-lg text-center fw-semibold"
+                                   id="inputDataInicial"
+                                   name="data"
+                                   required>
+                        </div>
+
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg fw-semibold shadow-sm">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Acessar Agenda
+                            </button>
+                        </div>
+
+                        <div class="border-top pt-3">
+                            <span class="d-block text-center text-muted small mb-2">Atalhos rápidos:</span>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm flex-fill js-atalho-data" data-offset="0">
+                                    Hoje
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm flex-fill js-atalho-data" data-offset="1">
+                                    Amanhã
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm flex-fill js-atalho-data" data-offset="2">
+                                    +2 dias
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </section>
+</th:block>
