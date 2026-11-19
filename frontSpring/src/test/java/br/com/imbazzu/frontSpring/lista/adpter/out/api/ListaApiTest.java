@@ -114,7 +114,9 @@ class ListaApiTest {
                             "inicioHorario": null,
                             "finalHorario": null,
                             "obrigacaoAnexo": false,
-                            "descricao": null
+                            "descricao": null,
+                            "diasSemana": ["MONDAY","FRIDAY"],
+                            "intervaloRepetacao": 3
                           }],
                           "regrasSeparacao": []
                         }
@@ -124,6 +126,8 @@ class ListaApiTest {
 
         assertEquals(List.of(idVeiculo), regra.getIdsVeiculos());
         assertEquals(List.of(idCidade), regra.getIdsCidades());
+        assertEquals(List.of("MONDAY", "FRIDAY"), regra.diasSemana());
+        assertEquals(3, regra.intervaloRepetacao());
     }
 
     @Test

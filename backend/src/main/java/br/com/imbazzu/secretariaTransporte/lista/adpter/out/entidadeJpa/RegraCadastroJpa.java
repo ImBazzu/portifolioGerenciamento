@@ -76,6 +76,6 @@ public class RegraCadastroJpa {
     @Column(name = "dia_semana", nullable = false, length = 10)
     private List<DayOfWeek> diasSemana = new ArrayList<>();
 
-    @Column(name = "intervalo_repetacao_semanas")
+    @Column(name = "intervalo_repeticao_semanas", nullable = false)
     private Integer intervaloRepetacao;
 }

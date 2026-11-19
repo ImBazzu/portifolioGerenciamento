@@ -96,7 +96,7 @@
                             <div id="pessoaSelecionada"
                                  class="form-text fw-semibold text-success"
                                  th:classappend="${pessoaSelecionada == null ? ' d-none' : ''}"
-                                 th:text="${pessoaSelecionada == null ? '' : pessoaSelecionada.nome() + ' — ' + pessoaSelecionada.prioridade()}">
+                                 th:text="${pessoaSelecionada == null ? '' : pessoaSelecionada.nome() + ' — ' + pessoaSelecionada.especificacaoPrioridade()}">
                             </div>
 
                             <div id="pessoaBuscaMensagem"

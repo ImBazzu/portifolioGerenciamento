@@ -10,6 +10,8 @@ public record PessoaResponseDto(
         UUID especificacaoId,
         String especificacaoNome,
         EnumPrioridade especificacaoPrioridade,
+        boolean buscarNaResidencia,
+        int quantidadeAcompanhantes,
         LocalDate dataArquivado,
         String endereco,
         String cpf,

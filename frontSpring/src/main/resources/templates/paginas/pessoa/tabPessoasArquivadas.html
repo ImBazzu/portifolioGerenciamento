@@ -41,7 +41,7 @@
                     <td th:text="${pessoa.telefone()}">(00) 00000-0000</td>
                     <td>
                         <span class="badge"
-                              th:classappend="${pessoa.especificacaoPrioridade().name() == 'BAIXA'} ? 'text-bg-secondary' : ${pessoa.especificacaoPrioridade().name() == 'MODERADA'} ? 'text-bg-warning' : ${pessoa.especificacaoPrioridade().name() == 'ALTA'} ? 'text-bg-warning text-dark' : 'text-bg-danger'"
+                              th:classappend="${pessoa.especificacaoPrioridade().name() == 'BAIXA' ? 'text-bg-secondary' : (pessoa.especificacaoPrioridade().name() == 'MODERADA' ? 'text-bg-warning' : (pessoa.especificacaoPrioridade().name() == 'ALTA' ? 'text-bg-warning text-dark' : 'text-bg-danger'))}"
                               th:text="${pessoa.especificacaoNome()}">Especificação</span>
                     </td>
                     <td th:text="${#temporals.format(pessoa.dataArquivado(), 'dd/MM/yyyy')}">01/01/2024</td>

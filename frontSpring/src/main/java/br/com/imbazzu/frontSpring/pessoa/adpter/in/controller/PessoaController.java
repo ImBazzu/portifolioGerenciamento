@@ -72,7 +72,7 @@ public class PessoaController {
             Model model) {
         var especificacoes = especificacaoApplication.listar("", false, 0).conteudo();
         model.addAttribute("id", null);
-        model.addAttribute("pessoa", new PessoaRequestDto("", "", null, "", "", ""));
+        model.addAttribute("pessoa", new PessoaRequestDto("", "", null, false, 0, "", "", ""));
         model.addAttribute("contextoAgendamento", contextoAgendamento);
         model.addAttribute("especificacoes", especificacoes);
         return "paginas/pessoa/formPessoa :: formPessoa";
@@ -87,8 +87,8 @@ public class PessoaController {
         model.addAttribute("contextoAgendamento", contextoAgendamento);
         model.addAttribute("especificacoes", especificacoes);
         model.addAttribute("pessoa", new PessoaRequestDto(
-                pessoa.nome(), pessoa.observacao(), pessoa.especificacaoId(), pessoa.endereco(), pessoa.cpf(),
-                pessoa.telefone()));
+                pessoa.nome(), pessoa.observacao(), pessoa.especificacaoId(), pessoa.buscarNaResidencia(),
+                pessoa.quantidadeAcompanhantes(), pessoa.endereco(), pessoa.cpf(), pessoa.telefone()));
         return "paginas/pessoa/formPessoa :: formPessoa";
     }
 

@@ -28,7 +28,7 @@
                     <td class="ps-3 fw-medium" th:text="${esp.nome}">Nome</td>
                     <td>
                         <span class="badge"
-                              th:classappend="${esp.prioridade.name() == 'BAIXA'} ? 'text-bg-secondary' : ${esp.prioridade.name() == 'MODERADA'} ? 'text-bg-warning' : ${esp.prioridade.name() == 'ALTA'} ? 'text-bg-warning text-dark' : 'text-bg-danger'"
+                              th:classappend="${esp.prioridade.name() == 'BAIXA' ? 'text-bg-secondary' : (esp.prioridade.name() == 'MODERADA' ? 'text-bg-warning' : (esp.prioridade.name() == 'ALTA' ? 'text-bg-warning text-dark' : 'text-bg-danger'))}"
                               th:text="${esp.prioridade}">MODERADA</span>
                     </td>
                     <td>

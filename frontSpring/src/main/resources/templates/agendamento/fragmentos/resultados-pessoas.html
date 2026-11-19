@@ -6,8 +6,8 @@
             role="option"
             th:data-id="${pessoa.id()}"
             th:data-nome="${pessoa.nome()}"
-            th:data-prioridade="${pessoa.prioridade()}"
-            th:text="${pessoa.nome() + ' — ' + pessoa.prioridade()}">
+            th:data-prioridade="${pessoa.especificacaoPrioridade()}"
+            th:text="${pessoa.nome() + ' — ' + pessoa.especificacaoPrioridade()}">
     </button>
 
     <div th:if="${#lists.isEmpty(pessoas)}"

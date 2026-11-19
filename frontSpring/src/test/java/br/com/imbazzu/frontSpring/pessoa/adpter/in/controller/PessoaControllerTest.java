@@ -29,7 +29,7 @@ class PessoaControllerTest {
         var id = UUID.randomUUID();
         var especId = UUID.randomUUID();
         var pessoa = new PessoaResponseDto(
-                id, "Maria da Silva", "Observação", especId, "Especificação 1", EnumPrioridade.ALTA, null,
+                id, "Maria da Silva", "Observação", especId, "Especificação 1", EnumPrioridade.ALTA, true, 2, null,
                 "Rua Central, 10", "12345678900", "77999999999");
         var model = new ExtendedModelMap();
         when(application.buscar(id)).thenReturn(pessoa);

@@ -18,7 +18,7 @@
                     <label class="form-label text-muted small">Prioridade</label>
                     <p class="fs-6">
                         <span class="badge"
-                              th:classappend="${especificacao.prioridade.name() == 'BAIXA'} ? 'text-bg-secondary' : ${especificacao.prioridade.name() == 'MODERADA'} ? 'text-bg-warning' : ${especificacao.prioridade.name() == 'ALTA'} ? 'text-bg-warning text-dark' : 'text-bg-danger'"
+                              th:classappend="${especificacao.prioridade.name() == 'BAIXA' ? 'text-bg-secondary' : (especificacao.prioridade.name() == 'MODERADA' ? 'text-bg-warning' : (especificacao.prioridade.name() == 'ALTA' ? 'text-bg-warning text-dark' : 'text-bg-danger'))}"
                               th:text="${especificacao.prioridade}">MODERADA</span>
                     </p>
                 </div>

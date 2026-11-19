@@ -62,6 +62,8 @@ class PessoaApiTest {
                             "especificacaoId": "%s",
                             "especificacaoNome": "Especificação 1",
                             "especificacaoPrioridade": "ALTA",
+                            "buscarNaResidencia": true,
+                            "quantidadeAcompanhantes": 2,
                             "dataArquivado": null,
                             "endereco": "Rua das Flores, 123",
                             "cpf": "52998224725",
@@ -78,6 +80,8 @@ class PessoaApiTest {
 
         assertEquals(1, page.totalElementos());
         assertEquals(EnumPrioridade.ALTA, page.conteudo().getFirst().especificacaoPrioridade());
+        assertEquals(true, page.conteudo().getFirst().buscarNaResidencia());
+        assertEquals(2, page.conteudo().getFirst().quantidadeAcompanhantes());
         assertNull(page.conteudo().getFirst().dataArquivado());
     }
 
@@ -106,6 +110,8 @@ class PessoaApiTest {
                           "nome":"Ana Souza",
                           "observacao":"",
                           "especificacaoId":"c5d0a150-2d80-4f0b-9a1d-3cfb8d8a0f22",
+                          "buscarNaResidencia":true,
+                          "quantidadeAcompanhantes":2,
                           "endereco":"Rua das Flores, 123",
                           "cpf":"52998224725",
                           "telefone":"11987654321"
@@ -115,7 +121,7 @@ class PessoaApiTest {
                         .location(URI.create("/api/pessoa/b4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f21")));
 
         assertEquals(UUID.fromString("b4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f21"), api.salvar(new PessoaRequestDto(
-                "Ana Souza", "", especId, "Rua das Flores, 123", "52998224725", "11987654321")));
+                "Ana Souza", "", especId, true, 2, "Rua das Flores, 123", "52998224725", "11987654321")));
     }
 
     @Test
@@ -125,5 +131,19 @@ class PessoaApiTest {
                 .andRespond(withStatus(HttpStatus.NO_CONTENT));
 
         api.arquivar(id);
+    }
+
+    @Test
+    void editarEnviaCamposDeBuscaEAcompanhantes() {
+        var id = UUID.fromString("b4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f21");
+        var especificacaoId = UUID.fromString("c5d0a150-2d80-4f0b-9a1d-3cfb8d8a0f22");
+        server.expect(requestTo("http://localhost:8080/api/pessoa/" + id))
+                .andExpect(content().json("""
+                        {"buscarNaResidencia":false,"quantidadeAcompanhantes":0}
+                        """))
+                .andRespond(withStatus(HttpStatus.NO_CONTENT));
+
+        api.editar(id, new PessoaRequestDto("Ana Souza", "", especificacaoId, false, 0,
+                "", "52998224725", "11987654321"));
     }
 }

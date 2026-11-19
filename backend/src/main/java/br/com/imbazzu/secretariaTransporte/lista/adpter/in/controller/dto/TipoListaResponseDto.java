@@ -1,5 +1,6 @@
 package br.com.imbazzu.secretariaTransporte.lista.adpter.in.controller.dto;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -23,7 +24,9 @@ public record TipoListaResponseDto(
             LocalTime inicioHorario,
             LocalTime finalHorario,
             boolean obrigacaoAnexo,
-            String descricao) {
+            String descricao,
+            List<DayOfWeek> diasSemana,
+            Integer intervaloRepetacao) {
     }
 
     public record RegraSeparacaoResponseDto(

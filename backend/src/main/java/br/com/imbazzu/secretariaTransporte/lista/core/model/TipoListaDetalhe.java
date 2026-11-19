@@ -1,6 +1,6 @@
 package br.com.imbazzu.secretariaTransporte.lista.core.model;
 
-import java.time.Duration;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -28,7 +28,9 @@ public record TipoListaDetalhe(
             LocalTime inicioHorario,
             LocalTime finalHorario,
             boolean obrigacaoAnexo,
-            String descricao) {
+            String descricao,
+            List<DayOfWeek> diasSemana,
+            Integer intervaloRepetacao) {
     }
 
     public record RegraSeparacaoDetalhe(

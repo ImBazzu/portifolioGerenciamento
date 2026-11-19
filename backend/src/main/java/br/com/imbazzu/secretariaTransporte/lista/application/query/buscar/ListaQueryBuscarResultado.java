@@ -1,6 +1,6 @@
 package br.com.imbazzu.secretariaTransporte.lista.application.query.buscar;
 
-import java.time.Duration;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -27,7 +27,9 @@ public record ListaQueryBuscarResultado(
             LocalTime inicioHorario,
             LocalTime finalHorario,
             boolean obrigacaoAnexo,
-            String descricao) {
+            String descricao,
+            List<DayOfWeek> diasSemana,
+            Integer intervaloRepetacao) {
     }
 
     public record RegraSeparacaoResultado(

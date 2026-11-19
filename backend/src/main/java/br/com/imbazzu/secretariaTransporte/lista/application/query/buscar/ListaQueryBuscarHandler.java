@@ -64,7 +64,9 @@ public class ListaQueryBuscarHandler {
                 regra.inicioHorario(),
                 regra.finalHorario(),
                 regra.obrigacaoAnexo(),
-                regra.descricao());
+                regra.descricao(),
+                regra.diasSemana(),
+                regra.intervaloRepetacao());
     }
 
     private RegraSeparacaoResultado paraResultado(RegraSeparacaoDetalhe regra) {

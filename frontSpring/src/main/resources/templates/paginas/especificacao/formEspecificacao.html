@@ -26,7 +26,7 @@
                         <select id="prioridade" th:field="*{prioridade}" class="form-select"
                                 th:classappend="${#fields.hasErrors('prioridade')} ? 'is-invalid'" required>
                             <option th:each="prioridade : ${prioridades}"
-                                    th:value="${prioridade}" th:text="${prioridade}">MODERADA</option>
+                                    th:value="${prioridade.name()}" th:text="${prioridade.label}">MODERADA</option>
                         </select>
                         <div class="invalid-feedback" th:if="${#fields.hasErrors('prioridade')}"
                              th:errors="*{prioridade}"></div>

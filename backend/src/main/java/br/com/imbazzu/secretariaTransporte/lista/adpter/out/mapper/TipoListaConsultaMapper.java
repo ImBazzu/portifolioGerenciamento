@@ -47,7 +47,9 @@ public final class TipoListaConsultaMapper {
                 regra.getInicioHorario(),
                 regra.getFinalHorario(),
                 regra.isObrigacaoAnexo(),
-                regra.getDescricao());
+                regra.getDescricao(),
+                List.copyOf(regra.getDiasSemana()),
+                regra.getIntervaloRepetacao());
     }
 
     private static RegraSeparacaoDetalhe paraRegraSeparacao(RegraSeparacaoProjecao regra) {

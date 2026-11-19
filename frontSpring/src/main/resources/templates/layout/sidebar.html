@@ -33,6 +33,10 @@
            th:classappend="${pagina == 'pessoas' ? 'active' : ''}">
             <i class="bi bi-person"></i> Pessoas
         </a>
+        <a th:href="@{/especificacoes}" class="nav-link text-white"
+           th:classappend="${pagina == 'especificacoes' ? 'active' : ''}">
+            <i class="bi bi-card-checklist"></i> Especificações
+        </a>
         
         <a th:href="@{/localidade}" class="nav-link text-white"
            th:classappend="${pagina == 'localidade' ? 'active' : ''}">

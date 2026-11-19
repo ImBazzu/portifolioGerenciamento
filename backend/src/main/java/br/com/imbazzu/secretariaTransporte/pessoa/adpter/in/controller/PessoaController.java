@@ -129,6 +129,7 @@ public class PessoaController {
                 pessoa.getObservacao() == null ? null : pessoa.getObservacao().valor(),
                 pessoa.getEspecificacao().getId(),
                 pessoa.getEspecificacao().getNome(),
+                pessoa.getEspecificacao().getPrioridade(),
                 pessoa.isBuscarNaResidencia(),
                 pessoa.getQuantidadeAcompanhantes(),
                 pessoa.getDataArquivado(),

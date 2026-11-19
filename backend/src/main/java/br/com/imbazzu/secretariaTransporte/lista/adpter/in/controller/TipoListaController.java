@@ -176,7 +176,9 @@ public class TipoListaController {
                         regra.inicioHorario(),
                         regra.finalHorario(),
                         regra.obrigacaoAnexo(),
-                        regra.descricao()))
+                        regra.descricao(),
+                        regra.diasSemana(),
+                        regra.intervaloRepetacao()))
                 .toList();
         var regrasSeparacao = resultado.regrasSeparacao().stream()
                 .map(regra -> new TipoListaResponseDto.RegraSeparacaoResponseDto(

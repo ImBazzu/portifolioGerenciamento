@@ -12,7 +12,7 @@
                         <span th:if="${arquivado}" class="badge bg-secondary ms-2 fs-6">Arquivado</span>
                     </h2>
                     <span class="badge"
-                          th:classappend="${pessoa.especificacaoPrioridade().name() == 'BAIXA'} ? 'text-bg-secondary' : ${pessoa.especificacaoPrioridade().name() == 'MODERADA'} ? 'text-bg-warning' : ${pessoa.especificacaoPrioridade().name() == 'ALTA'} ? 'text-bg-warning text-dark' : 'text-bg-danger'"
+                          th:classappend="${pessoa.especificacaoPrioridade().name() == 'BAIXA' ? 'text-bg-secondary' : (pessoa.especificacaoPrioridade().name() == 'MODERADA' ? 'text-bg-warning' : (pessoa.especificacaoPrioridade().name() == 'ALTA' ? 'text-bg-warning text-dark' : 'text-bg-danger'))}"
                           th:text="${pessoa.especificacaoNome()}">MODERADA</span>
                 </div>
                 

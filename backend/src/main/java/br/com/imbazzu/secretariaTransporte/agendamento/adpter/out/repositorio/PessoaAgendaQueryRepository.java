@@ -13,7 +13,7 @@ import br.com.imbazzu.secretariaTransporte.pessoa.adpter.out.entidadeJpa.PessoaJ
 public interface PessoaAgendaQueryRepository extends Repository<PessoaJpa, UUID> {
 
     @Query("""
-            SELECT p.prioridade AS prioridade,
+            SELECT p.especificacao.prioridade AS prioridade,
                    CASE WHEN p.dataArquivado IS NULL THEN true ELSE false END AS ativa
             FROM PessoaJpa p
             WHERE p.id = :id
