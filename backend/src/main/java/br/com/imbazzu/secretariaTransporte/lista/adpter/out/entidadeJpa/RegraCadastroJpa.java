@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import br.com.imbazzu.secretariaTransporte.lista.core.domain.EnumPrioridade;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -39,11 +38,10 @@ public class RegraCadastroJpa {
     private TipoListaJpa lista;
 
     @ElementCollection
-    @Enumerated(EnumType.STRING)
     @CollectionTable(name = "regra_cadastro_prioridades", joinColumns = @JoinColumn(name = "regra_cadastro_id"),
             foreignKey = @ForeignKey(name = "fk_regra_prioridade_cadastro"))
-    @Column(name = "prioridade", nullable = false, length = 20)
-    private List<EnumPrioridade> prioridades = new ArrayList<>();
+    @Column(name = "prioridade_id", nullable = false)
+    private List<UUID> prioridades = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "regra_cadastro_veiculos", joinColumns = @JoinColumn(name = "regra_cadastro_id"),

@@ -11,8 +11,7 @@
                         <!-- Badge de Arquivado -->
                         <span th:if="${arquivado}" class="badge bg-secondary ms-2 fs-6">Arquivado</span>
                     </h2>
-                    <span class="badge"
-                          th:classappend="${pessoa.especificacaoPrioridade().name() == 'BAIXA' ? 'text-bg-secondary' : (pessoa.especificacaoPrioridade().name() == 'MODERADA' ? 'text-bg-warning' : (pessoa.especificacaoPrioridade().name() == 'ALTA' ? 'text-bg-warning text-dark' : 'text-bg-danger'))}"
+                    <span class="badge text-bg-secondary"
                           th:text="${pessoa.especificacaoNome()}">MODERADA</span>
                 </div>
                 
@@ -43,6 +42,10 @@
 
             <!-- Body / Dados -->
             <dl class="row g-3 mb-0">
+                <div class="col-12">
+                    <dt class="small text-secondary">Dados antigos da pessoa (somente consulta)</dt>
+                    <dd th:text="${(pessoa.buscarNaResidencia() ? 'Busca na residência' : 'Sem busca na residência') + ' · ' + pessoa.quantidadeAcompanhantes() + ' acompanhante(s)'}"></dd>
+                </div>
                 <div class="col-12 col-md-6">
                     <dt class="small text-secondary">CPF</dt>
                     <dd th:text="${pessoa.cpf()}">CPF</dd>

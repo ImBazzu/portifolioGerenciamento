@@ -2,7 +2,6 @@ package br.com.imbazzu.secretariaTransporte.especificacao.application.command.ed
 
 import java.util.UUID;
 
-import br.com.imbazzu.secretariaTransporte.pessoa.core.domain.EnumPrioridade;
 
-public record EspecificacaoCommandEditar(UUID id, String nome, EnumPrioridade prioridade, String observacao) {
+public record EspecificacaoCommandEditar(UUID id, String nome, UUID prioridade, String observacao) {
 }

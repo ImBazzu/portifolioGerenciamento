@@ -6,7 +6,7 @@ import java.util.UUID;
 
 public record RegraCadastroAgendaDados(
         UUID id,
-        List<String> prioridades,
+        List<UUID> prioridades,
         List<UUID> idsVeiculos,
         List<UUID> idsCidades,
         boolean obrigacaoAnexo,

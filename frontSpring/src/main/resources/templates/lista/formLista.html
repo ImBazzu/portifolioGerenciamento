@@ -111,11 +111,12 @@
                                         <label class="form-label">Prioridades aceitas <span class="text-danger">*</span></label>
                                         <div class="lista-checkbox-group" data-grupo-obrigatorio="prioridades">
                                             <div class="lista-checkbox-options">
-                                                <label class="lista-checkbox-option" th:each="prioridade : ${prioridades}">
+                                                <label class="lista-checkbox-option" th:each="prioridade : ${prioridades}"
+                                                       th:if="${!prioridade.arquivada() or #lists.contains(regra.prioridades, prioridade.id().toString())}">
                                                     <input class="form-check-input" type="checkbox" data-campo="prioridades"
-                                                           th:value="${prioridade}"
-                                                           th:checked="${#lists.contains(regra.prioridades, prioridade)}">
-                                                    <span th:text="${prioridade}">Prioridade</span>
+                                                           th:value="${prioridade.id()}"
+                                                           th:checked="${#lists.contains(regra.prioridades, prioridade.id().toString())}">
+                                                    <span th:text="${prioridade.nome() + (prioridade.arquivada() ? ' (arquivada)' : '')}">Prioridade</span>
                                                 </label>
                                             </div>
                                             <div class="lista-checkbox-error" data-erro-selecao hidden>Selecione ao menos uma prioridade.</div>
@@ -288,9 +289,10 @@
                     <label class="form-label">Prioridades aceitas <span class="text-danger">*</span></label>
                     <div class="lista-checkbox-group" data-grupo-obrigatorio="prioridades">
                         <div class="lista-checkbox-options">
-                            <label class="lista-checkbox-option" th:each="prioridade : ${prioridades}">
-                                <input class="form-check-input" type="checkbox" data-campo="prioridades" th:value="${prioridade}">
-                                <span th:text="${prioridade}">Prioridade</span>
+                            <label class="lista-checkbox-option" th:each="prioridade : ${prioridades}"
+                                   th:if="${!prioridade.arquivada()}">
+                                <input class="form-check-input" type="checkbox" data-campo="prioridades" th:value="${prioridade.id()}">
+                                <span th:text="${prioridade.nome()}">Prioridade</span>
                             </label>
                         </div>
                         <div class="lista-checkbox-error" data-erro-selecao hidden>Selecione ao menos uma prioridade.</div>

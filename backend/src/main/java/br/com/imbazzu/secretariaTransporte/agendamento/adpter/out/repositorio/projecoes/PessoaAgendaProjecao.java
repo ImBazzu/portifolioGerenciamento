@@ -1,10 +1,16 @@
 package br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes;
 
-import br.com.imbazzu.secretariaTransporte.pessoa.core.domain.EnumPrioridade;
+import java.util.UUID;
 
 public interface PessoaAgendaProjecao {
 
-    EnumPrioridade getPrioridade();
+    UUID getPrioridade();
+
+    boolean isBuscarNaResidencia();
+
+    int getAcompanhantes();
 
     boolean isAtiva();
+
+    boolean isPrioridadeAtiva();
 }

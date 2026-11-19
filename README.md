@@ -10,6 +10,7 @@ O repositório contém dois módulos Java/Spring Boot:
 ## Funcionalidades
 
 - **Pessoas:** cadastro, consulta, edição, arquivamento e reativação; os dados cadastrais incluem informações usadas no atendimento e no transporte.
+- **Prioridades e especificações:** a prioridade define a busca na residência e a quantidade exata de acompanhantes. Uma especificação associa a pessoa à prioridade; as regras de listas selecionam as prioridades aceitas por veículo.
 - **Cidades e destinos:** manutenção de cidades, estado e tempo de viagem, além dos destinos associados; consulta e gerenciamento de registros arquivados.
 - **Tipos de veículo:** cadastro, consulta, edição, histórico e arquivamento de tipos de veículo.
 - **Listas e regras:** criação de listas, configuração de regras de cadastro e de separação, consulta e arquivamento.
@@ -17,6 +18,12 @@ O repositório contém dois módulos Java/Spring Boot:
 - **Acesso:** tela de login e API de autenticação com emissão e atualização de tokens.
 
 As operações disponíveis dependem das regras de negócio e das validações implementadas no backend. A documentação OpenAPI expõe os contratos da API.
+
+Alterações de prioridade aplicam-se apenas a novos agendamentos. Agendamentos existentes mantêm os valores originais, inclusive durante a edição. Os antigos valores cadastrados diretamente na pessoa permanecem disponíveis nos detalhes para consulta, mas não determinam novos agendamentos.
+
+Prioridades podem ser arquivadas e reativadas. Uma prioridade arquivada impede novos agendamentos das pessoas que a utilizam, sem apagar vínculos ou agendamentos existentes. A exclusão definitiva exige remover seus vínculos com especificações e regras de lista, inclusive arquivadas.
+
+As migrações criam as prioridades BAIXA, MODERADA, ALTA e URGENTE inicialmente sem busca na residência e sem acompanhantes, preservando as associações existentes. Faça backup do banco antes de atualizar e configure essas prioridades conforme a necessidade antes de criar novos agendamentos.
 
 ## Arquitetura
 
@@ -134,6 +141,8 @@ O endereço base é `http://localhost:8080/api`. Os principais grupos de recurso
 |---|---|
 | Autenticação e usuários | `/auth` |
 | Pessoas | `/pessoa` |
+| Prioridades | `/prioridades` |
+| Especificações | `/especificacao` |
 | Cidades | `/cidade` |
 | Destinos | `/destino` |
 | Tipos de veículo | `/veiculo` |

@@ -19,6 +19,7 @@ import br.com.imbazzu.frontSpring.lista.core.dto.ListaRequestDto;
 import br.com.imbazzu.frontSpring.lista.core.porta.in.ListaApplicationPorta;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
+import br.com.imbazzu.frontSpring.prioridade.PrioridadeApi;
 import org.springframework.ui.ExtendedModelMap;
 
 class ListaFormularioControllerTest {
@@ -38,7 +39,7 @@ class ListaFormularioControllerTest {
                         new TipoVeiculoResponseDto(idVan, "Van", 15)),
                 0, 20, 3, 1));
         when(localidade.listarCidades("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 20, 0, 0));
-        var controller = new ListaFormularioController(lista, localidade, veiculos);
+        var controller = new ListaFormularioController(lista, localidade, veiculos, mock(PrioridadeApi.class));
         var model = new ExtendedModelMap();
 
         controller.formNovo(model);
@@ -60,7 +61,8 @@ class ListaFormularioControllerTest {
         var controller = new ListaFormularioController(
                 application,
                 mock(LocalidadeApplicationPorta.class),
-                mock(VeiculoApplicationPorta.class));
+                mock(VeiculoApplicationPorta.class),
+                mock(PrioridadeApi.class));
 
         String regrasJson = """
                 {

@@ -3,7 +3,6 @@ package br.com.imbazzu.secretariaTransporte.pessoa.adpter.in.controller.dto;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import br.com.imbazzu.secretariaTransporte.pessoa.core.domain.EnumPrioridade;
 
 public record PessoaResponseDto(
         UUID id,
@@ -11,7 +10,10 @@ public record PessoaResponseDto(
         String observacao,
         UUID especificacaoId,
         String especificacaoNome,
-        EnumPrioridade especificacaoPrioridade,
+        String especificacaoPrioridade,
+        UUID prioridadeId,
+        boolean prioridadeBuscarNaResidencia,
+        int prioridadeAcompanhantes,
         boolean buscarNaResidencia,
         int quantidadeAcompanhantes,
         LocalDate dataArquivado,

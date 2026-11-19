@@ -6,7 +6,6 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
-import br.com.imbazzu.secretariaTransporte.lista.core.domain.EnumPrioridade;
 
 /**
  * Resultado da query de busca: já com os nomes de cidades e veículos resolvidos.
@@ -23,7 +22,7 @@ public record ListaQueryBuscarResultado(
             UUID id,
             List<IdNome> veiculos,
             List<IdNome> cidades,
-            List<EnumPrioridade> prioridades,
+            List<UUID> prioridades,
             LocalTime inicioHorario,
             LocalTime finalHorario,
             boolean obrigacaoAnexo,

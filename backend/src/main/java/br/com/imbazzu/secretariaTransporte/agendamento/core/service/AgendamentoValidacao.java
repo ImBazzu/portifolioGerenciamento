@@ -35,7 +35,15 @@ public final class AgendamentoValidacao {
             throw new OperacaoNaoPermitidaException(
                     "Não é possível agendar para um destino ou cidade arquivados");
         }
+
         return destino;
+    }
+
+    public static void exigirPrioridadeAtiva(PessoaAgendaDados pessoa) {
+        if (!pessoa.prioridadeAtiva()) {
+            throw new OperacaoNaoPermitidaException(
+                    "A prioridade da pessoa está arquivada. Reative-a ou altere a especificação antes de agendar.");
+        }
     }
 
     public static void validarLista(AgendamentoQueryPorta consultas, UUID idLista) {

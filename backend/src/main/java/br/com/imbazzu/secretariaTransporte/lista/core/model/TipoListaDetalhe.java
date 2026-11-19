@@ -6,7 +6,6 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
-import br.com.imbazzu.secretariaTransporte.lista.core.domain.EnumPrioridade;
 
 /**
  * Modelo de leitura (lado Query): só ids, sem nomes de cidade/veículo e sem regras de negócio.
@@ -24,7 +23,7 @@ public record TipoListaDetalhe(
             UUID id,
             List<UUID> idsVeiculos,
             List<UUID> idsCidades,
-            List<EnumPrioridade> prioridades,
+            List<UUID> prioridades,
             LocalTime inicioHorario,
             LocalTime finalHorario,
             boolean obrigacaoAnexo,

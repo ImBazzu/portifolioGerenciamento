@@ -28,11 +28,13 @@ public class AgendamentoQueryVerificarVeiculosHandler {
     public VerificacaoVeiculos handler(AgendamentoQueryVerificarVeiculos query) {
         AgendamentoValidacao.exigirDiaAberto(consultas, query.data());
         var veiculosAbertos = consultas.listarVeiculos(query.data());
-        if (query.acompanhantes() < 0) {
-            throw new DadosInvalidosException("A quantidade de acompanhantes não pode ser negativa");
-        }
-        long lugaresNecessarios = (long) query.acompanhantes() + 1;
         var pessoa = AgendamentoValidacao.validarPessoa(consultas, query.idPessoa());
+        AgendamentoValidacao.exigirPrioridadeAtiva(pessoa);
+        if (query.acompanhantes() != pessoa.acompanhantes()) {
+            throw new DadosInvalidosException(
+                    "A quantidade de acompanhantes não corresponde à prioridade. Atualize os dados da pessoa.");
+        }
+        long lugaresNecessarios = (long) pessoa.acompanhantes() + 1;
         var destino = AgendamentoValidacao.validarDestino(consultas, query.idDestino());
         AgendamentoValidacao.validarLista(consultas, query.idLista());
         var idsPorTipo = new HashMap<java.util.UUID, List<java.util.UUID>>();

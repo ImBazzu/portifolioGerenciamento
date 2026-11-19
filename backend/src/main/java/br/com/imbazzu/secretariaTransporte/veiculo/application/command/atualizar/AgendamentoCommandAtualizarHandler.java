@@ -28,8 +28,10 @@ public class AgendamentoCommandAtualizarHandler {
     public void handler(AgendamentoCommandAtualizar command) {
         var atual = AgendamentoValidacao.buscarAgendamento(consultas, command.id());
         AgendamentoValidacao.exigirDiaAberto(consultas, atual.getData());
-        if (command.acompanhantes() < 0) {
-            throw new DadosInvalidosException("A quantidade de acompanhantes não pode ser negativa");
+        if (command.acompanhantes() != atual.getAcompanhantes()
+                || command.buscarNaResidencia() != atual.isBuscarNaResidencia()) {
+            throw new DadosInvalidosException(
+                    "Busca na residência e acompanhantes não podem ser alterados em um agendamento existente");
         }
 
         var pessoa = AgendamentoValidacao.validarPessoa(consultas, atual.getIdPessoa());
@@ -39,7 +41,7 @@ public class AgendamentoCommandAtualizarHandler {
         if (!tipo.ativo()) {
             throw new OperacaoNaoPermitidaException("Não é possível agendar para um tipo de veículo arquivado");
         }
-        if ((long) command.acompanhantes() + 1 > tipo.capacidade()) {
+        if ((long) atual.getAcompanhantes() + 1 > tipo.capacidade()) {
             throw new DadosInvalidosException("A quantidade de pessoas excede a capacidade do tipo de veículo");
         }
 
@@ -69,8 +71,8 @@ public class AgendamentoCommandAtualizarHandler {
                 destino.tempoViagem(),
                 tolerancia,
                 command.horarioChegada(),
-                command.buscarNaResidencia(),
-                command.acompanhantes(),
+                atual.isBuscarNaResidencia(),
+                atual.getAcompanhantes(),
                 null);
 
         var veiculos = consultas.listarVeiculos(atual.getData());

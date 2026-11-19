@@ -18,7 +18,6 @@ import br.com.imbazzu.secretariaTransporte.lista.adpter.out.mapper.TipoListaCons
 import br.com.imbazzu.secretariaTransporte.lista.adpter.out.repositorio.projecoes.RegraCadastroProjecao;
 import br.com.imbazzu.secretariaTransporte.lista.adpter.out.repositorio.projecoes.TipoListaDetalheProjecao;
 import br.com.imbazzu.secretariaTransporte.lista.application.query.buscar.ListaQueryBuscarHandler;
-import br.com.imbazzu.secretariaTransporte.lista.core.domain.EnumPrioridade;
 import br.com.imbazzu.secretariaTransporte.lista.core.porta.out.TipoListaPortaQuery;
 import br.com.imbazzu.secretariaTransporte.localidades.core.portas.out.CidadeQueryPorta;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.model.TipoVeiculoOutput;
@@ -40,7 +39,7 @@ class TipoListaDetalheTest {
         when(regra.getId()).thenReturn(UUID.randomUUID());
         when(regra.getIdsVeiculos()).thenReturn(List.of(idVeiculo));
         when(regra.getIdsCidades()).thenReturn(List.of());
-        when(regra.getPrioridades()).thenReturn(List.of(EnumPrioridade.ALTA));
+        when(regra.getPrioridades()).thenReturn(List.of(UUID.randomUUID()));
         when(regra.getDiasSemana()).thenReturn(dias);
         when(regra.getIntervaloRepetacao()).thenReturn(intervalo);
         var projecao = mock(TipoListaDetalheProjecao.class);

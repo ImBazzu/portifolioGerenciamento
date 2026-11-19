@@ -10,6 +10,7 @@ import br.com.imbazzu.frontSpring.lista.core.porta.in.ListaApplicationPorta;
 import br.com.imbazzu.frontSpring.veiculo.core.TipoVeiculoUtil;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
+import br.com.imbazzu.frontSpring.prioridade.PrioridadeApi;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxRequest;
@@ -36,14 +37,16 @@ public class ListaFormularioController {
     private final ListaApplicationPorta application;
     private final LocalidadeApplicationPorta localidade;
     private final VeiculoApplicationPorta veiculos;
+    private final PrioridadeApi prioridades;
 
     public ListaFormularioController(
             ListaApplicationPorta application,
             LocalidadeApplicationPorta localidade,
-            VeiculoApplicationPorta veiculos) {
+            VeiculoApplicationPorta veiculos, PrioridadeApi prioridades) {
         this.application = application;
         this.localidade = localidade;
         this.veiculos = veiculos;
+        this.prioridades = prioridades;
     }
 
     @HxRequest
@@ -107,7 +110,7 @@ public class ListaFormularioController {
                 .filter(tipo -> TipoVeiculoUtil.ehCarro(tipo.nome()))
                 .toList());
         model.addAttribute("opcoesCidade", listarCidades());
-        model.addAttribute("prioridades", List.of("BAIXA", "MODERADA", "ALTA", "URGENTE"));
+        model.addAttribute("prioridades", prioridades.listar());
         model.addAttribute("diasSemana", DiaSemana.values());
     }
 

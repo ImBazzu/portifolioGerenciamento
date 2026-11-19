@@ -37,6 +37,10 @@
            th:classappend="${pagina == 'especificacoes' ? 'active' : ''}">
             <i class="bi bi-card-checklist"></i> Especificações
         </a>
+        <a th:href="@{/prioridades}" class="nav-link text-white"
+           th:classappend="${pagina == 'prioridades' ? 'active' : ''}">
+            <i class="bi bi-flag"></i> Prioridades
+        </a>
         
         <a th:href="@{/localidade}" class="nav-link text-white"
            th:classappend="${pagina == 'localidade' ? 'active' : ''}">

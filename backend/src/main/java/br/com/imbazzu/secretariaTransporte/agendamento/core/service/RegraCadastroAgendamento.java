@@ -24,7 +24,7 @@ public final class RegraCadastroAgendamento {
             RegraCadastroAgendaDados regra, PessoaAgendaDados pessoa,
             DestinoAgendaDados destino, LocalTime horario) {
         var motivos = new ArrayList<String>();
-        if (!regra.prioridades().contains(pessoa.prioridade().name())) {
+        if (!regra.prioridades().contains(pessoa.prioridade())) {
             motivos.add("prioridade da pessoa (%s) não está entre as aceitas: %s"
                     .formatted(pessoa.prioridade(), regra.prioridades()));
         }

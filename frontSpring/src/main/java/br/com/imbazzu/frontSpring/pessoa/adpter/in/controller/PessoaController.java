@@ -2,6 +2,8 @@ package br.com.imbazzu.frontSpring.pessoa.adpter.in.controller;
 
 import java.util.UUID;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import br.com.imbazzu.frontSpring.especificacao.core.porta.in.EspecificacaoApplicationPorta;
+import br.com.imbazzu.frontSpring.especificacao.core.dto.EspecificacaoResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaRequestDto;
 import br.com.imbazzu.frontSpring.pessoa.core.excecoes.PessoaDuplicadaException;
 import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
@@ -70,9 +73,9 @@ public class PessoaController {
     public String formularioNovo(
             @RequestParam(defaultValue = "false") boolean contextoAgendamento,
             Model model) {
-        var especificacoes = especificacaoApplication.listar("", false, 0).conteudo();
+        var especificacoes = listarEspecificacoes();
         model.addAttribute("id", null);
-        model.addAttribute("pessoa", new PessoaRequestDto("", "", null, false, 0, "", "", ""));
+        model.addAttribute("pessoa", new PessoaRequestDto("", "", null, "", "", ""));
         model.addAttribute("contextoAgendamento", contextoAgendamento);
         model.addAttribute("especificacoes", especificacoes);
         return "paginas/pessoa/formPessoa :: formPessoa";
@@ -82,13 +85,13 @@ public class PessoaController {
     @GetMapping("/abrirFormulario/{id}")
     public String formularioEdicao(@PathVariable UUID id, Model model, @RequestParam(defaultValue  = "false") boolean contextoAgendamento) {
         var pessoa = application.buscar(id);
-        var especificacoes = especificacaoApplication.listar("", false, 0).conteudo();
+        var especificacoes = listarEspecificacoes();
         model.addAttribute("id", id);
         model.addAttribute("contextoAgendamento", contextoAgendamento);
         model.addAttribute("especificacoes", especificacoes);
         model.addAttribute("pessoa", new PessoaRequestDto(
-                pessoa.nome(), pessoa.observacao(), pessoa.especificacaoId(), pessoa.buscarNaResidencia(),
-                pessoa.quantidadeAcompanhantes(), pessoa.endereco(), pessoa.cpf(), pessoa.telefone()));
+                pessoa.nome(), pessoa.observacao(), pessoa.especificacaoId(),
+                pessoa.endereco(), pessoa.cpf(), pessoa.telefone()));
         return "paginas/pessoa/formPessoa :: formPessoa";
     }
 
@@ -118,7 +121,7 @@ public class PessoaController {
         
         model.addAttribute("id", null);
         model.addAttribute("contextoAgendamento", contextoAgendamento);
-        var especificacoes = especificacaoApplication.listar("", false, 0).conteudo();
+        var especificacoes = listarEspecificacoes();
         model.addAttribute("especificacoes", especificacoes);
 
         if (result.hasErrors()) {
@@ -158,7 +161,7 @@ public class PessoaController {
         
         model.addAttribute("id", id);
         model.addAttribute("contextoAgendamento", contextoAgendamento);
-        var especificacoes = especificacaoApplication.listar("", false, 0).conteudo();
+        var especificacoes = listarEspecificacoes();
         model.addAttribute("especificacoes", especificacoes);
 
         if (result.hasErrors()) {
@@ -196,5 +199,14 @@ public class PessoaController {
     @GetMapping("/limpar-modal")
     public String limparModal() {
         return "layout/vazio :: vazio";
+    }
+
+    private List<EspecificacaoResponseDto> listarEspecificacoes() {
+        var primeira = especificacaoApplication.listar("", false, 0);
+        var especificacoes = new ArrayList<>(primeira.conteudo());
+        for (int pagina = 1; pagina < primeira.totalPaginas(); pagina++) {
+            especificacoes.addAll(especificacaoApplication.listar("", false, pagina).conteudo());
+        }
+        return especificacoes;
     }
 }

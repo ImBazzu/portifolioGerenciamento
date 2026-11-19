@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import br.com.imbazzu.frontSpring.especificacao.core.dto.EspecificacaoRequestDto;
 import br.com.imbazzu.frontSpring.especificacao.core.excecoes.EspecificacaoDuplicadaException;
 import br.com.imbazzu.frontSpring.especificacao.core.porta.in.EspecificacaoApplicationPorta;
-import br.com.imbazzu.frontSpring.pessoa.core.dto.EnumPrioridade;
+import br.com.imbazzu.frontSpring.prioridade.PrioridadeApi;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxRequest;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxTriggerAfterSettle;
 import jakarta.validation.Valid;
@@ -33,10 +33,12 @@ import jakarta.servlet.http.HttpServletResponse;
 public class EspecificacaoController {
     private final EspecificacaoApplicationPorta application;
     private final ObjectMapper objectMapper;
+    private final PrioridadeApi prioridades;
 
-    public EspecificacaoController(EspecificacaoApplicationPorta application, ObjectMapper objectMapper) {
+    public EspecificacaoController(EspecificacaoApplicationPorta application, ObjectMapper objectMapper, PrioridadeApi prioridades) {
         this.application = application;
         this.objectMapper = objectMapper;
+        this.prioridades = prioridades;
     }
 
     @GetMapping
@@ -67,8 +69,8 @@ public class EspecificacaoController {
     @GetMapping("/abrirFormulario")
     public String formularioNovo(Model model) {
         model.addAttribute("id", null);
-        model.addAttribute("especificacao", new EspecificacaoRequestDto("", EnumPrioridade.MODERADA, ""));
-        model.addAttribute("prioridades", EnumPrioridade.values());
+        model.addAttribute("especificacao", new EspecificacaoRequestDto("", null, ""));
+        model.addAttribute("prioridades", prioridades.listar());
         return "paginas/especificacao/formEspecificacao :: formEspecificacao";
     }
 
@@ -77,7 +79,7 @@ public class EspecificacaoController {
     public String formularioEdicao(@PathVariable UUID id, Model model) {
         var especificacao = application.buscar(id);
         model.addAttribute("id", id);
-        model.addAttribute("prioridades", EnumPrioridade.values());
+        model.addAttribute("prioridades", prioridades.listar());
         model.addAttribute("especificacao", new EspecificacaoRequestDto(
                 especificacao.nome(), especificacao.prioridade(), especificacao.observacao()));
         return "paginas/especificacao/formEspecificacao :: formEspecificacao";
@@ -107,7 +109,7 @@ public class EspecificacaoController {
             HttpServletResponse response) throws JsonProcessingException {
         
         model.addAttribute("id", null);
-        model.addAttribute("prioridades", EnumPrioridade.values());
+        model.addAttribute("prioridades", prioridades.listar());
 
         if (result.hasErrors()) {
             return "paginas/especificacao/formEspecificacao :: formEspecificacao";
@@ -137,7 +139,7 @@ public class EspecificacaoController {
             Model model) {
         
         model.addAttribute("id", id);
-        model.addAttribute("prioridades", EnumPrioridade.values());
+        model.addAttribute("prioridades", prioridades.listar());
 
         if (result.hasErrors()) {
             return "paginas/especificacao/formEspecificacao :: formEspecificacao";

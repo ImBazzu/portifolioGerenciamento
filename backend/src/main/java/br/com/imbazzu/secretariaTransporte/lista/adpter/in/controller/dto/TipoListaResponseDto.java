@@ -6,7 +6,6 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
-import br.com.imbazzu.secretariaTransporte.lista.core.domain.EnumPrioridade;
 
 public record TipoListaResponseDto(
         UUID id,
@@ -20,7 +19,7 @@ public record TipoListaResponseDto(
             UUID id,
             List<VeiculoResponseDto> veiculos,
             List<CidadeResponseDto> cidades,
-            List<EnumPrioridade> prioridades,
+            List<UUID> prioridades,
             LocalTime inicioHorario,
             LocalTime finalHorario,
             boolean obrigacaoAnexo,

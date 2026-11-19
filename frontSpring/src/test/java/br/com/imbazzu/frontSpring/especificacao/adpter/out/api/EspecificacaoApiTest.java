@@ -17,7 +17,6 @@ import org.springframework.web.client.RestClient;
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
 import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
 import br.com.imbazzu.frontSpring.especificacao.core.dto.EspecificacaoRequestDto;
-import br.com.imbazzu.frontSpring.pessoa.core.dto.EnumPrioridade;
 
 class EspecificacaoApiTest {
     @Test
@@ -32,13 +31,14 @@ class EspecificacaoApiTest {
         };
         var api = new EspecificacaoApi(new RestClientProtegido(builder.build()), retry);
         var id = UUID.fromString("b4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f21");
+        var prioridade = UUID.fromString("00000000-0000-0000-0000-000000000003");
         server.expect(requestTo("http://localhost:8080/api/especificacao"))
                 .andExpect(content().json("""
-                        {"nome":"Transporte","prioridade":"ALTA","observacao":"Observação"}
+                        {"nome":"Transporte","prioridade":"00000000-0000-0000-0000-000000000003","observacao":"Observação"}
                         """))
                 .andRespond(withStatus(HttpStatus.CREATED).location(URI.create("/api/especificacao/" + id)));
 
-        assertEquals(id, api.salvar(new EspecificacaoRequestDto("Transporte", EnumPrioridade.ALTA, "Observação")));
+        assertEquals(id, api.salvar(new EspecificacaoRequestDto("Transporte", prioridade, "Observação")));
         server.verify();
     }
 }

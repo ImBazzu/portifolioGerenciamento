@@ -10,6 +10,9 @@ import br.com.imbazzu.secretariaTransporte.lista.core.porta.out.TipoListaPorta;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.excecoes.TipoVeiculoNaoEncontradoException;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.core.porta.out.TipoVeiculoQueryPorta;
 import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
+import br.com.imbazzu.secretariaTransporte.prioridade.PrioridadeRepository;
+import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.EntidadeNaoEncontradoException;
+import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.OperacaoNaoPermitidaException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -18,11 +21,23 @@ public class TipoListaCommandAtualizarRegrasHandler {
 
     private final TipoListaPorta porta;
     private final TipoVeiculoQueryPorta tipoVeiculoQuery;
+    private final PrioridadeRepository prioridades;
 
     @Transactional
     public void handler(TipoListaCommandAtualizarRegras command) {
         var lista = porta.buscarPorId(command.id())
                 .orElseThrow(() -> new TipoListaNaoEncontradoException(command.id()));
+
+        var prioridadesExistentes = lista.getListaRegrasCadastro().stream()
+                .flatMap(regra -> regra.getPrioridades().stream())
+                .collect(java.util.stream.Collectors.toSet());
+        command.regrasCadastro().forEach(regra -> regra.prioridades().forEach(id -> {
+            var prioridade = prioridades.findById(id)
+                    .orElseThrow(() -> new EntidadeNaoEncontradoException("Prioridade não encontrada: " + id));
+            if (prioridade.getDataArquivado() != null && !prioridadesExistentes.contains(id)) {
+                throw new OperacaoNaoPermitidaException("Não é possível vincular uma prioridade arquivada.");
+            }
+        }));
 
         command.regrasSeparacao().forEach(regra -> {
             var tipoVeiculo = tipoVeiculoQuery.buscarAtivo(regra.idTipoVeiculo())

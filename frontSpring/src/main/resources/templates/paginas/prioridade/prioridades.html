@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Prioridades')}"></head>
+<body>
+<div class="d-flex min-vh-100">
+    <aside th:replace="~{layout/sidebar :: sidebar}"></aside>
+    <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
+        <div th:fragment="conteudo" class="app-page">
+            <header class="app-page-header">
+                <div><h1>Prioridades</h1><p>Defina a busca e a quantidade exata de acompanhantes para novos agendamentos.</p></div>
+            </header>
+            <div th:if="${sucesso}" class="alert alert-success" th:text="${sucesso}"></div>
+            <div th:if="${erro}" class="alert alert-danger" th:text="${erro}"></div>
+            <h2 class="h5">Nova prioridade</h2>
+            <form th:action="@{/prioridades}" method="post" class="row g-2 align-items-end mb-4">
+                <div class="col-md-4"><label class="form-label">Nome</label><input name="nome" class="form-control" maxlength="100" required></div>
+                <div class="col-md-3"><label class="form-label">Acompanhantes</label><input name="quantidadeAcompanhantes" type="number" min="0" value="0" class="form-control" required></div>
+                <div class="col-md-3"><label class="form-check"><input class="form-check-input" type="checkbox" name="buscarNaResidencia" value="true"> Buscar na residência</label></div>
+                <div class="col-md-2"><button class="btn btn-primary">Cadastrar</button></div>
+            </form>
+            <h2 class="h5">Prioridades ativas</h2>
+            <div th:each="prioridade : ${prioridades}" th:if="${!prioridade.arquivada()}" class="border rounded p-2 mb-2">
+                <form th:action="@{/prioridades/{id}(id=${prioridade.id()})}" method="post" class="row g-2 align-items-end">
+                    <div class="col-md-4"><label class="form-label">Nome</label><input name="nome" class="form-control" maxlength="100" th:value="${prioridade.nome()}" required></div>
+                    <div class="col-md-3"><label class="form-label">Acompanhantes</label><input name="quantidadeAcompanhantes" type="number" min="0" th:value="${prioridade.quantidadeAcompanhantes()}" class="form-control" required></div>
+                    <div class="col-md-3"><label class="form-check"><input class="form-check-input" type="checkbox" name="buscarNaResidencia" value="true" th:checked="${prioridade.buscarNaResidencia()}"> Buscar na residência</label></div>
+                    <div class="col-md-2"><button class="btn btn-outline-primary">Salvar</button></div>
+                </form>
+                <div class="d-flex gap-2 mt-2">
+                    <form th:action="@{/prioridades/{id}/arquivar(id=${prioridade.id()})}" method="post">
+                        <button class="btn btn-outline-secondary" type="submit">Arquivar</button>
+                    </form>
+                    <form th:action="@{/prioridades/{id}/excluir(id=${prioridade.id()})}" method="post" onsubmit="return confirm('Excluir esta prioridade definitivamente?')">
+                        <button class="btn btn-outline-danger" type="submit">Excluir</button>
+                    </form>
+                </div>
+            </div>
+            <h2 class="h5 mt-4">Prioridades arquivadas</h2>
+            <div th:each="prioridade : ${prioridades}" th:if="${prioridade.arquivada()}" class="border rounded p-2 mb-2">
+                <strong th:text="${prioridade.nome()}"></strong>
+                <span th:text="${' — ' + prioridade.quantidadeAcompanhantes() + ' acompanhante(s)'}"></span>
+                <span th:text="${prioridade.buscarNaResidencia() ? ' — Busca na residência' : ' — Sem busca na residência'}"></span>
+                <div class="d-flex gap-2 mt-2">
+                    <form th:action="@{/prioridades/{id}/desarquivar(id=${prioridade.id()})}" method="post">
+                        <button class="btn btn-outline-primary" type="submit">Reativar</button>
+                    </form>
+                    <form th:action="@{/prioridades/{id}/excluir(id=${prioridade.id()})}" method="post" onsubmit="return confirm('Excluir esta prioridade definitivamente?')">
+                        <button class="btn btn-outline-danger" type="submit">Excluir</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

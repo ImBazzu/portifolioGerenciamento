@@ -37,6 +37,8 @@ import br.com.imbazzu.secretariaTransporte.pessoa.application.query.listar.Pesso
 import br.com.imbazzu.secretariaTransporte.pessoa.application.query.listarArquivado.PessoaQueryListarArquivado;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.query.listarArquivado.PessoaQueryListarArquivadoHandler;
 import br.com.imbazzu.secretariaTransporte.pessoa.core.domain.Pessoa;
+import br.com.imbazzu.secretariaTransporte.prioridade.PrioridadeRepository;
+import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.EntidadeNaoEncontradoException;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -59,11 +61,12 @@ public class PessoaController {
     private final PessoaQueryBuscarArquivadoHandler buscarArquivadoHandler;
     private final PessoaQueryListarHandler listarHandler;
     private final PessoaQueryListarArquivadoHandler listarArquivadoHandler;
+    private final PrioridadeRepository prioridades;
 
     @PostMapping
     public ResponseEntity<Void> criar(@RequestBody @Valid PessoaRequestDto request) {
         var id = salvarHandler.handler(new PessoaCommandSalvar(request.nome(), request.observacao(), request.especificacaoId(),
-                request.buscarNaResidencia(), request.quantidadeAcompanhantes(), request.endereco(), request.cpf(), request.telefone()));
+                request.endereco(), request.cpf(), request.telefone()));
                 
         return ResponseEntity.created(URI.create("/api/pessoa/%s".formatted(id))).build();
     }
@@ -85,7 +88,7 @@ public class PessoaController {
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamanho) {
         var resultado = listarHandler.handler(new PessoaQueryListar(nome, pagina, tamanho));
-        return ResponseEntity.ok(resultado.map(PessoaController::toResponse));
+        return ResponseEntity.ok(resultado.map(this::toResponse));
     }
 
     @GetMapping("/listar/arquivado")
@@ -94,13 +97,13 @@ public class PessoaController {
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamanho) {
         var resultado = listarArquivadoHandler.handler(new PessoaQueryListarArquivado(nome, pagina, tamanho));
-        return ResponseEntity.ok(resultado.map(PessoaController::toResponse));
+        return ResponseEntity.ok(resultado.map(this::toResponse));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Void> editar(@PathVariable UUID id, @RequestBody @Valid PessoaRequestDto request) {
         editarHandler.handler(new PessoaCommandEditar(id, request.nome(), request.observacao(), request.especificacaoId(),
-                request.buscarNaResidencia(), request.quantidadeAcompanhantes(), request.endereco(), request.cpf(), request.telefone()));
+                request.endereco(), request.cpf(), request.telefone()));
         return ResponseEntity.noContent().build();
     }
 
@@ -122,14 +125,19 @@ public class PessoaController {
         return ResponseEntity.noContent().build();
     }
 
-    private static PessoaResponseDto toResponse(Pessoa pessoa) {
+    private PessoaResponseDto toResponse(Pessoa pessoa) {
+        var prioridade = prioridades.findById(pessoa.getEspecificacao().getPrioridade())
+                .orElseThrow(() -> new EntidadeNaoEncontradoException("Prioridade não encontrada"));
         return new PessoaResponseDto(
                 pessoa.getId(),
                 pessoa.getNome().valor(),
                 pessoa.getObservacao() == null ? null : pessoa.getObservacao().valor(),
                 pessoa.getEspecificacao().getId(),
                 pessoa.getEspecificacao().getNome(),
-                pessoa.getEspecificacao().getPrioridade(),
+                prioridade.getNome(),
+                prioridade.getId(),
+                prioridade.isBuscarNaResidencia(),
+                prioridade.getQuantidadeAcompanhantes(),
                 pessoa.isBuscarNaResidencia(),
                 pessoa.getQuantidadeAcompanhantes(),
                 pessoa.getDataArquivado(),

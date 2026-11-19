@@ -26,6 +26,7 @@ import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificacaoVeiculosResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificarVeiculosRequestDto;
 import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
+import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.TipoVeiculoUtil;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
 
@@ -71,15 +72,19 @@ public class AgendamentoPassageiroController {
             @RequestParam UUID idDestino,
             @RequestParam LocalTime horarioChegada,
             @RequestParam(defaultValue = "0") int acompanhantes,
-            @RequestParam boolean buscarNaResidencia,
+            @RequestParam(defaultValue = "false") boolean buscarNaResidencia,
             @RequestParam(required = false) UUID idTipoVeiculoSelecionado,
             @RequestHeader(value = "HX-Request", required = false) String hxRequest,
             Model model,
             RedirectAttributes redirect) {
 
         VerificacaoVeiculosResponseDto resposta = null;
+        PessoaResponseDto pessoa = null;
         String erro = null;
         try {
+            pessoa = pessoas.buscar(idPessoa);
+            acompanhantes = pessoa.prioridadeAcompanhantes();
+            buscarNaResidencia = pessoa.prioridadeBuscarNaResidencia();
             resposta = agendamentoApi.verificarVeiculos(data, new VerificarVeiculosRequestDto(
                     idPessoa, idLista, idDestino, horarioChegada, acompanhantes));
         } catch (RestClientResponseException e) {
@@ -105,10 +110,11 @@ public class AgendamentoPassageiroController {
                 model.addAttribute("agenda", agenda);
                 montadorAgenda.dividirPorTipo(model, agenda, opcoes);
 
-                var pessoa = pessoas.buscar(idPessoa);
-                model.addAttribute("passageiroVerificado", PassageiroVerificadoView.de(
-                        pessoa, opcoes.destino(idDestino).orElse(null),
-                        horarioChegada, buscarNaResidencia, acompanhantes));
+                if (pessoa != null) {
+                    model.addAttribute("passageiroVerificado", PassageiroVerificadoView.de(
+                            pessoa, opcoes.destino(idDestino).orElse(null),
+                            horarioChegada, pessoa.prioridadeBuscarNaResidencia(), pessoa.prioridadeAcompanhantes()));
+                }
             } catch (RestClientResponseException e) {
                 model.addAttribute("erroVerificacao",
                         "Não foi possível carregar os dados para confirmar: %s".formatted(mensagemErro.de(e)));

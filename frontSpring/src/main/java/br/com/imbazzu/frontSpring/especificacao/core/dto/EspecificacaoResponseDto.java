@@ -2,12 +2,12 @@ package br.com.imbazzu.frontSpring.especificacao.core.dto;
 
 import java.time.LocalDate;
 import java.util.UUID;
-import br.com.imbazzu.frontSpring.pessoa.core.dto.EnumPrioridade;
 
 public record EspecificacaoResponseDto(
         UUID id,
         String nome,
-        EnumPrioridade prioridade,
+        UUID prioridade,
+        String prioridadeNome,
         String observacao,
         LocalDate dataArquivado) {
 }

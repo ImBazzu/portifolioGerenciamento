@@ -5,7 +5,6 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
-import br.com.imbazzu.secretariaTransporte.lista.core.domain.EnumPrioridade;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
@@ -14,7 +13,7 @@ import jakarta.validation.constraints.NotNull;
 public record RegraCadastroRequestDto(
         @NotEmpty List<@NotNull UUID> idsVeiculos,
         List<@NotNull UUID> idsCidades,
-        @NotEmpty List<@NotNull EnumPrioridade> prioridades,
+        @NotEmpty List<@NotNull UUID> prioridades,
         LocalTime inicioHorario,
         LocalTime finalHorario,
         boolean obrigacaoAnexo,

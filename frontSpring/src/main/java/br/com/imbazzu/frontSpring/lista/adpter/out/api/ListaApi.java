@@ -20,6 +20,9 @@ import br.com.imbazzu.frontSpring.lista.core.dto.ListaRegrasRequestDto;
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaResponseDto;
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaResumoApiDto;
 import br.com.imbazzu.frontSpring.lista.core.porta.out.ListaApiPorta;
+import br.com.imbazzu.frontSpring.prioridade.PrioridadeApi;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ListaApi implements ListaApiPorta {
@@ -29,10 +32,12 @@ public class ListaApi implements ListaApiPorta {
 
     private final RestClient api;
     private final RetryComRefreshPorta retryComRefresh;
+    private final PrioridadeApi prioridades;
 
-    public ListaApi(RestClientProtegido api, RetryComRefreshPorta retryComRefresh) {
+    public ListaApi(RestClientProtegido api, RetryComRefreshPorta retryComRefresh, PrioridadeApi prioridades) {
         this.api = api.get();
         this.retryComRefresh = retryComRefresh;
+        this.prioridades = prioridades;
     }
 
     @Override
@@ -180,9 +185,11 @@ public class ListaApi implements ListaApiPorta {
                 List.of());
     }
 
-    private static ListaResponseDto toResponse(ListaDetalheApiDto lista) {
+    private ListaResponseDto toResponse(ListaDetalheApiDto lista) {
+        var nomes = prioridades.listar().stream().collect(Collectors.toMap(
+                item -> item.id().toString(), PrioridadeApi.Prioridade::nome));
         var regras = java.util.stream.Stream.concat(
-                lista.regrasCadastro().stream().map(ListaApi::formatarRegraCadastro),
+                lista.regrasCadastro().stream().map(regra -> formatarRegraCadastro(regra, nomes)),
                 lista.regrasSeparacao().stream().map(ListaApi::formatarRegraSeparacao))
                 .toList();
         var cidades = lista.regrasCadastro().stream()
@@ -203,7 +210,7 @@ public class ListaApi implements ListaApiPorta {
                 lista.regrasSeparacao());
     }
 
-    private static String formatarRegraCadastro(ListaDetalheApiDto.RegraCadastro regra) {
+    private static String formatarRegraCadastro(ListaDetalheApiDto.RegraCadastro regra, Map<String, String> nomes) {
         var horario = regra.inicioHorario() == null
                 ? "sem restrição de horário"
                 : "%s–%s".formatted(regra.inicioHorario(), regra.finalHorario());
@@ -219,7 +226,13 @@ public class ListaApi implements ListaApiPorta {
         
         var descricao = regra.descricao() == null ? "" : " — " + regra.descricao();
         return "Cadastro: prioridades %s, %d veículo(s), %d cidade(s), %s, %s, %s, anexo %s%s".formatted(
-                String.join(", ", regra.prioridades()),
+                regra.prioridades().stream().map(id -> {
+                    var nome = nomes.get(id);
+                    if (nome == null) {
+                        throw new IllegalStateException("Prioridade não encontrada: " + id);
+                    }
+                    return nome;
+                }).collect(Collectors.joining(", ")),
                 regra.veiculos().size(),
                 regra.cidades().size(),
                 horario,

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withCreatedEntity;
@@ -30,12 +31,14 @@ import br.com.imbazzu.frontSpring.autenticacao.core.porta.in.LoginApplicationPor
 import br.com.imbazzu.frontSpring.autenticacao.core.exception.TokenInvalidadoException;
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaRequestDto;
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaRegrasRequestDto;
+import br.com.imbazzu.frontSpring.prioridade.PrioridadeApi;
 
 class ListaApiTest {
 
     private MockRestServiceServer server;
     private ListaApi api;
     private RestClient.Builder clientBuilder;
+    private PrioridadeApi prioridades;
 
     @BeforeEach
     void configurar() {
@@ -47,7 +50,10 @@ class ListaApiTest {
                             throw new TokenInvalidadoException();
                         });
         server = MockRestServiceServer.bindTo(clientBuilder).build();
-        api = new ListaApi(new RestClientProtegido(clientBuilder.build()), executarSemRefresh());
+        prioridades = mock(PrioridadeApi.class);
+        when(prioridades.listar()).thenReturn(List.of(new PrioridadeApi.Prioridade(
+                UUID.fromString("00000000-0000-0000-0000-000000000003"), "ALTA", false, 0, false)));
+        api = new ListaApi(new RestClientProtegido(clientBuilder.build()), executarSemRefresh(), prioridades);
     }
 
     private RetryComRefreshPorta executarSemRefresh() {
@@ -110,7 +116,7 @@ class ListaApiTest {
                             "id": "%s",
                             "veiculos": [{"id": "%s", "nome": "Van"}],
                             "cidades": [{"id": "%s", "nome": "Centro"}],
-                            "prioridades": ["ALTA"],
+                            "prioridades": ["00000000-0000-0000-0000-000000000003"],
                             "inicioHorario": null,
                             "finalHorario": null,
                             "obrigacaoAnexo": false,
@@ -182,7 +188,7 @@ class ListaApiTest {
         var loginApplication = mock(LoginApplicationPorta.class);
         api = new ListaApi(
                 new RestClientProtegido(clientBuilder.build()),
-                new RetryComRefresh(loginApplication));
+                new RetryComRefresh(loginApplication), prioridades);
 
         assertEquals(id, api.salvar(new ListaRequestDto("Lista Centro", "Restrição de circulação")));
         verify(loginApplication).refresh();

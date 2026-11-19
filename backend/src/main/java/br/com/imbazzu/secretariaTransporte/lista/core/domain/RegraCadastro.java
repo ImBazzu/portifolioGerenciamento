@@ -16,7 +16,7 @@ public class RegraCadastro {
     
     private final UUID idLista;
 
-    private List<EnumPrioridade> prioridades;
+    private List<UUID> prioridades;
 
     private List<UUID> idsVeiculos;
     
@@ -36,7 +36,7 @@ public class RegraCadastro {
     private Integer intervaloRepetacao;
 
     private RegraCadastro(UUID id, UUID idLista, List<UUID> idsVeiculos, List<UUID> idCidades,
-        List<EnumPrioridade> prioridades,
+        List<UUID> prioridades,
         boolean obrigacaoAnexo, LocalTime inicioHorario, LocalTime finalHorario, Observacao descricao,
         List<DayOfWeek> diasSemana, Integer intervaloRepetacao
     ) {
@@ -61,14 +61,14 @@ public class RegraCadastro {
     //=====================
     
         public static RegraCadastro criar(UUID idLista, List<UUID> idsVeiculos, List<UUID> idCidades,
-            List<EnumPrioridade> prioridades, LocalTime inicioHorario, LocalTime finalHorario,
+            List<UUID> prioridades, LocalTime inicioHorario, LocalTime finalHorario,
             boolean obrigacaoAnexo, Observacao descricao, List<DayOfWeek> diasSemana, Integer intervaloRepetacao) {
             return new RegraCadastro(UUID.randomUUID(), idLista, idsVeiculos, idCidades, prioridades,
                 obrigacaoAnexo, inicioHorario, finalHorario, descricao, diasSemana, intervaloRepetacao);
         }
 
         public static RegraCadastro recriar(UUID id, UUID idLista, List<UUID> idsVeiculos, List<UUID> idCidades,
-            List<EnumPrioridade> prioridades, boolean obrigacaoAnexo, Observacao descricao,
+            List<UUID> prioridades, boolean obrigacaoAnexo, Observacao descricao,
             LocalTime inicioHorario, LocalTime finalHorario, List<DayOfWeek> diasSemana, Integer intervaloRepetacao) {
             return new RegraCadastro(id, idLista, idsVeiculos, idCidades, prioridades, obrigacaoAnexo,
                 inicioHorario, finalHorario, descricao, diasSemana, intervaloRepetacao);
@@ -88,7 +88,7 @@ public class RegraCadastro {
         this.intervaloRepetacao = validarIntervaloRepetacao(intervaloRepetacao);
     } 
 
-    public void editarPrioridades(List<EnumPrioridade> prioridades) {
+    public void editarPrioridades(List<UUID> prioridades) {
         this.prioridades = copiarListaObrigatoria(prioridades, "Ao menos uma prioridade é obrigatória");
     }
 
@@ -100,7 +100,7 @@ public class RegraCadastro {
         this.idCidades = copiarListaOpcional(idCidades);
     }
 
-    public boolean verificacaoDasRegras(EnumPrioridade prioridade, UUID idCidade, LocalTime horarioChegada,
+    public boolean verificacaoDasRegras(UUID prioridade, UUID idCidade, LocalTime horarioChegada,
         boolean possuiAnexo, UUID idVeiculo, DayOfWeek diaSemana) {
         return verificarHorario(horarioChegada)
             && verificarObrigacaoAnexo(possuiAnexo)
@@ -135,7 +135,7 @@ public class RegraCadastro {
         return depoisOuIgualAoInicio || antesOuIgualAoFinal;
     }
 
-    private boolean verificarPrioridade(EnumPrioridade prioridade) {
+    private boolean verificarPrioridade(UUID prioridade) {
         return prioridades.contains(prioridade);
     }
 
@@ -188,7 +188,7 @@ public class RegraCadastro {
         return idCidades;
     }
 
-    public List<EnumPrioridade> getPrioridades() {
+    public List<UUID> getPrioridades() {
         return prioridades;
     }
 

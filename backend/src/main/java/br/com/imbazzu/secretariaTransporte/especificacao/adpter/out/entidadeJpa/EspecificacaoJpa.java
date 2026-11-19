@@ -3,11 +3,8 @@ package br.com.imbazzu.secretariaTransporte.especificacao.adpter.out.entidadeJpa
 import java.time.LocalDate;
 import java.util.UUID;
 
-import br.com.imbazzu.secretariaTransporte.pessoa.core.domain.EnumPrioridade;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
@@ -32,9 +29,8 @@ public class EspecificacaoJpa {
     @Column(name = "nome", nullable = false, length = 100)
     private String nome;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "prioridade", nullable = false, length = 20)
-    private EnumPrioridade prioridade;
+    @Column(name = "prioridade_id", nullable = false)
+    private UUID prioridade;
 
     @Column(name = "observacao", length = 249)
     private String observacao;

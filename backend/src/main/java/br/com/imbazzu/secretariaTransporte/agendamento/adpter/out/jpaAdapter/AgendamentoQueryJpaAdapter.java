@@ -75,7 +75,8 @@ public class AgendamentoQueryJpaAdapter implements AgendamentoQueryPorta {
     public PessoaAgendaDados buscarPessoa(UUID id) {
         var pessoa = pessoaRepository.buscarProjecaoPorId(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradoException("Pessoa não encontrada: " + id));
-        return new PessoaAgendaDados(pessoa.getPrioridade(), pessoa.isAtiva());
+        return new PessoaAgendaDados(pessoa.getPrioridade(), pessoa.isAtiva(), pessoa.isPrioridadeAtiva(),
+                pessoa.isBuscarNaResidencia(), pessoa.getAcompanhantes());
     }
 
     @Override
@@ -100,7 +101,7 @@ public class AgendamentoQueryJpaAdapter implements AgendamentoQueryPorta {
                 .collect(Collectors.groupingBy(
                         item -> item.getId(),
                         HashMap::new,
-                        Collectors.mapping(item -> item.getPrioridade().name(), Collectors.toList())));
+                        Collectors.mapping(item -> item.getPrioridade(), Collectors.toList())));
         var tiposPorRegra = listaRepository.listarTiposCadastro(idLista).stream()
                 .collect(Collectors.groupingBy(
                         item -> item.getId(),

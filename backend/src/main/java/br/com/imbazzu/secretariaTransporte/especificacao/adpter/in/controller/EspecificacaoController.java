@@ -35,6 +35,8 @@ import br.com.imbazzu.secretariaTransporte.especificacao.application.query.lista
 import br.com.imbazzu.secretariaTransporte.especificacao.application.query.listarArquivado.EspecificacaoQueryListarArquivado;
 import br.com.imbazzu.secretariaTransporte.especificacao.application.query.listarArquivado.EspecificacaoQueryListarArquivadoHandler;
 import br.com.imbazzu.secretariaTransporte.especificacao.core.domain.Especificacao;
+import br.com.imbazzu.secretariaTransporte.prioridade.PrioridadeRepository;
+import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.EntidadeNaoEncontradoException;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -56,6 +58,7 @@ public class EspecificacaoController {
     private final EspecificacaoQueryBuscarHandler buscarHandler;
     private final EspecificacaoQueryListarHandler listarHandler;
     private final EspecificacaoQueryListarArquivadoHandler listarArquivadoHandler;
+    private final PrioridadeRepository prioridades;
 
     @PostMapping
     public ResponseEntity<Void> criar(@RequestBody @Valid EspecificacaoRequestDto request) {
@@ -76,7 +79,7 @@ public class EspecificacaoController {
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamanho) {
         var resultado = listarHandler.handler(new EspecificacaoQueryListar(nome, pagina, tamanho));
-        return ResponseEntity.ok(resultado.map(EspecificacaoController::toResponse));
+        return ResponseEntity.ok(resultado.map(this::toResponse));
     }
 
     @GetMapping("/listar/arquivado")
@@ -86,7 +89,7 @@ public class EspecificacaoController {
             @RequestParam(defaultValue = "20") int tamanho) {
         var resultado = listarArquivadoHandler.handler(
                 new EspecificacaoQueryListarArquivado(nome, pagina, tamanho));
-        return ResponseEntity.ok(resultado.map(EspecificacaoController::toResponse));
+        return ResponseEntity.ok(resultado.map(this::toResponse));
     }
 
     @PutMapping("/{id}")
@@ -113,11 +116,14 @@ public class EspecificacaoController {
         return ResponseEntity.noContent().build();
     }
 
-    private static EspecificacaoResponseDto toResponse(Especificacao especificacao) {
+    private EspecificacaoResponseDto toResponse(Especificacao especificacao) {
+        var prioridade = prioridades.findById(especificacao.getPrioridade())
+                .orElseThrow(() -> new EntidadeNaoEncontradoException("Prioridade não encontrada: " + especificacao.getPrioridade()));
         return new EspecificacaoResponseDto(
                 especificacao.getId(),
                 especificacao.getNome(),
                 especificacao.getPrioridade(),
+                prioridade.getNome(),
                 especificacao.getObservacao(),
                 especificacao.getDataArquivado());
     }

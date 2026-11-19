@@ -29,6 +29,6 @@ public class MensagemErroApi {
         } catch (JsonProcessingException ignored) {
             // cai no texto padrão abaixo
         }
-        return "A API de agendamentos retornou HTTP %d.".formatted(e.getStatusCode().value());
+        return "A API retornou HTTP %d.".formatted(e.getStatusCode().value());
     }
 }

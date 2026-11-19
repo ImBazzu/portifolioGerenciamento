@@ -192,7 +192,7 @@
 
         const checkResidencia =
             modal.querySelector(
-                "input[name='buscarNaResidencia'][type='checkbox']"
+                "input[id^='editarBusca-'][type='checkbox']"
             );
 
         if (checkResidencia) {

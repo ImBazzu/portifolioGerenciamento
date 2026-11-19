@@ -52,25 +52,12 @@
                             <option value="">-- Selecione uma especificação --</option>
                             <option th:each="spec : ${especificacoes}"
                                     th:value="${spec.id()}"
-                                    th:text="${spec.nome()} + ' (' + ${spec.prioridade()} + ')'">Especificação</option>
+                                    th:text="${spec.nome()} + ' (' + ${spec.prioridadeNome()} + ')'">Especificação</option>
                         </select>
                         <div class="invalid-feedback" th:if="${#fields.hasErrors('especificacaoId')}"
                              th:errors="*{especificacaoId}"></div>
                     </div>
-                    <div class="col-md-6">
-                        <label for="quantidadeAcompanhantes" class="form-label fw-bold">Quantidade de acompanhantes</label>
-                        <input id="quantidadeAcompanhantes" type="number" th:field="*{quantidadeAcompanhantes}"
-                               class="form-control" th:classappend="${#fields.hasErrors('quantidadeAcompanhantes')} ? 'is-invalid'"
-                               min="0" step="1" required>
-                        <div class="invalid-feedback" th:if="${#fields.hasErrors('quantidadeAcompanhantes')}"
-                             th:errors="*{quantidadeAcompanhantes}"></div>
-                    </div>
-                    <div class="col-12">
-                        <div class="form-check">
-                            <input id="buscarNaResidencia" type="checkbox" th:field="*{buscarNaResidencia}" class="form-check-input">
-                            <label for="buscarNaResidencia" class="form-check-label">Buscar na residência</label>
-                        </div>
-                    </div>
+                    <div class="col-12 form-text">Busca na residência e acompanhantes são definidos pela prioridade da especificação.</div>
                     <div class="col-12">
                         <label for="observacao" class="form-label fw-bold">Observação</label>
                         <textarea id="observacao" th:field="*{observacao}" class="form-control"

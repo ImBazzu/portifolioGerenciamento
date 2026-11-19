@@ -5,7 +5,6 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
-import br.com.imbazzu.secretariaTransporte.lista.core.domain.EnumPrioridade;
 
 public interface RegraCadastroProjecao {
 
@@ -15,7 +14,7 @@ public interface RegraCadastroProjecao {
 
     List<UUID> getIdsCidades();
 
-    List<EnumPrioridade> getPrioridades();
+    List<UUID> getPrioridades();
 
     LocalTime getInicioHorario();
 

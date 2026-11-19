@@ -227,20 +227,22 @@
                                                th:for="'editarAcompanhantes-' + ${passageiro.id()}">Acompanhantes</label>
                                         <input class="form-control" type="number" name="acompanhantes" min="0"
                                                th:id="'editarAcompanhantes-' + ${passageiro.id()}"
-                                               th:value="${passageiro.acompanhantes()}" required>
+                                               th:value="${passageiro.acompanhantes()}" readonly>
                                     </div>
 
                                     <div class="col-12">
                                         <div class="form-check form-switch">
                                             <input class="form-check-input" type="checkbox" role="switch"
-                                                   name="buscarNaResidencia" value="true"
                                                    th:id="'editarBusca-' + ${passageiro.id()}"
-                                                   th:checked="${passageiro.buscarNaResidencia()}">
+                                                   th:checked="${passageiro.buscarNaResidencia()}" disabled>
+                                            <input type="hidden" name="buscarNaResidencia"
+                                                   th:value="${passageiro.buscarNaResidencia()}">
                                             <label class="form-check-label text-secondary small fw-semibold"
                                                    th:for="'editarBusca-' + ${passageiro.id()}">
                                                 Buscar passageiro na residência
                                             </label>
                                         </div>
+                                        <div class="form-text">Busca e acompanhantes são mantidos conforme o agendamento original.</div>
                                     </div>
 
                                 </div>
