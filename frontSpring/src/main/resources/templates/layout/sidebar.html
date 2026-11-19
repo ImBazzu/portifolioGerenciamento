@@ -25,6 +25,11 @@
 
     <!-- MENU DE NAVEGAÇÃO -->
     <nav class="nav nav-pills flex-column gap-1" id="sidebar-menu">
+        <a th:href="@{/relatorios}" class="nav-link text-white"
+           th:classappend="${pagina == 'relatorios' ? 'active' : ''}">
+            <i class="bi bi-graph-up"></i> Relatórios
+        </a>
+        
         <a th:href="@{/agendamentos}" class="nav-link text-white"
            th:classappend="${pagina == 'agendamentos' ? 'active' : ''}">
             <i class="bi bi-calendar2-check"></i> Agendamentos
