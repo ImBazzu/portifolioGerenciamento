@@ -7,17 +7,19 @@
             <header class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">
                 <div>
                     <h2 class="h5 fw-bold mb-1 d-flex align-items-center" id="detalhesPessoaTitulo">
-                        <span th:text="${pessoa.nome}">Pessoa</span>
+                        <span th:text="${pessoa.nome()}">Pessoa</span>
                         <!-- Badge de Arquivado -->
                         <span th:if="${arquivado}" class="badge bg-secondary ms-2 fs-6">Arquivado</span>
                     </h2>
-                    <span class="badge text-bg-light" th:text="${pessoa.prioridade}">MODERADA</span>
+                    <span class="badge"
+                          th:classappend="${pessoa.especificacaoPrioridade().name() == 'BAIXA'} ? 'text-bg-secondary' : ${pessoa.especificacaoPrioridade().name() == 'MODERADA'} ? 'text-bg-warning' : ${pessoa.especificacaoPrioridade().name() == 'ALTA'} ? 'text-bg-warning text-dark' : 'text-bg-danger'"
+                          th:text="${pessoa.especificacaoNome()}">MODERADA</span>
                 </div>
                 
                 <div class="d-flex gap-2 align-items-center">
                     <!-- Botão Editar (ajustando para passar o parâmetro arquivado se necessário) -->
                     <button class="btn btn-sm btn-light border"
-                            hx:get="@{/pessoas/abrirFormulario/{id}(id=${pessoa.id}, arquivado=${arquivado})}"
+                            hx:get="@{/pessoas/abrirFormulario/{id}(id=${pessoa.id()}, arquivado=${arquivado})}"
                             hx-target="#modal" hx-swap="innerHTML"
                             title="Editar Pessoa">
                         <i class="bi bi-pencil me-1"></i>Editar
@@ -43,19 +45,19 @@
             <dl class="row g-3 mb-0">
                 <div class="col-12 col-md-6">
                     <dt class="small text-secondary">CPF</dt>
-                    <dd th:text="${pessoa.cpf}">CPF</dd>
+                    <dd th:text="${pessoa.cpf()}">CPF</dd>
                 </div>
                 <div class="col-12 col-md-6">
                     <dt class="small text-secondary">Telefone</dt>
-                    <dd th:text="${pessoa.telefone}">Telefone</dd>
+                    <dd th:text="${pessoa.telefone()}">Telefone</dd>
                 </div>
                 <div class="col-12">
                     <dt class="small text-secondary">Endereço</dt>
-                    <dd th:text="${pessoa.endereco}">Endereço</dd>
+                    <dd th:text="${pessoa.endereco()}">Endereço</dd>
                 </div>
                 <div class="col-12">
                     <dt class="small text-secondary">Observação</dt>
-                    <dd th:text="${#strings.isEmpty(pessoa.observacao) ? 'Nenhuma observação informada.' : pessoa.observacao}">
+                    <dd th:text="${#strings.isEmpty(pessoa.observacao()) ? 'Nenhuma observação informada.' : pessoa.observacao()}">
                         Observação
                     </dd>
                 </div>
@@ -66,7 +68,7 @@
                 <!-- Se NÃO estiver arquivado, mostra botão de Arquivar -->
                 <th:block th:unless="${arquivado}">
                     <button class="btn btn-sm btn-outline-warning"
-                            hx:patch="@{/pessoas/{id}/arquivar(id=${pessoa.id})}"
+                            hx:patch="@{/pessoas/{id}/arquivar(id=${pessoa.id()})}"
                             hx-confirm="Deseja arquivar esta pessoa?"
                             hx-target="#modal" hx-swap="innerHTML">
                         <i class="bi bi-archive me-1"></i>Arquivar
@@ -76,7 +78,7 @@
                 <!-- Se ESTIVER arquivado, pode mostrar opção de desarquivar ou excluir definitivo (igual veículo) -->
                 <th:block th:if="${arquivado}">
                     <button class="btn btn-sm btn-outline-success"
-                            hx:patch="@{/pessoas/{id}/desarquivar(id=${pessoa.id})}"
+                            hx:patch="@{/pessoas/{id}/desarquivar(id=${pessoa.id()})}"
                             hx-confirm="Deseja desarquivar esta pessoa?"
                             hx-target="#modal" hx-swap="innerHTML">
                         <i class="bi bi-unarchive me-1"></i>Desarquivar

@@ -3,6 +3,7 @@ package br.com.imbazzu.frontSpring.lista.adpter.in.controller;
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 import br.com.imbazzu.frontSpring.localidade.core.dto.CidadeResponseDto;
 import br.com.imbazzu.frontSpring.localidade.core.porta.in.LocalidadeApplicationPorta;
+import br.com.imbazzu.frontSpring.lista.core.dto.DiaSemana;
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaRegrasRequestDto;
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaRequestDto;
 import br.com.imbazzu.frontSpring.lista.core.porta.in.ListaApplicationPorta;
@@ -107,6 +108,7 @@ public class ListaFormularioController {
                 .toList());
         model.addAttribute("opcoesCidade", listarCidades());
         model.addAttribute("prioridades", List.of("BAIXA", "MODERADA", "ALTA", "URGENTE"));
+        model.addAttribute("diasSemana", DiaSemana.values());
     }
 
     private List<TipoVeiculoResponseDto> listarVeiculos() {

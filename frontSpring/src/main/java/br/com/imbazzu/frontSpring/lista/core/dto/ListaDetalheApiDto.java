@@ -19,7 +19,9 @@ public record ListaDetalheApiDto(
             String inicioHorario,
             String finalHorario,
             boolean obrigacaoAnexo,
-            String descricao) {
+            String descricao,
+            List<String> diasSemana,
+            Integer intervaloRepetacao) {
 
         public List<UUID> getIdsVeiculos() {
             return veiculos.stream().map(VeiculoResponse::id).toList();

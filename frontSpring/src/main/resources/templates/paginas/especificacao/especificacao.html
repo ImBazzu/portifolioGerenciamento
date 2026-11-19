@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{layout/head :: head('Especificações')}"></head>
+
+<body>
+<div class="d-flex min-vh-100">
+    <aside th:replace="~{layout/sidebar :: sidebar}"></aside>
+
+    <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
+        <div th:fragment="conteudo" class="app-page">
+            <header class="app-page-header">
+                <div>
+                    <h1>Especificações</h1>
+                    <p>Cadastre e gerencie as especificações de atendimento.</p>
+                </div>
+                <div class="app-page-actions">
+                    <button class="btn btn-outline-secondary"
+                            hx:get="@{/especificacoes/listar(arquivadas=true)}"
+                            hx-target="#especificacoes-lista"
+                            hx-swap="innerHTML">
+                        <i class="bi bi-archive me-1"></i> Arquivadas
+                    </button>
+                    <button class="btn btn-primary"
+                            hx:get="@{/especificacoes/abrirFormulario}"
+                            hx-target="#modal"
+                            hx-swap="innerHTML">
+                        <i class="bi bi-plus-lg me-1"></i> Nova Especificação
+                    </button>
+                </div>
+            </header>
+
+            <div id="especificacoes-lista"
+                 hx:get="@{/especificacoes/listar}"
+                 hx-trigger="load"
+                 hx-swap="innerHTML">
+                <div class="text-center text-muted py-5">
+                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    Carregando especificações...
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

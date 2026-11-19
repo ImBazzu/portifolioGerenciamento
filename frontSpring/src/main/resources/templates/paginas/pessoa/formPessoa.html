@@ -46,14 +46,16 @@
                              th:errors="*{endereco}"></div>
                     </div>
                     <div class="col-md-6">
-                        <label for="prioridade" class="form-label fw-bold">Prioridade</label>
-                        <select id="prioridade" th:field="*{prioridade}" class="form-select"
-                                th:classappend="${#fields.hasErrors('prioridade')} ? 'is-invalid'" required>
-                            <option th:each="prioridade : ${T(br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaPrioridade).values()}"
-                                    th:value="${prioridade}" th:text="${prioridade}">MODERADA</option>
+                        <label for="especificacaoId" class="form-label fw-bold">Especificação</label>
+                        <select id="especificacaoId" th:field="*{especificacaoId}" class="form-select"
+                                th:classappend="${#fields.hasErrors('especificacaoId')} ? 'is-invalid'" required>
+                            <option value="">-- Selecione uma especificação --</option>
+                            <option th:each="spec : ${especificacoes}"
+                                    th:value="${spec.id()}"
+                                    th:text="${spec.nome()} + ' (' + ${spec.prioridade()} + ')'">Especificação</option>
                         </select>
-                        <div class="invalid-feedback" th:if="${#fields.hasErrors('prioridade')}"
-                             th:errors="*{prioridade}"></div>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('especificacaoId')}"
+                             th:errors="*{especificacaoId}"></div>
                     </div>
                     <div class="col-12">
                         <label for="observacao" class="form-label fw-bold">Observação</label>

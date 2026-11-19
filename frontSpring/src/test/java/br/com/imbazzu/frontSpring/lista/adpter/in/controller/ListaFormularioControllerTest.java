@@ -71,7 +71,9 @@ class ListaFormularioControllerTest {
                     "inicioHorario": "08:00",
                     "finalHorario": "12:00",
                     "obrigacaoAnexo": true,
-                    "descricao": "Documentação obrigatória"
+                    "descricao": "Documentação obrigatória",
+                    "diasSemana": [],
+                    "intervaloRepetacao": 1
                   }],
                   "regrasSeparacao": [{
                     "idTipoVeiculo": "%s",
@@ -91,7 +93,9 @@ class ListaFormularioControllerTest {
                         "08:00",
                         "12:00",
                         true,
-                        "Documentação obrigatória")),
+                        "Documentação obrigatória",
+                        List.of(),
+                        1)),
                 List.of(new ListaRegrasRequestDto.RegraSeparacao(idVeiculo, 300, 0))));
     }
 }

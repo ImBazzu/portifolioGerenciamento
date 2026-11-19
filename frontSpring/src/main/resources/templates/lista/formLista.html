@@ -132,6 +132,25 @@
                                         </div>
                                         <div class="form-text">Preencha os dois horários ou deixe ambos vazios.</div>
                                     </div>
+                                    <div class="col-lg-6">
+                                        <label class="form-label d-block">Dias da semana <span class="text-muted">(opcional - deixe vazio = qualquer dia)</span></label>
+                                        <div class="lista-checkbox-group" data-grupo-dias-semana>
+                                            <div class="lista-checkbox-options lista-dias-semana">
+                                                <label class="lista-checkbox-option" th:each="dia : ${diasSemana}">
+                                                    <input class="form-check-input" type="checkbox" data-campo="diasSemana"
+                                                           th:value="${dia.name()}"
+                                                           th:checked="${#lists.contains(regra.diasSemana, dia.name())}">
+                                                    <span th:text="${dia.label}">Dia</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Intervalo de repetição (em semanas) <span class="text-muted">(opcional)</span></label>
+                                        <input type="number" class="form-control" data-campo="intervaloRepetacao"
+                                               min="1" max="52" th:value="${regra.intervaloRepetacao != null ? regra.intervaloRepetacao : 1}">
+                                        <div class="form-text">Repete a cada X semanas (padrão: 1)</div>
+                                    </div>
                                     <div class="col-lg-8">
                                         <label class="form-label">Observação <span class="text-muted">(opcional)</span></label>
                                         <input type="text" class="form-control" data-campo="descricao" maxlength="249"
@@ -285,6 +304,23 @@
                         <input type="time" class="form-control" data-campo="finalHorario" aria-label="Horário final">
                     </div>
                     <div class="form-text">Preencha os dois horários ou deixe ambos vazios.</div>
+                </div>
+                <div class="col-lg-6">
+                    <label class="form-label d-block">Dias da semana <span class="text-muted">(opcional - deixe vazio = qualquer dia)</span></label>
+                    <div class="lista-checkbox-group" data-grupo-dias-semana>
+                        <div class="lista-checkbox-options lista-dias-semana">
+                            <label class="lista-checkbox-option" th:each="dia : ${diasSemana}">
+                                <input class="form-check-input" type="checkbox" data-campo="diasSemana" th:value="${dia.name()}">
+                                <span th:text="${dia.label}">Dia</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Intervalo de repetição (em semanas) <span class="text-muted">(opcional)</span></label>
+                    <input type="number" class="form-control" data-campo="intervaloRepetacao"
+                           min="1" max="52" value="1">
+                    <div class="form-text">Repete a cada X semanas (padrão: 1)</div>
                 </div>
                 <div class="col-lg-8">
                     <label class="form-label">Observação <span class="text-muted">(opcional)</span></label>

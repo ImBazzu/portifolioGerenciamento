@@ -21,7 +21,7 @@ import org.springframework.web.client.RestClient;
 
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
 import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
-import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaPrioridade;
+import br.com.imbazzu.frontSpring.pessoa.core.dto.EnumPrioridade;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaRequestDto;
 
 class PessoaApiTest {
@@ -51,6 +51,7 @@ class PessoaApiTest {
 
     @Test
     void listaPessoasAtivasEConvertePrioridade() {
+        var especId = UUID.randomUUID();
         server.expect(requestTo("http://localhost:8080/api/pessoa/listar?nome=Ana&pagina=0&tamanho=10"))
                 .andRespond(withSuccess("""
                         {
@@ -58,7 +59,9 @@ class PessoaApiTest {
                             "id": "b4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f21",
                             "nome": "Ana Souza",
                             "observacao": null,
-                            "prioridade": "ALTA",
+                            "especificacaoId": "%s",
+                            "especificacaoNome": "Especificação 1",
+                            "especificacaoPrioridade": "ALTA",
                             "dataArquivado": null,
                             "endereco": "Rua das Flores, 123",
                             "cpf": "52998224725",
@@ -69,12 +72,12 @@ class PessoaApiTest {
                           "totalElementos": 1,
                           "totalPaginas": 1
                         }
-                        """, MediaType.APPLICATION_JSON));
+                        """.formatted(especId), MediaType.APPLICATION_JSON));
 
         var page = api.listar("Ana", false, 0, 10);
 
         assertEquals(1, page.totalElementos());
-        assertEquals(PessoaPrioridade.ALTA, page.conteudo().getFirst().prioridade());
+        assertEquals(EnumPrioridade.ALTA, page.conteudo().getFirst().especificacaoPrioridade());
         assertNull(page.conteudo().getFirst().dataArquivado());
     }
 
@@ -96,12 +99,13 @@ class PessoaApiTest {
 
     @Test
     void salvarEnviaOsCamposEsperadosPeloBackend() {
+        var especId = UUID.fromString("c5d0a150-2d80-4f0b-9a1d-3cfb8d8a0f22");
         server.expect(requestTo("http://localhost:8080/api/pessoa"))
                 .andExpect(content().json("""
                         {
                           "nome":"Ana Souza",
                           "observacao":"",
-                          "prioridade":"MODERADA",
+                          "especificacaoId":"c5d0a150-2d80-4f0b-9a1d-3cfb8d8a0f22",
                           "endereco":"Rua das Flores, 123",
                           "cpf":"52998224725",
                           "telefone":"11987654321"
@@ -111,7 +115,7 @@ class PessoaApiTest {
                         .location(URI.create("/api/pessoa/b4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f21")));
 
         assertEquals(UUID.fromString("b4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f21"), api.salvar(new PessoaRequestDto(
-                "Ana Souza", "", PessoaPrioridade.MODERADA, "Rua das Flores, 123", "52998224725", "11987654321")));
+                "Ana Souza", "", especId, "Rua das Flores, 123", "52998224725", "11987654321")));
     }
 
     @Test

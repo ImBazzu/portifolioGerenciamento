@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaPrioridade;
+import br.com.imbazzu.frontSpring.especificacao.core.porta.in.EspecificacaoApplicationPorta;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaRequestDto;
 import br.com.imbazzu.frontSpring.pessoa.core.excecoes.PessoaDuplicadaException;
 import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
@@ -32,10 +32,12 @@ import jakarta.servlet.http.HttpServletResponse;
 @RequestMapping("pessoas")
 public class PessoaController {
     private final PessoaApplicationPorta application;
+    private final EspecificacaoApplicationPorta especificacaoApplication;
     private final ObjectMapper objectMapper;
 
-    public PessoaController(PessoaApplicationPorta application, ObjectMapper objectMapper) {
+    public PessoaController(PessoaApplicationPorta application, EspecificacaoApplicationPorta especificacaoApplication, ObjectMapper objectMapper) {
         this.application = application;
+        this.especificacaoApplication = especificacaoApplication;
         this.objectMapper = objectMapper;
     }
 
@@ -68,9 +70,11 @@ public class PessoaController {
     public String formularioNovo(
             @RequestParam(defaultValue = "false") boolean contextoAgendamento,
             Model model) {
+        var especificacoes = especificacaoApplication.listar("", false, 0).conteudo();
         model.addAttribute("id", null);
-        model.addAttribute("pessoa", new PessoaRequestDto("", "", PessoaPrioridade.MODERADA, "", "", ""));
+        model.addAttribute("pessoa", new PessoaRequestDto("", "", null, "", "", ""));
         model.addAttribute("contextoAgendamento", contextoAgendamento);
+        model.addAttribute("especificacoes", especificacoes);
         return "paginas/pessoa/formPessoa :: formPessoa";
     }
 
@@ -78,10 +82,12 @@ public class PessoaController {
     @GetMapping("/abrirFormulario/{id}")
     public String formularioEdicao(@PathVariable UUID id, Model model, @RequestParam(defaultValue  = "false") boolean contextoAgendamento) {
         var pessoa = application.buscar(id);
+        var especificacoes = especificacaoApplication.listar("", false, 0).conteudo();
         model.addAttribute("id", id);
         model.addAttribute("contextoAgendamento", contextoAgendamento);
+        model.addAttribute("especificacoes", especificacoes);
         model.addAttribute("pessoa", new PessoaRequestDto(
-                pessoa.nome(), pessoa.observacao(), pessoa.prioridade(), pessoa.endereco(), pessoa.cpf(),
+                pessoa.nome(), pessoa.observacao(), pessoa.especificacaoId(), pessoa.endereco(), pessoa.cpf(),
                 pessoa.telefone()));
         return "paginas/pessoa/formPessoa :: formPessoa";
     }
@@ -101,7 +107,7 @@ public class PessoaController {
         return "paginas/pessoa/detalhesPessoa :: detalhesPessoa";
     }
 
-@HxRequest
+    @HxRequest
     @PostMapping
     public String salvar(
             @Valid @ModelAttribute("pessoa") PessoaRequestDto pessoa,
@@ -112,6 +118,8 @@ public class PessoaController {
         
         model.addAttribute("id", null);
         model.addAttribute("contextoAgendamento", contextoAgendamento);
+        var especificacoes = especificacaoApplication.listar("", false, 0).conteudo();
+        model.addAttribute("especificacoes", especificacoes);
 
         if (result.hasErrors()) {
             return "paginas/pessoa/formPessoa :: formPessoa";
@@ -125,7 +133,7 @@ public class PessoaController {
                             "pessoa-criada", Map.of(
                                     "id", id,
                                     "nome", pessoa.nome(),
-                                    "prioridade", pessoa.prioridade().name()))
+                                    "especificacaoId", pessoa.especificacaoId()))
                     : Map.of("atualizar-pessoas", Map.of());
             response.setHeader("HX-Trigger-After-Settle", objectMapper.writeValueAsString(eventos));
             return "layout/vazio :: vazio";
@@ -150,6 +158,8 @@ public class PessoaController {
         
         model.addAttribute("id", id);
         model.addAttribute("contextoAgendamento", contextoAgendamento);
+        var especificacoes = especificacaoApplication.listar("", false, 0).conteudo();
+        model.addAttribute("especificacoes", especificacoes);
 
         if (result.hasErrors()) {
             return "paginas/pessoa/formPessoa :: formPessoa";

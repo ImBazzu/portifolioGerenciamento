@@ -197,7 +197,9 @@ class ListaApiTest {
                         "08:00",
                         "12:00",
                         true,
-                        "Atendimento prioritário")),
+                        "Atendimento prioritário",
+                        List.of(),
+                        1)),
                 List.of(new ListaRegrasRequestDto.RegraSeparacao(idVeiculo, 5_400, 0)));
         server.expect(requestTo("http://localhost:8080/api/lista/" + id + "/regras"))
                 .andExpect(content().json("""
@@ -209,7 +211,9 @@ class ListaApiTest {
                             "inicioHorario":"08:00",
                             "finalHorario":"12:00",
                             "obrigacaoAnexo":true,
-                            "descricao":"Atendimento prioritário"
+                            "descricao":"Atendimento prioritário",
+                            "diasSemana":[],
+                            "intervaloRepetacao":1
                           }],
                           "regrasSeparacao":[{
                             "idTipoVeiculo":"%s",

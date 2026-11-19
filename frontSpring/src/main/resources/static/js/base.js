@@ -163,6 +163,18 @@ document.addEventListener('submit', function (event) {
             return null;
         }
 
+        const intervaloRepetacao = card.querySelector('[data-campo="intervaloRepetacao"]');
+        const intervaloValue = intervaloRepetacao.value ? parseInt(intervaloRepetacao.value) : 1;
+        
+        if (intervaloValue < 1 || intervaloValue > 52) {
+            intervaloRepetacao.setCustomValidity('O intervalo deve estar entre 1 e 52 semanas.');
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            intervaloRepetacao.reportValidity();
+            return null;
+        }
+        intervaloRepetacao.setCustomValidity('');
+
         return {
             idsVeiculos: valoresSelecionados(card, 'idsVeiculos'),
             idsCidades: valoresSelecionados(card, 'idsCidades'),
@@ -170,7 +182,9 @@ document.addEventListener('submit', function (event) {
             inicioHorario: inicio.value || null,
             finalHorario: final.value || null,
             obrigacaoAnexo: card.querySelector('[data-campo="obrigacaoAnexo"]').checked,
-            descricao: card.querySelector('[data-campo="descricao"]').value.trim() || null
+            descricao: card.querySelector('[data-campo="descricao"]').value.trim() || null,
+            diasSemana: valoresSelecionados(card, 'diasSemana'),
+            intervaloRepetacao: intervaloValue
         };
     });
 

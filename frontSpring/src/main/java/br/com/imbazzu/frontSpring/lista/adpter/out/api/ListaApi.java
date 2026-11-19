@@ -13,6 +13,7 @@ import org.springframework.web.client.RestClient;
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
 import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
+import br.com.imbazzu.frontSpring.lista.core.dto.DiaSemana;
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaDetalheApiDto;
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaRequestDto;
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaRegrasRequestDto;
@@ -206,12 +207,24 @@ public class ListaApi implements ListaApiPorta {
         var horario = regra.inicioHorario() == null
                 ? "sem restrição de horário"
                 : "%s–%s".formatted(regra.inicioHorario(), regra.finalHorario());
+        
+        var dias = regra.diasSemana() == null || regra.diasSemana().isEmpty()
+                ? "qualquer dia"
+                : String.join(", ", regra.diasSemana().stream()
+                    .map(dia -> DiaSemana.valueOf(dia).getLabelCurto())
+                    .toList());
+        
+        var intervalo = regra.intervaloRepetacao() == null ? 1 : regra.intervaloRepetacao();
+        var intervaloStr = intervalo == 1 ? "semanalmente" : "a cada %d semanas".formatted(intervalo);
+        
         var descricao = regra.descricao() == null ? "" : " — " + regra.descricao();
-        return "Cadastro: prioridades %s, %d veículo(s), %d cidade(s), %s, anexo %s%s".formatted(
+        return "Cadastro: prioridades %s, %d veículo(s), %d cidade(s), %s, %s, %s, anexo %s%s".formatted(
                 String.join(", ", regra.prioridades()),
                 regra.veiculos().size(),
                 regra.cidades().size(),
                 horario,
+                dias,
+                intervaloStr,
                 regra.obrigacaoAnexo() ? "obrigatório" : "não obrigatório",
                 descricao);
     }

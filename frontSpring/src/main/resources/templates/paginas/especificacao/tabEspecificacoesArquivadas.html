@@ -1,0 +1,67 @@
+<th:block th:fragment="tabEspecificacoesArquivadas">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h5 class="mb-0 fw-bold">Especificações arquivadas</h5>
+            <div class="col-12 col-md-4">
+                <input type="search" name="nome" th:value="${nome}" class="form-control"
+                       placeholder="Buscar por nome..."
+                       hx:get="@{/especificacoes/listar(arquivadas=true)}"
+                       hx-trigger="keyup changed delay:300ms, atualizar-especificacoes from:body"
+                       hx-target="#especificacoes-lista" hx-swap="innerHTML">
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th class="ps-3">Nome</th>
+                    <th>Prioridade</th>
+                    <th>Data de Arquivamento</th>
+                    <th class="text-end pe-3">Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(especificacoes)}">
+                    <td colspan="4" class="text-center text-muted py-4">Nenhuma especificação arquivada.</td>
+                </tr>
+                <tr th:each="esp : ${especificacoes}">
+                    <td class="ps-3 fw-medium" th:text="${esp.nome}">Nome</td>
+                    <td>
+                        <span class="badge"
+                              th:classappend="${esp.prioridade.name() == 'BAIXA'} ? 'text-bg-secondary' : ${esp.prioridade.name() == 'MODERADA'} ? 'text-bg-warning' : ${esp.prioridade.name() == 'ALTA'} ? 'text-bg-warning text-dark' : 'text-bg-danger'"
+                              th:text="${esp.prioridade}">MODERADA</span>
+                    </td>
+                    <td th:text="${#temporals.format(esp.dataArquivado, 'dd/MM/yyyy')}">01/01/2024</td>
+                    <td class="text-end pe-3">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-primary" title="Detalhes"
+                                    th:attr="hx-get=@{/especificacoes/{id}/detalhes/arquivado(id=${esp.id})}"
+                                    hx-target="#modal" hx-swap="innerHTML">
+                                <i class="bi bi-info-circle me-1"></i> Detalhes
+                            </button>
+                            <button class="btn btn-outline-success" title="Restaurar"
+                                    hx:patch="@{/especificacoes/{id}/desarquivar(id=${esp.id})}"
+                                    hx-confirm="Tem certeza que deseja restaurar esta especificação?">
+                                <i class="bi bi-arrow-counterclockwise me-1"></i> Restaurar
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2"
+             th:if="${totalPaginas > 1}">
+            <span class="text-muted small"
+                  th:text="'Página ' + (${paginaAtual} + 1) + ' de ' + ${totalPaginas}">Página</span>
+            <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary" th:disabled="${paginaAtual == 0}"
+                        th:attr="hx-get=@{/especificacoes/listar(nome=${nome},arquivadas=true,pagina=${paginaAtual - 1})}"
+                        hx-target="#especificacoes-lista" hx-swap="innerHTML">Anterior</button>
+                <button class="btn btn-outline-secondary" th:disabled="${paginaAtual + 1 >= totalPaginas}"
+                        th:attr="hx-get=@{/especificacoes/listar(nome=${nome},arquivadas=true,pagina=${paginaAtual + 1})}"
+                        hx-target="#especificacoes-lista" hx-swap="innerHTML">Próxima</button>
+            </div>
+        </div>
+    </div>
+</th:block>

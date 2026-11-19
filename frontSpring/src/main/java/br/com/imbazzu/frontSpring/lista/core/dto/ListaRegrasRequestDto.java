@@ -14,7 +14,9 @@ public record ListaRegrasRequestDto(
             String inicioHorario,
             String finalHorario,
             boolean obrigacaoAnexo,
-            String descricao) {
+            String descricao,
+            List<String> diasSemana,
+            Integer intervaloRepetacao) {
     }
 
     public record RegraSeparacao(

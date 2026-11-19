@@ -2,10 +2,8 @@
 
 -- Criar tabela de dias da semana para regras de agendamento
 CREATE TABLE IF NOT EXISTS regra_cadastro_dias_semana (
-    regra_cadastro_id UUID NOT NULL,
+    regra_cadastro_id BINARY(16) NOT NULL,
     dia_semana VARCHAR(10) NOT NULL,
-    FOREIGN KEY (regra_cadastro_id) REFERENCES regras_cadastro(id) 
-        ON DELETE CASCADE,
     PRIMARY KEY (regra_cadastro_id, dia_semana),
     CONSTRAINT fk_regra_dia_semana_cadastro FOREIGN KEY (regra_cadastro_id) 
         REFERENCES regras_cadastro(id) ON DELETE CASCADE
