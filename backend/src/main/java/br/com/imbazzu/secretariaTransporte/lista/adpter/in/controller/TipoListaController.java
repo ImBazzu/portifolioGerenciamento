@@ -151,7 +151,9 @@ public class TipoListaController {
                 request.inicioHorario(),
                 request.finalHorario(),
                 request.obrigacaoAnexo(),
-                request.descricao());
+                request.descricao(),
+                request.diasSemana(),
+                request.intervaloRepetacao());
     }
 
     private static RegraSeparacaoInput toInput(RegraSeparacaoRequestDto request) {

@@ -1,5 +1,6 @@
 package br.com.imbazzu.secretariaTransporte.lista.core.domain;
 
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
@@ -30,9 +31,14 @@ public class RegraCadastro {
 
     private LocalTime finalHorario;
 
+    private List<DayOfWeek> diasSemana;
+
+    private Integer intervaloRepetacao;
+
     private RegraCadastro(UUID id, UUID idLista, List<UUID> idsVeiculos, List<UUID> idCidades,
         List<EnumPrioridade> prioridades,
-        boolean obrigacaoAnexo, LocalTime inicioHorario, LocalTime finalHorario, Observacao descricao
+        boolean obrigacaoAnexo, LocalTime inicioHorario, LocalTime finalHorario, Observacao descricao,
+        List<DayOfWeek> diasSemana, Integer intervaloRepetacao
     ) {
         Objects.requireNonNull(id, "ID é obrigatório");
         Objects.requireNonNull(idLista, "Id da lista é obrigatório");
@@ -42,6 +48,9 @@ public class RegraCadastro {
         this.prioridades = copiarListaObrigatoria(prioridades, "Ao menos uma prioridade é obrigatória");
         this.idCidades = copiarListaOpcional(idCidades);
         definirHorario(inicioHorario, finalHorario);
+        
+        this.diasSemana = copiarListaDiasOpcional(diasSemana);
+        this.intervaloRepetacao = validarIntervaloRepetacao(intervaloRepetacao);
 
         this.obrigacaoAnexo = obrigacaoAnexo;
         this.descricao = descricao;
@@ -53,16 +62,16 @@ public class RegraCadastro {
     
         public static RegraCadastro criar(UUID idLista, List<UUID> idsVeiculos, List<UUID> idCidades,
             List<EnumPrioridade> prioridades, LocalTime inicioHorario, LocalTime finalHorario,
-            boolean obrigacaoAnexo, Observacao descricao) {
+            boolean obrigacaoAnexo, Observacao descricao, List<DayOfWeek> diasSemana, Integer intervaloRepetacao) {
             return new RegraCadastro(UUID.randomUUID(), idLista, idsVeiculos, idCidades, prioridades,
-                obrigacaoAnexo, inicioHorario, finalHorario, descricao);
+                obrigacaoAnexo, inicioHorario, finalHorario, descricao, diasSemana, intervaloRepetacao);
         }
 
         public static RegraCadastro recriar(UUID id, UUID idLista, List<UUID> idsVeiculos, List<UUID> idCidades,
             List<EnumPrioridade> prioridades, boolean obrigacaoAnexo, Observacao descricao,
-            LocalTime inicioHorario, LocalTime finalHorario) {
+            LocalTime inicioHorario, LocalTime finalHorario, List<DayOfWeek> diasSemana, Integer intervaloRepetacao) {
             return new RegraCadastro(id, idLista, idsVeiculos, idCidades, prioridades, obrigacaoAnexo,
-                inicioHorario, finalHorario, descricao);
+                inicioHorario, finalHorario, descricao, diasSemana, intervaloRepetacao);
         }
     
          
@@ -70,10 +79,13 @@ public class RegraCadastro {
     //Regras
     //===================== 
     
-    public void editar(LocalTime inicioHorario, LocalTime finalHorario, boolean obrigacaoAnexo, Observacao descricao) {
+    public void editar(LocalTime inicioHorario, LocalTime finalHorario, boolean obrigacaoAnexo, Observacao descricao,
+        List<DayOfWeek> diasSemana, Integer intervaloRepetacao) {
         definirHorario(inicioHorario, finalHorario);
         editarObrigacaoAnexo(obrigacaoAnexo);
         editarDescricao(descricao);
+        this.diasSemana = copiarListaDiasOpcional(diasSemana);
+        this.intervaloRepetacao = validarIntervaloRepetacao(intervaloRepetacao);
     } 
 
     public void editarPrioridades(List<EnumPrioridade> prioridades) {
@@ -89,12 +101,13 @@ public class RegraCadastro {
     }
 
     public boolean verificacaoDasRegras(EnumPrioridade prioridade, UUID idCidade, LocalTime horarioChegada,
-        boolean possuiAnexo, UUID idVeiculo) {
+        boolean possuiAnexo, UUID idVeiculo, DayOfWeek diaSemana) {
         return verificarHorario(horarioChegada)
             && verificarObrigacaoAnexo(possuiAnexo)
             && verificarPrioridade(prioridade)
             && verificarVeiculo(idVeiculo)
-            && verificarCidade(idCidade);
+            && verificarCidade(idCidade)
+            && verificarDiaSemana(diaSemana);
     }
 
     private boolean verificarVeiculo(UUID idVeiculo) {
@@ -134,6 +147,14 @@ public class RegraCadastro {
         return this.idCidades.isEmpty() || this.idCidades.contains(idCidade);
     }
 
+    private boolean verificarDiaSemana(DayOfWeek diaSemana) {
+        return this.diasSemana.isEmpty() || this.diasSemana.contains(diaSemana);
+    }
+
+    public int getIntervaloRepetacao() {
+        return intervaloRepetacao != null ? intervaloRepetacao : 1;
+    }
+
     
     //=====================
     //Getters
@@ -169,6 +190,14 @@ public class RegraCadastro {
 
     public List<EnumPrioridade> getPrioridades() {
         return prioridades;
+    }
+
+    public List<DayOfWeek> getDiasSemana() {
+        return diasSemana;
+    }
+
+    public Integer getIntervaloRepetacaoRaw() {
+        return intervaloRepetacao;
     }
 
     public boolean isObrigacaoAnexo() {
@@ -235,5 +264,25 @@ public class RegraCadastro {
         if (valores.stream().anyMatch(Objects::isNull)) {
             throw new DadosInvalidosException(mensagem);
         }
+    }
+
+    private static List<DayOfWeek> copiarListaDiasOpcional(List<DayOfWeek> dias) {
+        if (dias == null) {
+            return List.of();
+        }
+        validarSemNulos(dias, "A lista de dias da semana contém um valor inválido");
+        var copia = List.copyOf(dias);
+        validarSemDuplicatas(copia, "A lista de dias da semana não pode conter duplicatas");
+        return copia;
+    }
+
+    private static Integer validarIntervaloRepetacao(Integer intervalo) {
+        if (intervalo == null) {
+            return 1;
+        }
+        if (intervalo < 1 || intervalo > 52) {
+            throw new DadosInvalidosException("O intervalo de repetição deve estar entre 1 e 52 semanas");
+        }
+        return intervalo;
     }
 }

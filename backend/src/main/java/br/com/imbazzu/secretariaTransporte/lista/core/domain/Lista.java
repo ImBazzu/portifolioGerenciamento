@@ -99,9 +99,9 @@ public final class Lista {
 
     public RegraCadastro criarRegraCadastro(List<UUID> idsVeiculos, List<UUID> idCidades,
             List<EnumPrioridade> prioridades, LocalTime inicioHorario, LocalTime finalHorario,
-            boolean obrigacaoAnexo, Observacao descricaoRegra) {
+            boolean obrigacaoAnexo, Observacao descricaoRegra, List<java.time.DayOfWeek> diasSemana, Integer intervaloRepetacao) {
         RegraCadastro regra = RegraCadastro.criar(id, idsVeiculos, idCidades, prioridades,
-                inicioHorario, finalHorario, obrigacaoAnexo, descricaoRegra);
+                inicioHorario, finalHorario, obrigacaoAnexo, descricaoRegra, diasSemana, intervaloRepetacao);
         adicionarRegraCadastro(regra);
         return regra;
     }

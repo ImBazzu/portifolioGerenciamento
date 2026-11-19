@@ -1,10 +1,13 @@
 package br.com.imbazzu.secretariaTransporte.lista.adpter.in.controller.dto;
 
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
 import br.com.imbazzu.secretariaTransporte.lista.core.domain.EnumPrioridade;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
@@ -15,5 +18,7 @@ public record RegraCadastroRequestDto(
         LocalTime inicioHorario,
         LocalTime finalHorario,
         boolean obrigacaoAnexo,
-        @jakarta.validation.constraints.Size(max = 249) String descricao) {
+        @jakarta.validation.constraints.Size(max = 249) String descricao,
+        List<@NotNull DayOfWeek> diasSemana,
+        @Min(1) @Max(52) Integer intervaloRepetacao) {
 }

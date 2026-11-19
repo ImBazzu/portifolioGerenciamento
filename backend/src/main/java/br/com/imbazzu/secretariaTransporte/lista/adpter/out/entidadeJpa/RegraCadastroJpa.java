@@ -1,5 +1,6 @@
 package br.com.imbazzu.secretariaTransporte.lista.adpter.out.entidadeJpa;
 
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,4 +68,14 @@ public class RegraCadastroJpa {
 
     @Column(name = "final_horario")
     private LocalTime finalHorario;
+
+    @ElementCollection
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(name = "regra_cadastro_dias_semana", joinColumns = @JoinColumn(name = "regra_cadastro_id"),
+            foreignKey = @ForeignKey(name = "fk_regra_dia_semana_cadastro"))
+    @Column(name = "dia_semana", nullable = false, length = 10)
+    private List<DayOfWeek> diasSemana = new ArrayList<>();
+
+    @Column(name = "intervalo_repetacao_semanas")
+    private Integer intervaloRepetacao;
 }

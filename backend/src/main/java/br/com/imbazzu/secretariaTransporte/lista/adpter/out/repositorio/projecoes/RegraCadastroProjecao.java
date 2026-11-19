@@ -1,5 +1,6 @@
 package br.com.imbazzu.secretariaTransporte.lista.adpter.out.repositorio.projecoes;
 
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
@@ -23,4 +24,8 @@ public interface RegraCadastroProjecao {
     boolean isObrigacaoAnexo();
 
     String getDescricao();
+
+    List<DayOfWeek> getDiasSemana();
+
+    Integer getIntervaloRepetacao();
 }

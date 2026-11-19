@@ -44,7 +44,9 @@ public class TipoListaCommandAtualizarRegrasHandler {
                 regra.inicioHorario(),
                 regra.finalHorario(),
                 regra.obrigacaoAnexo(),
-                observacaoOpcional(regra.descricao())));
+                observacaoOpcional(regra.descricao()),
+                regra.diasSemana(),
+                regra.intervaloRepetacao()));
         command.regrasSeparacao().forEach(regra -> lista.criarRegraSeparacao(
                 regra.idTipoVeiculo(),
                 regra.tempoTolerancia()));

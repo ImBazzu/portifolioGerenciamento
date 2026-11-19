@@ -1,5 +1,6 @@
 package br.com.imbazzu.secretariaTransporte.lista.adpter.model;
 
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
@@ -13,5 +14,7 @@ public record RegraCadastroInput(
         LocalTime inicioHorario,
         LocalTime finalHorario,
         boolean obrigacaoAnexo,
-        String descricao) {
+        String descricao,
+        List<DayOfWeek> diasSemana,
+        Integer intervaloRepetacao) {
 }

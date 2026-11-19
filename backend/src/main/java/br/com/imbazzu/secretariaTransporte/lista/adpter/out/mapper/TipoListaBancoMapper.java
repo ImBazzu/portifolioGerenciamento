@@ -30,7 +30,9 @@ public final class TipoListaBancoMapper {
                         regra.isObrigacaoAnexo(),
                         observacaoOpcional(regra.getDescricao()),
                         regra.getInicioHorario(),
-                        regra.getFinalHorario()))
+                        regra.getFinalHorario(),
+                        regra.getDiasSemana(),
+                        regra.getIntervaloRepetacao()))
                 .toList();
         var regrasSeparacao = entidade.getRegrasSeparacao().stream()
                 .map(regra -> RegraSeparacao.recriar(
@@ -72,10 +74,12 @@ public final class TipoListaBancoMapper {
             substituirConteudo(regraJpa.getIdsVeiculos(), regra.getIdsVeiculos());
             substituirConteudo(regraJpa.getIdsCidades(), regra.listaCidades());
             substituirConteudo(regraJpa.getPrioridades(), regra.getPrioridades());
+            substituirConteudo(regraJpa.getDiasSemana(), regra.getDiasSemana());
             regraJpa.setObrigacaoAnexo(regra.isObrigacaoAnexo());
             regraJpa.setDescricao(valorOpcional(regra.getDescricao()));
             regraJpa.setInicioHorario(regra.getInicioHorario());
             regraJpa.setFinalHorario(regra.getFinalHorario());
+            regraJpa.setIntervaloRepetacao(regra.getIntervaloRepetacaoRaw());
         }
 
         var regrasSeparacaoExistentes = entidade.getRegrasSeparacao().stream()
