@@ -2,6 +2,7 @@ package br.com.imbazzu.frontSpring.lista.adpter.out.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -23,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
@@ -52,7 +54,7 @@ class ListaApiTest {
         server = MockRestServiceServer.bindTo(clientBuilder).build();
         prioridades = mock(PrioridadeApi.class);
         when(prioridades.listar()).thenReturn(List.of(new PrioridadeApi.Prioridade(
-                UUID.fromString("00000000-0000-0000-0000-000000000003"), "ALTA", false, 0, false)));
+                UUID.fromString("00000000-0000-0000-0000-000000000003"), "ALTA", false, 0, false, 0)));
         api = new ListaApi(new RestClientProtegido(clientBuilder.build()), executarSemRefresh(), prioridades);
     }
 
@@ -68,6 +70,32 @@ class ListaApiTest {
     @AfterEach
     void verificarRequisicoes() {
         server.verify();
+    }
+
+    @Test
+    void prioridadeRecebeQuantidadeDeEspecificacoesDaApi() {
+        server.expect(requestTo("http://localhost:8080/api/prioridades"))
+                .andRespond(withSuccess("""
+                        [{"id":"00000000-0000-0000-0000-000000000003",
+                          "nome":"Alta","buscarNaResidencia":true,"quantidadeAcompanhantes":2,
+                          "arquivada":false,"quantidadeEspecificacoes":5}]
+                        """, MediaType.APPLICATION_JSON));
+        var apiPrioridades = new PrioridadeApi(new RestClientProtegido(clientBuilder.build()), executarSemRefresh());
+        var prioridade = apiPrioridades.listar().getFirst();
+        assertEquals(5, prioridade.quantidadeEspecificacoes());
+        assertEquals(2, prioridade.quantidadeAcompanhantes());
+    }
+
+    @Test
+    void prioridadeRejeitaRespostaSemContagem() {
+        server.expect(requestTo("http://localhost:8080/api/prioridades"))
+                .andRespond(withSuccess("""
+                        [{"id":"00000000-0000-0000-0000-000000000003",
+                          "nome":"Alta","buscarNaResidencia":true,"quantidadeAcompanhantes":2,
+                          "arquivada":false}]
+                        """, MediaType.APPLICATION_JSON));
+        var apiPrioridades = new PrioridadeApi(new RestClientProtegido(clientBuilder.build()), executarSemRefresh());
+        assertThrows(RestClientException.class, apiPrioridades::listar);
     }
 
     @Test

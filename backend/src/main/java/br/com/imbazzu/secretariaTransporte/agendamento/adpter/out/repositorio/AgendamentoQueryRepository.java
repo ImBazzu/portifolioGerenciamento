@@ -6,15 +6,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.entidadeJpa.AgendamentoJpa;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.AgendamentoProjecao;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.DestinoPorCidadeProjecao;
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.HistoricoViagemProjecao;
 
-public interface AgendamentoQueryRepository extends Repository<AgendamentoJpa, UUID> {
+public interface AgendamentoQueryRepository extends JpaRepository<AgendamentoJpa, UUID> {
 
     boolean existsByDataAndIdPessoa(LocalDate data, UUID idPessoa);
 
@@ -61,4 +64,50 @@ public interface AgendamentoQueryRepository extends Repository<AgendamentoJpa, U
                 JOIN DestinoJpa d ON d.id = a.idDestino
                 WHERE a.data = :data""")
      List<DestinoPorCidadeProjecao> buscarDestinosPorCidadeId(@Param("data") LocalDate data);
+
+    @Query("""
+            SELECT 
+                    a.id AS id,
+                    a.data AS data,
+                    a.horarioChegada AS horarioChegada,
+                    a.horarioChegada - FUNCTION('SEC_TO_TIME', a.tempoViagemSegundos) AS horarioSaidaNecessario,
+                    d.nome AS destinoNome,
+                    l.descricao AS listaDescricao,
+                    tv.nome AS tipoVeiculoNome,
+                    a.buscarNaResidencia AS buscarNaResidencia,
+                    a.acompanhantes AS acompanhantes
+            FROM AgendamentoJpa a
+            JOIN DestinoJpa d ON d.id = a.idDestino
+            JOIN TipoListaJpa l ON l.id = a.idLista
+            JOIN TipoVeiculoJpa tv ON tv.id = a.idTipoVeiculo
+            WHERE a.idPessoa = :idPessoa
+            ORDER BY a.data DESC
+            """)
+    Page<HistoricoViagemProjecao> buscarHistoricoViagensPorPessoa(
+            @Param("idPessoa") UUID idPessoa,
+            Pageable pageable);
+
+    @Query("""
+            SELECT 
+                    a.id AS id,
+                    a.data AS data,
+                    a.horarioChegada AS horarioChegada,
+                    a.horarioChegada - FUNCTION('SEC_TO_TIME', a.tempoViagemSegundos) AS horarioSaidaNecessario,
+                    d.nome AS destinoNome,
+                    l.descricao AS listaDescricao,
+                    tv.nome AS tipoVeiculoNome,
+                    a.buscarNaResidencia AS buscarNaResidencia,
+                    a.acompanhantes AS acompanhantes
+            FROM AgendamentoJpa a
+            JOIN DestinoJpa d ON d.id = a.idDestino
+            JOIN TipoListaJpa l ON l.id = a.idLista
+            JOIN TipoVeiculoJpa tv ON tv.id = a.idTipoVeiculo
+            WHERE a.idPessoa = :idPessoa
+            AND d.nome LIKE CONCAT('%', :destinoBusca, '%')
+            ORDER BY a.data DESC
+            """)
+    Page<HistoricoViagemProjecao> buscarHistoricoViagensPorPessoaComBusca(
+            @Param("idPessoa") UUID idPessoa,
+            @Param("destinoBusca") String destinoBusca,
+            Pageable pageable);
 }

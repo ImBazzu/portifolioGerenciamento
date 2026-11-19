@@ -23,7 +23,11 @@ Alterações de prioridade aplicam-se apenas a novos agendamentos. Agendamentos 
 
 Prioridades podem ser arquivadas e reativadas. Uma prioridade arquivada impede novos agendamentos das pessoas que a utilizam, sem apagar vínculos ou agendamentos existentes. A exclusão definitiva exige remover seus vínculos com especificações e regras de lista, inclusive arquivadas.
 
+A listagem de prioridades exibe a quantidade de especificações vinculadas, incluindo as arquivadas.
+
 As migrações criam as prioridades BAIXA, MODERADA, ALTA e URGENTE inicialmente sem busca na residência e sem acompanhantes, preservando as associações existentes. Faça backup do banco antes de atualizar e configure essas prioridades conforme a necessidade antes de criar novos agendamentos.
+
+**Atenção:** a migração V21 exclui as tabelas legadas `passageiros` e `veiculos` e todos os seus dados, sem migrá-los. Faça backup antes de atualizar. Os históricos passam a usar os agendamentos e veículos de agenda existentes; os dados legados não aparecerão nesses históricos.
 
 ## Arquitetura
 

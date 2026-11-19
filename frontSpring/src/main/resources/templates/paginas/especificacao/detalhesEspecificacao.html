@@ -6,6 +6,9 @@
                 <button th:unless="${arquivado}" class="btn btn-sm btn-light border"
                         hx:get="@{/especificacoes/abrirFormulario/{id}(id=${especificacao.id})}"
                         hx-target="#modal" hx-swap="innerHTML">Editar</button>
+                <button th:if="${arquivado}" type="button" class="btn btn-sm btn-outline-secondary"
+                        hx:get="@{/especificacoes/listar(arquivadas=true,nome=${nome},pagina=${paginaAtual})}"
+                        hx-target="#modal" hx-swap="innerHTML">Voltar</button>
                 <button type="button" class="btn-close"
                         hx:get="@{/especificacoes/limpar-modal}" hx-target="#modal" hx-swap="innerHTML"
                         aria-label="Fechar"></button>
@@ -51,7 +54,7 @@
                         Desarquivar
                     </button>
                     <button class="btn btn-outline-danger"
-                            hx:delete="@{/especificacoes/{id}(id=${especificacao.id})}"
+                            hx:delete="@{/especificacoes/{id}(id=${especificacao.id},nome=${nome},pagina=${paginaAtual})}"
                             hx-confirm="Excluir esta especificação definitivamente?" hx-target="#modal" hx-swap="innerHTML">
                         Excluir
                     </button>

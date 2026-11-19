@@ -1,12 +1,14 @@
 package br.com.imbazzu.frontSpring.especificacao.adpter.in.controller;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -48,7 +50,7 @@ class EspecificacaoControllerTest {
 
     @BeforeEach
     void configurarPrioridades() {
-        when(prioridades.listar()).thenReturn(List.of(new PrioridadeApi.Prioridade(PRIORIDADE_ID, "Alta", true, 2, false)));
+        when(prioridades.listar()).thenReturn(List.of(new PrioridadeApi.Prioridade(PRIORIDADE_ID, "Alta", true, 2, false, 0)));
     }
 
     @Test
@@ -69,6 +71,10 @@ class EspecificacaoControllerTest {
     void paginaIniciaCarregamentoDaTabela() throws Exception {
         mvc.perform(get("/especificacoes"))
                 .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<h1>Especificações</h1>")))
+                .andExpect(content().string(containsString("hx-get=\"/especificacoes/abrirFormulario\"")))
+                .andExpect(content().string(matchesPattern(
+                        "(?s).*hx-get=\"/especificacoes/listar\\?arquivadas=true\"\\s+hx-target=\"#modal\".*")))
                 .andExpect(content().string(containsString("hx-get=\"/especificacoes/listar\"")));
     }
 
@@ -76,15 +82,25 @@ class EspecificacaoControllerTest {
     void carregaTabelaDeArquivadasComPrioridade() throws Exception {
         var especificacao = new EspecificacaoResponseDto(UUID.randomUUID(), "Arquivada",
                 PRIORIDADE_ID, "Alta", null, LocalDate.of(2026, 1, 15));
-        when(application.listar("", true, 0))
-                .thenReturn(new ResultadoPaginado<>(List.of(especificacao), 0, 10, 1, 1));
+        when(application.listar("Arq", true, 1))
+                .thenReturn(new ResultadoPaginado<>(List.of(especificacao), 1, 10, 30, 3));
 
-        mvc.perform(get("/especificacoes/listar").param("arquivadas", "true").header("HX-Request", "true"))
+        mvc.perform(get("/especificacoes/listar").param("arquivadas", "true").param("nome", "Arq")
+                        .param("pagina", "1").header("HX-Request", "true"))
                 .andExpect(status().isOk())
+                .andExpect(content().string(containsString("aria-labelledby=\"especificacoesArquivadasTitulo\"")))
+                .andExpect(content().string(containsString("atualizar-especificacoes from:body")))
+                .andExpect(content().string(containsString("nome=Arq&amp;arquivadas=true&amp;pagina=2")))
+                .andExpect(content().string(containsString("hx-target=\"#modal\"")))
+                .andExpect(content().string(containsString("/especificacoes/" + especificacao.id() + "/desarquivar")))
                 .andExpect(content().string(containsString("Arquivada")))
                 .andExpect(content().string(containsString("Alta")))
                 .andExpect(content().string(containsString("badge text-bg-secondary")))
                 .andExpect(content().string(containsString("15/01/2026")));
+        mvc.perform(patch("/especificacoes/{id}/desarquivar", especificacao.id()).header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("HX-Trigger-After-Settle", "atualizar-especificacoes"));
+        verify(application).desarquivar(especificacao.id());
     }
 
     @Test
@@ -108,11 +124,13 @@ class EspecificacaoControllerTest {
         var id = UUID.randomUUID();
         when(application.buscarArquivado(id)).thenReturn(new EspecificacaoResponseDto(
                 id, "Transporte", PRIORIDADE_ID, "Alta", "Observação", LocalDate.of(2026, 1, 15)));
-        mvc.perform(get("/especificacoes/{id}/detalhes/arquivado", id).header("HX-Request", "true"))
+        mvc.perform(get("/especificacoes/{id}/detalhes/arquivado", id).param("nome", "Transporte")
+                        .param("pagina", "1").header("HX-Request", "true"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Observação")))
                 .andExpect(content().string(containsString("/especificacoes/" + id + "/desarquivar")))
-                .andExpect(content().string(containsString("hx-delete=\"/especificacoes/" + id + "\"")))
+                .andExpect(content().string(containsString("hx-delete=\"/especificacoes/" + id + "?nome=Transporte&amp;pagina=1\"")))
+                .andExpect(content().string(containsString("/especificacoes/listar?arquivadas=true&amp;nome=Transporte&amp;pagina=1")))
                 .andExpect(content().string(not(containsString("/" + id + "/arquivar"))));
         mvc.perform(delete("/especificacoes/{id}", id).header("HX-Request", "true"))
                 .andExpect(status().isOk())
@@ -128,9 +146,11 @@ class EspecificacaoControllerTest {
         doThrow(HttpClientErrorException.create(HttpStatus.CONFLICT, "Conflict", null,
                 "{\"message\":\"Especificação vinculada\"}".getBytes(java.nio.charset.StandardCharsets.UTF_8),
                 java.nio.charset.StandardCharsets.UTF_8)).when(application).excluir(id);
-        mvc.perform(delete("/especificacoes/{id}", id).header("HX-Request", "true"))
+        mvc.perform(delete("/especificacoes/{id}", id).param("nome", "Transporte").param("pagina", "1")
+                        .header("HX-Request", "true"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Especificação vinculada")))
+                .andExpect(content().string(containsString("/especificacoes/listar?arquivadas=true&amp;nome=Transporte&amp;pagina=1")))
                 .andExpect(header().doesNotExist("HX-Trigger-After-Settle"));
     }
 
@@ -175,14 +195,14 @@ class EspecificacaoControllerTest {
     void paginaPermiteArquivarReativarEExcluir() throws Exception {
         var arquivada = UUID.randomUUID();
         when(prioridades.listar()).thenReturn(List.of(
-                new PrioridadeApi.Prioridade(PRIORIDADE_ID, "Ativa", false, 0, false),
-                new PrioridadeApi.Prioridade(arquivada, "Arquivada", false, 0, true)));
-        when(prioridades.buscar(PRIORIDADE_ID)).thenReturn(new PrioridadeApi.Prioridade(PRIORIDADE_ID, "Ativa", true, 2, false));
-        when(prioridades.buscar(arquivada)).thenReturn(new PrioridadeApi.Prioridade(arquivada, "Arquivada", false, 0, true));
+                new PrioridadeApi.Prioridade(PRIORIDADE_ID, "Ativa", false, 0, false, 0),
+                new PrioridadeApi.Prioridade(arquivada, "Arquivada", false, 0, true, 0)));
+        when(prioridades.buscar(PRIORIDADE_ID)).thenReturn(new PrioridadeApi.Prioridade(PRIORIDADE_ID, "Ativa", true, 2, false, 0));
+        when(prioridades.buscar(arquivada)).thenReturn(new PrioridadeApi.Prioridade(arquivada, "Arquivada", false, 0, true, 0));
         mvc.perform(get("/prioridades"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("/prioridades/" + PRIORIDADE_ID + "/detalhes")))
-                .andExpect(content().string(containsString("/prioridades/" + arquivada + "/detalhes")))
+                .andExpect(content().string(not(containsString("/prioridades/" + arquivada + "/detalhes"))))
                 .andExpect(content().string(not(containsString("/excluir"))));
         mvc.perform(get("/prioridades/{id}/detalhes", PRIORIDADE_ID).header("HX-Request", "true"))
                 .andExpect(status().isOk())
@@ -206,7 +226,7 @@ class EspecificacaoControllerTest {
     @Test
     void prioridadeArquivadaApareceSomenteQuandoJaVinculada() throws Exception {
         var id = UUID.randomUUID();
-        when(prioridades.listar()).thenReturn(List.of(new PrioridadeApi.Prioridade(PRIORIDADE_ID, "Alta", true, 2, true)));
+        when(prioridades.listar()).thenReturn(List.of(new PrioridadeApi.Prioridade(PRIORIDADE_ID, "Alta", true, 2, true, 0)));
         when(application.buscar(id)).thenReturn(new EspecificacaoResponseDto(
                 id, "Transporte", PRIORIDADE_ID, "Alta", "", null));
         mvc.perform(get("/especificacoes/abrirFormulario").header("HX-Request", "true"))

@@ -38,6 +38,10 @@
                     <form th:action="@{/prioridades/{id}/excluir(id=${prioridade.id()})}" method="post" onsubmit="return confirm('Excluir esta prioridade definitivamente?')">
                         <button class="btn btn-outline-danger" type="submit">Excluir</button>
                     </form>
+                    <button type="button" class="btn btn-light border"
+                            hx:get="@{/prioridades/listarArquivadas}" hx-target="#modal" hx-swap="innerHTML">
+                        Voltar às arquivadas
+                    </button>
                 </th:block>
                 <button type="button" class="btn btn-light border ms-auto"
                         hx:get="@{/prioridades/limpar-modal}" hx-target="#modal" hx-swap="innerHTML">Fechar</button>

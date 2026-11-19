@@ -1,12 +1,8 @@
 <th:block th:fragment="formEspecificacao" th:with="edicao=${id != null}">
     <div class="custom-modal-backdrop">
-        <div class="custom-modal-card bg-white rounded shadow-lg p-4">
-            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
-                <h5 class="fw-bold m-0" th:text="${edicao ? 'Editar Especificação' : 'Cadastrar Especificação'}">Especificação</h5>
-                <button type="button" class="btn-close"
-                        hx:get="@{/especificacoes/limpar-modal}" hx-target="#modal" hx-swap="innerHTML"
-                        aria-label="Fechar"></button>
-            </div>
+        <section class="custom-modal-card custom-modal-form bg-white rounded shadow-lg p-4"
+                 role="dialog" aria-modal="true" aria-labelledby="formEspecificacaoTitulo">
+            <header th:replace="~{fragmentos/componentes :: cabecalhoModal(${edicao ? 'Editar Especificação' : 'Cadastrar Especificação'}, 'formEspecificacaoTitulo', @{/especificacoes/limpar-modal})}"></header>
 
             <form th:object="${especificacao}"
                   hx:post="${!edicao} ? @{/especificacoes} : null"
@@ -57,6 +53,6 @@
                     </button>
                 </div>
             </form>
-        </div>
+        </section>
     </div>
 </th:block>

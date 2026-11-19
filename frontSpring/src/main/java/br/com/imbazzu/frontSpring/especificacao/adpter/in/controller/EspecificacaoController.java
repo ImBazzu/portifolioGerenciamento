@@ -99,8 +99,12 @@ public class EspecificacaoController {
 
     @HxRequest
     @GetMapping("/{id}/detalhes/arquivado")
-    public String detalhesArquivado(@PathVariable UUID id, Model model) {
+    public String detalhesArquivado(@PathVariable UUID id,
+                                    @RequestParam(defaultValue = "") String nome,
+                                    @RequestParam(defaultValue = "0") int pagina, Model model) {
         model.addAttribute("arquivado", true);
+        model.addAttribute("nome", nome);
+        model.addAttribute("paginaAtual", pagina);
         model.addAttribute("especificacao", application.buscarArquivado(id));
         return "paginas/especificacao/detalhesEspecificacao :: detalhesEspecificacao";
     }
@@ -180,7 +184,10 @@ public class EspecificacaoController {
 
     @HxRequest
     @DeleteMapping("/{id}")
-    public String excluir(@PathVariable UUID id, Model model, HttpServletResponse response) {
+    public String excluir(@PathVariable UUID id,
+                          @RequestParam(defaultValue = "") String nome,
+                          @RequestParam(defaultValue = "0") int pagina,
+                          Model model, HttpServletResponse response) {
         var especificacao = application.buscarArquivado(id);
         try {
             application.excluir(id);
@@ -188,6 +195,8 @@ public class EspecificacaoController {
             return "layout/vazio :: vazio";
         } catch (RestClientResponseException e) {
             model.addAttribute("arquivado", true);
+            model.addAttribute("nome", nome);
+            model.addAttribute("paginaAtual", pagina);
             model.addAttribute("especificacao", especificacao);
             model.addAttribute("erroGlobal", mensagemErro.de(e));
             return "paginas/especificacao/detalhesEspecificacao :: detalhesEspecificacao";

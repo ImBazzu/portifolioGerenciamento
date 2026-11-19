@@ -20,8 +20,10 @@ public interface TipoVeiculoQueryRepository extends JpaRepository<TipoVeiculoJpa
                         SELECT CASE 
                                 WHEN COUNT(v) > 0 THEN true 
                                 ELSE false END
-                        FROM VeiculoJpa v
-                        WHERE v.idTipoVeiculo = :tipoVeiculoId
+                        FROM TipoVeiculoJpa v
+                        WHERE v.id = :tipoVeiculoId
+                        AND (EXISTS (SELECT a.id FROM AgendamentoJpa a WHERE a.idTipoVeiculo = v.id)
+                             OR EXISTS (SELECT va.id FROM VeiculoAgendaJpa va WHERE va.idTipoVeiculo = v.id))
                 """)
         boolean existeVeiculoUsandoTipoVeiculo(@Param("tipoVeiculoId") UUID tipoVeiculoId);
 

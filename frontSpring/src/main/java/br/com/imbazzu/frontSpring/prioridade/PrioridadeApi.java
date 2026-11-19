@@ -7,13 +7,17 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
 import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
 
 @Service
 public class PrioridadeApi {
     public record Prioridade(UUID id, String nome, boolean buscarNaResidencia, int quantidadeAcompanhantes,
-                             boolean arquivada) {}
+                             boolean arquivada,
+                             @JsonProperty(value = "quantidadeEspecificacoes", required = true)
+                             long quantidadeEspecificacoes) {}
     public record Dados(String nome, boolean buscarNaResidencia, int quantidadeAcompanhantes) {}
 
     private final RestClient api;

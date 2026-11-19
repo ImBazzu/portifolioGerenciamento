@@ -29,8 +29,17 @@ public class PrioridadeController {
     @GetMapping
     public String listar(Model model) {
         model.addAttribute("pagina", "prioridades");
-        model.addAttribute("prioridades", api.listar());
+        model.addAttribute("prioridades", api.listar().stream()
+                .filter(prioridade -> !prioridade.arquivada()).toList());
         return "paginas/prioridade/prioridades";
+    }
+
+    @HxRequest
+    @GetMapping("/listarArquivadas")
+    public String listarArquivadas(Model model) {
+        model.addAttribute("prioridades", api.listar().stream()
+                .filter(PrioridadeApi.Prioridade::arquivada).toList());
+        return "paginas/prioridade/tabPrioridadesArquivadas :: tabPrioridadesArquivadas";
     }
 
     @HxRequest

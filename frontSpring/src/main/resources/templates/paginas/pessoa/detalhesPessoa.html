@@ -17,7 +17,7 @@
                 
                 <div class="d-flex gap-2 align-items-center">
                     <!-- Botão Editar (ajustando para passar o parâmetro arquivado se necessário) -->
-                    <button class="btn btn-sm btn-light border"
+                    <button th:unless="${arquivado}" class="btn btn-sm btn-light border"
                             hx:get="@{/pessoas/abrirFormulario/{id}(id=${pessoa.id()}, arquivado=${arquivado})}"
                             hx-target="#modal" hx-swap="innerHTML"
                             title="Editar Pessoa">
@@ -27,7 +27,7 @@
                     <!-- Botão Voltar (aparece se estiver arquivado) -->
                     <button th:if="${arquivado}"
                             class="btn btn-sm btn-outline-secondary"
-                            hx:get="@{/pessoas/listarArquivados}"
+                            hx:get="@{/pessoas/listar(arquivadas=true,nome=${nome},pagina=${paginaAtual})}"
                             hx-target="#modal"
                             hx-swap="innerHTML">
                         <i class="bi bi-arrow-left me-1"></i> Voltar

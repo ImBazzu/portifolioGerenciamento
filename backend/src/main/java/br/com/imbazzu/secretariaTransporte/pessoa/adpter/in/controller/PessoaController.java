@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.imbazzu.secretariaTransporte.compartilhados.domain.pagination.ResultadoPaginado;
 import br.com.imbazzu.secretariaTransporte.pessoa.adpter.in.controller.dto.PessoaRequestDto;
 import br.com.imbazzu.secretariaTransporte.pessoa.adpter.in.controller.dto.PessoaResponseDto;
+import br.com.imbazzu.secretariaTransporte.pessoa.adpter.in.controller.dto.PessoaDetalhesResponseDto;
+import br.com.imbazzu.secretariaTransporte.pessoa.adpter.in.controller.dto.PessoaComHistoricoResponseDto;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.arquivar.PessoaCommandArquivar;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.arquivar.PessoaCommandArquivarHandler;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.deletar.PessoaCommandDeletar;
@@ -36,6 +38,9 @@ import br.com.imbazzu.secretariaTransporte.pessoa.application.query.listar.Pesso
 import br.com.imbazzu.secretariaTransporte.pessoa.application.query.listar.PessoaQueryListarHandler;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.query.listarArquivado.PessoaQueryListarArquivado;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.query.listarArquivado.PessoaQueryListarArquivadoHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.query.historico.AgendamentoQueryListarHistoricoPessoa;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.query.historico.AgendamentoQueryListarHistoricoPessoaHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.HistoricoViagemResponseDto;
 import br.com.imbazzu.secretariaTransporte.pessoa.core.domain.Pessoa;
 import br.com.imbazzu.secretariaTransporte.prioridade.PrioridadeRepository;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.EntidadeNaoEncontradoException;
@@ -62,6 +67,7 @@ public class PessoaController {
     private final PessoaQueryListarHandler listarHandler;
     private final PessoaQueryListarArquivadoHandler listarArquivadoHandler;
     private final PrioridadeRepository prioridades;
+    private final AgendamentoQueryListarHistoricoPessoaHandler historicoHandler;
 
     @PostMapping
     public ResponseEntity<Void> criar(@RequestBody @Valid PessoaRequestDto request) {
@@ -125,6 +131,33 @@ public class PessoaController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{id}/detalhes-completo")
+    public ResponseEntity<PessoaComHistoricoResponseDto> buscarDetalhesCompleto(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "") String destinoBusca,
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "10") int tamanho) {
+        var pessoa = buscarHandler.handler(new PessoaQueryBuscar(id));
+        var historicoViagens = historicoHandler.handler(
+                new AgendamentoQueryListarHistoricoPessoa(id, destinoBusca, pagina, tamanho));
+        
+        return ResponseEntity.ok(new PessoaComHistoricoResponseDto(
+                toResponseDetalhes(pessoa),
+                historicoViagens
+        ));
+    }
+
+    @GetMapping("/{id}/historico-viagens")
+    public ResponseEntity<ResultadoPaginado<HistoricoViagemResponseDto>> buscarHistoricoViagens(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "") String destinoBusca,
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "10") int tamanho) {
+        var resultado = historicoHandler.handler(
+                new AgendamentoQueryListarHistoricoPessoa(id, destinoBusca, pagina, tamanho));
+        return ResponseEntity.ok(resultado);
+    }
+
     private PessoaResponseDto toResponse(Pessoa pessoa) {
         var prioridade = prioridades.findById(pessoa.getEspecificacao().getPrioridade())
                 .orElseThrow(() -> new EntidadeNaoEncontradoException("Prioridade não encontrada"));
@@ -141,6 +174,27 @@ public class PessoaController {
                 pessoa.isBuscarNaResidencia(),
                 pessoa.getQuantidadeAcompanhantes(),
                 pessoa.getDataArquivado(),
+                pessoa.getEndereco() == null ? null : pessoa.getEndereco().valor(),
+                pessoa.getCpf() == null ? null : pessoa.getCpf().valor(),
+                pessoa.getTelefone().valor());
+    }
+
+    private PessoaDetalhesResponseDto toResponseDetalhes(Pessoa pessoa) {
+        var prioridade = prioridades.findById(pessoa.getEspecificacao().getPrioridade())
+                .orElseThrow(() -> new EntidadeNaoEncontradoException("Prioridade não encontrada"));
+        return new PessoaDetalhesResponseDto(
+                pessoa.getId(),
+                pessoa.getNome().valor(),
+                pessoa.getObservacao() == null ? null : pessoa.getObservacao().valor(),
+                pessoa.getEspecificacao().getId(),
+                pessoa.getEspecificacao().getNome(),
+                prioridade.getNome(),
+                prioridade.getId(),
+                prioridade.isBuscarNaResidencia(),
+                prioridade.getQuantidadeAcompanhantes(),
+                pessoa.isBuscarNaResidencia(),
+                pessoa.getQuantidadeAcompanhantes(),
+                pessoa.getDataArquivado() == null ? null : pessoa.getDataArquivado().toString(),
                 pessoa.getEndereco() == null ? null : pessoa.getEndereco().valor(),
                 pessoa.getCpf() == null ? null : pessoa.getCpf().valor(),
                 pessoa.getTelefone().valor());

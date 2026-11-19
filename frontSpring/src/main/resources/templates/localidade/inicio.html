@@ -9,12 +9,8 @@
 
     <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
         <div th:fragment="conteudo" class="app-page">
-            <header class="app-page-header">
-                <div>
-                    <h1>Cidades e destinos</h1>
-                    <p>Gerencie as cidades e os destinos disponíveis.</p>
-                </div>
-                <div class="app-page-actions">
+            <header th:replace="~{fragmentos/componentes :: cabecalhoPagina('Cidades e destinos', 'Gerencie as cidades e os destinos disponíveis.', ~{::acoes})}">
+                <div th:fragment="acoes" class="app-page-actions">
                     <button class="btn btn-outline-secondary"
                             hx:get="@{/localidade/listarArquivado}"
                             hx-target="#modal"

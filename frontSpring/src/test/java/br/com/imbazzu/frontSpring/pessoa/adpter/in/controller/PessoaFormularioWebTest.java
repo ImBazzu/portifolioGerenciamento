@@ -1,10 +1,12 @@
 package br.com.imbazzu.frontSpring.pessoa.adpter.in.controller;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -58,7 +60,21 @@ class PessoaFormularioWebTest {
     void formularioNovoExibeCamposComValoresIniciais() throws Exception {
         mvc.perform(get("/pessoas/abrirFormulario").header("HX-Request", "true"))
                 .andExpect(status().isOk())
+                .andExpect(content().string(containsString("id=\"formPessoaTitulo\"")))
+                .andExpect(content().string(containsString("Cadastrar Pessoa")))
+                .andExpect(content().string(containsString("hx-get=\"/pessoas/limpar-modal\"")))
+                .andExpect(content().string(containsString("hx-post=\"/pessoas")))
                 .andExpect(content().string(containsString("Busca na residência e acompanhantes são definidos")));
+    }
+
+    @Test
+    void paginaExibeCabecalhoEConservaAcoesHtmx() throws Exception {
+        mvc.perform(get("/pessoas"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<h1>Pessoas</h1>")))
+                .andExpect(content().string(containsString("hx-get=\"/pessoas/abrirFormulario\"")))
+                .andExpect(content().string(matchesPattern(
+                        "(?s).*hx-get=\"/pessoas/listar\\?arquivadas=true\"\\s+hx-target=\"#modal\".*")));
     }
 
     @Test
@@ -83,6 +99,8 @@ class PessoaFormularioWebTest {
 
         mvc.perform(get("/pessoas/abrirFormulario/{id}", PESSOA_ID).header("HX-Request", "true"))
                 .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Editar Pessoa")))
+                .andExpect(content().string(containsString("hx-put=\"/pessoas/" + PESSOA_ID + "\"")))
                 .andExpect(content().string(not(containsString("name=\"quantidadeAcompanhantes\""))))
                 .andExpect(content().string(not(containsString("name=\"buscarNaResidencia\""))));
 
@@ -122,15 +140,28 @@ class PessoaFormularioWebTest {
     void apresentaDetalhesEListaArquivada() throws Exception {
         var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
                 "Alta", PRIORIDADE_ID, true, 2, true, 2, LocalDate.of(2026, 1, 15), "", "52998224725", "11987654321");
-        when(pessoas.listar("", true, 0))
-                .thenReturn(new ResultadoPaginado<>(List.of(pessoa), 0, 10, 1, 1));
+        when(pessoas.listar("Ana", true, 1))
+                .thenReturn(new ResultadoPaginado<>(List.of(pessoa), 1, 10, 30, 3));
         when(pessoas.buscarArquivado(PESSOA_ID)).thenReturn(pessoa);
 
-        mvc.perform(get("/pessoas/listar").param("arquivadas", "true").header("HX-Request", "true"))
+        mvc.perform(get("/pessoas/listar").param("arquivadas", "true").param("nome", "Ana")
+                        .param("pagina", "1").header("HX-Request", "true"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("15/01/2026")));
-        mvc.perform(get("/pessoas/{id}/detalhes/arquivado", PESSOA_ID).header("HX-Request", "true"))
+                .andExpect(content().string(containsString("15/01/2026")))
+                .andExpect(content().string(containsString("aria-labelledby=\"pessoasArquivadasTitulo\"")))
+                .andExpect(content().string(containsString("atualizar-pessoas from:body")))
+                .andExpect(content().string(containsString("nome=Ana&amp;arquivadas=true&amp;pagina=2")))
+                .andExpect(content().string(containsString("hx-target=\"#modal\"")))
+                .andExpect(content().string(containsString("/pessoas/" + PESSOA_ID + "/desarquivar")));
+        mvc.perform(get("/pessoas/{id}/detalhes/arquivado", PESSOA_ID)
+                        .param("nome", "Ana").param("pagina", "1").header("HX-Request", "true"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Ana Souza")));
+                .andExpect(content().string(containsString("Ana Souza")))
+                .andExpect(content().string(containsString("/pessoas/listar?arquivadas=true&amp;nome=Ana&amp;pagina=1")))
+                .andExpect(content().string(not(containsString("/pessoas/abrirFormulario/"))));
+        mvc.perform(patch("/pessoas/{id}/desarquivar", PESSOA_ID).header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("HX-Trigger-After-Settle", "atualizar-pessoas"));
+        verify(pessoas).desarquivar(PESSOA_ID);
     }
 }

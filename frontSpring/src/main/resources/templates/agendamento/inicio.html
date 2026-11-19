@@ -8,7 +8,7 @@
     <aside th:replace="~{layout/sidebar :: sidebar}"></aside>
 
     <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
-        <div th:fragment="conteudo" class="app-page container-fluid px-4 py-4">
+        <div th:fragment="conteudo" class="app-page">
 
             <!-- PASSO 1: SELEÇÃO INICIAL DE DATA (Quando não há ?data= na URL) -->
             <th:block th:replace="~{agendamento/fragmentos/selecao-data :: selecaoData}"></th:block>

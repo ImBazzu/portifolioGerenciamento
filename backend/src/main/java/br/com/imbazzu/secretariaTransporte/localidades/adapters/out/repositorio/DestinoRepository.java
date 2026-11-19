@@ -56,7 +56,7 @@ public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
                 d.cidadeId = :idCidade
                 AND
                 d.dataArquivado is not null
-            GROUP BY d.id, d.nome""", countQuery = """
+            GROUP BY d.id, d.nome, d.dataArquivado""", countQuery = """
             SELECT
                 COUNT(d)
             FROM
@@ -74,19 +74,17 @@ public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
 
     @Query(value = """
                 SELECT
-                    v.dataSaida as data,
+                    p.data as data,
                     COUNT(DISTINCT p.id) as quantidade
                 FROM DestinoJpa d
-                JOIN PassageiroJpa p ON d.id = p.destinoId
-                JOIN VeiculoJpa v ON p.veiculoId = v.id
+                JOIN AgendamentoJpa p ON d.id = p.idDestino
                 WHERE d.id = :id
-                GROUP BY v.dataSaida
-                ORDER BY v.dataSaida DESC
+                GROUP BY p.data
+                ORDER BY p.data DESC
             """, countQuery = """
-                SELECT COUNT(DISTINCT v.dataSaida)
+                SELECT COUNT(DISTINCT p.data)
                 FROM DestinoJpa d 
-                JOIN PassageiroJpa p ON d.id = p.destinoId 
-                JOIN VeiculoJpa v on p.veiculoId = v.id
+                JOIN AgendamentoJpa p ON d.id = p.idDestino
                 WHERE d.id = :id
             """)
     Page<DestinoProjecoesHistorico> buscarHistorico(@Param("id") UUID id, Pageable pageable);
@@ -99,7 +97,7 @@ public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
             FROM
                 DestinoJpa d
             LEFT JOIN
-                PassageiroJpa p ON d.id = p.destinoId
+                AgendamentoJpa p ON d.id = p.idDestino
             WHERE
                 d.id = :id
                 AND d.dataArquivado IS NULL
@@ -115,7 +113,7 @@ public interface DestinoRepository extends JpaRepository<DestinoJpa, UUID> {
             FROM
                 DestinoJpa d
             LEFT JOIN
-                PassageiroJpa p ON d.id = p.destinoId
+                AgendamentoJpa p ON d.id = p.idDestino
             WHERE
                 d.id = :id
                 AND d.dataArquivado IS NOT NULL

@@ -11,12 +11,8 @@
 
     <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
         <div th:fragment="conteudo" class="app-page">
-            <header class="app-page-header">
-                <div>
-                    <h1>Tipos de veículos</h1>
-                    <p>Gerencie os veículos disponíveis para o transporte.</p>
-                </div>
-                <div class="app-page-actions">
+            <header th:replace="~{fragmentos/componentes :: cabecalhoPagina('Tipos de veículos', 'Gerencie os veículos disponíveis para o transporte.', ~{::acoes})}">
+                <div th:fragment="acoes" class="app-page-actions">
                     <button class="btn btn-outline-secondary"
                             hx:get="@{/veiculo/listarArquivado}"
                             hx-target="#modal"

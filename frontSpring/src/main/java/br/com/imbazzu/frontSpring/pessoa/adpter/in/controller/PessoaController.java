@@ -104,8 +104,12 @@ public class PessoaController {
 
     @HxRequest
     @GetMapping("/{id}/detalhes/arquivado")
-    public String detalhesArquivado(@PathVariable UUID id, Model model) {
+    public String detalhesArquivado(@PathVariable UUID id,
+                                    @RequestParam(defaultValue = "") String nome,
+                                    @RequestParam(defaultValue = "0") int pagina, Model model) {
         model.addAttribute("arquivado", true);
+        model.addAttribute("nome", nome);
+        model.addAttribute("paginaAtual", pagina);
         model.addAttribute("pessoa", application.buscarArquivado(id));
         return "paginas/pessoa/detalhesPessoa :: detalhesPessoa";
     }

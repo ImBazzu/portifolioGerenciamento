@@ -8,7 +8,18 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface PrioridadeRepository extends JpaRepository<PrioridadeJpa, UUID> {
-    List<PrioridadeJpa> findAllByOrderByNomeAsc();
+    interface PrioridadeComTotal {
+        PrioridadeJpa getPrioridade();
+        long getTotal();
+    }
+
+    @Query("select p as prioridade, count(e) as total from PrioridadeJpa p "
+            + "left join EspecificacaoJpa e on e.prioridade = p.id group by p order by p.nome")
+    List<PrioridadeComTotal> listarComTotalEspecificacoes();
+
+    @Query("select count(e) from EspecificacaoJpa e where e.prioridade = :id")
+    long contarEspecificacoes(@Param("id") UUID id);
+
     boolean existsByNomeIgnoreCase(String nome);
     boolean existsByNomeIgnoreCaseAndIdNot(String nome, UUID id);
 

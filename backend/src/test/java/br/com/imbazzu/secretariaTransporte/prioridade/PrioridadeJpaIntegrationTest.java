@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.util.UUID;
 import java.util.List;
 
@@ -102,6 +103,31 @@ class PrioridadeJpaIntegrationTest {
         var editada = controller.editar(criada.id(), new PrioridadeController.Request("Especial atualizada", false, 1));
         assertEquals("Especial atualizada", prioridades.findById(criada.id()).orElseThrow().getNome());
         assertEquals(1, editada.quantidadeAcompanhantes());
+    }
+
+    @Test
+    void contaEspecificacoesVinculadasInclusiveArquivadas() {
+        var primeira = controller.criar(new PrioridadeController.Request("Contagem primeira", true, 2)).getBody();
+        var segunda = controller.criar(new PrioridadeController.Request("Contagem segunda", false, 0)).getBody();
+        assertEquals(0, primeira.quantidadeEspecificacoes());
+        var ativa = salvarEspecificacao.handler(new EspecificacaoCommandSalvar("Contagem ativa", primeira.id(), null));
+        var arquivada = salvarEspecificacao.handler(new EspecificacaoCommandSalvar("Contagem arquivada", primeira.id(), null));
+        var entidade = especificacoes.findById(arquivada).orElseThrow();
+        entidade.setDataArquivado(LocalDate.now());
+        especificacoes.saveAndFlush(entidade);
+
+        assertEquals(2, controller.buscar(primeira.id()).quantidadeEspecificacoes());
+        assertEquals(0, controller.buscar(segunda.id()).quantidadeEspecificacoes());
+        assertEquals(2, controller.listar().stream().filter(p -> p.id().equals(primeira.id()))
+                .findFirst().orElseThrow().quantidadeEspecificacoes());
+        assertEquals(0, controller.listar().stream().filter(p -> p.id().equals(segunda.id()))
+                .findFirst().orElseThrow().quantidadeEspecificacoes());
+
+        editarEspecificacao.handler(new EspecificacaoCommandEditar(ativa, "Contagem ativa", segunda.id(), null));
+        assertEquals(1, controller.buscar(primeira.id()).quantidadeEspecificacoes());
+        assertEquals(1, controller.buscar(segunda.id()).quantidadeEspecificacoes());
+        assertEquals(1, controller.editar(segunda.id(),
+                new PrioridadeController.Request("Contagem segunda", false, 0)).quantidadeEspecificacoes());
     }
 
     @Test

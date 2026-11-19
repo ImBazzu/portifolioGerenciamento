@@ -39,23 +39,25 @@ public class PrioridadeController {
                           @NotNull @Min(0) Integer quantidadeAcompanhantes) {}
 
     public record Response(UUID id, String nome, boolean buscarNaResidencia, int quantidadeAcompanhantes,
-                           boolean arquivada) {
-        static Response de(PrioridadeJpa prioridade) {
+                           boolean arquivada, long quantidadeEspecificacoes) {
+        static Response de(PrioridadeJpa prioridade, long quantidadeEspecificacoes) {
             return new Response(prioridade.getId(), prioridade.getNome(), prioridade.isBuscarNaResidencia(),
-                    prioridade.getQuantidadeAcompanhantes(), prioridade.getDataArquivado() != null);
+                    prioridade.getQuantidadeAcompanhantes(), prioridade.getDataArquivado() != null,
+                    quantidadeEspecificacoes);
         }
     }
 
     @GetMapping
     @Transactional(readOnly = true)
     public List<Response> listar() {
-        return repository.findAllByOrderByNomeAsc().stream().map(Response::de).toList();
+        return repository.listarComTotalEspecificacoes().stream()
+                .map(item -> Response.de(item.getPrioridade(), item.getTotal())).toList();
     }
 
     @GetMapping("/{id}")
     @Transactional(readOnly = true)
     public Response buscar(@PathVariable UUID id) {
-        return Response.de(encontrar(id));
+        return Response.de(encontrar(id), repository.contarEspecificacoes(id));
     }
 
     @PostMapping
@@ -70,7 +72,7 @@ public class PrioridadeController {
         atualizar(prioridade, request, nome);
         repository.saveAndFlush(prioridade);
         return ResponseEntity.created(URI.create("/api/prioridades/" + prioridade.getId()))
-                .body(Response.de(prioridade));
+                .body(Response.de(prioridade, 0));
     }
 
     @PutMapping("/{id}")
@@ -82,7 +84,7 @@ public class PrioridadeController {
             throw new EntidadeDuplicadaException("Já existe uma prioridade com este nome");
         }
         atualizar(prioridade, request, nome);
-        return Response.de(repository.saveAndFlush(prioridade));
+        return Response.de(repository.saveAndFlush(prioridade), repository.contarEspecificacoes(id));
     }
 
     @PatchMapping("/{id}/arquivar")

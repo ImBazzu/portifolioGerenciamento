@@ -9,12 +9,8 @@
 
     <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
         <div th:fragment="conteudo" class="app-page lista-page">
-            <header class="app-page-header lista-page-header">
-                <div>
-                    <h1>Listas</h1>
-                    <p>Organize listas de transporte, regras de cadastro e atendimento.</p>
-                </div>
-                <div class="app-page-actions lista-page-actions">
+            <header th:replace="~{fragmentos/componentes :: cabecalhoPagina('Listas', 'Organize listas de transporte, regras de cadastro e atendimento.', ~{::acoes})}">
+                <div th:fragment="acoes" class="app-page-actions lista-page-actions">
                     <button type="button" class="btn btn-light lista-secondary-action"
                             hx:get="@{/listas/listarArquivadas}"
                             hx-target="#modal"

@@ -5,22 +5,11 @@
     <!-- Backdrop escuro fixo -->
     <div class="custom-modal-backdrop">
         <!-- Cartão / Caixa do Modal -->
-        <div class="custom-modal-card bg-white rounded shadow-lg p-4">
+        <section class="custom-modal-card custom-modal-form bg-white rounded shadow-lg p-4"
+                 role="dialog" aria-modal="true" aria-labelledby="modalVeiculoLabel">
 
             <!-- Header -->
-            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
-                <h5 class="fw-bold m-0" id="modalVeiculoLabel"
-                    th:text="${edicao ? 'Editar Veículo' : 'Cadastrar Veículo'}">Título</h5>
-
-                <!-- Botão de Fechar que limpa o modal via HTMX -->
-                <button type="button"
-                        class="btn-close"
-                        hx:get="@{/veiculo/limpar-modal}"
-                        hx-target="#modal"
-                        hx-swap="innerHTML"
-                        aria-label="Close"
-                        title="Fechar"></button>
-            </div>
+            <header th:replace="~{fragmentos/componentes :: cabecalhoModal(${edicao ? 'Editar Veículo' : 'Cadastrar Veículo'}, 'modalVeiculoLabel', @{/veiculo/limpar-modal})}"></header>
 
             <!-- Formulário -->
             <form th:object="${veiculo}"
@@ -86,7 +75,7 @@
                 </div>
             </form>
 
-        </div>
+        </section>
     </div>
 
 </th:block>

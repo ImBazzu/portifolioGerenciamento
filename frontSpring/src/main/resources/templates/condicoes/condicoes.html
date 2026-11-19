@@ -17,12 +17,8 @@
             <div th:fragment="conteudo" class="app-page">
 
                 <!-- Cabeçalho -->
-                <header class="app-page-header">
-                    <div>
-                        <h1>Condições</h1>
-                        <p>Gerencie os níveis e as especificações das condições.</p>
-                    </div>
-                    <div class="app-page-actions">
+                <header th:replace="~{fragmentos/componentes :: cabecalhoPagina('Condições', 'Gerencie os níveis e as especificações das condições.', ~{::acoes})}">
+                    <div th:fragment="acoes" class="app-page-actions">
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalNovoNivel">
                             <i class="bi bi-plus-lg me-1"></i> Novo nível
                         </button>

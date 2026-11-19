@@ -11,6 +11,7 @@ import br.com.imbazzu.secretariaTransporte.compartilhados.valueObjects.Nome;
 import br.com.imbazzu.secretariaTransporte.especificacao.core.domain.Especificacao;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.query.buscar.PessoaQueryBuscar;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.query.buscar.PessoaQueryBuscarHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.query.historico.AgendamentoQueryListarHistoricoPessoaHandler;
 import java.util.Optional;
 import java.util.UUID;
 import br.com.imbazzu.secretariaTransporte.prioridade.PrioridadeJpa;
@@ -22,11 +23,12 @@ class PessoaControllerTest {
     void respostaIncluiPrioridadeDaEspecificacao() {
         var buscar = mock(PessoaQueryBuscarHandler.class);
         var prioridades = mock(PrioridadeRepository.class);
+        var historicoHandler = mock(AgendamentoQueryListarHistoricoPessoaHandler.class);
         var prioridade = new PrioridadeJpa();
         prioridade.setId(UUID.randomUUID());
         prioridade.setNome("ALTA");
         when(prioridades.findById(prioridade.getId())).thenReturn(Optional.of(prioridade));
-        var controller = new PessoaController(null, null, null, null, null, buscar, null, null, null, prioridades);
+        var controller = new PessoaController(null, null, null, null, null, buscar, null, null, null, prioridades, historicoHandler);
         var especificacao = Especificacao.criar("Padrão", prioridade.getId(), null);
         var pessoa = Pessoa.criar(new Nome("Ana Souza"), null, especificacao, true, 2,
                 null, null, new Telefone("11987654321"));
@@ -39,3 +41,4 @@ class PessoaControllerTest {
         assertEquals(2, resposta.quantidadeAcompanhantes());
     }
 }
+

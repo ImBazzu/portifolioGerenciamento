@@ -11,25 +11,26 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
-import br.com.imbazzu.secretariaTransporte.veiculo.adpter.out.entidadeJpa.VeiculoJpa;
+import br.com.imbazzu.secretariaTransporte.veiculo.adpter.out.entidadeJpa.VeiculoAgendaJpa;
 import br.com.imbazzu.secretariaTransporte.veiculo.adpter.out.repositorio.projecoes.VeiculoHistoricoCidadeProjecao;
 import br.com.imbazzu.secretariaTransporte.veiculo.adpter.out.repositorio.projecoes.VeiculoHistoricoResumoProjecao;
 
-public interface VeiculoQueryRepository extends Repository<VeiculoJpa, UUID> {
+public interface VeiculoQueryRepository extends Repository<VeiculoAgendaJpa, UUID> {
 
     @Query(value = """
             SELECT
-                v.dataSaida AS data,
-                COUNT(v.id) AS qtdVeiculo,
-                SUM(v.qtdPassageiros) AS totalPassageiros
-            FROM VeiculoJpa v
+                v.data AS data,
+                COUNT(DISTINCT v.id) AS qtdVeiculo,
+                COALESCE(SUM(p.acompanhantes + 1), 0) AS totalPassageiros
+            FROM VeiculoAgendaJpa v
+            LEFT JOIN AgendamentoJpa p ON p.idVeiculoAberto = v.id
             WHERE v.idTipoVeiculo = :idTipoVeiculo
-            GROUP BY v.dataSaida
-            ORDER BY v.dataSaida DESC
+            GROUP BY v.data
+            ORDER BY v.data DESC
             """,
             countQuery = """
-            SELECT COUNT(DISTINCT v.dataSaida)
-            FROM VeiculoJpa v
+            SELECT COUNT(DISTINCT v.data)
+            FROM VeiculoAgendaJpa v
             WHERE v.idTipoVeiculo = :idTipoVeiculo
             """)
     Page<VeiculoHistoricoResumoProjecao> buscarResumo(
@@ -38,14 +39,14 @@ public interface VeiculoQueryRepository extends Repository<VeiculoJpa, UUID> {
 
     @Query("""
             SELECT DISTINCT
-                v.dataSaida AS data,
+                v.data AS data,
                 c.nome AS cidade
-            FROM VeiculoJpa v
-            JOIN PassageiroJpa p ON p.veiculoId = v.id
-            JOIN DestinoJpa d ON d.id = p.destinoId
+            FROM VeiculoAgendaJpa v
+            JOIN AgendamentoJpa p ON p.idVeiculoAberto = v.id
+            JOIN DestinoJpa d ON d.id = p.idDestino
             JOIN CidadeJpa c ON c.id = d.cidadeId
             WHERE v.idTipoVeiculo = :idTipoVeiculo
-                AND v.dataSaida IN :datas
+                AND v.data IN :datas
             ORDER BY c.nome ASC
             """)
     List<VeiculoHistoricoCidadeProjecao> buscarDestinosPorDatas(

@@ -9,15 +9,11 @@
 
     <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
         <div th:fragment="conteudo" class="app-page">
-            <header class="app-page-header">
-                <div>
-                    <h1>Pessoas</h1>
-                    <p>Cadastre e gerencie as pessoas atendidas.</p>
-                </div>
-                <div class="app-page-actions">
+            <header th:replace="~{fragmentos/componentes :: cabecalhoPagina('Pessoas', 'Cadastre e gerencie as pessoas atendidas.', ~{::acoes})}">
+                <div th:fragment="acoes" class="app-page-actions">
                     <button class="btn btn-outline-secondary"
                             hx:get="@{/pessoas/listar(arquivadas=true)}"
-                            hx-target="#pessoas-lista"
+                            hx-target="#modal"
                             hx-swap="innerHTML">
                         <i class="bi bi-archive me-1"></i> Arquivadas
                     </button>
