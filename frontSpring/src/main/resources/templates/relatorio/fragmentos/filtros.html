@@ -1,0 +1,25 @@
+<div th:fragment="filtros" class="filter-panel">
+            <div class="filter-title">
+                <span>🔍 Filtros de Busca</span>
+            </div>
+
+            <form id="filtroForm">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="dataInicio">Data Início</label>
+                        <input type="date" id="dataInicio" name="dataInicio">
+                    </div>
+                    <div class="filter-group">
+                        <label for="dataFim">Data Fim</label>
+                        <input type="date" id="dataFim" name="dataFim">
+                    </div>
+                </div>
+
+                <p class="text-muted small">O período filtra agendamentos e alocações; os totais cadastrais não dependem da data.</p>
+
+                <div class="filter-buttons">
+                    <button type="button" class="btn-limpar" id="btnLimpar">🔄 Limpar</button>
+                    <button type="button" class="btn-filtrar" id="btnFiltrar">🔍 Filtrar</button>
+                </div>
+            </form>
+        </div>

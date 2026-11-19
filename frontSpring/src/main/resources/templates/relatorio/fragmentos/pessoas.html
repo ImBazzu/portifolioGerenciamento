@@ -1,0 +1,32 @@
+<div th:fragment="pessoas" id="pessoas" class="tab-content">
+            <div class="metrics-row" id="metricsPessoas">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Pessoas cadastradas por especificação (todos os períodos)</div>
+                <div id="chartPessoasEspecificacao" class="grafico-relatorio"></div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Pessoas Mais Frequentes</div>
+                <div id="chartPessoasMaisFrequentes" class="grafico-relatorio"></div>
+            </div>
+
+            <div class="table-container">
+                <div class="chart-title">Top 10 Pessoas Mais Frequentes</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Nome</th>
+                            <th>Especificação</th>
+                            <th>Total Agendamentos</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaPessoasFrequentes">
+                        <tr><td colspan="4" class="text-center p-4">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>

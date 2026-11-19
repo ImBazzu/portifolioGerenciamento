@@ -3,6 +3,16 @@ package br.com.imbazzu.secretariaTransporte.relatorio.adpter.out.dto;
 import java.util.List;
 
 public class EstatisticasOperacionaisDTO {
+    private Long totalAgendamentos;
+    private Long agendamentosAlocados;
+    private Long agendamentosSemVeiculo;
+
+    public Long getTotalAgendamentos() { return totalAgendamentos; }
+    public void setTotalAgendamentos(Long totalAgendamentos) { this.totalAgendamentos = totalAgendamentos; }
+    public Long getAgendamentosAlocados() { return agendamentosAlocados; }
+    public void setAgendamentosAlocados(Long agendamentosAlocados) { this.agendamentosAlocados = agendamentosAlocados; }
+    public Long getAgendamentosSemVeiculo() { return agendamentosSemVeiculo; }
+    public void setAgendamentosSemVeiculo(Long agendamentosSemVeiculo) { this.agendamentosSemVeiculo = agendamentosSemVeiculo; }
     private Double eficienciaOperacional;
     private Double taxaRealizacaoGeral;
     private Double taxaCancelamento;

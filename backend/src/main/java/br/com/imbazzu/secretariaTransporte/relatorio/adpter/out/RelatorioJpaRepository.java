@@ -1,111 +1,106 @@
 package br.com.imbazzu.secretariaTransporte.relatorio.adpter.out;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.stereotype.Repository;
+
 import br.com.imbazzu.secretariaTransporte.relatorio.adpter.in.controller.RelatorioQueryRepository;
-import br.com.imbazzu.secretariaTransporte.relatorio.adpter.out.dto.*;
+import br.com.imbazzu.secretariaTransporte.relatorio.adpter.out.dto.EstatisticasAgendamentosDTO;
+import br.com.imbazzu.secretariaTransporte.relatorio.adpter.out.dto.EstatisticasOperacionaisDTO;
+import br.com.imbazzu.secretariaTransporte.relatorio.adpter.out.dto.EstatisticasPessoasDTO;
+import br.com.imbazzu.secretariaTransporte.relatorio.adpter.out.dto.EstatisticasVeiculosDTO;
 import br.com.imbazzu.secretariaTransporte.relatorio.core.domain.FiltroRelatorio;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
-import org.springframework.stereotype.Repository;
-
-import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository
 public class RelatorioJpaRepository implements RelatorioQueryRepository {
-
     private final EntityManager entityManager;
 
     public RelatorioJpaRepository(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
 
+    private Query consulta(String sql, FiltroRelatorio filtro, String colunaData) {
+        StringBuilder where = new StringBuilder(" WHERE 1=1");
+        if (filtro.getDataInicio() != null) where.append(" AND ").append(colunaData).append(" >= :inicio");
+        if (filtro.getDataFim() != null) where.append(" AND ").append(colunaData).append(" <= :fim");
+        Query query = entityManager.createNativeQuery(sql.replace("/*filtro*/", where.toString()));
+        if (filtro.getDataInicio() != null) query.setParameter("inicio", filtro.getDataInicio());
+        if (filtro.getDataFim() != null) query.setParameter("fim", filtro.getDataFim());
+        return query;
+    }
+
+    private long numero(Object value) {
+        return ((Number) value).longValue();
+    }
+
     @Override
     public EstatisticasAgendamentosDTO obterEstatisticasAgendamentos(FiltroRelatorio filtro) {
-        EstatisticasAgendamentosDTO dto = new EstatisticasAgendamentosDTO();
-        
-        // Total de agendamentos
-        String sqlTotal = "SELECT COUNT(a.id) FROM agendamento a WHERE a.data_arquivado IS NULL";
-        String sqlRealizados = "SELECT COUNT(a.id) FROM agendamento a WHERE a.data_arquivado IS NULL AND a.status = 'REALIZADO'";
-        String sqlCancelados = "SELECT COUNT(a.id) FROM agendamento a WHERE a.data_arquivado IS NULL AND a.status = 'CANCELADO'";
-        String sqlPendentes = "SELECT COUNT(a.id) FROM agendamento a WHERE a.data_arquivado IS NULL AND a.status = 'PENDENTE'";
-
-        Long total = ((Number) entityManager.createNativeQuery(sqlTotal).getSingleResult()).longValue();
-        Long realizados = ((Number) entityManager.createNativeQuery(sqlRealizados).getSingleResult()).longValue();
-        Long cancelados = ((Number) entityManager.createNativeQuery(sqlCancelados).getSingleResult()).longValue();
-        Long pendentes = ((Number) entityManager.createNativeQuery(sqlPendentes).getSingleResult()).longValue();
-
-        dto.setTotalAgendamentos(total);
-        dto.setAgendamentosRealizados(realizados);
-        dto.setAgendamentosCancelados(cancelados);
-        dto.setAgendamentosPendentes(pendentes);
-        
-        Double taxaRealizacao = total > 0 ? (realizados.doubleValue() / total) * 100 : 0.0;
-        dto.setTaxaRealizacao(taxaRealizacao);
-
+        var dto = new EstatisticasAgendamentosDTO();
+        dto.setTotalAgendamentos(numero(consulta("SELECT COUNT(*) FROM agendamentos a /*filtro*/", filtro, "a.data").getSingleResult()));
+        List<EstatisticasAgendamentosDTO.AgendamentoPorDataDTO> porData = new ArrayList<>();
+        for (Object value : consulta("SELECT a.data, COUNT(*) FROM agendamentos a /*filtro*/ GROUP BY a.data ORDER BY a.data", filtro, "a.data").getResultList()) {
+            Object[] row = (Object[]) value;
+            porData.add(new EstatisticasAgendamentosDTO.AgendamentoPorDataDTO(LocalDate.parse(row[0].toString()), numero(row[1]), null, null));
+        }
+        dto.setAgendamentosPorData(porData);
+        List<EstatisticasAgendamentosDTO.AgendamentoPorDestinoDTO> porDestino = new ArrayList<>();
+        for (Object value : consulta("SELECT d.nome, COUNT(*) FROM agendamentos a JOIN destinos d ON d.id = a.destino_id /*filtro*/ GROUP BY d.id, d.nome ORDER BY COUNT(*) DESC, d.nome", filtro, "a.data").getResultList()) {
+            Object[] row = (Object[]) value;
+            porDestino.add(new EstatisticasAgendamentosDTO.AgendamentoPorDestinoDTO((String) row[0], numero(row[1])));
+        }
+        dto.setAgendamentosPorDestino(porDestino);
         return dto;
     }
 
     @Override
     public EstatisticasPessoasDTO obterEstatisticasPessoas(FiltroRelatorio filtro) {
-        EstatisticasPessoasDTO dto = new EstatisticasPessoasDTO();
-        
-        String sqlTotal = "SELECT COUNT(p.id) FROM pessoa p WHERE p.data_arquivado IS NULL";
-        String sqlArquivadas = "SELECT COUNT(p.id) FROM pessoa p WHERE p.data_arquivado IS NOT NULL";
-
-        Long total = ((Number) entityManager.createNativeQuery(sqlTotal).getSingleResult()).longValue();
-        Long arquivadas = ((Number) entityManager.createNativeQuery(sqlArquivadas).getSingleResult()).longValue();
-        Long ativas = total - arquivadas;
-
+        var dto = new EstatisticasPessoasDTO();
+        Object[] totals = (Object[]) entityManager.createNativeQuery("SELECT COUNT(*), COUNT(data_arquivado) FROM pessoas").getSingleResult();
+        long total = numero(totals[0]);
+        long arquivadas = numero(totals[1]);
         dto.setTotalPessoas(total);
-        dto.setPessoasAtivas(ativas);
+        dto.setPessoasAtivas(total - arquivadas);
         dto.setPessoasArquivadas(arquivadas);
-
+        List<EstatisticasPessoasDTO.PessoaPorEspecificacaoDTO> porEspecificacao = new ArrayList<>();
+        for (Object value : entityManager.createNativeQuery("SELECT e.nome, COUNT(*) FROM pessoas p JOIN especificacoes e ON e.id = p.especificacao_id GROUP BY e.id, e.nome ORDER BY COUNT(*) DESC, e.nome").getResultList()) {
+            Object[] row = (Object[]) value;
+            porEspecificacao.add(new EstatisticasPessoasDTO.PessoaPorEspecificacaoDTO((String) row[0], numero(row[1])));
+        }
+        dto.setPessoasPorEspecificacao(porEspecificacao);
+        List<EstatisticasPessoasDTO.PessoaMaisFrequenteDTO> frequentes = new ArrayList<>();
+        for (Object value : consulta("SELECT p.nome, COUNT(*), e.nome FROM agendamentos a JOIN pessoas p ON p.id = a.pessoa_id JOIN especificacoes e ON e.id = p.especificacao_id /*filtro*/ GROUP BY p.id, p.nome, e.nome ORDER BY COUNT(*) DESC, p.nome LIMIT 10", filtro, "a.data").getResultList()) {
+            Object[] row = (Object[]) value;
+            frequentes.add(new EstatisticasPessoasDTO.PessoaMaisFrequenteDTO((String) row[0], numero(row[1]), (String) row[2]));
+        }
+        dto.setPessoasMaisFrequentes(frequentes);
         return dto;
     }
 
     @Override
     public EstatisticasVeiculosDTO obterEstatisticasVeiculos(FiltroRelatorio filtro) {
-        EstatisticasVeiculosDTO dto = new EstatisticasVeiculosDTO();
-        
-        String sqlTotal = "SELECT COUNT(v.id) FROM veiculo v WHERE v.data_arquivado IS NULL";
-        String sqlArquivados = "SELECT COUNT(v.id) FROM veiculo v WHERE v.data_arquivado IS NOT NULL";
-
-        Long total = ((Number) entityManager.createNativeQuery(sqlTotal).getSingleResult()).longValue();
-        Long arquivados = ((Number) entityManager.createNativeQuery(sqlArquivados).getSingleResult()).longValue();
-        Long ativos = total - arquivados;
-
+        var dto = new EstatisticasVeiculosDTO();
+        Object[] totals = (Object[]) entityManager.createNativeQuery("SELECT COUNT(*), COUNT(data_arquivado) FROM tipo_veiculos").getSingleResult();
+        long total = numero(totals[0]);
+        long arquivados = numero(totals[1]);
         dto.setTotalVeiculos(total);
-        dto.setVeiculosAtivos(ativos);
+        dto.setVeiculosAtivos(total - arquivados);
         dto.setVeiculosArquivados(arquivados);
-
         return dto;
     }
 
     @Override
     public EstatisticasOperacionaisDTO obterEstatisticasOperacionais(FiltroRelatorio filtro) {
-        EstatisticasOperacionaisDTO dto = new EstatisticasOperacionaisDTO();
-        
-        String sqlTotal = "SELECT COUNT(a.id) FROM agendamento a WHERE a.data_arquivado IS NULL";
-        String sqlRealizados = "SELECT COUNT(a.id) FROM agendamento a WHERE a.data_arquivado IS NULL AND a.status = 'REALIZADO'";
-        String sqlCancelados = "SELECT COUNT(a.id) FROM agendamento a WHERE a.data_arquivado IS NULL AND a.status = 'CANCELADO'";
-        String sqlPendentes = "SELECT COUNT(a.id) FROM agendamento a WHERE a.data_arquivado IS NULL AND a.status = 'PENDENTE'";
-
-        Long total = ((Number) entityManager.createNativeQuery(sqlTotal).getSingleResult()).longValue();
-        Long realizados = ((Number) entityManager.createNativeQuery(sqlRealizados).getSingleResult()).longValue();
-        Long cancelados = ((Number) entityManager.createNativeQuery(sqlCancelados).getSingleResult()).longValue();
-        Long pendentes = ((Number) entityManager.createNativeQuery(sqlPendentes).getSingleResult()).longValue();
-
-        Double taxaRealizacao = total > 0 ? (realizados.doubleValue() / total) * 100 : 0.0;
-        Double taxaCancelamento = total > 0 ? (cancelados.doubleValue() / total) * 100 : 0.0;
-        Double eficiencia = taxaRealizacao;
-
-        dto.setEficienciaOperacional(eficiencia);
-        dto.setTaxaRealizacaoGeral(taxaRealizacao);
-        dto.setTaxaCancelamento(taxaCancelamento);
-        dto.setAgendamentosPendentes(pendentes);
-        dto.setAgendamentosCancelados(cancelados);
-
+        var dto = new EstatisticasOperacionaisDTO();
+        Object[] totals = (Object[]) consulta("SELECT COUNT(*), COUNT(a.veiculo_agendamento_id) FROM agendamentos a /*filtro*/", filtro, "a.data").getSingleResult();
+        long total = numero(totals[0]);
+        long alocados = numero(totals[1]);
+        dto.setTotalAgendamentos(total);
+        dto.setAgendamentosAlocados(alocados);
+        dto.setAgendamentosSemVeiculo(total - alocados);
         return dto;
     }
 }

@@ -1,0 +1,30 @@
+<div th:fragment="agendamentos" id="agendamentos" class="tab-content active">
+            <div class="metrics-row" id="metricsAgendamentos">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Agendamentos por Período</div>
+                <div id="chartAgendamentosPeriodo" class="grafico-relatorio"></div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Agendamentos por Destino</div>
+                <div id="chartAgendamentosDestino" class="grafico-relatorio"></div>
+            </div>
+
+            <div class="table-container">
+                <div class="chart-title">Detalhes de Agendamentos</div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaAgendamentosDetalhes">
+                        <tr><td colspan="2" class="text-center p-4">Carregando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
