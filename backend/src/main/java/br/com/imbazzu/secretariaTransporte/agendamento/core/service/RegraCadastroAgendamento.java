@@ -1,5 +1,6 @@
 package br.com.imbazzu.secretariaTransporte.agendamento.core.service;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,13 +17,13 @@ public final class RegraCadastroAgendamento {
 
     public static boolean aplica(
             RegraCadastroAgendaDados regra, PessoaAgendaDados pessoa,
-            DestinoAgendaDados destino, LocalTime horario) {
-        return motivosNaoAplicacao(regra, pessoa, destino, horario).isEmpty();
+            DestinoAgendaDados destino, LocalDate data, LocalTime horario) {
+        return motivosNaoAplicacao(regra, pessoa, destino, data, horario).isEmpty();
     }
 
     public static List<String> motivosNaoAplicacao(
             RegraCadastroAgendaDados regra, PessoaAgendaDados pessoa,
-            DestinoAgendaDados destino, LocalTime horario) {
+            DestinoAgendaDados destino, LocalDate data, LocalTime horario) {
         var motivos = new ArrayList<String>();
         if (!regra.prioridades().contains(pessoa.prioridade())) {
             motivos.add("prioridade da pessoa (%s) não está entre as aceitas: %s"
@@ -31,6 +32,10 @@ public final class RegraCadastroAgendamento {
         if (!regra.idsCidades().isEmpty() && !regra.idsCidades().contains(destino.idCidade())) {
             motivos.add("cidade do destino (%s) não está entre as atendidas: %s"
                     .formatted(destino.idCidade(), regra.idsCidades()));
+        }
+        if (!regra.diasSemana().isEmpty() && !regra.diasSemana().contains(data.getDayOfWeek())) {
+            motivos.add("dia da semana (%s) não está entre os dias aceitos: %s"
+                    .formatted(data.getDayOfWeek(), regra.diasSemana()));
         }
         if (!horarioPermitido(regra, horario)) {
             var intervalo = regra.inicioHorario() == null
@@ -61,15 +66,16 @@ public final class RegraCadastroAgendamento {
 
     public static void validar(
             RegraCadastroAgendaDados regra, PessoaAgendaDados pessoa,
-            DestinoAgendaDados destino, LocalTime horarioChegada, java.util.UUID idTipoVeiculo) {
+            DestinoAgendaDados destino, LocalDate data,
+            LocalTime horarioChegada, java.util.UUID idTipoVeiculo) {
         if (regra.obrigacaoAnexo()) {
             throw new OperacaoNaoPermitidaException(
                     "A regra exige anexo, mas o agendamento ainda não aceita anexos");
         }
         if (!regra.idsVeiculos().contains(idTipoVeiculo)
-                || !aplica(regra, pessoa, destino, horarioChegada)) {
+                || !aplica(regra, pessoa, destino, data, horarioChegada)) {
             throw new OperacaoNaoPermitidaException(
-                    "A regra selecionada não aprova este passageiro, horário, cidade ou tipo de veículo");
+                    "A regra selecionada não aprova este passageiro, horário, dia da semana, cidade ou tipo de veículo");
         }
     }
 }

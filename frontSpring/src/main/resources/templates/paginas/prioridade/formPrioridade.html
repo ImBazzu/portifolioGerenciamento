@@ -1,0 +1,40 @@
+<th:block th:fragment="formPrioridade">
+    <div class="custom-modal-backdrop">
+        <section class="custom-modal-card bg-white rounded shadow-lg p-4"
+                 role="dialog" aria-modal="true" aria-labelledby="formPrioridadeTitulo">
+            <header class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                <h2 id="formPrioridadeTitulo" class="h5 fw-bold m-0">Cadastrar Prioridade</h2>
+                <button type="button" class="btn-close" aria-label="Fechar"
+                        hx:get="@{/prioridades/limpar-modal}" hx-target="#modal" hx-swap="innerHTML"></button>
+            </header>
+            <form th:action="@{/prioridades}" method="post">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label for="nomePrioridade" class="form-label fw-bold">Nome</label>
+                        <input id="nomePrioridade" name="nome" class="form-control" maxlength="100" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="quantidadeAcompanhantes" class="form-label fw-bold">Acompanhantes</label>
+                        <input id="quantidadeAcompanhantes" name="quantidadeAcompanhantes" type="number"
+                               min="0" value="0" class="form-control" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" name="buscarNaResidencia" value="true">
+                            Buscar na residência
+                        </label>
+                    </div>
+                </div>
+                <footer class="border-top pt-3 mt-3 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-light border"
+                            hx:get="@{/prioridades/limpar-modal}" hx-target="#modal" hx-swap="innerHTML">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg me-1"></i> Salvar Prioridade
+                    </button>
+                </footer>
+            </form>
+        </section>
+    </div>
+</th:block>

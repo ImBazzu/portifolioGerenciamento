@@ -3,6 +3,7 @@ package br.com.imbazzu.frontSpring.especificacao.adpter.out.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 import java.net.URI;
@@ -11,6 +12,8 @@ import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
@@ -19,6 +22,46 @@ import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestCli
 import br.com.imbazzu.frontSpring.especificacao.core.dto.EspecificacaoRequestDto;
 
 class EspecificacaoApiTest {
+    @Test
+    void buscaEspecificacaoArquivadaPelaApi() {
+        var builder = RestClient.builder().baseUrl("http://localhost:8080/api");
+        var server = MockRestServiceServer.bindTo(builder).build();
+        var retry = new RetryComRefreshPorta() {
+            @Override
+            public <T> T executar(Supplier<T> chamadaApi) {
+                return chamadaApi.get();
+            }
+        };
+        var api = new EspecificacaoApi(new RestClientProtegido(builder.build()), retry);
+        var id = UUID.randomUUID();
+        server.expect(requestTo("http://localhost:8080/api/especificacao/" + id + "/arquivado"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess(
+                        "{\"id\":\"" + id + "\",\"nome\":\"Transporte\",\"prioridadeNome\":\"Alta\",\"dataArquivado\":\"2026-01-15\"}",
+                        MediaType.APPLICATION_JSON));
+        assertEquals("Transporte", api.buscarArquivado(id).nome());
+        server.verify();
+    }
+
+    @Test
+    void excluiEspecificacaoPelaApi() {
+        var builder = RestClient.builder().baseUrl("http://localhost:8080/api");
+        var server = MockRestServiceServer.bindTo(builder).build();
+        var retry = new RetryComRefreshPorta() {
+            @Override
+            public <T> T executar(Supplier<T> chamadaApi) {
+                return chamadaApi.get();
+            }
+        };
+        var api = new EspecificacaoApi(new RestClientProtegido(builder.build()), retry);
+        var id = UUID.randomUUID();
+        server.expect(requestTo("http://localhost:8080/api/especificacao/" + id))
+                .andExpect(method(HttpMethod.DELETE))
+                .andRespond(withStatus(HttpStatus.NO_CONTENT));
+        api.excluir(id);
+        server.verify();
+    }
+
     @Test
     void enviaPrioridadeNoFormatoEsperadoPeloBackend() {
         var builder = RestClient.builder().baseUrl("http://localhost:8080/api");

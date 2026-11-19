@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +22,8 @@ import br.com.imbazzu.frontSpring.especificacao.core.dto.EspecificacaoRequestDto
 import br.com.imbazzu.frontSpring.especificacao.core.excecoes.EspecificacaoDuplicadaException;
 import br.com.imbazzu.frontSpring.especificacao.core.porta.in.EspecificacaoApplicationPorta;
 import br.com.imbazzu.frontSpring.prioridade.PrioridadeApi;
+import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.MensagemErroApi;
+import org.springframework.web.client.RestClientResponseException;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxRequest;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxTriggerAfterSettle;
 import jakarta.validation.Valid;
@@ -34,11 +37,13 @@ public class EspecificacaoController {
     private final EspecificacaoApplicationPorta application;
     private final ObjectMapper objectMapper;
     private final PrioridadeApi prioridades;
+    private final MensagemErroApi mensagemErro;
 
-    public EspecificacaoController(EspecificacaoApplicationPorta application, ObjectMapper objectMapper, PrioridadeApi prioridades) {
+    public EspecificacaoController(EspecificacaoApplicationPorta application, ObjectMapper objectMapper, PrioridadeApi prioridades, MensagemErroApi mensagemErro) {
         this.application = application;
         this.objectMapper = objectMapper;
         this.prioridades = prioridades;
+        this.mensagemErro = mensagemErro;
     }
 
     @GetMapping
@@ -171,6 +176,22 @@ public class EspecificacaoController {
     @ResponseBody
     public void desarquivar(@PathVariable UUID id) {
         application.desarquivar(id);
+    }
+
+    @HxRequest
+    @DeleteMapping("/{id}")
+    public String excluir(@PathVariable UUID id, Model model, HttpServletResponse response) {
+        var especificacao = application.buscarArquivado(id);
+        try {
+            application.excluir(id);
+            response.setHeader("HX-Trigger-After-Settle", "atualizar-especificacoes");
+            return "layout/vazio :: vazio";
+        } catch (RestClientResponseException e) {
+            model.addAttribute("arquivado", true);
+            model.addAttribute("especificacao", especificacao);
+            model.addAttribute("erroGlobal", mensagemErro.de(e));
+            return "paginas/especificacao/detalhesEspecificacao :: detalhesEspecificacao";
+        }
     }
 
     @HxRequest

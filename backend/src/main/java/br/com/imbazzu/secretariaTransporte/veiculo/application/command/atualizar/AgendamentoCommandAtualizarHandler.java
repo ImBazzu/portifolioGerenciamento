@@ -49,7 +49,7 @@ public class AgendamentoCommandAtualizarHandler {
                 .filter(item -> !item.obrigacaoAnexo())
                 .filter(item -> item.idsVeiculos().contains(command.idTipoVeiculo()))
                 .filter(item -> RegraCadastroAgendamento.motivosNaoAplicacao(
-                        item, pessoa, destino, command.horarioChegada()).isEmpty())
+                        item, pessoa, destino, atual.getData(), command.horarioChegada()).isEmpty())
                 .findFirst()
                 .orElseThrow(() -> new OperacaoNaoPermitidaException(
                         "Nenhuma regra da lista aprova o tipo e os dados informados"));

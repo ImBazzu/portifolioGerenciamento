@@ -13,6 +13,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.MensagemErroApi;
+import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxRequest;
 
 @Controller
 @RequestMapping("/prioridades")
@@ -30,6 +31,25 @@ public class PrioridadeController {
         model.addAttribute("pagina", "prioridades");
         model.addAttribute("prioridades", api.listar());
         return "paginas/prioridade/prioridades";
+    }
+
+    @HxRequest
+    @GetMapping("/abrirFormulario")
+    public String formularioNovo() {
+        return "paginas/prioridade/formPrioridade :: formPrioridade";
+    }
+
+    @HxRequest
+    @GetMapping("/{id}/detalhes")
+    public String detalhes(@PathVariable UUID id, Model model) {
+        model.addAttribute("prioridade", api.buscar(id));
+        return "paginas/prioridade/detalhesPrioridade :: detalhesPrioridade";
+    }
+
+    @HxRequest
+    @GetMapping("/limpar-modal")
+    public String limparModal() {
+        return "layout/vazio :: vazio";
     }
 
     @PostMapping

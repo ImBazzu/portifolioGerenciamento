@@ -73,6 +73,11 @@ public class EspecificacaoController {
         return ResponseEntity.ok(toResponse(buscarHandler.handler(new EspecificacaoQueryBuscar(id))));
     }
 
+    @GetMapping("/{id}/arquivado")
+    public ResponseEntity<EspecificacaoResponseDto> buscarArquivada(@PathVariable UUID id) {
+        return ResponseEntity.ok(toResponse(buscarHandler.buscarArquivada(new EspecificacaoQueryBuscar(id))));
+    }
+
     @GetMapping("/listar")
     public ResponseEntity<ResultadoPaginado<EspecificacaoResponseDto>> listarAtivos(
             @RequestParam(defaultValue = "") String nome,

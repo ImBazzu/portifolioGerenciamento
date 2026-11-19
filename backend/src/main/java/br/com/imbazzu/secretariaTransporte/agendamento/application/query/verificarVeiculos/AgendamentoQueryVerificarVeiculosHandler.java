@@ -45,7 +45,7 @@ public class AgendamentoQueryVerificarVeiculosHandler {
         }
         for (var regra : regras) {
             var motivosRegra = RegraCadastroAgendamento.motivosNaoAplicacao(
-                    regra, pessoa, destino, query.horarioChegada());
+                    regra, pessoa, destino, query.data(), query.horarioChegada());
             if (!motivosRegra.isEmpty()) {
                 motivos.add("Regra %s: %s".formatted(regra.id(), String.join("; ", motivosRegra)));
                 continue;

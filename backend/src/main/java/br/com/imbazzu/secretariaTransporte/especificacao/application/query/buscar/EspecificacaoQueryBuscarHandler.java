@@ -19,4 +19,10 @@ public class EspecificacaoQueryBuscarHandler {
         return adapter.buscar(query.id())
                 .orElseThrow(() -> new EspecificacaoNaoEncontradoException(query.id()));
     }
+
+    @Transactional(readOnly = true)
+    public Especificacao buscarArquivada(EspecificacaoQueryBuscar query) {
+        return adapter.buscarArquivado(query.id())
+                .orElseThrow(() -> new EspecificacaoNaoEncontradoException(query.id()));
+    }
 }

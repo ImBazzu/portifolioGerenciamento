@@ -8,6 +8,7 @@ import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.CidadeRegraAgendaProjecao;
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.DiaSemanaRegraAgendaProjecao;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.PrioridadeRegraAgendaProjecao;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.RegraCadastroAgendaProjecao;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.TipoRegraAgendaProjecao;
@@ -46,6 +47,13 @@ public interface TipoListaAgendaQueryRepository extends Repository<TipoListaJpa,
             WHERE r.lista.id = :idLista
             """)
     List<CidadeRegraAgendaProjecao> listarCidadesCadastro(@Param("idLista") UUID idLista);
+
+    @Query("""
+            SELECT r.id AS id, diaSemana AS diaSemana
+            FROM RegraCadastroJpa r JOIN r.diasSemana diaSemana
+            WHERE r.lista.id = :idLista
+            """)
+    List<DiaSemanaRegraAgendaProjecao> listarDiasSemanaCadastro(@Param("idLista") UUID idLista);
 
     @Query("""
             SELECT r.tempoToleranciaSegundos AS segundos,

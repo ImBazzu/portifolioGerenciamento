@@ -48,7 +48,7 @@ public final class AgendamentoCompatibilidadeResolver {
                     agendamento.getIdDestino(), consultas::buscarDestino);
             if (regra.obrigacaoAnexo()
                     || !RegraCadastroAgendamento.aplica(
-                            regra, pessoa, destino, agendamento.getHorarioChegada())) {
+                            regra, pessoa, destino, agendamento.getData(), agendamento.getHorarioChegada())) {
                 resultado.put(agendamento.getId(), Map.of());
                 continue;
             }

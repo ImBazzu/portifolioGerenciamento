@@ -20,4 +20,6 @@ public interface EspecificacaoApplicationPorta {
     void arquivar(UUID id);
 
     void desarquivar(UUID id);
+
+    void excluir(UUID id);
 }

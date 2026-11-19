@@ -40,16 +40,6 @@
                                     hx-target="#modal" hx-swap="innerHTML">
                                 <i class="bi bi-info-circle me-1"></i> Detalhes
                             </button>
-                            <button class="btn btn-outline-warning" title="Editar"
-                                    th:attr="hx-get=@{/especificacoes/abrirFormulario/{id}(id=${esp.id})}"
-                                    hx-target="#modal" hx-swap="innerHTML">
-                                <i class="bi bi-pencil me-1"></i> Editar
-                            </button>
-                            <button class="btn btn-outline-secondary" title="Arquivar"
-                                    hx:patch="@{/especificacoes/{id}/arquivar(id=${esp.id})}"
-                                    hx-confirm="Tem certeza que deseja arquivar esta especificação?">
-                                <i class="bi bi-archive me-1"></i> Arquivar
-                            </button>
                         </div>
                     </td>
                 </tr>

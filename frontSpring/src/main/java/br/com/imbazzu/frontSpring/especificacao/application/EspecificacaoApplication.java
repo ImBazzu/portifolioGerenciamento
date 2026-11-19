@@ -54,4 +54,9 @@ public class EspecificacaoApplication implements EspecificacaoApplicationPorta {
     public void desarquivar(UUID id) {
         api.desarquivar(id);
     }
+
+    @Override
+    public void excluir(UUID id) {
+        api.excluir(id);
+    }
 }

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.time.DayOfWeek;
 import java.util.UUID;
 import java.util.List;
 
@@ -70,6 +71,9 @@ class PrioridadeJpaIntegrationTest {
         jdbc.update("INSERT INTO listas (id,nome) VALUES (UNHEX('00000000000000000000000000000003'),'Lista')");
         jdbc.update("INSERT INTO regras_cadastro (id,lista_id,obrigacao_anexo) VALUES (UNHEX('00000000000000000000000000000004'),UNHEX('00000000000000000000000000000003'),0)");
         jdbc.update("INSERT INTO regra_cadastro_prioridades (regra_cadastro_id,prioridade_id) VALUES (UNHEX('00000000000000000000000000000004'),UNHEX('00000000000000000000000000000002'))");
+        jdbc.update("INSERT INTO regra_cadastro_dias_semana (regra_cadastro_id,dia_semana) VALUES "
+                + "(UNHEX('00000000000000000000000000000004'),'SATURDAY'),"
+                + "(UNHEX('00000000000000000000000000000004'),'SUNDAY')");
 
         var pessoa = agenda.buscarPessoa(UUID.fromString("00000000-0000-0000-0000-000000000005"));
         assertEquals(prioridadeId, pessoa.prioridade());
@@ -77,6 +81,7 @@ class PrioridadeJpaIntegrationTest {
         assertEquals(2, pessoa.acompanhantes());
         var regras = agenda.listarRegrasCadastro(UUID.fromString("00000000-0000-0000-0000-000000000003"));
         assertEquals(prioridadeId, regras.getFirst().prioridades().getFirst());
+        assertEquals(List.of(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY), regras.getFirst().diasSemana());
     }
 
     @Test

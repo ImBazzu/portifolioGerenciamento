@@ -1,5 +1,6 @@
 package br.com.imbazzu.secretariaTransporte.agendamento.core.model;
 
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
@@ -11,5 +12,6 @@ public record RegraCadastroAgendaDados(
         List<UUID> idsCidades,
         boolean obrigacaoAnexo,
         LocalTime inicioHorario,
-        LocalTime finalHorario) {
+        LocalTime finalHorario,
+        List<DayOfWeek> diasSemana) {
 }

@@ -84,7 +84,7 @@ class AgendamentoCommandAtualizarHandlerTest {
         when(consultas.buscarTipoVeiculo(tipoId)).thenReturn(new TipoVeiculoAgendaDados(tipoId, "Carro", capacidade, true));
         when(consultas.listarRegrasCadastro(atual.getIdLista())).thenReturn(List.of(
                 new RegraCadastroAgendaDados(UUID.randomUUID(), List.of(prioridadeId), List.of(tipoId),
-                        List.of(), false, null, null)));
+                        List.of(), false, null, null, List.of())));
         when(consultas.buscarToleranciaSeparacao(atual.getIdLista(), tipoId)).thenReturn(Optional.of(Duration.ZERO));
         when(consultas.listarVeiculos(atual.getData())).thenReturn(List.of());
     }

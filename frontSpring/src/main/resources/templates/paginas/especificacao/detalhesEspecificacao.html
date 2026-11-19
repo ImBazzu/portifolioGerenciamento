@@ -3,6 +3,9 @@
         <div class="custom-modal-card bg-white rounded shadow-lg p-4">
             <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
                 <h5 class="fw-bold m-0">Detalhes da Especificação</h5>
+                <button th:unless="${arquivado}" class="btn btn-sm btn-light border"
+                        hx:get="@{/especificacoes/abrirFormulario/{id}(id=${especificacao.id})}"
+                        hx-target="#modal" hx-swap="innerHTML">Editar</button>
                 <button type="button" class="btn-close"
                         hx:get="@{/especificacoes/limpar-modal}" hx-target="#modal" hx-swap="innerHTML"
                         aria-label="Fechar"></button>
@@ -34,7 +37,25 @@
                 </div>
             </div>
 
-            <div class="border-top pt-3 mt-3 d-flex justify-content-end gap-2">
+            <div th:if="${erroGlobal}" class="alert alert-danger mt-3" role="alert" th:text="${erroGlobal}"></div>
+            <div class="border-top pt-3 mt-3 d-flex flex-wrap justify-content-between gap-2">
+                <button th:unless="${arquivado}" class="btn btn-outline-warning"
+                        hx:patch="@{/especificacoes/{id}/arquivar(id=${especificacao.id})}"
+                        hx-confirm="Deseja arquivar esta especificação?" hx-target="#modal" hx-swap="innerHTML">
+                    Arquivar
+                </button>
+                <div th:if="${arquivado}" class="d-flex gap-2">
+                    <button class="btn btn-outline-success"
+                            hx:patch="@{/especificacoes/{id}/desarquivar(id=${especificacao.id})}"
+                            hx-confirm="Deseja desarquivar esta especificação?" hx-target="#modal" hx-swap="innerHTML">
+                        Desarquivar
+                    </button>
+                    <button class="btn btn-outline-danger"
+                            hx:delete="@{/especificacoes/{id}(id=${especificacao.id})}"
+                            hx-confirm="Excluir esta especificação definitivamente?" hx-target="#modal" hx-swap="innerHTML">
+                        Excluir
+                    </button>
+                </div>
                 <button type="button" class="btn btn-light border"
                         hx:get="@{/especificacoes/limpar-modal}" hx-target="#modal" hx-swap="innerHTML">
                     Fechar

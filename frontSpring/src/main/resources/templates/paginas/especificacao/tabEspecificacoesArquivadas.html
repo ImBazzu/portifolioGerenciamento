@@ -1,7 +1,13 @@
 <th:block th:fragment="tabEspecificacoesArquivadas">
     <div class="card shadow-sm">
         <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <h5 class="mb-0 fw-bold">Especificações arquivadas</h5>
+            <div>
+                <h5 class="mb-0 fw-bold">Especificações arquivadas</h5>
+                <button class="btn btn-link btn-sm p-0 mt-1"
+                        hx:get="@{/especificacoes/listar}" hx-target="#especificacoes-lista" hx-swap="innerHTML">
+                    Voltar às especificações ativas
+                </button>
+            </div>
             <div class="col-12 col-md-4">
                 <input type="search" name="nome" th:value="${nome}" class="form-control"
                        placeholder="Buscar por nome..."
@@ -36,11 +42,6 @@
                                     th:attr="hx-get=@{/especificacoes/{id}/detalhes/arquivado(id=${esp.id})}"
                                     hx-target="#modal" hx-swap="innerHTML">
                                 <i class="bi bi-info-circle me-1"></i> Detalhes
-                            </button>
-                            <button class="btn btn-outline-success" title="Restaurar"
-                                    hx:patch="@{/especificacoes/{id}/desarquivar(id=${esp.id})}"
-                                    hx-confirm="Tem certeza que deseja restaurar esta especificação?">
-                                <i class="bi bi-arrow-counterclockwise me-1"></i> Restaurar
                             </button>
                         </div>
                     </td>

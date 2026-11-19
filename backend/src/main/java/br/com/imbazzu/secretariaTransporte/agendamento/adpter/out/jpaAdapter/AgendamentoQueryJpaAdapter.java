@@ -112,6 +112,11 @@ public class AgendamentoQueryJpaAdapter implements AgendamentoQueryPorta {
                         item -> item.getId(),
                         HashMap::new,
                         Collectors.mapping(item -> item.getIdCidade(), Collectors.toList())));
+        var diasSemanaPorRegra = listaRepository.listarDiasSemanaCadastro(idLista).stream()
+                .collect(Collectors.groupingBy(
+                        item -> item.getId(),
+                        HashMap::new,
+                        Collectors.mapping(item -> item.getDiaSemana(), Collectors.toList())));
 
         return regras.stream()
                 .map(regra -> new RegraCadastroAgendaDados(
@@ -121,7 +126,8 @@ public class AgendamentoQueryJpaAdapter implements AgendamentoQueryPorta {
                         cidadesPorRegra.getOrDefault(regra.getId(), List.of()),
                         regra.isObrigacaoAnexo(),
                         regra.getInicioHorario(),
-                        regra.getFinalHorario()))
+                        regra.getFinalHorario(),
+                        diasSemanaPorRegra.getOrDefault(regra.getId(), List.of())))
                 .toList();
     }
 

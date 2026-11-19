@@ -66,7 +66,7 @@ public class AgendamentoCommandCriarHandler {
                         .filter(item -> !item.obrigacaoAnexo())
                         .filter(item -> item.idsVeiculos().contains(command.idTipoVeiculo()))
                         .filter(item -> RegraCadastroAgendamento.motivosNaoAplicacao(
-                                item, pessoa, destino, command.horarioChegada()).isEmpty())
+                                item, pessoa, destino, command.data(), command.horarioChegada()).isEmpty())
                         .filter(item -> !tipoCarro || consultas.buscarToleranciaSeparacao(
                                 command.idLista(), command.idTipoVeiculo()).isPresent())
                         .findFirst()
@@ -78,7 +78,7 @@ public class AgendamentoCommandCriarHandler {
                         .orElseThrow(() -> new EntidadeNaoEncontradoException(
                                 "A regra de cadastro não pertence à lista informada"));
         RegraCadastroAgendamento.validar(
-                regra, pessoa, destino, command.horarioChegada(), command.idTipoVeiculo());
+                regra, pessoa, destino, command.data(), command.horarioChegada(), command.idTipoVeiculo());
 
         var tolerancia = tipoCarro
                 ? consultas.buscarToleranciaSeparacao(command.idLista(), command.idTipoVeiculo())

@@ -124,6 +124,11 @@ public class EspecificacaoApi implements EspecificacaoApiPorta {
         alterarArquivamento(id, "desarquivar");
     }
 
+    @Override
+    public void excluir(UUID id) {
+        executarComRefresh(() -> api.delete().uri(PATH_API + "/{id}", id).retrieve().toBodilessEntity());
+    }
+
     private void alterarArquivamento(UUID id, String acao) {
         api.patch()
                 .uri(PATH_API + "/" + id + "/" + acao)
