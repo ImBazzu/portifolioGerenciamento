@@ -101,7 +101,7 @@ public class PessoaController {
         return "paginas/pessoa/detalhesPessoa :: detalhesPessoa";
     }
 
-    @HxRequest
+@HxRequest
     @PostMapping
     public String salvar(
             @Valid @ModelAttribute("pessoa") PessoaRequestDto pessoa,
@@ -109,11 +109,14 @@ public class PessoaController {
             @RequestParam(defaultValue = "false") boolean contextoAgendamento,
             Model model,
             HttpServletResponse response) throws JsonProcessingException {
+        
+        model.addAttribute("id", null);
+        model.addAttribute("contextoAgendamento", contextoAgendamento);
+
         if (result.hasErrors()) {
-            model.addAttribute("id", null);
-            model.addAttribute("contextoAgendamento", contextoAgendamento);
             return "paginas/pessoa/formPessoa :: formPessoa";
         }
+        
         try {
             UUID id = application.salvar(pessoa);
             var eventos = contextoAgendamento
@@ -129,10 +132,9 @@ public class PessoaController {
         } catch (PessoaDuplicadaException e) {
             result.rejectValue("cpf", "duplicado", e.getMessage());
         } catch (Exception e) {
-            model.addAttribute("erroGlobal", e.getMessage());
+            model.addAttribute("erroGlobal", e.getMessage() != null ? e.getMessage() : "Ocorreu um erro inesperado.");
         }
-        model.addAttribute("id", null);
-        model.addAttribute("contextoAgendamento", contextoAgendamento);
+        
         return "paginas/pessoa/formPessoa :: formPessoa";
     }
 
@@ -143,22 +145,27 @@ public class PessoaController {
             @PathVariable UUID id,
             @Valid @ModelAttribute("pessoa") PessoaRequestDto pessoa,
             BindingResult result,
+            @RequestParam(defaultValue = "false") boolean contextoAgendamento,
             Model model) {
+        
         model.addAttribute("id", id);
+        model.addAttribute("contextoAgendamento", contextoAgendamento);
+
         if (result.hasErrors()) {
             return "paginas/pessoa/formPessoa :: formPessoa";
         }
+        
         try {
             application.editar(id, pessoa);
             return "layout/vazio :: vazio";
         } catch (PessoaDuplicadaException e) {
             result.rejectValue("cpf", "duplicado", e.getMessage());
         } catch (Exception e) {
-            model.addAttribute("erroGlobal", e.getMessage());
+            model.addAttribute("erroGlobal", e.getMessage() != null ? e.getMessage() : "Ocorreu um erro inesperado.");
         }
+        
         return "paginas/pessoa/formPessoa :: formPessoa";
     }
-
     @HxRequest
     @PatchMapping("/{id}/arquivar")
     @HxTriggerAfterSettle("atualizar-pessoas")

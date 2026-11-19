@@ -56,7 +56,7 @@ public class PessoaApi implements PessoaApiPorta {
                 .body(PessoaResponseDto.class);
     }
 
-    @Override
+ @Override
     public UUID salvar(PessoaRequestDto pessoa) {
         var respostaCriacao = api.post()
                 .uri(PATH_API)
@@ -64,13 +64,17 @@ public class PessoaApi implements PessoaApiPorta {
                 .retrieve()
                 .onStatus(status -> status.isSameCodeAs(HttpStatus.CONFLICT),
                         (request, response) -> {
-                            throw new PessoaDuplicadaException();
+                            // Lê o corpo da resposta para pegar a mensagem exata do backend
+                            throw new PessoaDuplicadaException(); // Certifique-se de que a exceção aceita String no construtor
                         })
-                .onStatus(status -> status.isSameCodeAs(HttpStatus.BAD_REQUEST),
+                .onStatus(status -> status.isSameCodeAs(HttpStatus.BAD_REQUEST) || status.isSameCodeAs(HttpStatus.UNAUTHORIZED),
                         (request, response) -> {
+                            // Captura o texto retornado pelo ErroDto ou mensagem pura do backend
+                            String mensagem = new String(response.getBody().readAllBytes());
                             throw new PessoaDadosInvalidosException();
                         })
                 .toBodilessEntity();
+        
         var location = respostaCriacao.getHeaders().getLocation();
         if (location == null) {
             throw new IllegalStateException("A API não retornou o endereço da pessoa criada.");
@@ -93,8 +97,9 @@ public class PessoaApi implements PessoaApiPorta {
                         (request, response) -> {
                             throw new PessoaDuplicadaException();
                         })
-                .onStatus(status -> status.isSameCodeAs(HttpStatus.BAD_REQUEST),
+                .onStatus(status -> status.isSameCodeAs(HttpStatus.BAD_REQUEST) || status.isSameCodeAs(HttpStatus.UNAUTHORIZED),
                         (request, response) -> {
+                            String mensagem = new String(response.getBody().readAllBytes());
                             throw new PessoaDadosInvalidosException();
                         })
                 .toBodilessEntity();
