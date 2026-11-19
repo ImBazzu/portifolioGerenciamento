@@ -141,4 +141,25 @@ class AgendamentoApiTest {
 
         server.verify();
     }
+
+    @Test
+    void buscaHistoricoPaginadoComFiltroCodificado() {
+        var id = UUID.fromString("6b0d3800-2ca7-4e1f-bfb3-36f849104d83");
+        server.expect(requestTo("http://localhost:8080/api/agendamentos/pessoas/" + id
+                        + "/historico-viagens?destinoBusca=S%C3%A3o%20Paulo&page=1&size=10"))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withSuccess("""
+                        {"conteudo":[{"id":"6b0d3800-2ca7-4e1f-bfb3-36f849104d83",
+                          "data":"2026-11-02","horarioChegada":"09:00:00","horarioSaidaNecessario":"08:00:00",
+                          "destinoNome":"São Paulo","listaDescricao":"Consulta","tipoVeiculoNome":"Van",
+                          "buscarNaResidencia":true,"acompanhantes":1}],
+                         "paginaAtual":1,"tamanhoPagina":10,"totalElementos":11,"totalPaginas":2}
+                        """, MediaType.APPLICATION_JSON));
+
+        var resultado = api.buscarHistoricoViagensComFiltro(id, "São Paulo", 1);
+        assertEquals(2, resultado.totalPaginas());
+        assertEquals(LocalTime.of(8, 0), resultado.conteudo().getFirst().horarioSaidaNecessario());
+        assertEquals("São Paulo", resultado.conteudo().getFirst().destinoNome());
+        server.verify();
+    }
 }

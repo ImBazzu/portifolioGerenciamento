@@ -5,6 +5,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AgendaDiaResponseDto;
@@ -22,6 +25,8 @@ import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.VeiculoPermitidoResponseDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.VerificarVeiculosRequestDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.VerificacaoVeiculosResponseDto;
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.HistoricoViagemResponseDto;
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.PageResponseDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.abrirDia.AgendamentoCommandAbrirDia;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.abrirDia.AgendamentoCommandAbrirDiaHandler;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.criar.AgendamentoCommandCriar;
@@ -45,6 +50,8 @@ import br.com.imbazzu.secretariaTransporte.agendamento.application.query.verific
 import br.com.imbazzu.secretariaTransporte.agendamento.application.query.verificarVeiculos.AgendamentoQueryVerificarVeiculosHandler;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.CompatibilidadeVeiculoAgendamento;
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.AgendamentoQueryRepository;
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.HistoricoViagemProjecao;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -66,6 +73,7 @@ public class AgendamentoController {
     private final AgendamentoQueryBuscarHandler buscarHandler;
 
     private final AgendamentoCommandRemoverHandler removerHandler;
+    private final AgendamentoQueryRepository queryRepository;
 
     @PostMapping("/dias/{data}/abrir")
     public ResponseEntity<Void> abrirDia(@PathVariable LocalDate data) {
@@ -139,6 +147,70 @@ public class AgendamentoController {
     public ResponseEntity<Void> remover(@PathVariable UUID id) {
         removerHandler.handler(new AgendamentoCommandRemover(id));
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/pessoas/{idPessoa}/historico-viagens")
+    public ResponseEntity<PageResponseDto<HistoricoViagemResponseDto>> buscarHistoricoViagens(
+            @PathVariable UUID idPessoa,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "destinoBusca", defaultValue = "") String destinoBusca) {
+        PageRequest pageable = PageRequest.of(page, 10);
+        
+        Page<HistoricoViagemProjecao> resultado = destinoBusca.isEmpty() || destinoBusca.isBlank()
+                ? queryRepository.buscarHistoricoViagensPorPessoa(idPessoa, pageable)
+                : queryRepository.buscarHistoricoViagensPorPessoaComBusca(idPessoa, destinoBusca, pageable);
+        
+        Page<HistoricoViagemResponseDto> mapped = resultado.map(this::toHistoricoViagemResponse);
+        return ResponseEntity.ok(new PageResponseDto<>(mapped));
+    }
+
+    private HistoricoViagemResponseDto toHistoricoViagemResponse(HistoricoViagemProjecao projecao) {
+        return new HistoricoViagemResponseDto(
+                projecao.getId(),
+                projecao.getData(),
+                projecao.getHorarioChegada(),
+                projecao.getHorarioSaidaNecessario(),
+                projecao.getDestinoNome(),
+                projecao.getListaDescricao(),
+                projecao.getTipoVeiculoNome(),
+                projecao.isBuscarNaResidencia(),
+                projecao.getAcompanhantes());
+    }
+
+    private static class HistoricoViagemResponseDto {
+        private UUID id;
+        private LocalDate data;
+        private java.time.LocalTime horarioChegada;
+        private java.time.LocalTime horarioSaidaNecessario;
+        private String destinoNome;
+        private String listaDescricao;
+        private String tipoVeiculoNome;
+        private Boolean buscarNaResidencia;
+        private Integer acompanhantes;
+
+        public HistoricoViagemResponseDto(UUID id, LocalDate data, java.time.LocalTime horarioChegada,
+                java.time.LocalTime horarioSaidaNecessario, String destinoNome, String listaDescricao,
+                String tipoVeiculoNome, Boolean buscarNaResidencia, Integer acompanhantes) {
+            this.id = id;
+            this.data = data;
+            this.horarioChegada = horarioChegada;
+            this.horarioSaidaNecessario = horarioSaidaNecessario;
+            this.destinoNome = destinoNome;
+            this.listaDescricao = listaDescricao;
+            this.tipoVeiculoNome = tipoVeiculoNome;
+            this.buscarNaResidencia = buscarNaResidencia;
+            this.acompanhantes = acompanhantes;
+        }
+
+        public UUID getId() { return id; }
+        public LocalDate getData() { return data; }
+        public java.time.LocalTime getHorarioChegada() { return horarioChegada; }
+        public java.time.LocalTime getHorarioSaidaNecessario() { return horarioSaidaNecessario; }
+        public String getDestinoNome() { return destinoNome; }
+        public String getListaDescricao() { return listaDescricao; }
+        public String getTipoVeiculoNome() { return tipoVeiculoNome; }
+        public Boolean getBuscarNaResidencia() { return buscarNaResidencia; }
+        public Integer getAcompanhantes() { return acompanhantes; }
     }
 
     private AgendaDiaResponseDto toResponse(AgendaDia agenda) {

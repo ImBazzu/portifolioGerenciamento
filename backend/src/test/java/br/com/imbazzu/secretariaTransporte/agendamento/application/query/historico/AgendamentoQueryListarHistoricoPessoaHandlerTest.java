@@ -56,8 +56,13 @@ class AgendamentoQueryListarHistoricoPessoaHandlerTest {
             }
 
             @Override
-            public LocalTime getHorarioSaidaNecessario() {
-                return LocalTime.of(13, 30);
+            public long getTempoViagemSegundos() {
+                return 3600;
+            }
+
+            @Override
+            public int getTempoViagemNanos() {
+                return 0;
             }
 
             @Override
@@ -104,6 +109,7 @@ class AgendamentoQueryListarHistoricoPessoaHandlerTest {
         assertEquals(10, resultado.tamanhoPagina());
         assertEquals(1, resultado.totalElementos());
         assertEquals(1, resultado.totalPaginas());
+        assertEquals(LocalTime.of(13, 30), resultado.conteudo().getFirst().horarioSaidaNecessario());
     }
 
     @Test

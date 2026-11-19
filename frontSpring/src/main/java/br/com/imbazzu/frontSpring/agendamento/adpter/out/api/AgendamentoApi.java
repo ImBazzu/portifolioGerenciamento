@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.core.ParameterizedTypeReference;
 
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AbrirVeiculoRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoRequestDto;
@@ -17,8 +18,10 @@ import br.com.imbazzu.frontSpring.agendamento.core.dto.ResultadoSeparacaoRespons
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificarVeiculosRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificacaoVeiculosResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoAbertoAtualizarRequestDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.HistoricoViagemResponseDto;
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
 import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
+import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 
 @Service
 public class AgendamentoApi {
@@ -133,6 +136,22 @@ public class AgendamentoApi {
                 .uri(PATH + "/{id}", idAgendamento)
                 .retrieve()
                 .toBodilessEntity());
+    }
+
+    public ResultadoPaginado<HistoricoViagemResponseDto> buscarHistoricoViagens(UUID idPessoa, int pagina) {
+        return executar(() -> api.get()
+                .uri(PATH + "/pessoas/{idPessoa}/historico-viagens?page={page}&size=10", idPessoa, pagina)
+                .retrieve()
+                .body(new org.springframework.core.ParameterizedTypeReference<ResultadoPaginado<HistoricoViagemResponseDto>>() {}));
+    }
+
+    public ResultadoPaginado<HistoricoViagemResponseDto> buscarHistoricoViagensComFiltro(
+            UUID idPessoa, String destinoBusca, int pagina) {
+        return executar(() -> api.get()
+                .uri(PATH + "/pessoas/{idPessoa}/historico-viagens?destinoBusca={destinoBusca}&page={page}&size=10", 
+                        idPessoa, destinoBusca, pagina)
+                .retrieve()
+                .body(new org.springframework.core.ParameterizedTypeReference<ResultadoPaginado<HistoricoViagemResponseDto>>() {}));
     }
 
     private <T> T executar(Supplier<T> chamadaApi) {

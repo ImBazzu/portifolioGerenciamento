@@ -76,6 +76,12 @@
                             hx-target="#modal" hx-swap="innerHTML">
                         <i class="bi bi-archive me-1"></i>Arquivar
                     </button>
+                    <button class="btn btn-sm btn-outline-primary"
+                            hx:get="@{/pessoas/{id}/historico-viagens(id=${pessoa.id()})}"
+                            hx-target="#historico-viagens-container"
+                            hx-swap="innerHTML">
+                        <i class="bi bi-clock-history me-1"></i>Histórico de Viagens
+                    </button>
                 </th:block>
 
                 <!-- Se ESTIVER arquivado, pode mostrar opção de desarquivar ou excluir definitivo (igual veículo) -->
@@ -95,6 +101,9 @@
                     </button>
                 </div>
             </footer>
+
+            <!-- Histórico de Viagens -->
+            <div id="historico-viagens-container"></div>
         </section>
     </div>
 </th:block>

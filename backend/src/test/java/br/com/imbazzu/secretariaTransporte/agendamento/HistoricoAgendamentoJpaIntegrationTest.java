@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +22,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mysql.MySQLContainer;
 
 import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.DestinoRepository;
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.AgendamentoQueryRepository;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.adpter.out.repositorio.TipoVeiculoQueryRepository;
 import br.com.imbazzu.secretariaTransporte.veiculo.adpter.out.repositorio.VeiculoQueryRepository;
 
@@ -45,6 +47,7 @@ class HistoricoAgendamentoJpaIntegrationTest {
     @Autowired private DestinoRepository destinos;
     @Autowired private VeiculoQueryRepository veiculos;
     @Autowired private TipoVeiculoQueryRepository tipos;
+    @Autowired private AgendamentoQueryRepository agendamentos;
 
     @Test
     @Transactional
@@ -99,5 +102,27 @@ class HistoricoAgendamentoJpaIntegrationTest {
         jdbc.update("UPDATE destinos SET data_arquivado='2030-01-03' WHERE id=UNHEX('00000000000000000000000000000012')");
         assertEquals(3, destinos.buscarPorIdArquivado(destino).orElseThrow().getQtdViagens());
         assertEquals(3, destinos.listarPorCidadeArquivado(cidade, "", pagina).getContent().getFirst().getQtdViagens());
+
+        jdbc.update("UPDATE agendamentos SET tempo_viagem_segundos=7200, tempo_viagem_nanos=500000000, buscar_na_residencia=1 WHERE id=UNHEX('00000000000000000000000000000041')");
+        jdbc.update("INSERT INTO dias_agendamento (data,aberto_em) VALUES ('2030-01-03',NOW())");
+        jdbc.update("INSERT INTO agendamentos (id,data,pessoa_id,lista_id,regra_cadastro_id,tipo_veiculo_id,destino_id,"
+                + "tempo_viagem_segundos,tempo_viagem_nanos,tolerancia_segundos,tolerancia_nanos,hora_chegada,buscar_na_residencia,acompanhantes) "
+                + "SELECT UNHEX('00000000000000000000000000000044'),'2030-01-03',pessoa_id,lista_id,regra_cadastro_id,tipo_veiculo_id,destino_id,"
+                + "tempo_viagem_segundos,tempo_viagem_nanos,tolerancia_segundos,tolerancia_nanos,hora_chegada,buscar_na_residencia,acompanhantes "
+                + "FROM agendamentos WHERE id=UNHEX('00000000000000000000000000000041')");
+        var pessoa = UUID.fromString("00000000-0000-0000-0000-000000000021");
+        var historicoPessoa = agendamentos.buscarHistoricoViagensPorPessoa(pessoa, pagina);
+        assertEquals(2, historicoPessoa.getTotalElements());
+        assertEquals(2, historicoPessoa.getTotalPages());
+        var viagem = historicoPessoa.getContent().getFirst();
+        assertEquals(LocalDate.of(2030, 1, 3), viagem.getData());
+        assertEquals(LocalTime.of(7, 59, 59, 500_000_000), viagem.getHorarioSaidaNecessario());
+        assertEquals("Destino teste", viagem.getDestinoNome());
+        assertEquals("Tipo teste", viagem.getTipoVeiculoNome());
+        assertTrue(viagem.isBuscarNaResidencia());
+        assertEquals(2, viagem.getAcompanhantes());
+        assertEquals(LocalDate.of(2030, 1, 1), agendamentos.buscarHistoricoViagensPorPessoa(pessoa, PageRequest.of(1, 1)).getContent().getFirst().getData());
+        assertEquals(2, agendamentos.buscarHistoricoViagensPorPessoaComBusca(pessoa, "Destino", pagina).getTotalElements());
+        assertEquals(0, agendamentos.buscarHistoricoViagensPorPessoaComBusca(pessoa, "inexistente", pagina).getTotalElements());
     }
 }

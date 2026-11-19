@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,6 +27,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.HistoricoViagemResponseDto;
+import br.com.imbazzu.frontSpring.agendamento.core.porta.in.HistoricoViagemApplicationPorta;
 import br.com.imbazzu.frontSpring.especificacao.core.dto.EspecificacaoResponseDto;
 import br.com.imbazzu.frontSpring.especificacao.core.porta.in.EspecificacaoApplicationPorta;
 import static org.hamcrest.Matchers.not;
@@ -48,6 +51,9 @@ class PessoaFormularioWebTest {
 
     @MockitoBean
     private EspecificacaoApplicationPorta especificacoes;
+
+    @MockitoBean
+    private HistoricoViagemApplicationPorta historico;
 
     @BeforeEach
     void configurar() {
@@ -163,5 +169,35 @@ class PessoaFormularioWebTest {
                 .andExpect(status().isOk())
                 .andExpect(header().string("HX-Trigger-After-Settle", "atualizar-pessoas"));
         verify(pessoas).desarquivar(PESSOA_ID);
+    }
+
+    @Test
+    void historicoAbreEAtualizaBuscaEPaginacaoNoMesmoContainer() throws Exception {
+        var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
+                "Alta", PRIORIDADE_ID, true, 2, true, 2, null, "", "52998224725", "11987654321");
+        var viagem = new HistoricoViagemResponseDto(UUID.randomUUID(), LocalDate.of(2026, 11, 2),
+                LocalTime.of(9, 0), LocalTime.of(8, 0), "Hospital", "Consulta", "Van", true, 1);
+        when(pessoas.buscar(PESSOA_ID)).thenReturn(pessoa);
+        when(historico.buscarHistoricoViagens(PESSOA_ID, 0))
+                .thenReturn(new ResultadoPaginado<>(List.of(viagem), 0, 10, 11, 2));
+        when(historico.buscarHistoricoViagensComFiltro(PESSOA_ID, "Hospital", 1))
+                .thenReturn(new ResultadoPaginado<>(List.of(viagem), 1, 10, 11, 2));
+
+        mvc.perform(get("/pessoas/{id}/detalhes", PESSOA_ID).header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("hx-get=\"/pessoas/" + PESSOA_ID + "/historico-viagens\"")));
+        mvc.perform(get("/pessoas/{id}/historico-viagens", PESSOA_ID).header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("02/11/2026")))
+                .andExpect(content().string(containsString("08:00")))
+                .andExpect(content().string(containsString("hx-get=\"/pessoas/" + PESSOA_ID + "/historico-viagens/buscar\"")))
+                .andExpect(content().string(containsString("hx-target=\"#historico-viagens-container\"")))
+                .andExpect(content().string(containsString("hx-include=\"#destinoBusca\"")))
+                .andExpect(content().string(containsString("/historico-viagens/buscar?pagina=1")));
+        mvc.perform(get("/pessoas/{id}/historico-viagens/buscar", PESSOA_ID)
+                        .param("destinoBusca", "Hospital").param("pagina", "1").header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("value=\"Hospital\"")))
+                .andExpect(content().string(containsString("Hospital")));
     }
 }

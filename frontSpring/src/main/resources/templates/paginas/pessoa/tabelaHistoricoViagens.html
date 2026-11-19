@@ -1,0 +1,112 @@
+<th:block th:fragment="tabelaHistoricoViagens" xmlns:hx="http://www.w3.org/1999/xhtml">
+    <div class="mt-4">
+        <h5 class="mb-3 fw-bold">Histórico de Viagens</h5>
+        
+        <!-- Campo de Busca -->
+        <div class="mb-3">
+            <input 
+                type="text" 
+                class="form-control" 
+                id="destinoBusca"
+                placeholder="Buscar por destino..."
+                hx:get="@{/pessoas/{id}/historico-viagens/buscar(id=${pessoaId})}"
+                hx-trigger="keyup changed delay:500ms"
+                hx-target="#historico-viagens-container"
+                hx-sync="#historico-viagens-container:replace"
+                hx-swap="innerHTML"
+                th:value="${destinoBusca}"
+                name="destinoBusca">
+        </div>
+
+        <!-- Tabela -->
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Data</th>
+                        <th>Horário Chegada</th>
+                        <th>Horário Saída Necessário</th>
+                        <th>Destino</th>
+                        <th>Lista</th>
+                        <th>Tipo Veículo</th>
+                        <th>Buscar na Residência</th>
+                        <th>Acompanhantes</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaHistoricoViagensTbody">
+                    <tr th:each="viagem : ${historicoViagens}">
+                        <td th:text="${#temporals.format(viagem.data(), 'dd/MM/yyyy')}">-</td>
+                        <td th:text="${#temporals.format(viagem.horarioChegada(), 'HH:mm')}">-</td>
+                        <td th:text="${#temporals.format(viagem.horarioSaidaNecessario(), 'HH:mm')}">-</td>
+                        <td th:text="${viagem.destinoNome()}">-</td>
+                        <td th:text="${viagem.listaDescricao()}">-</td>
+                        <td th:text="${viagem.tipoVeiculoNome()}">-</td>
+                        <td>
+                            <span th:if="${viagem.buscarNaResidencia()}" class="badge bg-success">Sim</span>
+                            <span th:unless="${viagem.buscarNaResidencia()}" class="badge bg-secondary">Não</span>
+                        </td>
+                        <td th:text="${viagem.acompanhantes()}">-</td>
+                    </tr>
+                    <tr th:if="${historicoViagens.isEmpty()}">
+                        <td colspan="8" class="text-center text-muted py-3">Nenhuma viagem registrada</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginação -->
+        <th:block th:if="${totalPaginas > 1}">
+            <nav aria-label="Paginação" class="mt-3">
+                <ul class="pagination pagination-sm justify-content-center">
+                    <!-- Botão Anterior -->
+                    <li th:classappend="${paginaAtual == 0 ? 'disabled' : ''}" class="page-item">
+                        <a 
+                            th:if="${paginaAtual > 0}"
+                            class="page-link" 
+                            href="#"
+                            hx:get="@{/pessoas/{id}/historico-viagens/buscar(id=${pessoaId}, pagina=${paginaAtual - 1})}"
+                            hx-include="#destinoBusca"
+                            hx-target="#historico-viagens-container"
+                            hx-sync="#historico-viagens-container:replace"
+                            hx-swap="innerHTML">
+                            Anterior
+                        </a>
+                        <span th:unless="${paginaAtual > 0}" class="page-link">Anterior</span>
+                    </li>
+
+                    <!-- Números de Página -->
+                    <th:block th:each="i : ${#numbers.sequence(0, totalPaginas - 1)}">
+                        <li th:classappend="${i == paginaAtual ? 'active' : ''}" class="page-item">
+                            <a 
+                                class="page-link" 
+                                href="#"
+                                th:text="${i + 1}"
+                                hx:get="@{/pessoas/{id}/historico-viagens/buscar(id=${pessoaId}, pagina=${i})}"
+                                hx-include="#destinoBusca"
+                                hx-target="#historico-viagens-container"
+                                hx-sync="#historico-viagens-container:replace"
+                                hx-swap="innerHTML">
+                            </a>
+                        </li>
+                    </th:block>
+
+                    <!-- Botão Próxima -->
+                    <li th:classappend="${paginaAtual == totalPaginas - 1 ? 'disabled' : ''}" class="page-item">
+                        <a 
+                            th:if="${paginaAtual < totalPaginas - 1}"
+                            class="page-link" 
+                            href="#"
+                            hx:get="@{/pessoas/{id}/historico-viagens/buscar(id=${pessoaId}, pagina=${paginaAtual + 1})}"
+                            hx-include="#destinoBusca"
+                            hx-target="#historico-viagens-container"
+                            hx-sync="#historico-viagens-container:replace"
+                            hx-swap="innerHTML">
+                            Próxima
+                        </a>
+                        <span th:unless="${paginaAtual < totalPaginas - 1}" class="page-link">Próxima</span>
+                    </li>
+                </ul>
+            </nav>
+        </th:block>
+    </div>
+</th:block>
