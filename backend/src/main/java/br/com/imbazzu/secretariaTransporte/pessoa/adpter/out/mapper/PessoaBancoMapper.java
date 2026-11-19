@@ -5,6 +5,7 @@ import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.En
 import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.Observacao;
 import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.Telefone;
 import br.com.imbazzu.secretariaTransporte.compartilhados.valueObjects.Nome;
+import br.com.imbazzu.secretariaTransporte.especificacao.adpter.out.mapper.EspecificacaoBancoMapper;
 import br.com.imbazzu.secretariaTransporte.pessoa.adpter.out.entidadeJpa.PessoaJpa;
 import br.com.imbazzu.secretariaTransporte.pessoa.core.domain.Pessoa;
 
@@ -18,7 +19,9 @@ public final class PessoaBancoMapper {
                 entidade.getId(),
                 new Nome(entidade.getNome()),
                 observacaoOpcional(entidade.getObservacao()),
-                entidade.getPrioridade(),
+                EspecificacaoBancoMapper.paraDomain(entidade.getEspecificacao()),
+                entidade.isBuscarNaResidencia(),
+                entidade.getQuantidadeAcompanhantes(),
                 entidade.getDataArquivado(),
                 enderecoOpcional(entidade.getEndereco()),
                 cpfOpcional(entidade.getCpf()),
@@ -29,7 +32,9 @@ public final class PessoaBancoMapper {
         entidade.setId(dominio.getId());
         entidade.setNome(dominio.getNome().valor());
         entidade.setObservacao(dominio.getObservacao() == null ? null : dominio.getObservacao().valor());
-        entidade.setPrioridade(dominio.getPrioridade());
+        entidade.setEspecificacao(EspecificacaoBancoMapper.paraEntidade(dominio.getEspecificacao()));
+        entidade.setBuscarNaResidencia(dominio.isBuscarNaResidencia());
+        entidade.setQuantidadeAcompanhantes(dominio.getQuantidadeAcompanhantes());
         entidade.setDataArquivado(dominio.getDataArquivado());
         entidade.setEndereco(dominio.getEndereco() == null ? null : dominio.getEndereco().valor());
         entidade.setCpf(dominio.getCpf()==null?null:dominio.getCpf().valor());

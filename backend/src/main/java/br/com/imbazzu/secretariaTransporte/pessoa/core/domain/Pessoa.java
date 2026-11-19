@@ -9,45 +9,56 @@ import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.En
 import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.Observacao;
 import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.Telefone;
 import br.com.imbazzu.secretariaTransporte.compartilhados.valueObjects.Nome;
+import br.com.imbazzu.secretariaTransporte.especificacao.core.domain.Especificacao;
 
 public final class Pessoa {
 
     private final UUID id;
     private Nome nome;
     private Observacao observacao;
-    private EnumPrioridade prioridade;
+    private Especificacao especificacao;
+    private boolean buscarNaResidencia;
+    private int quantidadeAcompanhantes;
     private LocalDate dataArquivado;
     private Endereco endereco;
     private Cpf cpf;
     private Telefone telefone;
 
-    private Pessoa(UUID id, Nome nome, Observacao observacao, EnumPrioridade prioridade,
-            LocalDate dataArquivado, Endereco endereco, Cpf cpf, Telefone telefone) {
+    private Pessoa(UUID id, Nome nome, Observacao observacao, Especificacao especificacao,
+            boolean buscarNaResidencia, int quantidadeAcompanhantes, LocalDate dataArquivado, 
+            Endereco endereco, Cpf cpf, Telefone telefone) {
         this.id = Objects.requireNonNull(id, "ID é obrigatório");
         this.nome = Objects.requireNonNull(nome, "Nome é obrigatório");
         this.observacao = observacao;
-        this.prioridade = Objects.requireNonNull(prioridade, "Prioridade é obrigatória");
+        this.especificacao = Objects.requireNonNull(especificacao, "Especificação é obrigatória");
+        this.buscarNaResidencia = buscarNaResidencia;
+        this.quantidadeAcompanhantes = quantidadeAcompanhantes;
         this.dataArquivado = dataArquivado;
         this.endereco = endereco;
         this.cpf = cpf;
         this.telefone = Objects.requireNonNull(telefone, "Telefone é obrigatório");
     }
 
-    public static Pessoa criar(Nome nome, Observacao observacao, EnumPrioridade prioridade,
-            Endereco endereco, Cpf cpf, Telefone telefone) {
-        return new Pessoa(UUID.randomUUID(), nome, observacao, prioridade, null, endereco, cpf, telefone);
+    public static Pessoa criar(Nome nome, Observacao observacao, Especificacao especificacao,
+            boolean buscarNaResidencia, int quantidadeAcompanhantes, Endereco endereco, Cpf cpf, Telefone telefone) {
+        return new Pessoa(UUID.randomUUID(), nome, observacao, especificacao, buscarNaResidencia, 
+            quantidadeAcompanhantes, null, endereco, cpf, telefone);
     }
 
-    public static Pessoa recriar(UUID id, Nome nome, Observacao observacao, EnumPrioridade prioridade,
-            LocalDate dataArquivado, Endereco endereco, Cpf cpf, Telefone telefone) {
-        return new Pessoa(id, nome, observacao, prioridade, dataArquivado, endereco, cpf, telefone);
+    public static Pessoa recriar(UUID id, Nome nome, Observacao observacao, Especificacao especificacao,
+            boolean buscarNaResidencia, int quantidadeAcompanhantes, LocalDate dataArquivado, 
+            Endereco endereco, Cpf cpf, Telefone telefone) {
+        return new Pessoa(id, nome, observacao, especificacao, buscarNaResidencia, quantidadeAcompanhantes,
+            dataArquivado, endereco, cpf, telefone);
     }
 
-    public void editar(Nome nome, Observacao observacao, EnumPrioridade prioridade,
-            Endereco endereco, Cpf cpf, Telefone telefone) {
+    public void editar(Nome nome, Observacao observacao, Especificacao especificacao,
+            boolean buscarNaResidencia, int quantidadeAcompanhantes, Endereco endereco, Cpf cpf, Telefone telefone) {
         this.nome = Objects.requireNonNull(nome, "Nome é obrigatório");
         this.observacao = observacao;
-        this.prioridade = Objects.requireNonNull(prioridade, "Prioridade é obrigatória");
+        this.especificacao = Objects.requireNonNull(especificacao, "Especificação é obrigatória");
+        this.buscarNaResidencia = buscarNaResidencia;
+        this.quantidadeAcompanhantes = quantidadeAcompanhantes;
         this.endereco = endereco;
         this.cpf = cpf;
         this.telefone = Objects.requireNonNull(telefone, "Telefone é obrigatório");
@@ -75,8 +86,16 @@ public final class Pessoa {
         return observacao;
     }
 
-    public EnumPrioridade getPrioridade() {
-        return prioridade;
+    public Especificacao getEspecificacao() {
+        return especificacao;
+    }
+
+    public boolean isBuscarNaResidencia() {
+        return buscarNaResidencia;
+    }
+
+    public int getQuantidadeAcompanhantes() {
+        return quantidadeAcompanhantes;
     }
 
     public LocalDate getDataArquivado() {

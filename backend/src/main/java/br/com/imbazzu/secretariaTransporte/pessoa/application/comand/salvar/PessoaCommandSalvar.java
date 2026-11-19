@@ -1,9 +1,8 @@
 package br.com.imbazzu.secretariaTransporte.pessoa.application.comand.salvar;
 
-import br.com.imbazzu.secretariaTransporte.pessoa.core.domain.EnumPrioridade;
+import java.util.UUID;
 
-
-public record PessoaCommandSalvar(String nome, String observacao, EnumPrioridade prioridade,
-            String endereco, String cpf, String telefone) {
+public record PessoaCommandSalvar(String nome, String observacao, UUID especificacaoId,
+            boolean buscarNaResidencia, int quantidadeAcompanhantes, String endereco, String cpf, String telefone) {
     
 }

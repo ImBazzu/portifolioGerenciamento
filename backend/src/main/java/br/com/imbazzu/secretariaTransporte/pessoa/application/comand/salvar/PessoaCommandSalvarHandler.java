@@ -10,6 +10,8 @@ import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.En
 import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.Observacao;
 import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.Telefone;
 import br.com.imbazzu.secretariaTransporte.compartilhados.valueObjects.Nome;
+import br.com.imbazzu.secretariaTransporte.especificacao.adpter.out.mapper.EspecificacaoBancoMapper;
+import br.com.imbazzu.secretariaTransporte.especificacao.adpter.out.repositorio.EspecificacaoRepository;
 import br.com.imbazzu.secretariaTransporte.pessoa.core.domain.Pessoa;
 import br.com.imbazzu.secretariaTransporte.pessoa.core.excecoes.PessoaDuplicadoException;
 import br.com.imbazzu.secretariaTransporte.pessoa.core.porta.out.PessoaCommandPorta;
@@ -20,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class PessoaCommandSalvarHandler {
     
     private final PessoaCommandPorta porta;
+    private final EspecificacaoRepository especificacaoRepository;
     
     @Transactional
     public UUID handler(PessoaCommandSalvar command){
@@ -40,8 +43,15 @@ public class PessoaCommandSalvarHandler {
         var endereco = command.endereco() == null || command.endereco().isBlank()
                 ? null
                 : new Endereco(command.endereco());
-        var pessoa = Pessoa.criar(new Nome(command.nome()), observacao,
-                command.prioridade(), endereco, cpf, new Telefone(command.telefone()));
+        
+        var especificacaoJpa = especificacaoRepository.findById(command.especificacaoId())
+                .orElseThrow(() -> new IllegalArgumentException("Especificação não encontrada"));
+        
+        var especificacao = EspecificacaoBancoMapper.paraDomain(especificacaoJpa);
+        
+        var pessoa = Pessoa.criar(new Nome(command.nome()), observacao, especificacao,
+                command.buscarNaResidencia(), command.quantidadeAcompanhantes(), 
+                endereco, cpf, new Telefone(command.telefone()));
         
      
         

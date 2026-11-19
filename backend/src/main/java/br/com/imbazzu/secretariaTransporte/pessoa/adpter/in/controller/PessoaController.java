@@ -62,8 +62,8 @@ public class PessoaController {
 
     @PostMapping
     public ResponseEntity<Void> criar(@RequestBody @Valid PessoaRequestDto request) {
-        var id = salvarHandler.handler(new PessoaCommandSalvar(request.nome(), request.observacao(), request.prioridade(),
-                request.endereco(), request.cpf(), request.telefone()));
+        var id = salvarHandler.handler(new PessoaCommandSalvar(request.nome(), request.observacao(), request.especificacaoId(),
+                request.buscarNaResidencia(), request.quantidadeAcompanhantes(), request.endereco(), request.cpf(), request.telefone()));
                 
         return ResponseEntity.created(URI.create("/api/pessoa/%s".formatted(id))).build();
     }
@@ -99,8 +99,8 @@ public class PessoaController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Void> editar(@PathVariable UUID id, @RequestBody @Valid PessoaRequestDto request) {
-        editarHandler.handler(new PessoaCommandEditar(id, request.nome(), request.observacao(), request.prioridade(),
-                request.endereco(), request.cpf(), request.telefone()));
+        editarHandler.handler(new PessoaCommandEditar(id, request.nome(), request.observacao(), request.especificacaoId(),
+                request.buscarNaResidencia(), request.quantidadeAcompanhantes(), request.endereco(), request.cpf(), request.telefone()));
         return ResponseEntity.noContent().build();
     }
 
@@ -127,7 +127,10 @@ public class PessoaController {
                 pessoa.getId(),
                 pessoa.getNome().valor(),
                 pessoa.getObservacao() == null ? null : pessoa.getObservacao().valor(),
-                pessoa.getPrioridade(),
+                pessoa.getEspecificacao().getId(),
+                pessoa.getEspecificacao().getNome(),
+                pessoa.isBuscarNaResidencia(),
+                pessoa.getQuantidadeAcompanhantes(),
                 pessoa.getDataArquivado(),
                 pessoa.getEndereco() == null ? null : pessoa.getEndereco().valor(),
                 pessoa.getCpf() == null ? null : pessoa.getCpf().valor(),

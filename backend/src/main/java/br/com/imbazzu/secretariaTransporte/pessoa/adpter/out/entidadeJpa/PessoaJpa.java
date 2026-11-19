@@ -3,16 +3,17 @@ package br.com.imbazzu.secretariaTransporte.pessoa.adpter.out.entidadeJpa;
 import java.time.LocalDate;
 import java.util.UUID;
 
-import br.com.imbazzu.secretariaTransporte.pessoa.core.domain.EnumPrioridade;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import br.com.imbazzu.secretariaTransporte.especificacao.adpter.out.entidadeJpa.EspecificacaoJpa;
 
 @Entity
 @Table(name = "pessoas")
@@ -31,9 +32,15 @@ public class PessoaJpa {
     @Column(name = "observacao", length = 249)
     private String observacao;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "prioridade", nullable = false, length = 20)
-    private EnumPrioridade prioridade;
+    @ManyToOne
+    @JoinColumn(name = "especificacao_id", nullable = false, foreignKey = @ForeignKey(name = "fk_pessoa_especificacao"))
+    private EspecificacaoJpa especificacao;
+
+    @Column(name = "buscar_na_residencia", nullable = false)
+    private boolean buscarNaResidencia;
+
+    @Column(name = "quantidade_acompanhantes", nullable = false)
+    private int quantidadeAcompanhantes;
 
     @Column(name = "data_arquivado")
     private LocalDate dataArquivado;
