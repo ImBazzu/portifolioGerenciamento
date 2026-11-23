@@ -63,10 +63,9 @@ public class PrioridadeController {
 
     @PostMapping
     public String criar(@RequestParam String nome,
-                        @RequestParam(defaultValue = "false") boolean buscarNaResidencia,
                         @RequestParam int quantidadeAcompanhantes, RedirectAttributes redirect) {
         try {
-            api.criar(new PrioridadeApi.Dados(nome, buscarNaResidencia, quantidadeAcompanhantes));
+            api.criar(new PrioridadeApi.Dados(nome, quantidadeAcompanhantes));
             redirect.addFlashAttribute("sucesso", "Prioridade cadastrada.");
         } catch (RestClientResponseException e) {
             redirect.addFlashAttribute("erro", mensagemErro.de(e));
@@ -76,10 +75,9 @@ public class PrioridadeController {
 
     @PostMapping("/{id}")
     public String editar(@PathVariable UUID id, @RequestParam String nome,
-                         @RequestParam(defaultValue = "false") boolean buscarNaResidencia,
                          @RequestParam int quantidadeAcompanhantes, RedirectAttributes redirect) {
         try {
-            api.editar(id, new PrioridadeApi.Dados(nome, buscarNaResidencia, quantidadeAcompanhantes));
+            api.editar(id, new PrioridadeApi.Dados(nome, quantidadeAcompanhantes));
             redirect.addFlashAttribute("sucesso", "Prioridade atualizada.");
         } catch (RestClientResponseException e) {
             redirect.addFlashAttribute("erro", mensagemErro.de(e));

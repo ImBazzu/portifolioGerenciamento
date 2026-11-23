@@ -11,5 +11,6 @@ public record PessoaRequestDto(
         @NotNull UUID especificacaoId,
         @Size(max = 249) String endereco,
         String cpf,
-        @NotBlank String telefone) {
+        @NotBlank String telefone,
+        boolean buscarNaResidencia) {
 }

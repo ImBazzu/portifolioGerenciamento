@@ -52,7 +52,7 @@ public class PessoaCommandEditarHandler {
         var especificacao = EspecificacaoBancoMapper.paraDomain(especificacaoJpa);
         
         pessoa.editar(new Nome(command.nome()),  observacao, especificacao,
-                pessoa.isBuscarNaResidencia(), pessoa.getQuantidadeAcompanhantes(),
+                command.buscarNaResidencia(), pessoa.getQuantidadeAcompanhantes(),
                 endereco, novoCpf, new Telefone(command.telefone()));
         porta.salvar(pessoa);
     }

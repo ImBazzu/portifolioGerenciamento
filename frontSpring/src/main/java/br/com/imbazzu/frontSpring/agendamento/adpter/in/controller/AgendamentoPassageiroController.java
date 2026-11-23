@@ -71,7 +71,7 @@ public class AgendamentoPassageiroController {
             @RequestParam UUID idLista,
             @RequestParam UUID idDestino,
             @RequestParam LocalTime horarioChegada,
-            @RequestParam(defaultValue = "0") int acompanhantes,
+            @RequestParam(required = false) Integer acompanhantes,
             @RequestParam(defaultValue = "false") boolean buscarNaResidencia,
             @RequestParam(required = false) UUID idTipoVeiculoSelecionado,
             @RequestHeader(value = "HX-Request", required = false) String hxRequest,
@@ -83,12 +83,15 @@ public class AgendamentoPassageiroController {
         String erro = null;
         try {
             pessoa = pessoas.buscar(idPessoa);
-            acompanhantes = pessoa.prioridadeAcompanhantes();
-            buscarNaResidencia = pessoa.prioridadeBuscarNaResidencia();
+            acompanhantes = acompanhantes == null ? pessoa.prioridadeAcompanhantes() : acompanhantes;
+            buscarNaResidencia = pessoa.buscarNaResidencia();
             resposta = agendamentoApi.verificarVeiculos(data, new VerificarVeiculosRequestDto(
                     idPessoa, idLista, idDestino, horarioChegada, acompanhantes));
         } catch (RestClientResponseException e) {
             erro = mensagemErro.de(e);
+        }
+        if (acompanhantes == null) {
+            acompanhantes = 0;
         }
 
         if ("true".equalsIgnoreCase(hxRequest)) {
@@ -99,6 +102,7 @@ public class AgendamentoPassageiroController {
             model.addAttribute("horarioChegadaSelecionado", horarioChegada);
             model.addAttribute("acompanhantesSelecionados", acompanhantes);
             model.addAttribute("buscarNaResidenciaSelecionado", buscarNaResidencia);
+            model.addAttribute("maxAcompanhantes", pessoa == null ? null : pessoa.prioridadeAcompanhantes());
             model.addAttribute("idTipoVeiculoSelecionado", idTipoVeiculoSelecionado);
             model.addAttribute("verificacao", resposta);
             model.addAttribute("erroVerificacao", erro);
@@ -113,7 +117,7 @@ public class AgendamentoPassageiroController {
                 if (pessoa != null) {
                     model.addAttribute("passageiroVerificado", PassageiroVerificadoView.de(
                             pessoa, opcoes.destino(idDestino).orElse(null),
-                            horarioChegada, pessoa.prioridadeBuscarNaResidencia(), pessoa.prioridadeAcompanhantes()));
+                            horarioChegada, pessoa.buscarNaResidencia(), acompanhantes));
                 }
             } catch (RestClientResponseException e) {
                 model.addAttribute("erroVerificacao",

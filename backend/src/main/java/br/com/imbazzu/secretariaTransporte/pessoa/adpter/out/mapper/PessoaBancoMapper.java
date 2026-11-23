@@ -22,6 +22,7 @@ public final class PessoaBancoMapper {
                 EspecificacaoBancoMapper.paraDomain(entidade.getEspecificacao()),
                 entidade.isBuscarNaResidencia(),
                 entidade.getQuantidadeAcompanhantes(),
+                entidade.isValidada(),
                 entidade.getDataArquivado(),
                 enderecoOpcional(entidade.getEndereco()),
                 cpfOpcional(entidade.getCpf()),
@@ -35,6 +36,7 @@ public final class PessoaBancoMapper {
         entidade.setEspecificacao(EspecificacaoBancoMapper.paraEntidade(dominio.getEspecificacao()));
         entidade.setBuscarNaResidencia(dominio.isBuscarNaResidencia());
         entidade.setQuantidadeAcompanhantes(dominio.getQuantidadeAcompanhantes());
+        entidade.setValidada(dominio.isValidada());
         entidade.setDataArquivado(dominio.getDataArquivado());
         entidade.setEndereco(dominio.getEndereco() == null ? null : dominio.getEndereco().valor());
         entidade.setCpf(dominio.getCpf()==null?null:dominio.getCpf().valor());

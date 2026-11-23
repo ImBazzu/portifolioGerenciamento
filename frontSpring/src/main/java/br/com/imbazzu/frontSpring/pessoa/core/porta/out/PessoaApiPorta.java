@@ -20,5 +20,7 @@ public interface PessoaApiPorta {
 
     void desarquivar(UUID id);
 
+    void validar(UUID id);
+
     PessoaResponseDto buscarArquivado(UUID id);
 }

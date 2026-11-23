@@ -30,24 +30,36 @@ class PrioridadeMigrationTest {
         }
 
         Flyway.configure().dataSource(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword())
+                .locations("classpath:db/migration").target("20").load().migrate();
+
+        try (var conn = DriverManager.getConnection(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword());
+             var sql = conn.createStatement()) {
+            sql.executeUpdate("UPDATE prioridades SET buscar_na_residencia=1 WHERE nome='ALTA'");
+        }
+
+        Flyway.configure().dataSource(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword())
                 .locations("classpath:db/migration").load().migrate();
 
         try (var conn = DriverManager.getConnection(MYSQL.getJdbcUrl(), MYSQL.getUsername(), MYSQL.getPassword());
              var sql = conn.createStatement()) {
-            try (var rows = sql.executeQuery("SELECT p.nome,p.buscar_na_residencia,p.quantidade_acompanhantes FROM especificacoes e JOIN prioridades p ON p.id=e.prioridade_id WHERE e.nome='Teste'")) {
+            try (var rows = sql.executeQuery("SELECT p.nome,p.quantidade_acompanhantes FROM especificacoes e JOIN prioridades p ON p.id=e.prioridade_id WHERE e.nome='Teste'")) {
                 rows.next();
                 assertEquals("ALTA", rows.getString(1));
-                assertEquals(false, rows.getBoolean(2));
-                assertEquals(0, rows.getInt(3));
+                assertEquals(0, rows.getInt(2));
             }
             try (var rows = sql.executeQuery("SELECT COUNT(*) FROM regra_cadastro_prioridades r JOIN prioridades p ON p.id=r.prioridade_id WHERE p.nome='ALTA'")) {
                 rows.next();
                 assertEquals(1, rows.getInt(1));
             }
-            try (var rows = sql.executeQuery("SELECT buscar_na_residencia,quantidade_acompanhantes FROM pessoas WHERE nome='Pessoa'")) {
+            try (var rows = sql.executeQuery("SELECT buscar_na_residencia,quantidade_acompanhantes,validada FROM pessoas WHERE nome='Pessoa'")) {
                 rows.next();
                 assertEquals(true, rows.getBoolean(1));
                 assertEquals(2, rows.getInt(2));
+                assertEquals(false, rows.getBoolean(3));
+            }
+            try (var rows = sql.executeQuery("SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='prioridades' AND column_name='buscar_na_residencia'")) {
+                rows.next();
+                assertEquals(0, rows.getInt(1));
             }
         }
     }

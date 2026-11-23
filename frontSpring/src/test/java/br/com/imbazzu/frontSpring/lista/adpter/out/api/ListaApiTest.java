@@ -54,7 +54,7 @@ class ListaApiTest {
         server = MockRestServiceServer.bindTo(clientBuilder).build();
         prioridades = mock(PrioridadeApi.class);
         when(prioridades.listar()).thenReturn(List.of(new PrioridadeApi.Prioridade(
-                UUID.fromString("00000000-0000-0000-0000-000000000003"), "ALTA", false, 0, false, 0)));
+                UUID.fromString("00000000-0000-0000-0000-000000000003"), "ALTA", 0, false, 0)));
         api = new ListaApi(new RestClientProtegido(clientBuilder.build()), executarSemRefresh(), prioridades);
     }
 

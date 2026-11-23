@@ -42,6 +42,9 @@ public class PessoaJpa {
     @Column(name = "quantidade_acompanhantes", nullable = false)
     private int quantidadeAcompanhantes;
 
+    @Column(name = "validada", nullable = false)
+    private boolean validada;
+
     @Column(name = "data_arquivado")
     private LocalDate dataArquivado;
 

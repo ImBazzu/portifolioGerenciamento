@@ -13,6 +13,8 @@
                     </h2>
                     <span class="badge text-bg-secondary"
                           th:text="${pessoa.especificacaoNome()}">MODERADA</span>
+                    <span th:if="${pessoa.validada()}" class="badge text-bg-success ms-1">Dados validados</span>
+                    <span th:unless="${pessoa.validada()}" class="badge text-bg-warning ms-1">Aguardando validação</span>
                 </div>
                 
                 <div class="d-flex gap-2 align-items-center">
@@ -43,8 +45,10 @@
             <!-- Body / Dados -->
             <dl class="row g-3 mb-0">
                 <div class="col-12">
-                    <dt class="small text-secondary">Dados antigos da pessoa (somente consulta)</dt>
-                    <dd th:text="${(pessoa.buscarNaResidencia() ? 'Busca na residência' : 'Sem busca na residência') + ' · ' + pessoa.quantidadeAcompanhantes() + ' acompanhante(s)'}"></dd>
+                    <dt class="small text-secondary">Busca na residência</dt>
+                    <dd th:text="${pessoa.buscarNaResidencia() ? 'Sim' : 'Não'}"></dd>
+                    <dt class="small text-secondary">Máximo de acompanhantes permitido</dt>
+                    <dd th:text="${pessoa.prioridadeAcompanhantes()}"></dd>
                 </div>
                 <div class="col-12 col-md-6">
                     <dt class="small text-secondary">CPF</dt>
@@ -70,6 +74,12 @@
             <footer class="border-top pt-3 mt-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <!-- Se NÃO estiver arquivado, mostra botão de Arquivar -->
                 <th:block th:unless="${arquivado}">
+                    <button th:if="${!pessoa.validada()}" class="btn btn-sm btn-success"
+                            hx:patch="@{/pessoas/{id}/validar(id=${pessoa.id()})}"
+                            hx-confirm="Confirma que os dados desta pessoa foram verificados e são verdadeiros?"
+                            hx-target="#modal" hx-swap="innerHTML">
+                        <i class="bi bi-patch-check me-1"></i>Confirmar validação
+                    </button>
                     <button class="btn btn-sm btn-outline-warning"
                             hx:patch="@{/pessoas/{id}/arquivar(id=${pessoa.id()})}"
                             hx-confirm="Deseja arquivar esta pessoa?"

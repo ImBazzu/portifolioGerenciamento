@@ -6,7 +6,7 @@
     <aside th:replace="~{layout/sidebar :: sidebar}"></aside>
     <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
         <div th:fragment="conteudo" class="app-page">
-            <header th:replace="~{fragmentos/componentes :: cabecalhoPagina('Prioridades', 'Defina a busca e a quantidade exata de acompanhantes para novos agendamentos.', ~{::acoes})}">
+            <header th:replace="~{fragmentos/componentes :: cabecalhoPagina('Prioridades', 'Defina o número máximo de acompanhantes permitido para cada prioridade.', ~{::acoes})}">
                 <div th:fragment="acoes" class="app-page-actions">
                     <button class="btn btn-outline-secondary"
                             hx:get="@{/prioridades/listarArquivadas}"
@@ -26,12 +26,11 @@
                 <div class="card-header bg-white"><h2 class="h5 mb-0">Prioridades cadastradas</h2></div>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light"><tr><th>Nome</th><th>Busca na residência</th><th>Acompanhantes</th><th>Especificações vinculadas</th><th class="text-end">Ações</th></tr></thead>
+                        <thead class="table-light"><tr><th>Nome</th><th>Máximo de acompanhantes</th><th>Especificações vinculadas</th><th class="text-end">Ações</th></tr></thead>
                         <tbody>
-                        <tr th:if="${#lists.isEmpty(prioridades)}"><td colspan="5" class="text-center text-muted py-4">Nenhuma prioridade ativa encontrada.</td></tr>
+                        <tr th:if="${#lists.isEmpty(prioridades)}"><td colspan="4" class="text-center text-muted py-4">Nenhuma prioridade ativa encontrada.</td></tr>
                         <tr th:each="prioridade : ${prioridades}">
                             <td th:text="${prioridade.nome()}">Nome</td>
-                            <td th:text="${prioridade.buscarNaResidencia() ? 'Sim' : 'Não'}">Não</td>
                             <td th:text="${prioridade.quantidadeAcompanhantes()}">0</td>
                             <td th:text="${prioridade.quantidadeEspecificacoes()}">0</td>
                             <td class="text-end">

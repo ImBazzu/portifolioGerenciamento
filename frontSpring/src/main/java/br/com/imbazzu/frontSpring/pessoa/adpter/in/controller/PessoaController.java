@@ -75,7 +75,7 @@ public class PessoaController {
             Model model) {
         var especificacoes = listarEspecificacoes();
         model.addAttribute("id", null);
-        model.addAttribute("pessoa", new PessoaRequestDto("", "", null, "", "", ""));
+        model.addAttribute("pessoa", new PessoaRequestDto("", "", null, "", "", "", false));
         model.addAttribute("contextoAgendamento", contextoAgendamento);
         model.addAttribute("especificacoes", especificacoes);
         return "paginas/pessoa/formPessoa :: formPessoa";
@@ -91,7 +91,7 @@ public class PessoaController {
         model.addAttribute("especificacoes", especificacoes);
         model.addAttribute("pessoa", new PessoaRequestDto(
                 pessoa.nome(), pessoa.observacao(), pessoa.especificacaoId(),
-                pessoa.endereco(), pessoa.cpf(), pessoa.telefone()));
+                pessoa.endereco(), pessoa.cpf(), pessoa.telefone(), pessoa.buscarNaResidencia()));
         return "paginas/pessoa/formPessoa :: formPessoa";
     }
 
@@ -197,6 +197,15 @@ public class PessoaController {
     @ResponseBody
     public void desarquivar(@PathVariable UUID id) {
         application.desarquivar(id);
+    }
+
+    @HxRequest
+    @PatchMapping("/{id}/validar")
+    @HxTriggerAfterSettle("atualizar-pessoas")
+    public String validar(@PathVariable UUID id, Model model) {
+        application.validar(id);
+        model.addAttribute("pessoa", application.buscar(id));
+        return "paginas/pessoa/detalhesPessoa :: detalhesPessoa";
     }
 
     @HxRequest

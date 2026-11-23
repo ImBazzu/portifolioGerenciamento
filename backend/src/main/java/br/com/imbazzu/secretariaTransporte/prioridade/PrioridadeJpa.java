@@ -24,9 +24,6 @@ public class PrioridadeJpa {
     @Column(nullable = false, length = 100, unique = true)
     private String nome;
 
-    @Column(name = "buscar_na_residencia", nullable = false)
-    private boolean buscarNaResidencia;
-
     @Column(name = "quantidade_acompanhantes", nullable = false)
     private int quantidadeAcompanhantes;
 

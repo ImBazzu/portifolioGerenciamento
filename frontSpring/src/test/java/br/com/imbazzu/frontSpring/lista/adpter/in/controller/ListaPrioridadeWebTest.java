@@ -39,8 +39,8 @@ class ListaPrioridadeWebTest {
 
     @Test
     void separaPrioridadesAtivasDasArquivadasNoModal() throws Exception {
-        var ativa = new PrioridadeApi.Prioridade(UUID.randomUUID(), "Ativa exemplo", false, 0, false, 3);
-        var arquivada = new PrioridadeApi.Prioridade(UUID.randomUUID(), "Arquivada exemplo", true, 2, true, 1);
+        var ativa = new PrioridadeApi.Prioridade(UUID.randomUUID(), "Ativa exemplo", 0, false, 3);
+        var arquivada = new PrioridadeApi.Prioridade(UUID.randomUUID(), "Arquivada exemplo", 2, true, 1);
         when(prioridades.listar()).thenReturn(List.of(ativa, arquivada));
         when(prioridades.buscar(arquivada.id())).thenReturn(arquivada);
 
@@ -78,14 +78,13 @@ class ListaPrioridadeWebTest {
     @Test
     void tabelaExibeDadosEQuantidadeDeEspecificacoes() throws Exception {
         when(prioridades.listar()).thenReturn(List.of(
-                new PrioridadeApi.Prioridade(UUID.randomUUID(), "Com busca", true, 2, false, 5),
-                new PrioridadeApi.Prioridade(UUID.randomUUID(), "Sem busca", false, 0, false, 0)));
+                new PrioridadeApi.Prioridade(UUID.randomUUID(), "Com busca", 2, false, 5),
+                new PrioridadeApi.Prioridade(UUID.randomUUID(), "Sem busca", 0, false, 0)));
         mvc.perform(get("/prioridades"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("<th>Busca na residência</th>")))
+                .andExpect(content().string(containsString("<th>Máximo de acompanhantes</th>")))
                 .andExpect(content().string(containsString("<th>Especificações vinculadas</th>")))
-                .andExpect(content().string(containsString("<td>Sim</td>")))
-                .andExpect(content().string(containsString("<td>Não</td>")))
+                .andExpect(content().string(not(containsString("<th>Busca na residência</th>"))))
                 .andExpect(content().string(containsString("<td>2</td>")))
                 .andExpect(content().string(containsString("<td>5</td>")))
                 .andExpect(content().string(containsString("<td>0</td>")))
@@ -138,7 +137,7 @@ class ListaPrioridadeWebTest {
                 List.of(prioridade.toString()), null, null, false, null, List.of(), 1);
         when(listas.buscarAtiva(id)).thenReturn(new ListaResponseDto(
                 id, "Lista", "", 1, 0, false, List.of(), List.of(), List.of(regra), List.of()));
-        when(prioridades.listar()).thenReturn(List.of(new PrioridadeApi.Prioridade(prioridade, "Especial", true, 2, false, 0)));
+        when(prioridades.listar()).thenReturn(List.of(new PrioridadeApi.Prioridade(prioridade, "Especial", 2, false, 0)));
         when(localidades.listarCidades("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 20, 0, 0));
         when(veiculos.listar("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 20, 0, 0));
 
@@ -156,7 +155,7 @@ class ListaPrioridadeWebTest {
                 List.of(prioridade.toString()), null, null, false, null, List.of(), 1);
         when(listas.buscarAtiva(id)).thenReturn(new ListaResponseDto(
                 id, "Lista", "", 1, 0, false, List.of(), List.of(), List.of(regra), List.of()));
-        when(prioridades.listar()).thenReturn(List.of(new PrioridadeApi.Prioridade(prioridade, "Arquivada", false, 0, true, 0)));
+        when(prioridades.listar()).thenReturn(List.of(new PrioridadeApi.Prioridade(prioridade, "Arquivada", 0, true, 0)));
         when(localidades.listarCidades("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 20, 0, 0));
         when(veiculos.listar("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 20, 0, 0));
         mvc.perform(get("/listas/abrirFormulario/{id}", id).header("HX-Request", "true"))

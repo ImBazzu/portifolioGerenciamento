@@ -13,7 +13,7 @@ class PessoaRequestDtoTest {
     @Test
     void aceitaEnderecoEmBranco() {
         var pessoa = new PessoaRequestDto(
-                "Ana Souza", "", UUID.randomUUID(), "", "52998224725", "11987654321");
+                "Ana Souza", "", UUID.randomUUID(), "", "52998224725", "11987654321", false);
         var validator = Validation.buildDefaultValidatorFactory().getValidator();
 
         assertTrue(validator.validate(pessoa).isEmpty());

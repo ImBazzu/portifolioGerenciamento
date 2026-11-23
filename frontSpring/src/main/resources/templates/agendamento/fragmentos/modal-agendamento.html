@@ -259,7 +259,7 @@
                         </div>
 
                         <div class="col-12 form-text">
-                            Busca na residência e acompanhantes são definidos pela prioridade da pessoa.
+                            A busca na residência é definida no cadastro da pessoa. A quantidade selecionada pode ser menor que o máximo da prioridade.
                         </div>
 
                         <!-- VERIFICAÇÃO -->
@@ -333,6 +333,41 @@
 
                             </ul>
 
+                            <form method="post"
+                                  th:action="@{/agendamentos/verificar-veiculos}"
+                                  hx:post="@{/agendamentos/verificar-veiculos}"
+                                  hx-target="#resultadoVerificacao"
+                                  hx-swap="outerHTML"
+                                  class="card card-body bg-light mb-3">
+                                <input type="hidden" name="data" th:value="${data}">
+                                <input type="hidden" name="idPessoa" th:value="${idPessoaSelecionada}">
+                                <input type="hidden" name="idLista" th:value="${idListaSelecionada}">
+                                <input type="hidden" name="idDestino" th:value="${idDestinoSelecionado}">
+                                <input type="hidden" name="horarioChegada" th:value="${horarioChegadaSelecionado}">
+                                <input type="hidden" name="buscarNaResidencia"
+                                       th:value="${buscarNaResidenciaSelecionado == true}">
+                                <fieldset>
+                                    <legend class="form-label fw-semibold">
+                                        Acompanhantes (máximo permitido: <span th:text="${maxAcompanhantes}"></span>)
+                                    </legend>
+                                    <div class="btn-group flex-wrap" role="group" aria-label="Quantidade de acompanhantes">
+                                        <th:block th:each="quantidade : ${#numbers.sequence(0, maxAcompanhantes)}">
+                                            <input class="btn-check" type="radio" name="acompanhantes"
+                                                   th:id="${'verificar-acompanhantes-' + quantidade}"
+                                                   th:value="${quantidade}"
+                                                   th:checked="${quantidade == acompanhantesSelecionados}"
+                                                   required>
+                                            <label class="btn btn-outline-primary"
+                                                   th:for="${'verificar-acompanhantes-' + quantidade}"
+                                                   th:text="${quantidade == 1 ? '1 acompanhante' : quantidade + ' acompanhantes'}"></label>
+                                        </th:block>
+                                    </div>
+                                </fieldset>
+                                <button type="submit" class="btn btn-sm btn-outline-primary align-self-start mt-3">
+                                    <i class="bi bi-arrow-repeat me-1"></i>Atualizar veículos permitidos
+                                </button>
+                            </form>
+
                             <!-- PASSAGEIRO VERIFICADO -->
                             <section th:if="${passageiroVerificado != null}"
                                      class="card bg-light border-0 mb-3 rounded-3">
@@ -352,18 +387,15 @@
                                     <div th:text="${passageiroVerificado.cidade() + ' · ' + passageiroVerificado.destino()}">
                                     </div>
 
+                                    <div th:class="${passageiroVerificado.buscarNaResidencia() ? 'alert alert-warning py-2 my-2' : 'alert alert-success py-2 my-2'}"
+                                         role="status">
+                                        <strong th:text="${passageiroVerificado.buscarNaResidencia() ? 'BUSCAR NA RESIDÊNCIA' : 'NÃO BUSCAR NA RESIDÊNCIA'}"></strong>
+                                    </div>
+
                                     <div>
-
                                         <span th:text="${'Chegada ' + passageiroVerificado.horarioChegada()}"></span>
-
                                         <span> · </span>
-
-                                        <span th:text="${passageiroVerificado.buscarNaResidencia() ? 'Buscar na residência' : 'Sem busca na residência'}"></span>
-
-                                        <span> · </span>
-
-                                        <span th:text="${passageiroVerificado.acompanhantes() + ' acompanhante(s)'}"></span>
-
+                                        <span th:text="${passageiroVerificado.acompanhantes() + ' acompanhante(s) selecionado(s), máximo de ' + passageiroVerificado.maxAcompanhantes()}"></span>
                                     </div>
 
                                 </div>
@@ -397,12 +429,10 @@
                                        th:value="${horarioChegadaSelecionado}">
 
                                 <input type="hidden"
-                                       name="acompanhantes"
-                                       th:value="${acompanhantesSelecionados}">
-
-                                <input type="hidden"
                                        name="buscarNaResidencia"
                                        th:value="${buscarNaResidenciaSelecionado == true}">
+
+                                <input type="hidden" name="acompanhantes" th:value="${acompanhantesSelecionados}">
 
                                 <!-- TIPO DE VEÍCULO -->
                                 <div class="col-12">

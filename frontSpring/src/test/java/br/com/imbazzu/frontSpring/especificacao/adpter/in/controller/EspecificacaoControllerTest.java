@@ -50,7 +50,7 @@ class EspecificacaoControllerTest {
 
     @BeforeEach
     void configurarPrioridades() {
-        when(prioridades.listar()).thenReturn(List.of(new PrioridadeApi.Prioridade(PRIORIDADE_ID, "Alta", true, 2, false, 0)));
+        when(prioridades.listar()).thenReturn(List.of(new PrioridadeApi.Prioridade(PRIORIDADE_ID, "Alta", 2, false, 0)));
     }
 
     @Test
@@ -177,28 +177,28 @@ class EspecificacaoControllerTest {
                 .andExpect(content().string(containsString("Cadastrar Prioridade")))
                 .andExpect(content().string(containsString("action=\"/prioridades\"")))
                 .andExpect(content().string(containsString("name=\"quantidadeAcompanhantes\"")))
-                .andExpect(content().string(containsString("name=\"buscarNaResidencia\"")))
+                .andExpect(content().string(not(containsString("name=\"buscarNaResidencia\""))))
                 .andExpect(content().string(containsString("hx-get=\"/prioridades/limpar-modal\"")));
 
         mvc.perform(post("/prioridades").param("nome", "Especial")
-                        .param("buscarNaResidencia", "true").param("quantidadeAcompanhantes", "2"))
+                        .param("quantidadeAcompanhantes", "2"))
                 .andExpect(status().is3xxRedirection());
-        verify(prioridades).criar(new PrioridadeApi.Dados("Especial", true, 2));
+        verify(prioridades).criar(new PrioridadeApi.Dados("Especial", 2));
 
         mvc.perform(post("/prioridades/{id}", PRIORIDADE_ID).param("nome", "Alta")
                         .param("quantidadeAcompanhantes", "1"))
                 .andExpect(status().is3xxRedirection());
-        verify(prioridades).editar(PRIORIDADE_ID, new PrioridadeApi.Dados("Alta", false, 1));
+        verify(prioridades).editar(PRIORIDADE_ID, new PrioridadeApi.Dados("Alta", 1));
     }
 
     @Test
     void paginaPermiteArquivarReativarEExcluir() throws Exception {
         var arquivada = UUID.randomUUID();
         when(prioridades.listar()).thenReturn(List.of(
-                new PrioridadeApi.Prioridade(PRIORIDADE_ID, "Ativa", false, 0, false, 0),
-                new PrioridadeApi.Prioridade(arquivada, "Arquivada", false, 0, true, 0)));
-        when(prioridades.buscar(PRIORIDADE_ID)).thenReturn(new PrioridadeApi.Prioridade(PRIORIDADE_ID, "Ativa", true, 2, false, 0));
-        when(prioridades.buscar(arquivada)).thenReturn(new PrioridadeApi.Prioridade(arquivada, "Arquivada", false, 0, true, 0));
+                new PrioridadeApi.Prioridade(PRIORIDADE_ID, "Ativa", 0, false, 0),
+                new PrioridadeApi.Prioridade(arquivada, "Arquivada", 0, true, 0)));
+        when(prioridades.buscar(PRIORIDADE_ID)).thenReturn(new PrioridadeApi.Prioridade(PRIORIDADE_ID, "Ativa", 2, false, 0));
+        when(prioridades.buscar(arquivada)).thenReturn(new PrioridadeApi.Prioridade(arquivada, "Arquivada", 0, true, 0));
         mvc.perform(get("/prioridades"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("/prioridades/" + PRIORIDADE_ID + "/detalhes")))
@@ -207,7 +207,8 @@ class EspecificacaoControllerTest {
         mvc.perform(get("/prioridades/{id}/detalhes", PRIORIDADE_ID).header("HX-Request", "true"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("/prioridades/" + PRIORIDADE_ID + "/arquivar")))
-                .andExpect(content().string(containsString("Sim")))
+                .andExpect(content().string(containsString("Acompanhantes")))
+                .andExpect(content().string(not(containsString("Busca na residência"))))
                 .andExpect(content().string(not(containsString("/excluir"))))
                 .andExpect(content().string(not(containsString("/desarquivar"))));
         mvc.perform(get("/prioridades/{id}/detalhes", arquivada).header("HX-Request", "true"))
@@ -226,7 +227,7 @@ class EspecificacaoControllerTest {
     @Test
     void prioridadeArquivadaApareceSomenteQuandoJaVinculada() throws Exception {
         var id = UUID.randomUUID();
-        when(prioridades.listar()).thenReturn(List.of(new PrioridadeApi.Prioridade(PRIORIDADE_ID, "Alta", true, 2, true, 0)));
+        when(prioridades.listar()).thenReturn(List.of(new PrioridadeApi.Prioridade(PRIORIDADE_ID, "Alta", 2, true, 0)));
         when(application.buscar(id)).thenReturn(new EspecificacaoResponseDto(
                 id, "Transporte", PRIORIDADE_ID, "Alta", "", null));
         mvc.perform(get("/especificacoes/abrirFormulario").header("HX-Request", "true"))

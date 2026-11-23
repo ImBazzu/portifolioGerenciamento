@@ -30,11 +30,11 @@ public class AgendamentoQueryVerificarVeiculosHandler {
         var veiculosAbertos = consultas.listarVeiculos(query.data());
         var pessoa = AgendamentoValidacao.validarPessoa(consultas, query.idPessoa());
         AgendamentoValidacao.exigirPrioridadeAtiva(pessoa);
-        if (query.acompanhantes() != pessoa.acompanhantes()) {
+        if (query.acompanhantes() > pessoa.acompanhantes()) {
             throw new DadosInvalidosException(
-                    "A quantidade de acompanhantes não corresponde à prioridade. Atualize os dados da pessoa.");
+                    "A quantidade de acompanhantes excede o máximo permitido pela prioridade.");
         }
-        long lugaresNecessarios = (long) pessoa.acompanhantes() + 1;
+        long lugaresNecessarios = (long) query.acompanhantes() + 1;
         var destino = AgendamentoValidacao.validarDestino(consultas, query.idDestino());
         AgendamentoValidacao.validarLista(consultas, query.idLista());
         var idsPorTipo = new HashMap<java.util.UUID, List<java.util.UUID>>();

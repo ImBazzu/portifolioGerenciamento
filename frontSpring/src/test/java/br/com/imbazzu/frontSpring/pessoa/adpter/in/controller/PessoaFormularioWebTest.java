@@ -70,7 +70,7 @@ class PessoaFormularioWebTest {
                 .andExpect(content().string(containsString("Cadastrar Pessoa")))
                 .andExpect(content().string(containsString("hx-get=\"/pessoas/limpar-modal\"")))
                 .andExpect(content().string(containsString("hx-post=\"/pessoas")))
-                .andExpect(content().string(containsString("Busca na residência e acompanhantes são definidos")));
+                .andExpect(content().string(containsString("Buscar na residência")));
     }
 
     @Test
@@ -85,13 +85,14 @@ class PessoaFormularioWebTest {
 
     @Test
     void cadastraPessoaComCamposPadraoEAtualizaLista() throws Exception {
-        var dto = new PessoaRequestDto("Ana Souza", "", ESPECIFICACAO_ID, "", "52998224725", "11987654321");
+        var dto = new PessoaRequestDto("Ana Souza", "", ESPECIFICACAO_ID, "", "52998224725", "11987654321", true);
         when(pessoas.salvar(dto)).thenReturn(PESSOA_ID);
 
         mvc.perform(post("/pessoas").header("HX-Request", "true")
                         .param("nome", dto.nome()).param("observacao", "")
                         .param("especificacaoId", ESPECIFICACAO_ID.toString())
-                        .param("endereco", "").param("cpf", dto.cpf()).param("telefone", dto.telefone()))
+                        .param("endereco", "").param("cpf", dto.cpf()).param("telefone", dto.telefone())
+                        .param("buscarNaResidencia", "true"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("HX-Trigger-After-Settle", containsString("atualizar-pessoas")));
         verify(pessoas).salvar(dto);
@@ -100,7 +101,7 @@ class PessoaFormularioWebTest {
     @Test
     void edicaoMostraEEnviaOsValoresExistentes() throws Exception {
         var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
-                "Alta", PRIORIDADE_ID, true, 2, true, 2, null, "", "52998224725", "11987654321");
+                "Alta", PRIORIDADE_ID, 2, true, 2, false, null, "", "52998224725", "11987654321");
         when(pessoas.buscar(PESSOA_ID)).thenReturn(pessoa);
 
         mvc.perform(get("/pessoas/abrirFormulario/{id}", PESSOA_ID).header("HX-Request", "true"))
@@ -108,13 +109,14 @@ class PessoaFormularioWebTest {
                 .andExpect(content().string(containsString("Editar Pessoa")))
                 .andExpect(content().string(containsString("hx-put=\"/pessoas/" + PESSOA_ID + "\"")))
                 .andExpect(content().string(not(containsString("name=\"quantidadeAcompanhantes\""))))
-                .andExpect(content().string(not(containsString("name=\"buscarNaResidencia\""))));
+                .andExpect(content().string(containsString("name=\"buscarNaResidencia\"")));
 
-        var dto = new PessoaRequestDto("Ana Souza", "", ESPECIFICACAO_ID, "", "52998224725", "11987654321");
+        var dto = new PessoaRequestDto("Ana Souza", "", ESPECIFICACAO_ID, "", "52998224725", "11987654321", true);
         mvc.perform(put("/pessoas/{id}", PESSOA_ID).header("HX-Request", "true")
                         .param("nome", dto.nome()).param("observacao", "")
                         .param("especificacaoId", ESPECIFICACAO_ID.toString())
-                        .param("endereco", "").param("cpf", dto.cpf()).param("telefone", dto.telefone()))
+                        .param("endereco", "").param("cpf", dto.cpf()).param("telefone", dto.telefone())
+                        .param("buscarNaResidencia", "true"))
                 .andExpect(status().isOk());
         verify(pessoas).editar(PESSOA_ID, dto);
     }
@@ -122,7 +124,7 @@ class PessoaFormularioWebTest {
     @Test
     void listaPessoasComPrioridadeDaEspecificacao() throws Exception {
         var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
-                "Alta", PRIORIDADE_ID, true, 2, true, 2, null, "", "52998224725", "11987654321");
+                "Alta", PRIORIDADE_ID, 2, true, 2, false, null, "", "52998224725", "11987654321");
         when(pessoas.listar("", false, 0))
                 .thenReturn(new ResultadoPaginado<>(List.of(pessoa), 0, 10, 1, 1));
         mvc.perform(get("/pessoas/listar").header("HX-Request", "true"))
@@ -134,7 +136,7 @@ class PessoaFormularioWebTest {
     @Test
     void apresentaPessoaCadastradaNaBuscaDeAgendamento() throws Exception {
         var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
-                "Alta", PRIORIDADE_ID, true, 2, true, 2, null, "", "52998224725", "11987654321");
+                "Alta", PRIORIDADE_ID, 2, true, 2, false, null, "", "52998224725", "11987654321");
         when(pessoas.listar("Ana", false, 0))
                 .thenReturn(new ResultadoPaginado<>(List.of(pessoa), 0, 10, 1, 1));
         mvc.perform(get("/agendamentos/buscar-pessoas").param("termo", "Ana").header("HX-Request", "true"))
@@ -145,7 +147,7 @@ class PessoaFormularioWebTest {
     @Test
     void apresentaDetalhesEListaArquivada() throws Exception {
         var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
-                "Alta", PRIORIDADE_ID, true, 2, true, 2, LocalDate.of(2026, 1, 15), "", "52998224725", "11987654321");
+                "Alta", PRIORIDADE_ID, 2, true, 2, false, LocalDate.of(2026, 1, 15), "", "52998224725", "11987654321");
         when(pessoas.listar("Ana", true, 1))
                 .thenReturn(new ResultadoPaginado<>(List.of(pessoa), 1, 10, 30, 3));
         when(pessoas.buscarArquivado(PESSOA_ID)).thenReturn(pessoa);
@@ -174,7 +176,7 @@ class PessoaFormularioWebTest {
     @Test
     void historicoAbreEAtualizaBuscaEPaginacaoNoMesmoContainer() throws Exception {
         var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
-                "Alta", PRIORIDADE_ID, true, 2, true, 2, null, "", "52998224725", "11987654321");
+                "Alta", PRIORIDADE_ID, 2, true, 2, false, null, "", "52998224725", "11987654321");
         var viagem = new HistoricoViagemResponseDto(UUID.randomUUID(), LocalDate.of(2026, 11, 2),
                 LocalTime.of(9, 0), LocalTime.of(8, 0), "Hospital", "Consulta", "Van", true, 1);
         when(pessoas.buscar(PESSOA_ID)).thenReturn(pessoa);
@@ -199,5 +201,19 @@ class PessoaFormularioWebTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("value=\"Hospital\"")))
                 .andExpect(content().string(containsString("Hospital")));
+    }
+
+    @Test
+    void confirmaValidacaoEExibePessoaValidada() throws Exception {
+        var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
+                "Alta", PRIORIDADE_ID, 2, true, 2, true, null, "", "52998224725", "11987654321");
+        when(pessoas.buscar(PESSOA_ID)).thenReturn(pessoa);
+
+        mvc.perform(patch("/pessoas/{id}/validar", PESSOA_ID).header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Dados validados")))
+                .andExpect(content().string(not(containsString("Confirmar validação"))));
+
+        verify(pessoas).validar(PESSOA_ID);
     }
 }

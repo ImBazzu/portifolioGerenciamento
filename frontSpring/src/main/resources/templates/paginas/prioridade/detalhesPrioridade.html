@@ -11,10 +11,8 @@
                         hx:get="@{/prioridades/limpar-modal}" hx-target="#modal" hx-swap="innerHTML"></button>
             </header>
             <dl class="row">
-                <dt class="col-sm-6">Acompanhantes</dt>
+                <dt class="col-sm-6">Máximo de acompanhantes</dt>
                 <dd class="col-sm-6" th:text="${prioridade.quantidadeAcompanhantes()}">0</dd>
-                <dt class="col-sm-6">Busca na residência</dt>
-                <dd class="col-sm-6" th:text="${prioridade.buscarNaResidencia() ? 'Sim' : 'Não'}">Não</dd>
             </dl>
             <div th:unless="${prioridade.arquivada()}">
                 <button type="button" class="btn btn-sm btn-light border mb-3"
@@ -22,8 +20,7 @@
                         aria-expanded="false" aria-controls="editarPrioridade">Editar</button>
                 <form id="editarPrioridade" class="collapse" th:action="@{/prioridades/{id}(id=${prioridade.id()})}" method="post">
                     <div class="mb-2"><label class="form-label" for="editarNome">Nome</label><input id="editarNome" name="nome" class="form-control" maxlength="100" th:value="${prioridade.nome()}" required></div>
-                    <div class="mb-2"><label class="form-label" for="editarAcompanhantes">Acompanhantes</label><input id="editarAcompanhantes" name="quantidadeAcompanhantes" type="number" min="0" th:value="${prioridade.quantidadeAcompanhantes()}" class="form-control" required></div>
-                    <label class="form-check mb-2"><input class="form-check-input" type="checkbox" name="buscarNaResidencia" value="true" th:checked="${prioridade.buscarNaResidencia()}"> Buscar na residência</label>
+                    <div class="mb-2"><label class="form-label" for="editarAcompanhantes">Máximo de acompanhantes</label><input id="editarAcompanhantes" name="quantidadeAcompanhantes" type="number" min="0" th:value="${prioridade.quantidadeAcompanhantes()}" class="form-control" required></div>
                     <button class="btn btn-primary" type="submit">Salvar</button>
                 </form>
             </div>

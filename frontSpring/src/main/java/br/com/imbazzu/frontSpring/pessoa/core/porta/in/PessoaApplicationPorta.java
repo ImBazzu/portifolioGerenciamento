@@ -21,4 +21,6 @@ public interface PessoaApplicationPorta {
     void arquivar(UUID id);
 
     void desarquivar(UUID id);
+
+    void validar(UUID id);
 }

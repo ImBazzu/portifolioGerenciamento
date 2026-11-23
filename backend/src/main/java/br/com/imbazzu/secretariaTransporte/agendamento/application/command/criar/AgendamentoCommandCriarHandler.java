@@ -38,12 +38,12 @@ public class AgendamentoCommandCriarHandler {
 
         var pessoa = AgendamentoValidacao.validarPessoa(consultas, command.idPessoa());
         AgendamentoValidacao.exigirPrioridadeAtiva(pessoa);
-        if (command.acompanhantes() != pessoa.acompanhantes()
+        if (command.acompanhantes() > pessoa.acompanhantes()
                 || command.buscarNaResidencia() != pessoa.buscarNaResidencia()) {
             throw new DadosInvalidosException(
-                    "A prioridade foi alterada ou os dados informados não correspondem à prioridade. Verifique os veículos novamente.");
+                    "A quantidade de acompanhantes excede o máximo da prioridade ou a busca na residência não corresponde aos dados da pessoa.");
         }
-        long lugaresNecessarios = (long) pessoa.acompanhantes() + 1;
+        long lugaresNecessarios = (long) command.acompanhantes() + 1;
         var destino = AgendamentoValidacao.validarDestino(consultas, command.idDestino());
         AgendamentoValidacao.validarLista(consultas, command.idLista());
         var tipo = consultas.buscarTipoVeiculo(command.idTipoVeiculo());
@@ -96,7 +96,7 @@ public class AgendamentoCommandCriarHandler {
                 tolerancia,
                 command.horarioChegada(),
                 pessoa.buscarNaResidencia(),
-                pessoa.acompanhantes());
+                command.acompanhantes());
         if (tipoCarro && command.idVeiculo() != null) {
             throw new OperacaoNaoPermitidaException(
                     "Passageiros de carro devem ser atribuídos pela página de carros");

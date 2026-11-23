@@ -7,16 +7,15 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
                         <thead class="table-light">
-                        <tr><th>Nome</th><th>Acompanhantes</th><th>Busca na residência</th><th class="text-end">Ações</th></tr>
+                        <tr><th>Nome</th><th>Máximo de acompanhantes</th><th class="text-end">Ações</th></tr>
                         </thead>
                         <tbody>
                         <tr th:if="${#lists.isEmpty(prioridades)}">
-                            <td colspan="4" class="text-center text-muted py-4">Nenhuma prioridade arquivada encontrada.</td>
+                            <td colspan="3" class="text-center text-muted py-4">Nenhuma prioridade arquivada encontrada.</td>
                         </tr>
                         <tr th:each="prioridade : ${prioridades}">
                             <td class="fw-semibold" th:text="${prioridade.nome()}">Nome</td>
                             <td th:text="${prioridade.quantidadeAcompanhantes()}">0</td>
-                            <td th:text="${prioridade.buscarNaResidencia() ? 'Sim' : 'Não'}">Não</td>
                             <td class="text-end">
                                 <form class="d-inline" th:action="@{/prioridades/{id}/desarquivar(id=${prioridade.id()})}"
                                       method="post" onsubmit="return confirm('Deseja desarquivar esta prioridade?')">

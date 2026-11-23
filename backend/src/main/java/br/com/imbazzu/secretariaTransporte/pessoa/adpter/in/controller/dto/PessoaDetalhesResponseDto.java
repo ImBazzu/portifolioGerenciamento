@@ -18,14 +18,14 @@ public record PessoaDetalhesResponseDto(
         String prioridadeNome,
         @JsonProperty("prioridadeId")
         UUID prioridadeId,
-        @JsonProperty("buscarNaResidenciaPrioridade")
-        boolean buscarNaResidenciaPrioridade,
         @JsonProperty("quantidadeAcompanhantesPrioridade")
         int quantidadeAcompanhantesPrioridade,
         @JsonProperty("buscarNaResidencia")
         boolean buscarNaResidencia,
         @JsonProperty("quantidadeAcompanhantes")
         int quantidadeAcompanhantes,
+        @JsonProperty("validada")
+        boolean validada,
         @JsonProperty("dataArquivado")
         String dataArquivado,
         @JsonProperty("endereco")

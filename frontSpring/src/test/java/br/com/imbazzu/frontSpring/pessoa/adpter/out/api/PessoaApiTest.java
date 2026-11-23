@@ -61,10 +61,10 @@ class PessoaApiTest {
                             "especificacaoId": "%s",
                             "especificacaoNome": "Especificação 1",
                             "especificacaoPrioridade": "ALTA",
-                            "prioridadeBuscarNaResidencia": true,
                             "prioridadeAcompanhantes": 2,
                             "buscarNaResidencia": true,
                             "quantidadeAcompanhantes": 2,
+                            "validada": false,
                             "dataArquivado": null,
                             "endereco": "Rua das Flores, 123",
                             "cpf": "52998224725",
@@ -113,14 +113,15 @@ class PessoaApiTest {
                           "especificacaoId":"c5d0a150-2d80-4f0b-9a1d-3cfb8d8a0f22",
                           "endereco":"Rua das Flores, 123",
                           "cpf":"52998224725",
-                          "telefone":"11987654321"
+                          "telefone":"11987654321",
+                          "buscarNaResidencia":true
                         }
                         """))
                 .andRespond(withStatus(HttpStatus.CREATED)
                         .location(URI.create("/api/pessoa/b4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f21")));
 
         assertEquals(UUID.fromString("b4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f21"), api.salvar(new PessoaRequestDto(
-                "Ana Souza", "", especId, "Rua das Flores, 123", "52998224725", "11987654321")));
+                "Ana Souza", "", especId, "Rua das Flores, 123", "52998224725", "11987654321", true)));
     }
 
     @Test
@@ -130,6 +131,15 @@ class PessoaApiTest {
                 .andRespond(withStatus(HttpStatus.NO_CONTENT));
 
         api.arquivar(id);
+    }
+
+    @Test
+    void confirmaValidacaoDaPessoaNoBackend() {
+        var id = UUID.fromString("b4d0a150-2d80-4f0b-9a1d-3cfb8d8a0f21");
+        server.expect(requestTo("http://localhost:8080/api/pessoa/" + id + "/validar"))
+                .andRespond(withStatus(HttpStatus.NO_CONTENT));
+
+        api.validar(id);
     }
 
     @Test
@@ -143,6 +153,6 @@ class PessoaApiTest {
                 .andRespond(withStatus(HttpStatus.NO_CONTENT));
 
         api.editar(id, new PessoaRequestDto("Ana Souza", "", especificacaoId,
-                "", "52998224725", "11987654321"));
+                "", "52998224725", "11987654321", false));
     }
 }

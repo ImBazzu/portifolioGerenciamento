@@ -14,7 +14,7 @@ public interface PessoaAgendaQueryRepository extends Repository<PessoaJpa, UUID>
 
     @Query("""
             SELECT p.especificacao.prioridade AS prioridade,
-                   prioridade.buscarNaResidencia AS buscarNaResidencia,
+                   p.buscarNaResidencia AS buscarNaResidencia,
                    prioridade.quantidadeAcompanhantes AS acompanhantes,
                    CASE WHEN prioridade.dataArquivado IS NULL THEN true ELSE false END AS prioridadeAtiva,
                    CASE WHEN p.dataArquivado IS NULL THEN true ELSE false END AS ativa

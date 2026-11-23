@@ -19,13 +19,14 @@ public final class Pessoa {
     private Especificacao especificacao;
     private boolean buscarNaResidencia;
     private int quantidadeAcompanhantes;
+    private boolean validada;
     private LocalDate dataArquivado;
     private Endereco endereco;
     private Cpf cpf;
     private Telefone telefone;
 
     private Pessoa(UUID id, Nome nome, Observacao observacao, Especificacao especificacao,
-            boolean buscarNaResidencia, int quantidadeAcompanhantes, LocalDate dataArquivado, 
+            boolean buscarNaResidencia, int quantidadeAcompanhantes, boolean validada, LocalDate dataArquivado,
             Endereco endereco, Cpf cpf, Telefone telefone) {
         this.id = Objects.requireNonNull(id, "ID é obrigatório");
         this.nome = Objects.requireNonNull(nome, "Nome é obrigatório");
@@ -33,6 +34,7 @@ public final class Pessoa {
         this.especificacao = Objects.requireNonNull(especificacao, "Especificação é obrigatória");
         this.buscarNaResidencia = buscarNaResidencia;
         this.quantidadeAcompanhantes = quantidadeAcompanhantes;
+        this.validada = validada;
         this.dataArquivado = dataArquivado;
         this.endereco = endereco;
         this.cpf = cpf;
@@ -42,14 +44,14 @@ public final class Pessoa {
     public static Pessoa criar(Nome nome, Observacao observacao, Especificacao especificacao,
             boolean buscarNaResidencia, int quantidadeAcompanhantes, Endereco endereco, Cpf cpf, Telefone telefone) {
         return new Pessoa(UUID.randomUUID(), nome, observacao, especificacao, buscarNaResidencia, 
-            quantidadeAcompanhantes, null, endereco, cpf, telefone);
+            quantidadeAcompanhantes, false, null, endereco, cpf, telefone);
     }
 
     public static Pessoa recriar(UUID id, Nome nome, Observacao observacao, Especificacao especificacao,
-            boolean buscarNaResidencia, int quantidadeAcompanhantes, LocalDate dataArquivado, 
+            boolean buscarNaResidencia, int quantidadeAcompanhantes, boolean validada, LocalDate dataArquivado,
             Endereco endereco, Cpf cpf, Telefone telefone) {
         return new Pessoa(id, nome, observacao, especificacao, buscarNaResidencia, quantidadeAcompanhantes,
-            dataArquivado, endereco, cpf, telefone);
+            validada, dataArquivado, endereco, cpf, telefone);
     }
 
     public void editar(Nome nome, Observacao observacao, Especificacao especificacao,
@@ -62,6 +64,11 @@ public final class Pessoa {
         this.endereco = endereco;
         this.cpf = cpf;
         this.telefone = Objects.requireNonNull(telefone, "Telefone é obrigatório");
+        this.validada = false;
+    }
+
+    public void validar() {
+        this.validada = true;
     }
 
     public void arquivar() {
@@ -96,6 +103,10 @@ public final class Pessoa {
 
     public int getQuantidadeAcompanhantes() {
         return quantidadeAcompanhantes;
+    }
+
+    public boolean isValidada() {
+        return validada;
     }
 
     public LocalDate getDataArquivado() {

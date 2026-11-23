@@ -14,11 +14,11 @@ import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestCli
 
 @Service
 public class PrioridadeApi {
-    public record Prioridade(UUID id, String nome, boolean buscarNaResidencia, int quantidadeAcompanhantes,
+    public record Prioridade(UUID id, String nome, int quantidadeAcompanhantes,
                              boolean arquivada,
                              @JsonProperty(value = "quantidadeEspecificacoes", required = true)
                              long quantidadeEspecificacoes) {}
-    public record Dados(String nome, boolean buscarNaResidencia, int quantidadeAcompanhantes) {}
+    public record Dados(String nome, int quantidadeAcompanhantes) {}
 
     private final RestClient api;
     private final RetryComRefreshPorta retry;

@@ -64,11 +64,10 @@ class PrioridadeJpaIntegrationTest {
     void carregaPrioridadeDaPessoaEVerificaRegraPorId() {
         var prioridadeId = UUID.fromString("00000000-0000-0000-0000-000000000002");
         var prioridade = prioridades.findById(prioridadeId).orElseThrow();
-        prioridade.setBuscarNaResidencia(true);
         prioridade.setQuantidadeAcompanhantes(2);
         prioridades.saveAndFlush(prioridade);
 
-        jdbc.update("INSERT INTO pessoas (id,nome,telefone,especificacao_id) VALUES (UNHEX('00000000000000000000000000000005'),'Pessoa','11987654321',UNHEX('00000000000000000000000000000001'))");
+        jdbc.update("INSERT INTO pessoas (id,nome,telefone,especificacao_id,buscar_na_residencia) VALUES (UNHEX('00000000000000000000000000000005'),'Pessoa','11987654321',UNHEX('00000000000000000000000000000001'),1)");
         jdbc.update("INSERT INTO listas (id,nome) VALUES (UNHEX('00000000000000000000000000000003'),'Lista')");
         jdbc.update("INSERT INTO regras_cadastro (id,lista_id,obrigacao_anexo) VALUES (UNHEX('00000000000000000000000000000004'),UNHEX('00000000000000000000000000000003'),0)");
         jdbc.update("INSERT INTO regra_cadastro_prioridades (regra_cadastro_id,prioridade_id) VALUES (UNHEX('00000000000000000000000000000004'),UNHEX('00000000000000000000000000000002'))");
@@ -90,7 +89,7 @@ class PrioridadeJpaIntegrationTest {
         jdbc.update("INSERT INTO pessoas (id,nome,telefone,especificacao_id,buscar_na_residencia,quantidade_acompanhantes) VALUES (UNHEX('00000000000000000000000000000006'),'Pessoa Antiga','11987654321',UNHEX('00000000000000000000000000000001'),1,2)");
         editarPessoa.handler(new PessoaCommandEditar(UUID.fromString("00000000-0000-0000-0000-000000000006"),
                 "Pessoa Editada", "", UUID.fromString("00000000-0000-0000-0000-000000000001"),
-                "", null, "11987654321"));
+                "", null, "11987654321", true));
         assertEquals(true, jdbc.queryForObject(
                 "SELECT buscar_na_residencia FROM pessoas WHERE nome='Pessoa Editada'", Boolean.class));
         assertEquals(2, jdbc.queryForObject(
@@ -99,16 +98,16 @@ class PrioridadeJpaIntegrationTest {
 
     @Test
     void criaEAtualizaPrioridade() {
-        var criada = controller.criar(new PrioridadeController.Request("Especial", true, 2)).getBody();
-        var editada = controller.editar(criada.id(), new PrioridadeController.Request("Especial atualizada", false, 1));
+        var criada = controller.criar(new PrioridadeController.Request("Especial", 2)).getBody();
+        var editada = controller.editar(criada.id(), new PrioridadeController.Request("Especial atualizada", 1));
         assertEquals("Especial atualizada", prioridades.findById(criada.id()).orElseThrow().getNome());
         assertEquals(1, editada.quantidadeAcompanhantes());
     }
 
     @Test
     void contaEspecificacoesVinculadasInclusiveArquivadas() {
-        var primeira = controller.criar(new PrioridadeController.Request("Contagem primeira", true, 2)).getBody();
-        var segunda = controller.criar(new PrioridadeController.Request("Contagem segunda", false, 0)).getBody();
+        var primeira = controller.criar(new PrioridadeController.Request("Contagem primeira", 2)).getBody();
+        var segunda = controller.criar(new PrioridadeController.Request("Contagem segunda", 0)).getBody();
         assertEquals(0, primeira.quantidadeEspecificacoes());
         var ativa = salvarEspecificacao.handler(new EspecificacaoCommandSalvar("Contagem ativa", primeira.id(), null));
         var arquivada = salvarEspecificacao.handler(new EspecificacaoCommandSalvar("Contagem arquivada", primeira.id(), null));
@@ -127,12 +126,12 @@ class PrioridadeJpaIntegrationTest {
         assertEquals(1, controller.buscar(primeira.id()).quantidadeEspecificacoes());
         assertEquals(1, controller.buscar(segunda.id()).quantidadeEspecificacoes());
         assertEquals(1, controller.editar(segunda.id(),
-                new PrioridadeController.Request("Contagem segunda", false, 0)).quantidadeEspecificacoes());
+                new PrioridadeController.Request("Contagem segunda", 0)).quantidadeEspecificacoes());
     }
 
     @Test
     void arquivaReativaEExcluiPrioridadeSemVinculos() {
-        var id = controller.criar(new PrioridadeController.Request("Sem vínculos", false, 0)).getBody().id();
+        var id = controller.criar(new PrioridadeController.Request("Sem vínculos", 0)).getBody().id();
         controller.arquivar(id);
         assertTrue(controller.buscar(id).arquivada());
         controller.desarquivar(id);
@@ -143,7 +142,7 @@ class PrioridadeJpaIntegrationTest {
 
     @Test
     void naoExcluiPrioridadeComEspecificacaoNemCriaNovoVinculoArquivado() {
-        var id = controller.criar(new PrioridadeController.Request("Com especificação", false, 0)).getBody().id();
+        var id = controller.criar(new PrioridadeController.Request("Com especificação", 0)).getBody().id();
         var especificacaoId = salvarEspecificacao.handler(new EspecificacaoCommandSalvar("Especificação vinculada", id, null));
         jdbc.update("INSERT INTO pessoas (id,nome,telefone,especificacao_id) VALUES (UNHEX('0000000000000000000000000000000B'),'Pessoa vinculada','11987654321',UNHEX(?))",
                 especificacaoId.toString().replace("-", ""));
@@ -160,7 +159,7 @@ class PrioridadeJpaIntegrationTest {
 
     @Test
     void naoExcluiPrioridadeVinculadaSomenteARegra() {
-        var id = controller.criar(new PrioridadeController.Request("Com regra", false, 0)).getBody().id();
+        var id = controller.criar(new PrioridadeController.Request("Com regra", 0)).getBody().id();
         jdbc.update("INSERT INTO listas (id,nome) VALUES (UNHEX('00000000000000000000000000000008'),'Lista para exclusão')");
         jdbc.update("INSERT INTO regras_cadastro (id,lista_id,obrigacao_anexo) VALUES (UNHEX('00000000000000000000000000000009'),UNHEX('00000000000000000000000000000008'),0)");
         jdbc.update("INSERT INTO regra_cadastro_prioridades (regra_cadastro_id,prioridade_id) VALUES (UNHEX('00000000000000000000000000000009'),UNHEX(?))", id.toString().replace("-", ""));
@@ -170,7 +169,7 @@ class PrioridadeJpaIntegrationTest {
 
     @Test
     void vinculaPrioridadeNovaAEspecificacaoERegraDaLista() {
-        var criada = controller.criar(new PrioridadeController.Request("Nova prioridade", true, 1)).getBody();
+        var criada = controller.criar(new PrioridadeController.Request("Nova prioridade", 1)).getBody();
         var especificacaoId = salvarEspecificacao.handler(
                 new EspecificacaoCommandSalvar("Nova especificação", criada.id(), null));
         assertEquals(criada.id(), especificacoes.findById(especificacaoId).orElseThrow().getPrioridade());

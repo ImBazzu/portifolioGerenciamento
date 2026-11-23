@@ -115,6 +115,18 @@ public class PessoaApi implements PessoaApiPorta {
         alterarArquivamento(id, "desarquivar");
     }
 
+    @Override
+    public void validar(UUID id) {
+        api.patch()
+                .uri(PATH_API + "/" + id + "/validar")
+                .retrieve()
+                .onStatus(status -> status.isSameCodeAs(HttpStatus.NOT_FOUND),
+                        (request, response) -> {
+                            throw new PessoaNaoEncontradaException(id);
+                        })
+                .toBodilessEntity();
+    }
+
     private void alterarArquivamento(UUID id, String acao) {
         api.patch()
                 .uri(PATH_API + "/" + id + "/" + acao)

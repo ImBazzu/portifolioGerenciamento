@@ -35,13 +35,12 @@ public class PrioridadeController {
     private final PrioridadeRepository repository;
 
     public record Request(@NotBlank @Size(max = 100) String nome,
-                          @NotNull Boolean buscarNaResidencia,
                           @NotNull @Min(0) Integer quantidadeAcompanhantes) {}
 
-    public record Response(UUID id, String nome, boolean buscarNaResidencia, int quantidadeAcompanhantes,
+    public record Response(UUID id, String nome, int quantidadeAcompanhantes,
                            boolean arquivada, long quantidadeEspecificacoes) {
         static Response de(PrioridadeJpa prioridade, long quantidadeEspecificacoes) {
-            return new Response(prioridade.getId(), prioridade.getNome(), prioridade.isBuscarNaResidencia(),
+            return new Response(prioridade.getId(), prioridade.getNome(),
                     prioridade.getQuantidadeAcompanhantes(), prioridade.getDataArquivado() != null,
                     quantidadeEspecificacoes);
         }
@@ -126,7 +125,6 @@ public class PrioridadeController {
 
     private static void atualizar(PrioridadeJpa prioridade, Request request, String nome) {
         prioridade.setNome(nome);
-        prioridade.setBuscarNaResidencia(request.buscarNaResidencia());
         prioridade.setQuantidadeAcompanhantes(request.quantidadeAcompanhantes());
     }
 }

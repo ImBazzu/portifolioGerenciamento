@@ -51,6 +51,11 @@ public class PessoaApplication implements PessoaApplicationPorta {
     }
 
     @Override
+    public void validar(UUID id) {
+        api.validar(id);
+    }
+
+    @Override
     public PessoaResponseDto buscarArquivado(UUID id) {
         return api.buscarArquivado(id);    }
 }

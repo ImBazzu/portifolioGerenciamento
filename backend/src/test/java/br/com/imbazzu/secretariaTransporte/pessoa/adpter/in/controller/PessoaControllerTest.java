@@ -27,8 +27,10 @@ class PessoaControllerTest {
         var prioridade = new PrioridadeJpa();
         prioridade.setId(UUID.randomUUID());
         prioridade.setNome("ALTA");
+        prioridade.setQuantidadeAcompanhantes(3);
         when(prioridades.findById(prioridade.getId())).thenReturn(Optional.of(prioridade));
-        var controller = new PessoaController(null, null, null, null, null, buscar, null, null, null, prioridades, historicoHandler);
+        var controller = new PessoaController(null, null, null, null, null, null,
+                buscar, null, null, null, prioridades, historicoHandler);
         var especificacao = Especificacao.criar("Padrão", prioridade.getId(), null);
         var pessoa = Pessoa.criar(new Nome("Ana Souza"), null, especificacao, true, 2,
                 null, null, new Telefone("11987654321"));
@@ -38,6 +40,7 @@ class PessoaControllerTest {
 
         assertEquals("ALTA", resposta.especificacaoPrioridade());
         assertEquals(true, resposta.buscarNaResidencia());
+        assertEquals(3, resposta.prioridadeAcompanhantes());
         assertEquals(2, resposta.quantidadeAcompanhantes());
     }
 }

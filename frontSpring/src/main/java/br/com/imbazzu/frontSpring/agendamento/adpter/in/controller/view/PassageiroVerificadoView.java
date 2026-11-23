@@ -11,7 +11,8 @@ public record PassageiroVerificadoView(
         String destino,
         LocalTime horarioChegada,
         boolean buscarNaResidencia,
-        int acompanhantes) {
+        int acompanhantes,
+        int maxAcompanhantes) {
 
     /** Monta a view; destino pode ser null (não encontrado). */
     public static PassageiroVerificadoView de(
@@ -27,6 +28,7 @@ public record PassageiroVerificadoView(
                 destino == null ? "Destino não encontrado" : destino.nome(),
                 horarioChegada,
                 buscarNaResidencia,
-                acompanhantes);
+                acompanhantes,
+                pessoa.prioridadeAcompanhantes());
     }
 }

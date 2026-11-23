@@ -130,6 +130,7 @@ public class AgendamentoPaginaController {
         int acompanhantes = model.getAttribute("acompanhantesSelecionados") instanceof Number n ? n.intValue() : 0;
         boolean buscarNaResidencia = Boolean.TRUE.equals(model.getAttribute("buscarNaResidenciaSelecionado"));
 
+        model.addAttribute("maxAcompanhantes", pessoa.prioridadeAcompanhantes());
         model.addAttribute("passageiroVerificado", PassageiroVerificadoView.de(
                 pessoa, opcoes.destino(idDestino).orElse(null), horarioChegada, buscarNaResidencia, acompanhantes));
     }

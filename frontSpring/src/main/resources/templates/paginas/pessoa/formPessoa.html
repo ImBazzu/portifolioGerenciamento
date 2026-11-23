@@ -53,7 +53,12 @@
                         <div class="invalid-feedback" th:if="${#fields.hasErrors('especificacaoId')}"
                              th:errors="*{especificacaoId}"></div>
                     </div>
-                    <div class="col-12 form-text">Busca na residência e acompanhantes são definidos pela prioridade da especificação.</div>
+                    <div class="col-12">
+                        <label class="form-check">
+                            <input class="form-check-input" type="checkbox" th:field="*{buscarNaResidencia}">
+                            <span class="form-check-label fw-bold">Buscar na residência</span>
+                        </label>
+                    </div>
                     <div class="col-12">
                         <label for="observacao" class="form-label fw-bold">Observação</label>
                         <textarea id="observacao" th:field="*{observacao}" class="form-control"

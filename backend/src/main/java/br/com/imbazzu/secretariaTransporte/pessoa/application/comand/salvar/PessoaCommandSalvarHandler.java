@@ -50,7 +50,7 @@ public class PessoaCommandSalvarHandler {
         var especificacao = EspecificacaoBancoMapper.paraDomain(especificacaoJpa);
         
         var pessoa = Pessoa.criar(new Nome(command.nome()), observacao, especificacao,
-                false, 0,
+                command.buscarNaResidencia(), 0,
                 endereco, cpf, new Telefone(command.telefone()));
         
      

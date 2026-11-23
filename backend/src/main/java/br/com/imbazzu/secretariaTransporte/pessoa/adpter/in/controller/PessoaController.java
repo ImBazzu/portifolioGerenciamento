@@ -30,6 +30,7 @@ import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.editar.Pess
 import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.editar.PessoaCommandEditarHandler;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.salvar.PessoaCommandSalvar;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.salvar.PessoaCommandSalvarHandler;
+import br.com.imbazzu.secretariaTransporte.pessoa.application.comand.validar.PessoaCommandValidarHandler;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.query.buscar.PessoaQueryBuscar;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.query.buscar.PessoaQueryBuscarHandler;
 import br.com.imbazzu.secretariaTransporte.pessoa.application.query.buscarArquivado.PessoaQueryBuscarArquivado;
@@ -61,6 +62,7 @@ public class PessoaController {
     private final PessoaCommandDeletarHandler deletarHandler;
     private final PessoaCommandEditarHandler editarHandler;
     private final PessoaCommandSalvarHandler salvarHandler;
+    private final PessoaCommandValidarHandler validarHandler;
 
     private final PessoaQueryBuscarHandler buscarHandler;
     private final PessoaQueryBuscarArquivadoHandler buscarArquivadoHandler;
@@ -72,7 +74,7 @@ public class PessoaController {
     @PostMapping
     public ResponseEntity<Void> criar(@RequestBody @Valid PessoaRequestDto request) {
         var id = salvarHandler.handler(new PessoaCommandSalvar(request.nome(), request.observacao(), request.especificacaoId(),
-                request.endereco(), request.cpf(), request.telefone()));
+                request.endereco(), request.cpf(), request.telefone(), request.buscarNaResidencia()));
                 
         return ResponseEntity.created(URI.create("/api/pessoa/%s".formatted(id))).build();
     }
@@ -109,7 +111,7 @@ public class PessoaController {
     @PutMapping("/{id}")
     public ResponseEntity<Void> editar(@PathVariable UUID id, @RequestBody @Valid PessoaRequestDto request) {
         editarHandler.handler(new PessoaCommandEditar(id, request.nome(), request.observacao(), request.especificacaoId(),
-                request.endereco(), request.cpf(), request.telefone()));
+                request.endereco(), request.cpf(), request.telefone(), request.buscarNaResidencia()));
         return ResponseEntity.noContent().build();
     }
 
@@ -122,6 +124,12 @@ public class PessoaController {
     @PatchMapping("/{id}/desarquivar")
     public ResponseEntity<Void> desarquivar(@PathVariable UUID id) {
         desarquivarHandler.handler(new PessoaCommandDesarquivar(id));
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/validar")
+    public ResponseEntity<Void> validar(@PathVariable UUID id) {
+        validarHandler.handler(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -169,10 +177,10 @@ public class PessoaController {
                 pessoa.getEspecificacao().getNome(),
                 prioridade.getNome(),
                 prioridade.getId(),
-                prioridade.isBuscarNaResidencia(),
                 prioridade.getQuantidadeAcompanhantes(),
                 pessoa.isBuscarNaResidencia(),
                 pessoa.getQuantidadeAcompanhantes(),
+                pessoa.isValidada(),
                 pessoa.getDataArquivado(),
                 pessoa.getEndereco() == null ? null : pessoa.getEndereco().valor(),
                 pessoa.getCpf() == null ? null : pessoa.getCpf().valor(),
@@ -190,10 +198,10 @@ public class PessoaController {
                 pessoa.getEspecificacao().getNome(),
                 prioridade.getNome(),
                 prioridade.getId(),
-                prioridade.isBuscarNaResidencia(),
                 prioridade.getQuantidadeAcompanhantes(),
                 pessoa.isBuscarNaResidencia(),
                 pessoa.getQuantidadeAcompanhantes(),
+                pessoa.isValidada(),
                 pessoa.getDataArquivado() == null ? null : pessoa.getDataArquivado().toString(),
                 pessoa.getEndereco() == null ? null : pessoa.getEndereco().valor(),
                 pessoa.getCpf() == null ? null : pessoa.getCpf().valor(),
