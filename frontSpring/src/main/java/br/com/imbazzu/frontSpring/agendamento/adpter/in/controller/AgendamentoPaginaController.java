@@ -17,8 +17,10 @@ import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.Montado
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.MontadorDetalhesPassageiros;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.OpcoesAgendamento;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.PassageiroVerificadoView;
+import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.VeiculoDisponivelView;
 import br.com.imbazzu.frontSpring.agendamento.adpter.out.api.AgendamentoApi;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendaDiaResponseDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificacaoVeiculosResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
 
@@ -92,6 +94,13 @@ public class AgendamentoPaginaController {
         model.addAttribute("agenda", agenda);
         model.addAttribute("detalhesPassageiros", montadorDetalhes.montar(agenda, opcoes));
         montadorAgenda.dividirPorTipo(model, agenda, opcoes);
+        if (model.getAttribute("verificacao") instanceof VerificacaoVeiculosResponseDto verificacao) {
+            int acompanhantes = model.getAttribute("acompanhantesSelecionados") instanceof Number numero
+                    ? numero.intValue()
+                    : 0;
+            model.addAttribute("veiculosDisponiveis",
+                    VeiculoDisponivelView.disponiveis(verificacao, agenda, acompanhantes));
+        }
     }
 
     private void tratarErroAgenda(Model model, RestClientResponseException e) {

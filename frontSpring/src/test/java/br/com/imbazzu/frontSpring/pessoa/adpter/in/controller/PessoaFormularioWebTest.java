@@ -3,6 +3,8 @@ package br.com.imbazzu.frontSpring.pessoa.adpter.in.controller;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -18,7 +20,6 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,13 +29,21 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.HistoricoViagemResponseDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendaDiaResponseDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoAbertoResponseDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoPermitidoDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificacaoVeiculosResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.porta.in.HistoricoViagemApplicationPorta;
+import br.com.imbazzu.frontSpring.agendamento.adpter.out.api.AgendamentoApi;
 import br.com.imbazzu.frontSpring.especificacao.core.dto.EspecificacaoResponseDto;
 import br.com.imbazzu.frontSpring.especificacao.core.porta.in.EspecificacaoApplicationPorta;
 import static org.hamcrest.Matchers.not;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaRequestDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
+import br.com.imbazzu.frontSpring.lista.core.porta.in.ListaApplicationPorta;
+import br.com.imbazzu.frontSpring.localidade.core.porta.in.LocalidadeApplicationPorta;
+import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -55,12 +64,17 @@ class PessoaFormularioWebTest {
     @MockitoBean
     private HistoricoViagemApplicationPorta historico;
 
-    @BeforeEach
-    void configurar() {
-        var especificacao = new EspecificacaoResponseDto(ESPECIFICACAO_ID, "Padrão", PRIORIDADE_ID, "Alta", null, null);
-        when(especificacoes.listar("", false, 0))
-                .thenReturn(new ResultadoPaginado<>(List.of(especificacao), 0, 10, 1, 1));
-    }
+    @MockitoBean
+    private AgendamentoApi agendamentos;
+
+    @MockitoBean
+    private ListaApplicationPorta listas;
+
+    @MockitoBean
+    private LocalidadeApplicationPorta localidades;
+
+    @MockitoBean
+    private VeiculoApplicationPorta tiposVeiculo;
 
     @Test
     void formularioNovoExibeCamposComValoresIniciais() throws Exception {
@@ -70,7 +84,69 @@ class PessoaFormularioWebTest {
                 .andExpect(content().string(containsString("Cadastrar Pessoa")))
                 .andExpect(content().string(containsString("hx-get=\"/pessoas/limpar-modal\"")))
                 .andExpect(content().string(containsString("hx-post=\"/pessoas")))
+                .andExpect(content().string(containsString("hx-get=\"/pessoas/buscar-especificacoes\"")))
                 .andExpect(content().string(containsString("Buscar na residência")));
+    }
+
+    @Test
+    void buscaEspecificacoesConformeOTermoDigitado() throws Exception {
+        var especificacao = new EspecificacaoResponseDto(ESPECIFICACAO_ID, "Padrão", PRIORIDADE_ID, "Alta", null, null);
+        when(especificacoes.listar("Pa", false, 0))
+                .thenReturn(new ResultadoPaginado<>(List.of(especificacao), 0, 10, 1, 1));
+
+        mvc.perform(get("/pessoas/buscar-especificacoes").param("termoEspecificacao", "Pa")
+                        .header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("data-id=\"" + ESPECIFICACAO_ID + "\"")))
+                .andExpect(content().string(containsString("Padrão (Alta)")));
+        verify(especificacoes).listar("Pa", false, 0);
+    }
+
+    @Test
+    void naoBuscaEspecificacoesComTermoMenorQueDuasLetras() throws Exception {
+        mvc.perform(get("/pessoas/buscar-especificacoes").param("termoEspecificacao", "P")
+                        .header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(not(containsString("<button"))));
+        verify(especificacoes, never()).listar("P", false, 0);
+    }
+
+    @Test
+    void exibeVeiculosFisicosDisponiveisDiretamenteAposVerificar() throws Exception {
+        var data = LocalDate.of(2026, 11, 23);
+        var idTipo = UUID.randomUUID();
+        var idVeiculo = UUID.randomUUID();
+        var destinoId = UUID.randomUUID();
+        var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
+                "Alta", PRIORIDADE_ID, 2, true, 2, false, null, "", "52998224725", "11987654321");
+        var verificacao = new VerificacaoVeiculosResponseDto(
+                List.of(new VeiculoPermitidoDto(idTipo, "Van", 8, List.of())), List.of());
+        var veiculo = new VeiculoAbertoResponseDto(idVeiculo, data, idTipo, "Van", 8,
+                "VAN-01", LocalTime.of(8, 0), 3, List.of());
+
+        when(pessoas.buscar(PESSOA_ID)).thenReturn(pessoa);
+        when(agendamentos.verificarVeiculos(eq(data), any())).thenReturn(verificacao);
+        when(agendamentos.buscarDia(data))
+                .thenReturn(new AgendaDiaResponseDto(data, List.of(veiculo), List.of()));
+        when(listas.listarAtivas("", 0))
+                .thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(tiposVeiculo.listar("", 0))
+                .thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(localidades.listarCidades("", 0))
+                .thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+
+        mvc.perform(post("/agendamentos/verificar-veiculos").header("HX-Request", "true")
+                        .param("data", data.toString())
+                        .param("idPessoa", PESSOA_ID.toString())
+                        .param("idLista", UUID.randomUUID().toString())
+                        .param("idDestino", destinoId.toString())
+                        .param("horarioChegada", "09:00")
+                        .param("acompanhantes", "2"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("VAN-01")))
+                .andExpect(content().string(containsString("Agendar neste veículo")))
+                .andExpect(content().string(not(containsString("Tipo inicial do agendamento"))))
+                .andExpect(content().string(not(containsString("veiculoFisico"))));
     }
 
     @Test

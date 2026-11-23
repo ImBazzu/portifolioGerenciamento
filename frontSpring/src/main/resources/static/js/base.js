@@ -35,6 +35,20 @@ if (document.readyState === 'loading') {
 
 // Fechamento automático de modais em requisições HTMX
 document.body.addEventListener('htmx:afterSwap', function (evt) {
+    if (evt.detail.target.id === 'especificacaoResultados') {
+        const grupo = evt.detail.target.closest('.js-especificacao-grupo');
+        const busca = grupo?.querySelector('.js-especificacao-busca');
+        const mensagem = grupo?.querySelector('#especificacaoBuscaMensagem');
+        const termoCurto = (busca?.value ?? '').trim().length < 2;
+        if (mensagem) {
+            mensagem.textContent = termoCurto
+                ? 'Digite ao menos duas letras para pesquisar.'
+                : evt.detail.target.children.length === 0
+                    ? 'Nenhuma especificação encontrada.'
+                    : 'Selecione uma especificação da lista.';
+        }
+    }
+
     if (evt.detail.target.id === 'modal') {
         document.querySelectorAll('[data-lista-regras]').forEach(container => {
             atualizarTitulosRegras(container, container.dataset.listaRegras);
@@ -131,6 +145,58 @@ document.addEventListener('input', function (event) {
 
     const semResultado = grupo.querySelector('[data-cidades-sem-resultado]');
     if (semResultado) semResultado.hidden = opcoesVisiveis > 0;
+});
+
+document.addEventListener('input', function (event) {
+    const busca = event.target;
+    if (!(busca instanceof HTMLInputElement) || !busca.matches('.js-especificacao-busca')) return;
+
+    const grupo = busca.closest('.js-especificacao-grupo');
+    const idEspecificacao = grupo?.querySelector('#especificacaoId');
+    if (idEspecificacao) idEspecificacao.value = '';
+    busca.setCustomValidity('');
+
+    const mensagem = grupo?.querySelector('#especificacaoBuscaMensagem');
+    if (mensagem) mensagem.textContent = 'Digite e selecione uma especificação da lista.';
+});
+
+document.addEventListener('submit', function (event) {
+    const formulario = event.target;
+    if (!(formulario instanceof HTMLFormElement)) return;
+
+    const busca = formulario.querySelector('.js-especificacao-busca');
+    const idEspecificacao = formulario.querySelector('#especificacaoId');
+    if (!busca || !idEspecificacao || idEspecificacao.value) return;
+
+    busca.setCustomValidity('Selecione uma especificação da lista.');
+    busca.reportValidity();
+    event.preventDefault();
+}, true);
+
+document.addEventListener('click', function (event) {
+    const alvo = event.target;
+    if (!(alvo instanceof Element)) return;
+
+    const opcao = alvo.closest('#especificacaoResultados button');
+    if (opcao) {
+        const grupo = opcao.closest('.js-especificacao-grupo');
+        const busca = grupo?.querySelector('.js-especificacao-busca');
+        const idEspecificacao = grupo?.querySelector('#especificacaoId');
+        if (!busca || !idEspecificacao) return;
+
+        busca.value = opcao.dataset.label || opcao.textContent.trim();
+        busca.setCustomValidity('');
+        idEspecificacao.value = opcao.dataset.id || '';
+        grupo.querySelector('#especificacaoResultados')?.replaceChildren();
+
+        const mensagem = grupo.querySelector('#especificacaoBuscaMensagem');
+        if (mensagem) mensagem.textContent = 'Especificação selecionada.';
+        return;
+    }
+
+    if (!alvo.closest('#especificacaoBusca, #especificacaoResultados')) {
+        document.querySelectorAll('#especificacaoResultados').forEach(resultados => resultados.replaceChildren());
+    }
 });
 
 document.addEventListener('submit', function (event) {

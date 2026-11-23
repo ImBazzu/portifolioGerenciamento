@@ -7,6 +7,7 @@ import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 public record PassageiroVerificadoView(
         String nome,
         String telefone,
+        String endereco,
         String cidade,
         String destino,
         LocalTime horarioChegada,
@@ -24,6 +25,7 @@ public record PassageiroVerificadoView(
         return new PassageiroVerificadoView(
                 pessoa.nome(),
                 pessoa.telefone(),
+                pessoa.endereco(),
                 destino == null ? "Cidade não encontrada" : destino.cidade(),
                 destino == null ? "Destino não encontrado" : destino.nome(),
                 horarioChegada,

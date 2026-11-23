@@ -9,7 +9,7 @@
  *  - Preenchimento do modal de edição de passageiro.
  *  - Seleção de pessoa nos resultados renderizados pelo Thymeleaf/HTMX.
  *  - Busca e atualização dinâmica de cidade e destino.
- *  - Verificação e seleção de veículo físico.
+ *  - Verificação e escolha direta de veículos disponíveis.
  *  - Reabertura automática do modal de agendamento.
  *
  * IMPORTANTE:
@@ -526,44 +526,8 @@
     }
 
     /* ------------------------------------------------------------------ */
-    /* 6. Verificação e Seleção de Veículo Físico                         */
+    /* 6. Verificação do agendamento                                      */
     /* ------------------------------------------------------------------ */
-
-    function atualizarCamposVeiculo() {
-        const tipo = $("tipoPermitido");
-        const container = $("veiculoFisicoContainer");
-        const veiculo = $("veiculoFisico");
-
-        if (!tipo || !container || !veiculo) return;
-
-        const ehCarro =
-            tipo.selectedOptions[0]?.dataset.carro === "true";
-
-        const exigeVeiculo =
-            tipo.value !== "" && !ehCarro;
-
-        container.classList.toggle("d-none", !exigeVeiculo);
-
-        veiculo.disabled = !exigeVeiculo;
-        veiculo.required = exigeVeiculo;
-
-        Array.from(veiculo.options).forEach((opcao) => {
-            if (!opcao.value) return;
-
-            const compativel =
-                opcao.dataset.tipo === tipo.value;
-
-            opcao.hidden = !compativel;
-            opcao.disabled = !compativel;
-        });
-
-        if (
-            !exigeVeiculo ||
-            veiculo.selectedOptions[0]?.disabled
-        ) {
-            veiculo.value = "";
-        }
-    }
 
     function sincronizarVerificacao() {
         const resultado = $("resultadoVerificacao");
@@ -572,8 +536,6 @@
         if (!resultado || !formulario) return;
 
         formulario.hidden = !resultado.hidden;
-
-        atualizarCamposVeiculo();
     }
 
     function editarDadosAgendamento() {
@@ -617,9 +579,7 @@
     });
 
     document.addEventListener("change", (e) => {
-        if (ehElemento(e, "#tipoPermitido")) {
-            atualizarCamposVeiculo();
-        } else if (ehElemento(e, "#filtroStatus")) {
+        if (ehElemento(e, "#filtroStatus")) {
             aplicarFiltrosTabela();
         } else if (ehElemento(e, ".js-troca-rapida-tipo")) {
             e.target.closest("form")?.submit();

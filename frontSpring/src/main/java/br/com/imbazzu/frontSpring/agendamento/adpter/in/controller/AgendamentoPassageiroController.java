@@ -20,6 +20,7 @@ import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.Mensage
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.MontadorAgendaDia;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.RespostaFlash;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.PassageiroVerificadoView;
+import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.VeiculoDisponivelView;
 import br.com.imbazzu.frontSpring.agendamento.adpter.out.api.AgendamentoApi;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoAtualizarRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoRequestDto;
@@ -73,7 +74,6 @@ public class AgendamentoPassageiroController {
             @RequestParam LocalTime horarioChegada,
             @RequestParam(required = false) Integer acompanhantes,
             @RequestParam(defaultValue = "false") boolean buscarNaResidencia,
-            @RequestParam(required = false) UUID idTipoVeiculoSelecionado,
             @RequestHeader(value = "HX-Request", required = false) String hxRequest,
             Model model,
             RedirectAttributes redirect) {
@@ -103,9 +103,10 @@ public class AgendamentoPassageiroController {
             model.addAttribute("acompanhantesSelecionados", acompanhantes);
             model.addAttribute("buscarNaResidenciaSelecionado", buscarNaResidencia);
             model.addAttribute("maxAcompanhantes", pessoa == null ? null : pessoa.prioridadeAcompanhantes());
-            model.addAttribute("idTipoVeiculoSelecionado", idTipoVeiculoSelecionado);
             model.addAttribute("verificacao", resposta);
             model.addAttribute("erroVerificacao", erro);
+            model.addAttribute("veiculosDisponiveis",
+                    VeiculoDisponivelView.disponiveis(resposta, null, acompanhantes));
 
             var opcoes = carregadorOpcoes.carregar();
             carregadorOpcoes.adicionarAoModel(model, opcoes);
@@ -113,6 +114,8 @@ public class AgendamentoPassageiroController {
                 var agenda = agendamentoApi.buscarDia(data);
                 model.addAttribute("agenda", agenda);
                 montadorAgenda.dividirPorTipo(model, agenda, opcoes);
+                model.addAttribute("veiculosDisponiveis",
+                        VeiculoDisponivelView.disponiveis(resposta, agenda, acompanhantes));
 
                 if (pessoa != null) {
                     model.addAttribute("passageiroVerificado", PassageiroVerificadoView.de(
@@ -129,9 +132,6 @@ public class AgendamentoPassageiroController {
         // Fallback sem htmx: guarda o estado e volta para a página.
         manterDadosAgendamento(
                 redirect, idPessoa, idLista, idDestino, horarioChegada, acompanhantes, buscarNaResidencia);
-        if (idTipoVeiculoSelecionado != null) {
-            redirect.addFlashAttribute("idTipoVeiculoSelecionado", idTipoVeiculoSelecionado);
-        }
         if (resposta != null) {
             redirect.addFlashAttribute("verificacao", resposta);
         }
@@ -164,8 +164,6 @@ public class AgendamentoPassageiroController {
             redirect.addFlashAttribute("erro", mensagemErro.de(e));
             manterDadosAgendamento(
                     redirect, idPessoa, idLista, idDestino, horarioChegada, acompanhantes, buscarNaResidencia);
-            redirect.addFlashAttribute("idTipoVeiculoSelecionado", idTipoVeiculo);
-            redirect.addFlashAttribute("idVeiculoSelecionado", idVeiculo);
             try {
                 redirect.addFlashAttribute("verificacao", agendamentoApi.verificarVeiculos(
                         data, new VerificarVeiculosRequestDto(

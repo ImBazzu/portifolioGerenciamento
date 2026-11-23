@@ -2,7 +2,6 @@ package br.com.imbazzu.frontSpring.pessoa.adpter.in.controller;
 
 import java.util.UUID;
 import java.util.Map;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -73,11 +72,10 @@ public class PessoaController {
     public String formularioNovo(
             @RequestParam(defaultValue = "false") boolean contextoAgendamento,
             Model model) {
-        var especificacoes = listarEspecificacoes();
         model.addAttribute("id", null);
         model.addAttribute("pessoa", new PessoaRequestDto("", "", null, "", "", "", false));
         model.addAttribute("contextoAgendamento", contextoAgendamento);
-        model.addAttribute("especificacoes", especificacoes);
+        model.addAttribute("especificacaoSelecionadaLabel", "");
         return "paginas/pessoa/formPessoa :: formPessoa";
     }
 
@@ -85,10 +83,10 @@ public class PessoaController {
     @GetMapping("/abrirFormulario/{id}")
     public String formularioEdicao(@PathVariable UUID id, Model model, @RequestParam(defaultValue  = "false") boolean contextoAgendamento) {
         var pessoa = application.buscar(id);
-        var especificacoes = listarEspecificacoes();
         model.addAttribute("id", id);
         model.addAttribute("contextoAgendamento", contextoAgendamento);
-        model.addAttribute("especificacoes", especificacoes);
+        model.addAttribute("especificacaoSelecionadaLabel",
+                pessoa.especificacaoNome() + " (" + pessoa.especificacaoPrioridade() + ")");
         model.addAttribute("pessoa", new PessoaRequestDto(
                 pessoa.nome(), pessoa.observacao(), pessoa.especificacaoId(),
                 pessoa.endereco(), pessoa.cpf(), pessoa.telefone(), pessoa.buscarNaResidencia()));
@@ -120,13 +118,13 @@ public class PessoaController {
             @Valid @ModelAttribute("pessoa") PessoaRequestDto pessoa,
             BindingResult result,
             @RequestParam(defaultValue = "false") boolean contextoAgendamento,
+            @RequestParam(defaultValue = "") String termoEspecificacao,
             Model model,
             HttpServletResponse response) throws JsonProcessingException {
         
         model.addAttribute("id", null);
         model.addAttribute("contextoAgendamento", contextoAgendamento);
-        var especificacoes = listarEspecificacoes();
-        model.addAttribute("especificacoes", especificacoes);
+        model.addAttribute("especificacaoSelecionadaLabel", termoEspecificacao);
 
         if (result.hasErrors()) {
             return "paginas/pessoa/formPessoa :: formPessoa";
@@ -161,12 +159,12 @@ public class PessoaController {
             @Valid @ModelAttribute("pessoa") PessoaRequestDto pessoa,
             BindingResult result,
             @RequestParam(defaultValue = "false") boolean contextoAgendamento,
+            @RequestParam(defaultValue = "") String termoEspecificacao,
             Model model) {
         
         model.addAttribute("id", id);
         model.addAttribute("contextoAgendamento", contextoAgendamento);
-        var especificacoes = listarEspecificacoes();
-        model.addAttribute("especificacoes", especificacoes);
+        model.addAttribute("especificacaoSelecionadaLabel", termoEspecificacao);
 
         if (result.hasErrors()) {
             return "paginas/pessoa/formPessoa :: formPessoa";
@@ -214,12 +212,17 @@ public class PessoaController {
         return "layout/vazio :: vazio";
     }
 
-    private List<EspecificacaoResponseDto> listarEspecificacoes() {
-        var primeira = especificacaoApplication.listar("", false, 0);
-        var especificacoes = new ArrayList<>(primeira.conteudo());
-        for (int pagina = 1; pagina < primeira.totalPaginas(); pagina++) {
-            especificacoes.addAll(especificacaoApplication.listar("", false, pagina).conteudo());
-        }
-        return especificacoes;
+    @HxRequest
+    @GetMapping("/buscar-especificacoes")
+    public String buscarEspecificacoes(
+            @RequestParam(name = "termoEspecificacao", defaultValue = "") String termo,
+            Model model) {
+        var termoLimpo = termo.strip();
+        var especificacoes = termoLimpo.length() < 2
+                ? List.<EspecificacaoResponseDto>of()
+                : especificacaoApplication.listar(termoLimpo, false, 0).conteudo();
+        model.addAttribute("especificacoes", especificacoes);
+        return "paginas/pessoa/resultados-especificacoes :: resultados";
     }
+
 }

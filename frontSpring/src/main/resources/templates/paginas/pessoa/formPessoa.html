@@ -41,15 +41,29 @@
                         <div class="invalid-feedback" th:if="${#fields.hasErrors('endereco')}"
                              th:errors="*{endereco}"></div>
                     </div>
-                    <div class="col-md-6">
-                        <label for="especificacaoId" class="form-label fw-bold">Especificação</label>
-                        <select id="especificacaoId" th:field="*{especificacaoId}" class="form-select"
-                                th:classappend="${#fields.hasErrors('especificacaoId')} ? 'is-invalid'" required>
-                            <option value="">-- Selecione uma especificação --</option>
-                            <option th:each="spec : ${especificacoes}"
-                                    th:value="${spec.id()}"
-                                    th:text="${spec.nome()} + ' (' + ${spec.prioridadeNome()} + ')'">Especificação</option>
-                        </select>
+                    <div class="col-md-6 position-relative js-especificacao-grupo">
+                        <label for="especificacaoBusca" class="form-label fw-bold">Especificação</label>
+                        <input id="especificacaoBusca" type="search" name="termoEspecificacao"
+                               class="form-control js-especificacao-busca"
+                               th:classappend="${#fields.hasErrors('especificacaoId')} ? 'is-invalid'"
+                               placeholder="Digite para buscar uma especificação"
+                               autocomplete="off" required
+                               th:value="${especificacaoSelecionadaLabel}"
+                               hx:get="@{/pessoas/buscar-especificacoes}"
+                               hx-trigger="input changed delay:300ms, search"
+                               hx-target="#especificacaoResultados"
+                               hx-swap="innerHTML"
+                               hx-sync="this:replace"
+                               aria-controls="especificacaoResultados"
+                               aria-autocomplete="list">
+                        <input type="hidden" id="especificacaoId" th:field="*{especificacaoId}">
+                        <div id="especificacaoResultados"
+                             class="list-group position-absolute w-100 shadow rounded-3"
+                             style="z-index: 1060; max-height: 18rem; overflow-y: auto;"
+                             role="listbox"></div>
+                        <div id="especificacaoBuscaMensagem" class="form-text" aria-live="polite">
+                            Digite e selecione uma especificação da lista.
+                        </div>
                         <div class="invalid-feedback" th:if="${#fields.hasErrors('especificacaoId')}"
                              th:errors="*{especificacaoId}"></div>
                     </div>

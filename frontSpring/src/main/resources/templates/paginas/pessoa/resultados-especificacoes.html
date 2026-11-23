@@ -1,0 +1,10 @@
+<th:block th:fragment="resultados" xmlns:th="http://www.thymeleaf.org">
+    <button th:each="especificacao : ${especificacoes}"
+            type="button"
+            role="option"
+            class="list-group-item list-group-item-action"
+            th:data-id="${especificacao.id()}"
+            th:data-label="${especificacao.nome() + ' (' + especificacao.prioridadeNome() + ')'}"
+            th:text="${especificacao.nome() + ' (' + especificacao.prioridadeNome() + ')'}">
+    </button>
+</th:block>
