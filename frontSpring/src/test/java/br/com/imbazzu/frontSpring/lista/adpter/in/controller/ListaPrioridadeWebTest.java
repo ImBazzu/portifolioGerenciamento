@@ -38,6 +38,21 @@ class ListaPrioridadeWebTest {
     @MockitoBean private PrioridadeApi prioridades;
 
     @Test
+    void filtrosDasListasMantemBuscaNasTabelasAtivasEArquivadas() throws Exception {
+        var vazia = new ResultadoPaginado<ListaResponseDto>(List.of(), 0, 10, 0, 0);
+        when(listas.listarAtivas("Centro", 0)).thenReturn(vazia);
+        when(listas.listarArquivadas("Centro", 0)).thenReturn(vazia);
+
+        for (var caminho : List.of("/listas/listar", "/listas/listarArquivadas")) {
+            mvc.perform(get(caminho).param("busca", "Centro").header("HX-Request", "true"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("value=\"Centro\"")))
+                    .andExpect(content().string(containsString("hx-preserve=\"true\"")))
+                    .andExpect(content().string(containsString("class=\"table table-hover align-middle mb-0\"")));
+        }
+    }
+
+    @Test
     void separaPrioridadesAtivasDasArquivadasNoModal() throws Exception {
         var ativa = new PrioridadeApi.Prioridade(UUID.randomUUID(), "Ativa exemplo", 0, false, 3);
         var arquivada = new PrioridadeApi.Prioridade(UUID.randomUUID(), "Arquivada exemplo", 2, true, 1);

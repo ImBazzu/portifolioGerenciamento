@@ -2,12 +2,16 @@
     <div class="card shadow-sm">
         <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
             <h5 class="mb-0 fw-bold">Pessoas cadastradas</h5>
-            <div class="col-12 col-md-4">
-                <input type="search" name="nome" th:value="${nome}" class="form-control"
+            <div class="style-search">
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="search" id="inputBuscaPessoa" name="nome" th:value="${nome}" class="form-control"
+                       aria-label="Buscar pessoas"
                        placeholder="Buscar por nome..."
                        hx:get="@{/pessoas/listar(arquivadas=false)}"
                        hx-trigger="keyup changed delay:300ms, atualizar-pessoas from:body"
-                       hx-target="#pessoas-lista" hx-swap="innerHTML">
+                       hx-target="#pessoas-lista" hx-swap="innerHTML" hx-preserve="true">
+              </div>
             </div>
         </div>
         <div class="table-responsive">

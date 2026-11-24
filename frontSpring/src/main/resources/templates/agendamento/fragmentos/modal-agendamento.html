@@ -335,9 +335,11 @@
                             <form method="post"
                                   th:action="@{/agendamentos/verificar-veiculos}"
                                   hx:post="@{/agendamentos/verificar-veiculos}"
+                                  hx-trigger="change, submit"
                                   hx-target="#resultadoVerificacao"
                                   hx-swap="outerHTML"
-                                  class="card card-body bg-light mb-3">
+                                  hx-sync="this:replace"
+                                  class="card card-body bg-light mb-3 js-reverificar-acompanhantes">
                                 <input type="hidden" name="data" th:value="${data}">
                                 <input type="hidden" name="idPessoa" th:value="${idPessoaSelecionada}">
                                 <input type="hidden" name="idLista" th:value="${idListaSelecionada}">
@@ -365,6 +367,7 @@
                                 <button type="submit" class="btn btn-sm btn-outline-primary align-self-start mt-3">
                                     <i class="bi bi-arrow-repeat me-1"></i>Atualizar veículos permitidos
                                 </button>
+                                <div class="form-text" data-verificacao-status aria-live="polite"></div>
                             </form>
 
                             <!-- PASSAGEIRO VERIFICADO -->
@@ -438,7 +441,7 @@
                                                     <input type="hidden" name="buscarNaResidencia"
                                                            th:value="${buscarNaResidenciaSelecionado == true}">
                                                     <input type="hidden" name="acompanhantes" th:value="${acompanhantesSelecionados}">
-                                                    <button class="btn btn-success w-100" type="submit">
+                                                    <button class="btn btn-success w-100 js-confirmar-agendamento" type="submit">
                                                         <i class="bi bi-check-lg me-1"></i>
                                                         <span th:text="${veiculo.idVeiculo() == null ? 'Agendar como carro' : 'Agendar neste veículo'}"></span>
                                                     </button>

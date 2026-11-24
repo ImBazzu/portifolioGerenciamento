@@ -33,6 +33,8 @@ import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendaDiaResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoAbertoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoPermitidoDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificacaoVeiculosResponseDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificarVeiculosRequestDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.porta.in.HistoricoViagemApplicationPorta;
 import br.com.imbazzu.frontSpring.agendamento.adpter.out.api.AgendamentoApi;
 import br.com.imbazzu.frontSpring.especificacao.core.dto.EspecificacaoResponseDto;
@@ -135,18 +137,38 @@ class PessoaFormularioWebTest {
         when(localidades.listarCidades("", 0))
                 .thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
 
+        var listaId = UUID.randomUUID();
         mvc.perform(post("/agendamentos/verificar-veiculos").header("HX-Request", "true")
                         .param("data", data.toString())
                         .param("idPessoa", PESSOA_ID.toString())
-                        .param("idLista", UUID.randomUUID().toString())
+                        .param("idLista", listaId.toString())
                         .param("idDestino", destinoId.toString())
                         .param("horarioChegada", "09:00")
-                        .param("acompanhantes", "2"))
+                        .param("acompanhantes", "1"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("VAN-01")))
                 .andExpect(content().string(containsString("Agendar neste veículo")))
+                .andExpect(content().string(containsString("1 acompanhante(s) selecionado(s), máximo de 2")))
+                .andExpect(content().string(containsString("name=\"acompanhantes\" value=\"1\"")))
+                .andExpect(content().string(containsString("hx-trigger=\"change, submit\"")))
                 .andExpect(content().string(not(containsString("Tipo inicial do agendamento"))))
                 .andExpect(content().string(not(containsString("veiculoFisico"))));
+        verify(agendamentos).verificarVeiculos(data, new VerificarVeiculosRequestDto(
+                PESSOA_ID, listaId, destinoId, LocalTime.of(9, 0), 1));
+
+        mvc.perform(post("/agendamentos/passageiros")
+                        .param("data", data.toString())
+                        .param("idPessoa", PESSOA_ID.toString())
+                        .param("idLista", listaId.toString())
+                        .param("idTipoVeiculo", idTipo.toString())
+                        .param("idDestino", destinoId.toString())
+                        .param("horarioChegada", "09:00")
+                        .param("buscarNaResidencia", "true")
+                        .param("acompanhantes", "1")
+                        .param("idVeiculo", idVeiculo.toString()))
+                .andExpect(status().is3xxRedirection());
+        verify(agendamentos).criar(data, new AgendamentoRequestDto(PESSOA_ID, listaId, idTipo,
+                destinoId, LocalTime.of(9, 0), true, 1, idVeiculo));
     }
 
     @Test
@@ -183,7 +205,7 @@ class PessoaFormularioWebTest {
         mvc.perform(get("/pessoas/abrirFormulario/{id}", PESSOA_ID).header("HX-Request", "true"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Editar Pessoa")))
-                .andExpect(content().string(containsString("hx-put=\"/pessoas/" + PESSOA_ID + "\"")))
+                .andExpect(content().string(containsString("hx-put=\"/pessoas/" + PESSOA_ID + "?contextoAgendamento=false\"")))
                 .andExpect(content().string(not(containsString("name=\"quantidadeAcompanhantes\""))))
                 .andExpect(content().string(containsString("name=\"buscarNaResidencia\"")));
 
@@ -193,8 +215,32 @@ class PessoaFormularioWebTest {
                         .param("especificacaoId", ESPECIFICACAO_ID.toString())
                         .param("endereco", "").param("cpf", dto.cpf()).param("telefone", dto.telefone())
                         .param("buscarNaResidencia", "true"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(header().string("HX-Trigger-After-Settle", "atualizar-pessoas"));
         verify(pessoas).editar(PESSOA_ID, dto);
+    }
+
+    @Test
+    void edicaoNoAgendamentoAtualizaAPaginaSomenteAposSalvar() throws Exception {
+        var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
+                "Alta", PRIORIDADE_ID, 2, true, 2, false, null, "", "52998224725", "11987654321");
+        when(pessoas.buscar(PESSOA_ID)).thenReturn(pessoa);
+        mvc.perform(get("/pessoas/abrirFormulario/{id}", PESSOA_ID)
+                        .param("contextoAgendamento", "true").header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("?contextoAgendamento=true")));
+        mvc.perform(put("/pessoas/{id}", PESSOA_ID).header("HX-Request", "true")
+                        .param("contextoAgendamento", "true")
+                        .param("nome", "Ana Souza").param("especificacaoId", ESPECIFICACAO_ID.toString())
+                        .param("telefone", "11987654321").param("cpf", "52998224725")
+                        .param("_buscarNaResidencia", "on"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("HX-Refresh", "true"));
+        mvc.perform(put("/pessoas/{id}", PESSOA_ID).header("HX-Request", "true")
+                        .param("contextoAgendamento", "true").param("nome", ""))
+                .andExpect(status().isOk())
+                .andExpect(header().doesNotExist("HX-Refresh"))
+                .andExpect(header().doesNotExist("HX-Trigger-After-Settle"));
     }
 
     @Test
@@ -206,6 +252,8 @@ class PessoaFormularioWebTest {
         mvc.perform(get("/pessoas/listar").header("HX-Request", "true"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Ana Souza")))
+                .andExpect(content().string(containsString("id=\"inputBuscaPessoa\"")))
+                .andExpect(content().string(containsString("hx-preserve=\"true\"")))
                 .andExpect(content().string(containsString("badge text-bg-secondary")));
     }
 

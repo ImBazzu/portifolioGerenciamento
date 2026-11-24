@@ -6,12 +6,14 @@
                 <h2>Listas ativas</h2>
                 <p>Consulte e mantenha suas configurações de transporte.</p>
             </div>
-            <label class="lista-search">
-                <i class="bi bi-search" aria-hidden="true"></i>
+            <div class="style-search">
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search" aria-hidden="true"></i></span>
                 <input type="search"
                        id="inputBuscaLista"
                        name="busca"
                        th:value="${busca}"
+                       class="form-control"
                        placeholder="Buscar pelo nome ou descrição"
                        aria-label="Buscar listas"
                        hx:get="@{/listas/listar}"
@@ -19,13 +21,13 @@
                        hx-target="#listasAtivasContainer"
                        hx-swap="innerHTML"
                        hx-preserve="true">
-                <span class="lista-search-shortcut" aria-hidden="true"><i class="bi bi-command"></i> K</span>
-            </label>
+              </div>
+            </div>
         </div>
 
         <div class="table-responsive lista-table-wrap">
-            <table class="table lista-table align-middle mb-0">
-                <thead>
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
                 <tr>
                     <th scope="col">Lista</th>
                     <th scope="col">Descrição</th>

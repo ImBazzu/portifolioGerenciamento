@@ -6,7 +6,7 @@
 
             <form th:object="${pessoa}"
                   hx:post="${!edicao} ? @{/pessoas(contextoAgendamento=${contextoAgendamento})} : null"
-                  hx:put="${edicao ? '/pessoas/' + id : null}"
+                  hx:put="${edicao} ? @{/pessoas/{id}(id=${id}, contextoAgendamento=${contextoAgendamento})} : null"
                   hx-target="#modal" hx-swap="innerHTML">
                 <div class="row g-3">
                     <div class="col-12">

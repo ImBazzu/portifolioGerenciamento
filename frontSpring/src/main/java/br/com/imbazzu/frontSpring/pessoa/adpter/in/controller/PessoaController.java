@@ -153,14 +153,14 @@ public class PessoaController {
 
     @HxRequest
     @PutMapping("/{id}")
-    @HxTriggerAfterSettle("atualizar-pessoas")
     public String editar(
             @PathVariable UUID id,
             @Valid @ModelAttribute("pessoa") PessoaRequestDto pessoa,
             BindingResult result,
             @RequestParam(defaultValue = "false") boolean contextoAgendamento,
             @RequestParam(defaultValue = "") String termoEspecificacao,
-            Model model) {
+            Model model,
+            HttpServletResponse response) {
         
         model.addAttribute("id", id);
         model.addAttribute("contextoAgendamento", contextoAgendamento);
@@ -172,6 +172,8 @@ public class PessoaController {
         
         try {
             application.editar(id, pessoa);
+            response.setHeader(contextoAgendamento ? "HX-Refresh" : "HX-Trigger-After-Settle",
+                    contextoAgendamento ? "true" : "atualizar-pessoas");
             return "layout/vazio :: vazio";
         } catch (PessoaDuplicadaException e) {
             result.rejectValue("cpf", "duplicado", e.getMessage());

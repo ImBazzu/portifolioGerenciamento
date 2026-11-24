@@ -64,6 +64,8 @@ class EspecificacaoControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Padrão")))
                 .andExpect(content().string(containsString("Moderada")))
+                .andExpect(content().string(containsString("id=\"inputBuscaEspecificacao\"")))
+                .andExpect(content().string(containsString("hx-preserve=\"true\"")))
                 .andExpect(content().string(containsString("badge text-bg-secondary")));
     }
 

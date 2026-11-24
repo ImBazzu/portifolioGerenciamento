@@ -3,12 +3,16 @@
       <section class="custom-modal-card bg-white rounded shadow-lg p-4"
                role="dialog" aria-modal="true" aria-labelledby="pessoasArquivadasTitulo">
         <header th:replace="~{fragmentos/componentes :: cabecalhoModal('Pessoas arquivadas', 'pessoasArquivadasTitulo', @{/pessoas/limpar-modal})}"></header>
-        <div class="mb-3">
+        <div class="style-search mb-3">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
                 <input type="search" id="buscaPessoaArquivada" name="nome" th:value="${nome}" class="form-control"
+                       aria-label="Buscar pessoas arquivadas"
                        placeholder="Buscar por nome..."
                        hx:get="@{/pessoas/listar(arquivadas=true)}"
                        hx-trigger="keyup changed delay:300ms, atualizar-pessoas from:body"
                        hx-target="#modal" hx-swap="innerHTML" hx-preserve="true">
+            </div>
         </div>
         <div class="modal-body p-0">
         <div class="table-responsive">
@@ -68,8 +72,8 @@
                 <button class="btn btn-outline-secondary" th:disabled="${paginaAtual + 1 >= totalPaginas}"
                         th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=true,pagina=${paginaAtual + 1})}"
                         hx-target="#modal" hx-swap="innerHTML">Próxima</button>
-              </section>
             </div>
         </div>
+      </section>
     </div>
 </th:block>

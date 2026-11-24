@@ -22,16 +22,17 @@
             <!-- Body -->
             <div class="py-2">
                 <!-- Input de Pesquisa -->
-                <div class="mb-3">
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-white">
-                            <i class="bi bi-search text-muted"></i>
+                <div class="style-search mb-3">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
                         </span>
                         <input type="search"
                                id="inputBuscaVeiculoArquivado"
                                name="busca"
                                th:value="${busca}"
                                class="form-control"
+                               aria-label="Buscar veículos arquivados"
                                placeholder="Buscar veículo arquivado..."
                                hx:get="@{/veiculo/listarArquivado}"
                                hx-trigger="keyup changed delay:300ms, listar-arquivados from:body"

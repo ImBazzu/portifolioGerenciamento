@@ -113,6 +113,10 @@ html, body {
 #cidadeResultados:not(:has(> *)),
 #destinoResultados:not(:has(> *)) { display: none; }
 
+#verificarAgendamentoForm[hidden] {
+    display: none !important;
+}
+
 /* =========================================================
    SIDEBAR (DESKTOP E DRAWER MOBILE)
    ========================================================= */

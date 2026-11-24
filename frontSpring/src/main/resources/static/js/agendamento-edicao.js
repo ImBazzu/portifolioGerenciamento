@@ -579,6 +579,15 @@
     });
 
     document.addEventListener("change", (e) => {
+        if (ehElemento(e, "#resultadoVerificacao input[name='acompanhantes']")) {
+            document.querySelectorAll("#resultadoVerificacao .js-confirmar-agendamento")
+                .forEach((botao) => { botao.disabled = true; });
+            const status = e.target.form?.querySelector("[data-verificacao-status]");
+            if (status) status.textContent = "Atualizando veículos permitidos...";
+        }
+    }, true);
+
+    document.addEventListener("change", (e) => {
         if (ehElemento(e, "#filtroStatus")) {
             aplicarFiltrosTabela();
         } else if (ehElemento(e, ".js-troca-rapida-tipo")) {
@@ -738,12 +747,23 @@
     /* 9. Eventos HTMX                                                    */
     /* ------------------------------------------------------------------ */
 
-    document.addEventListener(
-        "htmx:afterSwap",
-        sincronizarVerificacao
-    );
+    document.addEventListener("htmx:afterSwap", (e) => {
+        if (e.detail?.target?.id === "resultadoVerificacao") {
+            sincronizarVerificacao();
+        }
+    });
 
     document.addEventListener("htmx:afterSwap", atualizarMensagemBusca);
+
+    function informarFalhaVerificacao(e) {
+        const formulario = e.detail?.elt;
+        if (!formulario?.matches?.(".js-reverificar-acompanhantes")) return;
+        const status = formulario.querySelector("[data-verificacao-status]");
+        if (status) status.textContent = "Não foi possível atualizar os veículos. Tente novamente.";
+    }
+
+    document.addEventListener("htmx:responseError", informarFalhaVerificacao);
+    document.addEventListener("htmx:sendError", informarFalhaVerificacao);
 
     document.addEventListener("pessoa-criada", (e) => {
         if (e.detail) {
