@@ -7,5 +7,6 @@ public record PassageiroDetalheView(
         String endereco,
         String observacao,
         String cidade,
-        String destino) {
+        String destino,
+        int maxAcompanhantes) {
 }

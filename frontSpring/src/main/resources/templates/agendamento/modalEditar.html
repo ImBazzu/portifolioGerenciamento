@@ -222,12 +222,33 @@
                                                th:value="${passageiro.horarioChegada()}" required>
                                     </div>
 
-                                    <div class="col-12 col-md-6">
-                                        <label class="form-label fw-semibold small text-secondary"
-                                               th:for="'editarAcompanhantes-' + ${passageiro.id()}">Acompanhantes</label>
-                                        <input class="form-control" type="number" name="acompanhantes" min="0"
-                                               th:id="'editarAcompanhantes-' + ${passageiro.id()}"
-                                               th:value="${passageiro.acompanhantes()}" readonly>
+                                    <div class="col-12">
+                                        <fieldset>
+                                            <legend class="form-label fw-semibold">
+                                                Acompanhantes (máximo permitido: <span th:text="${pessoa.maxAcompanhantes()}"></span>)
+                                            </legend>
+                                            <div class="d-flex flex-wrap gap-2" role="group" aria-label="Quantidade de acompanhantes">
+                                                <th:block th:each="quantidade : ${#numbers.sequence(0, pessoa.maxAcompanhantes())}">
+                                                    <input class="btn-check" type="radio" name="acompanhantes"
+                                                           th:id="${'editar-acompanhantes-' + passageiro.id() + '-' + quantidade}"
+                                                           th:value="${quantidade}"
+                                                           th:checked="${quantidade == passageiro.acompanhantes()}" required>
+                                                    <label class="btn btn-outline-primary mw-100"
+                                                           th:for="${'editar-acompanhantes-' + passageiro.id() + '-' + quantidade}"
+                                                           th:text="${quantidade == 1 ? '1 acompanhante' : quantidade + ' acompanhantes'}"></label>
+                                                </th:block>
+                                                <th:block th:if="${passageiro.acompanhantes() > pessoa.maxAcompanhantes()}">
+                                                    <input class="btn-check" type="radio" name="acompanhantes"
+                                                           th:id="${'editar-acompanhantes-atual-' + passageiro.id()}"
+                                                           th:value="${passageiro.acompanhantes()}" checked required>
+                                                    <label class="btn btn-outline-primary mw-100"
+                                                           th:for="${'editar-acompanhantes-atual-' + passageiro.id()}"
+                                                           th:text="${passageiro.acompanhantes() + ' acompanhantes (atual)'}"></label>
+                                                </th:block>
+                                            </div>
+                                            <div th:if="${passageiro.acompanhantes() > pessoa.maxAcompanhantes()}"
+                                                 class="form-text">A quantidade atual supera o máximo da prioridade. Uma nova seleção deve respeitar esse limite.</div>
+                                        </fieldset>
                                     </div>
 
                                     <div class="col-12">
@@ -242,7 +263,7 @@
                                                 Buscar passageiro na residência
                                             </label>
                                         </div>
-                                        <div class="form-text">Busca e acompanhantes são mantidos conforme o agendamento original.</div>
+                                        <div class="form-text">A busca na residência é mantida conforme o agendamento original.</div>
                                     </div>
 
                                 </div>

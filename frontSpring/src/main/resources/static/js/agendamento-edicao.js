@@ -183,11 +183,10 @@
             inputHorario.value = horario.substring(0, 5);
         }
 
-        const inputAcomp =
-            modal.querySelector("input[name='acompanhantes']");
-
-        if (inputAcomp && acompanhantes !== undefined) {
-            inputAcomp.value = acompanhantes;
+        if (acompanhantes !== undefined) {
+            modal.querySelectorAll("input[name='acompanhantes']").forEach((input) => {
+                input.checked = input.value === acompanhantes;
+            });
         }
 
         const checkResidencia =
@@ -740,6 +739,9 @@
     document.addEventListener("hidden.bs.modal", (e) => {
         if (e.target.matches?.("[id^='editarAgendamentoModal-']")) {
             reiniciarEdicaoEndereco(e.target);
+            e.target.querySelectorAll("input[name='acompanhantes']").forEach((input) => {
+                input.checked = input.defaultChecked;
+            });
         }
     });
 

@@ -35,6 +35,8 @@ import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoPermitidoDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificacaoVeiculosResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificarVeiculosRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoRequestDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoAtualizarRequestDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.porta.in.HistoricoViagemApplicationPorta;
 import br.com.imbazzu.frontSpring.agendamento.adpter.out.api.AgendamentoApi;
 import br.com.imbazzu.frontSpring.especificacao.core.dto.EspecificacaoResponseDto;
@@ -46,6 +48,7 @@ import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
 import br.com.imbazzu.frontSpring.lista.core.porta.in.ListaApplicationPorta;
 import br.com.imbazzu.frontSpring.localidade.core.porta.in.LocalidadeApplicationPorta;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
+import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -169,6 +172,50 @@ class PessoaFormularioWebTest {
                 .andExpect(status().is3xxRedirection());
         verify(agendamentos).criar(data, new AgendamentoRequestDto(PESSOA_ID, listaId, idTipo,
                 destinoId, LocalTime.of(9, 0), true, 1, idVeiculo));
+    }
+
+    @Test
+    void edicaoDoAgendamentoSelecionaEEnviaQuantidadeDeAcompanhantes() throws Exception {
+        var data = LocalDate.of(2026, 11, 23);
+        var idAgendamento = UUID.randomUUID();
+        var idTipo = UUID.randomUUID();
+        var idDestino = UUID.randomUUID();
+        var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
+                "Alta", PRIORIDADE_ID, 2, true, 2, false, null, "", "52998224725", "11987654321");
+        var passageiro = new AgendamentoResponseDto(idAgendamento, data, PESSOA_ID, UUID.randomUUID(),
+                UUID.randomUUID(), idTipo, idDestino, LocalTime.of(9, 0), LocalTime.of(8, 0),
+                true, 1, null, List.of());
+        when(pessoas.buscar(PESSOA_ID)).thenReturn(pessoa);
+        when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(), List.of(passageiro)));
+        when(listas.listarAtivas("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(tiposVeiculo.listar("", 0)).thenReturn(new ResultadoPaginado<>(
+                List.of(new TipoVeiculoResponseDto(idTipo, "Carro", 4)), 0, 10, 1, 1));
+        when(localidades.listarCidades("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+
+        for (var caminho : List.of("/agendamentos", "/agendamentos/carros")) {
+            mvc.perform(get(caminho).param("data", data.toString()))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("editar-acompanhantes-" + idAgendamento + "-0")))
+                    .andExpect(content().string(containsString("editar-acompanhantes-" + idAgendamento + "-2")))
+                    .andExpect(content().string(matchesPattern("(?s).*id=\"editar-acompanhantes-"
+                            + idAgendamento + "-1\"\\s+value=\"1\"\\s+required\\s+checked=\"checked\".*")));
+        }
+
+        when(pessoas.buscar(PESSOA_ID)).thenReturn(new PessoaResponseDto(PESSOA_ID, "Ana Souza", "",
+                ESPECIFICACAO_ID, "Padrão", "Alta", PRIORIDADE_ID, 0, true, 2, false,
+                null, "", "52998224725", "11987654321"));
+        mvc.perform(get("/agendamentos").param("data", data.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("editar-acompanhantes-atual-" + idAgendamento)))
+                .andExpect(content().string(containsString("Uma nova seleção deve respeitar esse limite.")));
+
+        mvc.perform(post("/agendamentos/{id}/editar", idAgendamento)
+                        .param("data", data.toString()).param("idTipoVeiculo", idTipo.toString())
+                        .param("idDestino", idDestino.toString()).param("horarioChegada", "09:00")
+                        .param("buscarNaResidencia", "true").param("acompanhantes", "2"))
+                .andExpect(status().is3xxRedirection());
+        verify(agendamentos).atualizar(idAgendamento, new AgendamentoAtualizarRequestDto(
+                idTipo, idDestino, LocalTime.of(9, 0), true, 2, null));
     }
 
     @Test

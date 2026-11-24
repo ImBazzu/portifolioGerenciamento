@@ -28,20 +28,28 @@ public class AgendamentoCommandAtualizarHandler {
     public void handler(AgendamentoCommandAtualizar command) {
         var atual = AgendamentoValidacao.buscarAgendamento(consultas, command.id());
         AgendamentoValidacao.exigirDiaAberto(consultas, atual.getData());
-        if (command.acompanhantes() != atual.getAcompanhantes()
-                || command.buscarNaResidencia() != atual.isBuscarNaResidencia()) {
+        if (command.buscarNaResidencia() != atual.isBuscarNaResidencia()) {
             throw new DadosInvalidosException(
-                    "Busca na residência e acompanhantes não podem ser alterados em um agendamento existente");
+                    "Busca na residência não pode ser alterada em um agendamento existente");
         }
 
         var pessoa = AgendamentoValidacao.validarPessoa(consultas, atual.getIdPessoa());
+        if (command.acompanhantes() < 0) {
+            throw new DadosInvalidosException("A quantidade de acompanhantes não pode ser negativa");
+        }
+        if (command.acompanhantes() != atual.getAcompanhantes()) {
+            AgendamentoValidacao.exigirPrioridadeAtiva(pessoa);
+            if (command.acompanhantes() > pessoa.acompanhantes()) {
+                throw new DadosInvalidosException("A quantidade de acompanhantes excede o máximo da prioridade");
+            }
+        }
         var destino = AgendamentoValidacao.validarDestino(consultas, command.idDestino());
         AgendamentoValidacao.validarLista(consultas, atual.getIdLista());
         var tipo = consultas.buscarTipoVeiculo(command.idTipoVeiculo());
         if (!tipo.ativo()) {
             throw new OperacaoNaoPermitidaException("Não é possível agendar para um tipo de veículo arquivado");
         }
-        if ((long) atual.getAcompanhantes() + 1 > tipo.capacidade()) {
+        if ((long) command.acompanhantes() + 1 > tipo.capacidade()) {
             throw new DadosInvalidosException("A quantidade de pessoas excede a capacidade do tipo de veículo");
         }
 
@@ -72,7 +80,7 @@ public class AgendamentoCommandAtualizarHandler {
                 tolerancia,
                 command.horarioChegada(),
                 atual.isBuscarNaResidencia(),
-                atual.getAcompanhantes(),
+                command.acompanhantes(),
                 null);
 
         var veiculos = consultas.listarVeiculos(atual.getData());
