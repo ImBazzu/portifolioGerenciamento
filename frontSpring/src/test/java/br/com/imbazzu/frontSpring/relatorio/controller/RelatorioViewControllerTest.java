@@ -27,6 +27,7 @@ class RelatorioViewControllerTest {
                 .andExpect(content().string(containsString("class=\"nav-link text-white active\"")))
                 .andExpect(content().string(containsString("id=\"btnToggleSidebar\"")))
                 .andExpect(content().string(containsString("id=\"filtroForm\"")))
+                .andExpect(content().string(containsString("id=\"formPdfPassageiros\"")))
                 .andExpect(content().string(containsString("id=\"chartAgendamentosPeriodo\"")))
                 .andExpect(content().string(containsString("id=\"tabelaPessoasFrequentes\"")))
                 .andExpect(content().string(containsString("id=\"metricsVeiculos\"")))

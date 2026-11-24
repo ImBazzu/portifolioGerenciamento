@@ -2,9 +2,15 @@
 
 ## 🎯 Visão Geral
 
-Este módulo implementa uma **página de relatórios e análises profissional** focada exclusivamente em **consulta e visualização de dados** com gráficos interativos usando **ApexCharts**.
+Este módulo oferece consulta e visualização de dados com gráficos interativos usando **ApexCharts**, além de exportação de passageiros em PDF.
 
 A solução segue a **arquitetura hexagonal** do projeto, com separação clara entre camadas de apresentação, aplicação e infraestrutura.
+
+## PDF de passageiros por período
+
+Na página de relatórios, informe as datas e selecione os filtros desejados. É possível selecionar várias listas, uma cidade, um destino e um tipo de veículo; campos sem seleção incluem todos. As opções são carregadas automaticamente dos cadastros, inclusive os arquivados. Se necessário, clique em **Atualizar opções dos filtros**.
+
+O PDF agrupa os agendamentos por passageiro, com CPF, telefone, especificação, data, lista, cidade, destino, tipo de veículo, horários e acompanhantes. O horário de saída é o horário programado do veículo exibido na agenda: informado manualmente ou calculado a partir de todos os passageiros do veículo. Sem veículo ou horário, aparece "Não informado". Os dados cadastrais exibidos são os atuais. O relatório inclui também agendamentos sem veículo atribuído e **não confirma que a viagem ocorreu**.
 
 ## 🏗️ Arquitetura
 

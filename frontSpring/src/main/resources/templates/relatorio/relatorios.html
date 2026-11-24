@@ -20,6 +20,49 @@
 
             <div class="container-custom">
                 <div id="erroRelatorio" class="alert alert-danger" role="alert" hidden></div>
+                <section class="filter-panel" aria-labelledby="tituloPdfPassageiros">
+                    <h2 id="tituloPdfPassageiros" class="filter-title">PDF de passageiros por período</h2>
+                    <p class="text-muted small">O relatório contém agendamentos, inclusive sem veículo atribuído; não confirma que a viagem ocorreu. Os filtros incluem cadastros arquivados.</p>
+                    <form id="formPdfPassageiros" th:action="@{/relatorios/passageiros/pdf}" method="get" target="_blank"
+                          th:attr="data-opcoes-url=@{/relatorios/passageiros/opcoes}">
+                        <div class="filter-row">
+                            <div class="filter-group">
+                                <label for="pdfInicio">Data de início</label>
+                                <input id="pdfInicio" name="dataInicio" type="date" required>
+                            </div>
+                            <div class="filter-group">
+                                <label for="pdfFim">Data de fim</label>
+                                <input id="pdfFim" name="dataFim" type="date" required>
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-primary mb-3" type="button" id="carregarFiltrosPdf">Atualizar opções dos filtros</button>
+                        <p id="statusPdfPassageiros" class="text-muted small" role="status">Carregando opções dos filtros...</p>
+                        <p id="erroPdfPassageiros" class="text-danger" role="alert" hidden></p>
+                        <noscript><p class="text-danger">Ative o JavaScript para carregar as opções dos filtros.</p></noscript>
+                        <fieldset id="filtrosPdfPassageiros">
+                            <div class="filter-row">
+                                <div class="filter-group">
+                                    <label for="pdfListas">Listas</label>
+                                    <select id="pdfListas" name="listas" multiple size="4"></select>
+                                    <small>Sem seleção, inclui todas. Use Ctrl para selecionar várias.</small>
+                                </div>
+                                <div class="filter-group">
+                                    <label for="pdfCidade">Cidade de destino</label>
+                                    <select id="pdfCidade" name="cidade"><option value="">Todas</option></select>
+                                </div>
+                                <div class="filter-group">
+                                    <label for="pdfDestino">Destino</label>
+                                    <select id="pdfDestino" name="destino"><option value="">Todos</option></select>
+                                </div>
+                                <div class="filter-group">
+                                    <label for="pdfTipoVeiculo">Tipo de veículo</label>
+                                    <select id="pdfTipoVeiculo" name="tipoVeiculo"><option value="">Todos</option></select>
+                                </div>
+                            </div>
+                            <button class="btn-filtrar" type="submit">Gerar PDF</button>
+                        </fieldset>
+                    </form>
+                </section>
                 <th:block th:replace="~{relatorio/fragmentos/filtros :: filtros}"></th:block>
                 <th:block th:replace="~{relatorio/fragmentos/navegacao :: navegacao}"></th:block>
                 <th:block th:replace="~{relatorio/fragmentos/agendamentos :: agendamentos}"></th:block>
@@ -29,7 +72,7 @@
             </div>
 
             <script src="https://cdn.jsdelivr.net/npm/apexcharts@latest/dist/apexcharts.min.js" defer></script>
-            <script th:src="@{/js/relatorios.js}" defer></script>
+            <script th:src="@{/js/relatorios.js(v=2)}" defer></script>
         </div>
     </main>
 </div>

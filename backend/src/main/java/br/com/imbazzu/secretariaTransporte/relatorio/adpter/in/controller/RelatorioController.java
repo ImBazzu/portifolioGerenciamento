@@ -2,6 +2,8 @@ package br.com.imbazzu.secretariaTransporte.relatorio.adpter.in.controller;
 
 import br.com.imbazzu.secretariaTransporte.relatorio.adpter.out.dto.*;
 import br.com.imbazzu.secretariaTransporte.relatorio.core.domain.FiltroRelatorio;
+import br.com.imbazzu.secretariaTransporte.relatorio.adpter.out.PassageiroPeriodoRepository;
+import br.com.imbazzu.secretariaTransporte.agendamento.core.service.CompatibilidadeVeiculoAgendamento;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
@@ -9,17 +11,60 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.Duration;
+import java.time.LocalTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/relatorios")
 public class RelatorioController {
     
     private final RelatorioService relatorioService;
+    private final PassageiroPeriodoRepository passageiros;
 
-    public RelatorioController(RelatorioService relatorioService) {
+    public RelatorioController(RelatorioService relatorioService, PassageiroPeriodoRepository passageiros) {
         this.relatorioService = relatorioService;
+        this.passageiros = passageiros;
+    }
+
+    @GetMapping("/passageiros-opcoes")
+    public ResponseEntity<OpcoesPassageiros> opcoesPassageiros() {
+        return ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore())
+                .body(new OpcoesPassageiros(
+                        passageiros.listarListas().stream().map(o -> new Opcao(o.getId(), o.getNome())).toList(),
+                        passageiros.listarCidades().stream().map(o -> new Opcao(o.getId(), o.getNome())).toList(),
+                        passageiros.listarDestinos().stream()
+                                .map(o -> new Destino(o.getId(), o.getNome(), o.getIdCidade())).toList(),
+                        passageiros.listarTiposVeiculo().stream().map(o -> new Opcao(o.getId(), o.getNome())).toList()));
+    }
+
+    public record Opcao(UUID id, String nome) {}
+    public record Destino(UUID id, String nome, UUID idCidade) {}
+    public record OpcoesPassageiros(List<Opcao> listas, List<Opcao> cidades,
+            List<Destino> destinos, List<Opcao> tiposVeiculo) {}
+
+    @GetMapping("/passageiros-periodo")
+    public ResponseEntity<List<PassageiroPeriodoDTO>> passageirosPeriodo(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
+        if (dataInicio.isAfter(dataFim)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data inicial posterior à data final");
+        }
+        var viagens = passageiros.buscar(dataInicio, dataFim);
+        Map<UUID, LocalTime> saidasCalculadas = new HashMap<>();
+        for (var viagem : viagens) {
+            if (viagem.idVeiculo() != null && Boolean.TRUE.equals(viagem.horarioSaidaCalculado())) {
+                var saida = CompatibilidadeVeiculoAgendamento.horarioSaidaNecessario(viagem.horarioChegada(),
+                        Duration.ofSeconds(viagem.tempoViagemSegundos(), viagem.tempoViagemNanos()));
+                saidasCalculadas.merge(viagem.idVeiculo(), saida, (a, b) -> a.isBefore(b) ? a : b);
+            }
+        }
+        var resultado = viagens.stream().map(viagem -> Boolean.TRUE.equals(viagem.horarioSaidaCalculado())
+                ? viagem.comHorarioSaida(saidasCalculadas.get(viagem.idVeiculo())) : viagem).toList();
+        return ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore()).body(resultado);
     }
 
     @GetMapping("/agendamentos")

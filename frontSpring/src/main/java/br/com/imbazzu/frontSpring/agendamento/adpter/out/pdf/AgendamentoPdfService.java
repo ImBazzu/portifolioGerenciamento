@@ -713,6 +713,16 @@ public final class AgendamentoPdfService {
             throws DocumentException, IOException {
         adicionarCabecalho(documento, titulo, "SECRETARIA MUNICIPAL  |  TRANSPORTE DE PASSAGEIROS  |  " + data.format(DATA_FORMATTER), estilos);
     }
+
+    public static void adicionarCabecalhoCompartilhado(Document documento, String titulo, String subtitulo)
+            throws DocumentException, IOException {
+        adicionarCabecalho(documento, titulo, subtitulo, new EstilosPdf());
+    }
+
+    public static void adicionarRodapeCompartilhado(PdfWriter writer, String titulo) {
+        writer.setPageEvent(new RodapePaginas(new EstilosPdf().getBaseFont(), titulo));
+    }
+
     private static void adicionarCabecalho(
             Document documento, String titulo, String linhaSubtitulo, EstilosPdf estilos)
             throws DocumentException, IOException {

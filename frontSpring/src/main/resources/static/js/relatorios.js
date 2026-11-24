@@ -159,5 +159,72 @@ class RelatorioManager {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    configurarPdfPassageiros();
     window.relatorioManager = new RelatorioManager();
 });
+
+function configurarPdfPassageiros() {
+    const form = document.getElementById('formPdfPassageiros');
+    const erro = document.getElementById('erroPdfPassageiros');
+    const status = document.getElementById('statusPdfPassageiros');
+    const cidade = document.getElementById('pdfCidade');
+    const destino = document.getElementById('pdfDestino');
+    const botao = document.getElementById('carregarFiltrosPdf');
+    let destinos = [];
+    let controller;
+
+    function preencher(select, valores, rotuloTodos) {
+        const selecionados = new Set(Array.from(select.selectedOptions, option => option.value));
+        select.replaceChildren();
+        if (rotuloTodos) select.add(new Option(rotuloTodos, ''));
+        valores.forEach(item => select.add(new Option(item.nome, item.id, false, selecionados.has(item.id))));
+    }
+
+    form.addEventListener('submit', event => {
+        const inicio = document.getElementById('pdfInicio').value;
+        const fim = document.getElementById('pdfFim').value;
+        if (inicio && fim && inicio > fim) {
+            event.preventDefault();
+            erro.textContent = 'A data de início não pode ser posterior à data de fim.';
+            erro.hidden = false;
+        }
+    });
+    cidade.addEventListener('change', () => {
+        preencher(destino, destinos.filter(item => !cidade.value || item.idCidade === cidade.value), 'Todos');
+    });
+
+    async function carregarOpcoes() {
+        if (controller) controller.abort();
+        controller = new AbortController();
+        const requisicao = controller;
+        botao.disabled = true;
+        erro.hidden = true;
+        status.textContent = 'Carregando opções dos filtros...';
+        try {
+            const response = await fetch(form.dataset.opcoesUrl, {
+                headers: { Accept: 'application/json' }, signal: requisicao.signal
+            });
+            if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            const dados = await response.json();
+            if (requisicao.signal.aborted) return;
+            preencher(document.getElementById('pdfListas'), dados.listas);
+            preencher(cidade, dados.cidades, 'Todas');
+            destinos = dados.destinos;
+            preencher(destino, destinos.filter(item => !cidade.value || item.idCidade === cidade.value), 'Todos');
+            preencher(document.getElementById('pdfTipoVeiculo'), dados.tiposVeiculo, 'Todos');
+            status.textContent = 'Opções carregadas. Sem seleção, o relatório inclui todos.';
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            console.error('Erro ao carregar filtros do PDF:', error);
+            status.textContent = '';
+            erro.textContent = 'Não foi possível carregar os filtros. Verifique se o frontend e o backend estão atualizados e em execução; depois tente atualizar as opções.';
+            erro.hidden = false;
+        } finally {
+            if (controller === requisicao) botao.disabled = false;
+        }
+    }
+    botao.addEventListener('click', carregarOpcoes);
+    carregarOpcoes();
+}

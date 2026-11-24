@@ -101,7 +101,11 @@ private static UUID cidadeDoDestino(Map<UUID, List<UUID>> destinosPorCidadeId, U
     }
 
     public static LocalTime horarioSaidaNecessario(Agendamento agendamento) {
-        return agendamento.getHorarioChegada().minus(agendamento.getTempoViagem());
+        return horarioSaidaNecessario(agendamento.getHorarioChegada(), agendamento.getTempoViagem());
+    }
+
+    public static LocalTime horarioSaidaNecessario(LocalTime chegada, Duration tempoViagem) {
+        return chegada.minus(tempoViagem);
     }
 
     public static LocalTime horarioSaidaDoVeiculo(VeiculoAberto veiculo, List<Agendamento> agendamentos) {

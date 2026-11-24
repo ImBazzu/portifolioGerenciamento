@@ -468,6 +468,14 @@ body.htmx-request #global-loader,
     overflow-y: auto;
 }
 
+.custom-modal-card.custom-modal-pessoa {
+    overflow-y: auto;
+}
+
+.custom-modal-pessoa > * {
+    flex-shrink: 0;
+}
+
 .custom-modal-form > header,
 .custom-modal-form > form {
     flex: 0 0 auto;
