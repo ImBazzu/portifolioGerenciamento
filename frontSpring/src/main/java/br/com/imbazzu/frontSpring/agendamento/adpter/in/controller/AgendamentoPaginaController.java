@@ -2,7 +2,10 @@ package br.com.imbazzu.frontSpring.agendamento.adpter.in.controller;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -16,6 +19,7 @@ import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.Mensage
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.MontadorAgendaDia;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.MontadorDetalhesPassageiros;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.OpcoesAgendamento;
+import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.PassageiroDetalheView;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.PassageiroVerificadoView;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.VeiculoDisponivelView;
 import br.com.imbazzu.frontSpring.agendamento.adpter.out.api.AgendamentoApi;
@@ -65,8 +69,18 @@ public class AgendamentoPaginaController {
 
         try {
             var agenda = agendamentoApi.buscarDia(dia);
-            adicionarAgenda(model, agenda, opcoes);
+            var passageiros = Stream.concat(
+                    agenda.veiculos().stream().flatMap(veiculo -> veiculo.passageiros().stream()),
+                    agenda.passageirosPendentes().stream()).toList();
+            var opcoesComHistorico = carregadorOpcoes.incluirDestinosHistoricos(opcoes, passageiros);
+            var detalhes = montadorDetalhes.montarPorAgendamento(passageiros, opcoesComHistorico);
+            var detalhesPorPessoa = passageiros.stream().collect(Collectors.toMap(
+                    passageiro -> passageiro.idPessoa(), passageiro -> detalhes.get(passageiro.id()), (primeiro, outro) -> primeiro));
+            adicionarAgenda(model, agenda, opcoesComHistorico, detalhesPorPessoa);
             montadorAgenda.consolidarPassageiros(model, agenda);
+            model.addAttribute("detalhesAgendamentos", detalhes);
+            model.addAttribute("nomesListasPassageiros", carregadorOpcoes.nomesListas(opcoes, passageiros));
+            model.addAttribute("nomesTiposPassageiros", carregadorOpcoes.nomesTipos(opcoes, agenda));
         } catch (RestClientResponseException e) {
             tratarErroAgenda(model, e);
         }
@@ -91,8 +105,13 @@ public class AgendamentoPaginaController {
     }
 
     private void adicionarAgenda(Model model, AgendaDiaResponseDto agenda, OpcoesAgendamento opcoes) {
+        adicionarAgenda(model, agenda, opcoes, montadorDetalhes.montar(agenda, opcoes));
+    }
+
+    private void adicionarAgenda(Model model, AgendaDiaResponseDto agenda, OpcoesAgendamento opcoes,
+            Map<UUID, PassageiroDetalheView> detalhes) {
         model.addAttribute("agenda", agenda);
-        model.addAttribute("detalhesPassageiros", montadorDetalhes.montar(agenda, opcoes));
+        model.addAttribute("detalhesPassageiros", detalhes);
         montadorAgenda.dividirPorTipo(model, agenda, opcoes);
         if (model.getAttribute("verificacao") instanceof VerificacaoVeiculosResponseDto verificacao) {
             int acompanhantes = model.getAttribute("acompanhantesSelecionados") instanceof Number numero

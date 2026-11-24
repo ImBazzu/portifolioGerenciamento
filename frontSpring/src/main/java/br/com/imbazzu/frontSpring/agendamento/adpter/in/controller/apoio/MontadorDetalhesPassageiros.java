@@ -55,6 +55,24 @@ public class MontadorDetalhesPassageiros {
         return detalhes;
     }
 
+    public Map<UUID, PassageiroDetalheView> montarPorAgendamento(
+            List<AgendamentoResponseDto> passageiros, OpcoesAgendamento opcoes) {
+        var destinos = opcoes.destinosPorId();
+        Map<UUID, PessoaResponseDto> pessoasPorId = new HashMap<>();
+        Map<UUID, PassageiroDetalheView> detalhes = new HashMap<>();
+        for (var agendamento : passageiros) {
+            var pessoa = pessoasPorId.computeIfAbsent(agendamento.idPessoa(), id -> {
+                try {
+                    return pessoas.buscar(id);
+                } catch (PessoaNaoEncontradaException e) {
+                    return pessoas.buscarArquivado(id);
+                }
+            });
+            detalhes.put(agendamento.id(), detalhe(pessoa, destinos.get(agendamento.idDestino()), agendamento.idDestino()));
+        }
+        return detalhes;
+    }
+
     private static PassageiroDetalheView detalhe(PessoaResponseDto pessoa, DestinoView destino, UUID idDestino) {
         return new PassageiroDetalheView(
                 pessoa.nome(),
@@ -64,6 +82,7 @@ public class MontadorDetalhesPassageiros {
                 pessoa.observacao(),
                 destino == null ? "Cidade não encontrada (%s)".formatted(idDestino) : destino.cidade(),
                 destino == null ? "Destino não encontrado (%s)".formatted(idDestino) : destino.nome(),
-                pessoa.prioridadeAcompanhantes());
+                pessoa.prioridadeAcompanhantes(),
+                pessoa.especificacaoNome());
     }
 }

@@ -2,6 +2,8 @@ package br.com.imbazzu.frontSpring.pessoa.adpter.in.controller;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
@@ -39,6 +41,9 @@ import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoAtualizarReque
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.porta.in.HistoricoViagemApplicationPorta;
 import br.com.imbazzu.frontSpring.agendamento.adpter.out.api.AgendamentoApi;
+import br.com.imbazzu.frontSpring.agendamento.adpter.out.pdf.AgendamentoPdfService;
+import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.PassageiroDetalheView;
+import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.PassageiroRelatorioView;
 import br.com.imbazzu.frontSpring.especificacao.core.dto.EspecificacaoResponseDto;
 import br.com.imbazzu.frontSpring.especificacao.core.porta.in.EspecificacaoApplicationPorta;
 import static org.hamcrest.Matchers.not;
@@ -46,9 +51,14 @@ import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaRequestDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
 import br.com.imbazzu.frontSpring.lista.core.porta.in.ListaApplicationPorta;
+import br.com.imbazzu.frontSpring.lista.core.dto.ListaResponseDto;
 import br.com.imbazzu.frontSpring.localidade.core.porta.in.LocalidadeApplicationPorta;
+import br.com.imbazzu.frontSpring.localidade.core.dto.CidadeResponseDto;
+import br.com.imbazzu.frontSpring.localidade.core.dto.DestinoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
+import com.lowagie.text.pdf.PdfReader;
+import com.lowagie.text.pdf.parser.PdfTextExtractor;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -80,6 +90,108 @@ class PessoaFormularioWebTest {
 
     @MockitoBean
     private VeiculoApplicationPorta tiposVeiculo;
+
+    @Test
+    void pdfPassageirosPaginaSemPerderPassageiros() throws Exception {
+        var data = LocalDate.of(2026, 11, 23);
+        var agendamento = new AgendamentoResponseDto(UUID.randomUUID(), data, PESSOA_ID, UUID.randomUUID(),
+                UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), LocalTime.of(9, 0), null,
+                false, 0, null, List.of());
+        var linhas = java.util.stream.IntStream.range(0, 40).mapToObj(numero -> new PassageiroRelatorioView(
+                agendamento, new PassageiroDetalheView("Pessoa " + numero, "123", "456", "", "",
+                        "Cidade", "Destino", 0, "Padrão"), "Lista", null)).toList();
+        var reader = new PdfReader(AgendamentoPdfService.gerarPassageiros(data, linhas));
+        assertTrue(reader.getNumberOfPages() > 1);
+        var texto = new StringBuilder();
+        var extractor = new PdfTextExtractor(reader);
+        for (int pagina = 1; pagina <= reader.getNumberOfPages(); pagina++) {
+            texto.append(extractor.getTextFromPage(pagina)).append('\n');
+        }
+        reader.close();
+        for (int numero = 0; numero < 40; numero++) {
+            assertTrue(texto.toString().contains("Pessoa " + numero + "\n"), "Ausente: Pessoa " + numero);
+        }
+    }
+
+    @Test
+    void pdfPassageirosRespeitaSelecaoOrdemEDadosDaAgenda() throws Exception {
+        var data = LocalDate.of(2026, 11, 23);
+        var listaId = UUID.randomUUID();
+        var tipoId = UUID.randomUUID();
+        var cidadeId = UUID.randomUUID();
+        var destinoId = UUID.randomUUID();
+        var veiculoId = UUID.randomUUID();
+        var pessoaPendenteId = UUID.randomUUID();
+        var idExcluido = UUID.randomUUID();
+        var atribuido = new AgendamentoResponseDto(UUID.randomUUID(), data, PESSOA_ID, listaId,
+                UUID.randomUUID(), tipoId, destinoId, LocalTime.of(9, 0), LocalTime.of(8, 0),
+                true, 1, veiculoId, List.of());
+        var pendente = new AgendamentoResponseDto(UUID.randomUUID(), data, pessoaPendenteId, listaId,
+                UUID.randomUUID(), tipoId, destinoId, LocalTime.of(10, 0), null, false, 0, null, List.of());
+        var excluido = new AgendamentoResponseDto(UUID.randomUUID(), data, idExcluido, listaId,
+                UUID.randomUUID(), tipoId, destinoId, LocalTime.of(11, 0), null, false, 0, null, List.of());
+        var veiculo = new VeiculoAbertoResponseDto(veiculoId, data, tipoId, "Van", 8,
+                "VAN-01", LocalTime.of(7, 30), 2, List.of(atribuido));
+        when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(veiculo), List.of(pendente, excluido)));
+        when(pessoas.buscar(PESSOA_ID)).thenReturn(new PessoaResponseDto(PESSOA_ID, "Ana Souza", "",
+                ESPECIFICACAO_ID, "Gestante", "Alta", PRIORIDADE_ID, 2, true, 2, false,
+                null, "Rua Principal 12", "52998224725", "11987654321"));
+        when(pessoas.buscar(pessoaPendenteId)).thenReturn(new PessoaResponseDto(pessoaPendenteId, "Bruno Silva", "",
+                ESPECIFICACAO_ID, "Padrão", "Alta", PRIORIDADE_ID, 2, false, 0, false,
+                null, "Rua que nao deve aparecer", "12345678900", "11912345678"));
+        when(pessoas.buscar(idExcluido)).thenReturn(new PessoaResponseDto(idExcluido, "Carlos Excluido", "",
+                ESPECIFICACAO_ID, "Padrão", "Alta", PRIORIDADE_ID, 2, false, 0, false,
+                null, "", "123", "456"));
+        when(listas.listarAtivas("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(listas.buscarArquivada(listaId)).thenReturn(new ListaResponseDto(
+                listaId, "Lista histórica", "", 0, 0, true, List.of(), List.of(), List.of(), List.of()));
+        when(tiposVeiculo.listar("", 0)).thenReturn(new ResultadoPaginado<>(
+                List.of(new TipoVeiculoResponseDto(tipoId, "Van", 8)), 0, 10, 1, 1));
+        when(localidades.listarCidades("", 0)).thenReturn(new ResultadoPaginado<>(
+                List.of(new CidadeResponseDto(cidadeId, "Salvador", "BA", "", 1)), 0, 10, 1, 1));
+        when(localidades.listarDestinos(cidadeId, "", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(localidades.listarDestinosArquivados(cidadeId, "", 0)).thenReturn(new ResultadoPaginado<>(
+                List.of(new DestinoResponseDto(destinoId, "Hospital Central", 1)), 0, 10, 1, 1));
+
+        mvc.perform(get("/agendamentos").param("data", data.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("data-tipo-nome=\"Van\"")))
+                .andExpect(content().string(containsString("data-cidade=\"Salvador\"")))
+                .andExpect(content().string(containsString("data-especificacao=\"Gestante\"")))
+                .andExpect(content().string(containsString("action=\"/agendamentos/pdf/passageiros\"")));
+
+        byte[] pdf = mvc.perform(post("/agendamentos/pdf/passageiros").param("data", data.toString())
+                        .param("ids", pendente.id().toString(), atribuido.id().toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/pdf"))
+                .andReturn().getResponse().getContentAsByteArray();
+        var reader = new PdfReader(pdf);
+        var texto = new StringBuilder();
+        var extractor = new PdfTextExtractor(reader);
+        for (int pagina = 1; pagina <= reader.getNumberOfPages(); pagina++) {
+            texto.append(extractor.getTextFromPage(pagina));
+        }
+        reader.close();
+        String conteudo = texto.toString();
+        assertTrue(conteudo.indexOf("Bruno Silva") < conteudo.indexOf("Ana Souza"), conteudo);
+        for (String esperado : List.of("Bruno Silva", "Ana Souza", "52998224725", "11987654321",
+                "DADOS DO PASSAGEIRO", "DADOS DA VIAGEM", "CPF: 12345678900", "Gestante",
+                "Acompanhantes: 1", "Rua Principal 12", "Lista histórica", "Salvador",
+                "Hospital Central", "Horário de chegada: 10:00", "VEÍCULO ATRIBUÍDO",
+                "VEÍCULO PENDENTE", "09:00", "Van", "Saída: 07:30", "Pendente",
+                "TOTAL DE PASSAGEIROS", "Passageiros cadastrados")) {
+            assertTrue(conteudo.contains(esperado), esperado + " ausente em: " + conteudo);
+        }
+        assertFalse(conteudo.contains("Carlos Excluido"));
+        assertFalse(conteudo.contains("Rua que nao deve aparecer"));
+
+        mvc.perform(post("/agendamentos/pdf/passageiros").param("data", data.toString())
+                        .param("ids", atribuido.id().toString(), atribuido.id().toString()))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/agendamentos/pdf/passageiros").param("data", data.toString())
+                        .param("ids", atribuido.id().toString(), UUID.randomUUID().toString()))
+                .andExpect(status().isConflict());
+    }
 
     @Test
     void formularioNovoExibeCamposComValoresIniciais() throws Exception {
@@ -191,6 +303,9 @@ class PessoaFormularioWebTest {
         when(tiposVeiculo.listar("", 0)).thenReturn(new ResultadoPaginado<>(
                 List.of(new TipoVeiculoResponseDto(idTipo, "Carro", 4)), 0, 10, 1, 1));
         when(localidades.listarCidades("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(localidades.listarCidadesArquivadas("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(listas.buscarArquivada(passageiro.idLista())).thenReturn(new ListaResponseDto(
+                passageiro.idLista(), "Lista antiga", "", 0, 0, true, List.of(), List.of(), List.of(), List.of()));
 
         for (var caminho : List.of("/agendamentos", "/agendamentos/carros")) {
             mvc.perform(get(caminho).param("data", data.toString()))

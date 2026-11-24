@@ -74,36 +74,24 @@
     function aplicarFiltrosTabela() {
         const filtroTexto = $("filtroTexto");
         const filtroCidade = $("filtroCidade");
-        const filtroStatus = $("filtroStatus");
-
         const linhas = document.querySelectorAll(".linha-passageiro");
         const semResultados = $("semResultadosFiltro");
-
-        if (!linhas.length) return;
-
         const txt = normalizar(filtroTexto?.value);
         const cid = normalizar(filtroCidade?.value);
-        const st = filtroStatus?.value;
+        const st = $("filtroStatus")?.value;
+        const tipo = $("filtroTipoVeiculo")?.value;
+        const residencia = $("filtroResidencia")?.value;
 
         let visiveis = 0;
 
         linhas.forEach((linha) => {
-            const nome = normalizar(linha.dataset.nome);
-            const tel = normalizar(linha.dataset.telefone);
             const cidade = normalizar(linha.dataset.cidade);
-            const destino = normalizar(linha.dataset.destino);
-            const status = linha.dataset.status;
-
-            const bateTexto =
-                !txt ||
-                nome.includes(txt) ||
-                tel.includes(txt) ||
-                destino.includes(txt);
-
+            const bateTexto = !txt || ["nome", "telefone", "cpf", "destino", "lista", "especificacao"]
+                .some(campo => normalizar(linha.dataset[campo]).includes(txt));
             const bateCidade = !cid || cidade.includes(cid);
-            const bateStatus = !st || status === st;
-
-            const mostrar = bateTexto && bateCidade && bateStatus;
+            const mostrar = bateTexto && bateCidade && (!st || linha.dataset.status === st)
+                && (!tipo || linha.dataset.tipo === tipo)
+                && (!residencia || linha.dataset.residencia === residencia);
 
             linha.classList.toggle("d-none", !mostrar);
 
@@ -111,13 +99,37 @@
         });
 
         semResultados?.classList.toggle("d-none", visiveis > 0);
+        mensagem("contagemPassageiros", `${visiveis} de ${linhas.length} passageiros`);
+        if ($("btnPdfPassageiros")) $("btnPdfPassageiros").disabled = visiveis === 0;
+    }
+
+    function ordenarPassageiros() {
+        const corpo = $("tabelaPassageiros")?.tBodies[0];
+        if (!corpo) return;
+        const campo = $("ordenacaoPassageiros")?.value;
+        const direcao = $("direcaoOrdenacao")?.value === "desc" ? -1 : 1;
+        const linhas = Array.from(corpo.querySelectorAll(".linha-passageiro"));
+        linhas.sort((a, b) => {
+            if (!campo) return Number(a.dataset.ordemOriginal) - Number(b.dataset.ordemOriginal);
+            const primeiro = a.dataset[campo] || "";
+            const segundo = b.dataset[campo] || "";
+            if (!primeiro || !segundo) return primeiro ? -1 : segundo ? 1 : 0;
+            return direcao * primeiro.localeCompare(segundo, "pt-BR", { sensitivity: "base", numeric: true });
+        });
+        const fim = $("semResultadosFiltro");
+        linhas.forEach(linha => corpo.insertBefore(linha, fim));
     }
 
     function limparFiltrosTabela() {
         if ($("filtroTexto")) $("filtroTexto").value = "";
         if ($("filtroCidade")) $("filtroCidade").value = "";
         if ($("filtroStatus")) $("filtroStatus").value = "";
+        if ($("filtroTipoVeiculo")) $("filtroTipoVeiculo").value = "";
+        if ($("filtroResidencia")) $("filtroResidencia").value = "";
+        if ($("ordenacaoPassageiros")) $("ordenacaoPassageiros").value = "";
+        if ($("direcaoOrdenacao")) $("direcaoOrdenacao").value = "asc";
 
+        ordenarPassageiros();
         aplicarFiltrosTabela();
     }
 
@@ -587,8 +599,10 @@
     }, true);
 
     document.addEventListener("change", (e) => {
-        if (ehElemento(e, "#filtroStatus")) {
+        if (ehElemento(e, "#filtroStatus, #filtroTipoVeiculo, #filtroResidencia")) {
             aplicarFiltrosTabela();
+        } else if (ehElemento(e, "#ordenacaoPassageiros, #direcaoOrdenacao")) {
+            ordenarPassageiros();
         } else if (ehElemento(e, ".js-troca-rapida-tipo")) {
             e.target.closest("form")?.submit();
         } else if (
@@ -715,6 +729,24 @@
         }
     });
 
+    document.addEventListener("submit", (e) => {
+        if (!ehElemento(e, "#formPdfPassageiros")) return;
+        const ids = $("idsPdfPassageiros");
+        const linhas = document.querySelectorAll(".linha-passageiro:not(.d-none)");
+        if (!linhas.length) {
+            e.preventDefault();
+            return;
+        }
+        ids.replaceChildren();
+        linhas.forEach(linha => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = "ids";
+            input.value = linha.dataset.id;
+            ids.appendChild(input);
+        });
+    });
+
     /* ------------------------------------------------------------------ */
     /* 8. Eventos dos Modais Bootstrap                                    */
     /* ------------------------------------------------------------------ */
@@ -788,6 +820,19 @@
     /* ------------------------------------------------------------------ */
 
     function iniciarPagina(raiz) {
+        const tabela = $("tabelaPassageiros");
+        if (tabela && raiz?.contains?.(tabela) && !tabela.dataset.filtrosInicializados) {
+            const tipos = new Map();
+            tabela.querySelectorAll(".linha-passageiro").forEach((linha, indice) => {
+                linha.dataset.ordemOriginal = indice;
+                tipos.set(linha.dataset.tipo, linha.dataset.tipoNome);
+            });
+            Array.from(tipos).sort((a, b) => a[1].localeCompare(b[1], "pt-BR")).forEach(([id, nome]) => {
+                $("filtroTipoVeiculo").add(new Option(nome, id));
+            });
+            tabela.dataset.filtrosInicializados = "true";
+        }
+        aplicarFiltrosTabela();
         const inputDataInicial = $("inputDataInicial");
         if (inputDataInicial && !inputDataInicial.value) {
             inputDataInicial.value = formatarDataLocalISO(0);

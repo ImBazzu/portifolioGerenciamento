@@ -8,29 +8,29 @@
 
                         <div class="row g-2 align-items-center">
 
-                            <div class="col-12 col-md-3">
+                            <div class="col-12">
 
                                 <h2 class="h5 mb-0 fw-bold text-dark">Passageiros Cadastrados</h2>
 
                             </div>
 
-                            <div class="col-12 col-md-9">
+                            <div class="col-12">
 
                                 <div class="row g-2">
 
-                                    <div class="col-12 col-sm-4">
+                                    <div class="col-12 col-md-4">
 
-                                        <input type="text" id="filtroTexto" class="form-control form-control-sm" placeholder="Filtrar por nome ou telefone...">
+                                        <input type="text" id="filtroTexto" class="form-control form-control-sm" aria-label="Buscar passageiros" placeholder="Nome, telefone, CPF, destino, lista ou especificação">
 
                                     </div>
 
-                                    <div class="col-6 col-sm-3">
+                                    <div class="col-12 col-sm-6 col-md-2">
 
                                         <input type="text" id="filtroCidade" class="form-control form-control-sm" placeholder="Filtrar por cidade...">
 
                                     </div>
 
-                                    <div class="col-6 col-sm-3">
+                                    <div class="col-12 col-sm-6 col-md-2">
 
                                         <select id="filtroStatus" class="form-select form-select-sm">
 
@@ -44,7 +44,35 @@
 
                                     </div>
 
-                                    <div class="col-12 col-sm-2">
+                                    <div class="col-12 col-sm-6 col-md-2">
+                                        <select id="filtroTipoVeiculo" class="form-select form-select-sm" aria-label="Filtrar por tipo de veículo">
+                                            <option value="">Todos os tipos de veículo</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-sm-6 col-md-2">
+                                        <select id="filtroResidencia" class="form-select form-select-sm" aria-label="Filtrar por busca na residência">
+                                            <option value="">Todas as buscas</option>
+                                            <option value="true">Busca na residência</option>
+                                            <option value="false">Sem busca na residência</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-sm-6 col-md-3">
+                                        <select id="ordenacaoPassageiros" class="form-select form-select-sm" aria-label="Ordenar passageiros por">
+                                            <option value="">Ordem original</option>
+                                            <option value="nome">Nome</option>
+                                            <option value="cidade">Cidade</option>
+                                            <option value="chegada">Horário de chegada</option>
+                                            <option value="saida">Horário de saída</option>
+                                            <option value="tipoNome">Tipo de veículo</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-sm-6 col-md-2">
+                                        <select id="direcaoOrdenacao" class="form-select form-select-sm" aria-label="Direção da ordenação">
+                                            <option value="asc">Crescente</option>
+                                            <option value="desc">Decrescente</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6 col-md-2">
 
                                         <button type="button" id="btnLimparFiltros" class="btn btn-sm btn-outline-secondary w-100">Limpar</button>
 
@@ -54,6 +82,16 @@
 
                             </div>
 
+                        </div>
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                            <span id="contagemPassageiros" class="small text-muted" aria-live="polite"></span>
+                            <form id="formPdfPassageiros" th:action="@{/agendamentos/pdf/passageiros}" method="post" target="_blank">
+                                <input type="hidden" name="data" th:value="${data}">
+                                <span id="idsPdfPassageiros"></span>
+                                <button type="submit" id="btnPdfPassageiros" class="btn btn-sm btn-outline-primary" disabled>
+                                    <i class="bi bi-file-earmark-pdf me-1"></i>PDF dos resultados
+                                </button>
+                            </form>
                         </div>
 
                     </div>
@@ -100,29 +138,38 @@
 
                                 class="linha-passageiro"
 
-                                th:data-nome="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"
+                                th:data-nome="${detalhesAgendamentos.get(passageiro.id()).nome()}"
 
-                                th:data-telefone="${detalhesPassageiros.get(passageiro.idPessoa()).telefone()}"
+                                th:data-telefone="${detalhesAgendamentos.get(passageiro.id()).telefone()}"
+                                th:data-cpf="${detalhesAgendamentos.get(passageiro.id()).cpf()}"
+                                th:data-especificacao="${detalhesAgendamentos.get(passageiro.id()).especificacao()}"
+                                th:data-lista="${nomesListasPassageiros.get(passageiro.idLista())}"
+                                th:data-id="${passageiro.id()}"
+                                th:data-tipo="${passageiro.idTipoVeiculo()}"
+                                th:data-tipo-nome="${nomesTiposPassageiros.get(passageiro.idTipoVeiculo())}"
+                                th:data-residencia="${passageiro.buscarNaResidencia()}"
+                                th:data-chegada="${passageiro.horarioChegada()}"
+                                th:data-saida="${passageiro.idVeiculoAberto() != null and veiculoAtribuido.get(passageiro.id()) != null ? veiculoAtribuido.get(passageiro.id()).horarioSaida() : ''}"
 
-                                th:data-cidade="${detalhesPassageiros.get(passageiro.idPessoa()).cidade()}"
+                                th:data-cidade="${detalhesAgendamentos.get(passageiro.id()).cidade()}"
 
-                                th:data-destino="${detalhesPassageiros.get(passageiro.idPessoa()).destino()}"
+                                th:data-destino="${detalhesAgendamentos.get(passageiro.id()).destino()}"
 
                                 th:data-status="${passageiro.idVeiculoAberto() == null ? 'pendente' : 'atribuido'}">
 
                                 <td>
 
-                                    <strong class="text-dark" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></strong>
+                                    <strong class="text-dark" th:text="${detalhesAgendamentos.get(passageiro.id()).nome()}"></strong>
 
-                                    <div class="small text-muted" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).telefone()}"></div>
+                                    <div class="small text-muted" th:text="${detalhesAgendamentos.get(passageiro.id()).telefone()}"></div>
 
                                 </td>
 
                                 <td>
 
-                                    <span class="text-dark" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).cidade()}"></span>
+                                    <span class="text-dark" th:text="${detalhesAgendamentos.get(passageiro.id()).cidade()}"></span>
 
-                                    <div class="small text-muted" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).destino()}"></div>
+                                    <div class="small text-muted" th:text="${detalhesAgendamentos.get(passageiro.id()).destino()}"></div>
 
                                 </td>
 
@@ -136,11 +183,8 @@
 
                                 <td>
 
-                                    <span class="text-secondary fw-semibold" th:each="lista : ${listas}"
-
-                                          th:if="${lista.id() == passageiro.idLista()}"
-
-                                          th:text="${lista.nome()}">
+                                    <span class="text-secondary fw-semibold"
+                                          th:text="${nomesListasPassageiros.get(passageiro.idLista())}">
 
                                     </span>
 

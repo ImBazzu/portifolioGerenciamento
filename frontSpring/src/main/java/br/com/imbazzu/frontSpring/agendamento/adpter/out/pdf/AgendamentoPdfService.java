@@ -26,6 +26,7 @@ import com.lowagie.text.pdf.PdfPageEventHelper;
 import com.lowagie.text.pdf.PdfTemplate;
 import com.lowagie.text.pdf.PdfWriter;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.PassageiroDetalheView;
+import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.PassageiroRelatorioView;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoAbertoResponseDto;
 public final class AgendamentoPdfService {
@@ -57,6 +58,184 @@ public final class AgendamentoPdfService {
     private AgendamentoPdfService() {
         throw new UnsupportedOperationException("Classe utilitária não deve ser instanciada");
     }
+
+    public static byte[] gerarPassageiros(LocalDate data, List<PassageiroRelatorioView> passageiros) {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        Document documento = new Document(PageSize.A4, 28, 28, 28, 34);
+        try {
+            EstilosPdf estilos = new EstilosPdf();
+            PdfWriter writer = PdfWriter.getInstance(documento, buffer);
+            writer.setPageEvent(new RodapePaginas(estilos.getBaseFont(), "Passageiros cadastrados"));
+            documento.open();
+            adicionarCabecalho(documento, "Passageiros cadastrados",
+                    "SECRETARIA MUNICIPAL  |  TRANSPORTE DE PASSAGEIROS", estilos);
+            adicionarLinhaDataOrigem(documento, data, estilos);
+            PdfPTable resumo = new PdfPTable(2);
+            resumo.setWidthPercentage(100);
+            resumo.setWidths(new float[] {3f, 1f});
+            resumo.setSpacingAfter(10);
+            PdfPCell rotuloTotal = new PdfPCell(new Phrase("TOTAL DE PASSAGEIROS", estilos.getSubtitulo()));
+            rotuloTotal.setBackgroundColor(new java.awt.Color(242, 246, 244));
+            rotuloTotal.setBorderColor(new java.awt.Color(218, 226, 232));
+            rotuloTotal.setPadding(7);
+            resumo.addCell(rotuloTotal);
+            PdfPCell quantidadeTotal = new PdfPCell(new Phrase(Integer.toString(passageiros.size()), estilos.getTotalDestaque()));
+            quantidadeTotal.setHorizontalAlignment(Element.ALIGN_CENTER);
+            quantidadeTotal.setBackgroundColor(new java.awt.Color(230, 244, 236));
+            quantidadeTotal.setBorderColor(new java.awt.Color(192, 220, 202));
+            quantidadeTotal.setPadding(7);
+            resumo.addCell(quantidadeTotal);
+            documento.add(resumo);
+            if (passageiros.isEmpty()) {
+                documento.add(new Paragraph("Nenhum passageiro encontrado na seleção.", estilos.getTextoNormal()));
+            }
+            for (PassageiroRelatorioView linha : passageiros) {
+                var pessoa = linha.pessoa();
+                var agendamento = linha.agendamento();
+                var veiculo = linha.veiculo();
+                PdfPTable card = new PdfPTable(2);
+                card.setWidthPercentage(100);
+                card.setWidths(new float[] {1f, 1f});
+                card.setKeepTogether(true);
+                card.setSpacingAfter(8);
+                PdfPCell titulo = new PdfPCell(new Phrase(valorRelatorio(pessoa.nome()), estilos.getSecao()));
+                titulo.setColspan(2);
+                titulo.setBackgroundColor(new java.awt.Color(234, 245, 238));
+                titulo.setBorderColor(new java.awt.Color(192, 220, 202));
+                titulo.setPadding(7);
+                card.addCell(titulo);
+                PdfPTable dadosPessoais = new PdfPTable(1);
+                dadosPessoais.setWidthPercentage(100);
+                adicionarTituloBloco(dadosPessoais, "DADOS DO PASSAGEIRO", estilos);
+                adicionarCampoRelatorio(dadosPessoais, "CPF", pessoa.cpf(), estilos);
+                adicionarCampoRelatorio(dadosPessoais, "Telefone", pessoa.telefone(), estilos);
+                adicionarCampoRelatorio(dadosPessoais, "Especificação", pessoa.especificacao(), estilos);
+                adicionarCampoRelatorio(dadosPessoais, "Acompanhantes",
+                        Integer.toString(agendamento.acompanhantes()), estilos);
+                adicionarCampoRelatorio(dadosPessoais, "Busca na residência",
+                        agendamento.buscarNaResidencia() ? "Sim" : "Não", estilos);
+                if (agendamento.buscarNaResidencia()) {
+                    adicionarCampoRelatorio(dadosPessoais, "Endereço", pessoa.endereco(), estilos);
+                }
+                if (pessoa.observacao() != null && !pessoa.observacao().isBlank()) {
+                    adicionarCampoRelatorio(dadosPessoais, "Observação", pessoa.observacao(), estilos);
+                }
+                adicionarBlocoAoCartao(card, dadosPessoais);
+
+                PdfPTable dadosViagem = new PdfPTable(1);
+                dadosViagem.setWidthPercentage(100);
+                adicionarTituloBloco(dadosViagem, "DADOS DA VIAGEM", estilos);
+                adicionarCampoRelatorio(dadosViagem, "Lista", linha.lista(), estilos);
+                adicionarCampoRelatorio(dadosViagem, "Cidade", pessoa.cidade(), estilos);
+                adicionarCampoRelatorio(dadosViagem, "Destino", pessoa.destino(), estilos);
+                adicionarCampoRelatorio(dadosViagem, "Horário de chegada",
+                        formatarHoraRelatorio(agendamento.horarioChegada()), estilos);
+                adicionarBlocoAoCartao(card, dadosViagem);
+
+                PdfPCell veiculoDestaque = new PdfPCell(construirDestaqueVeiculo(veiculo, estilos));
+                veiculoDestaque.setColspan(2);
+                veiculoDestaque.setPadding(0);
+                veiculoDestaque.setBorderColor(new java.awt.Color(218, 226, 232));
+                card.addCell(veiculoDestaque);
+                documento.add(card);
+            }
+            documento.close();
+            return buffer.toByteArray();
+        } catch (DocumentException | IOException e) {
+            fecharDocumentoSeguro(documento);
+            throw new IllegalStateException("Não foi possível gerar o PDF de passageiros.", e);
+        } catch (RuntimeException e) {
+            fecharDocumentoSeguro(documento);
+            throw e;
+        }
+    }
+
+    private static String valorRelatorio(String valor) {
+        return valor == null || valor.isBlank() ? "Não informado" : valor;
+    }
+
+    private static String formatarHoraRelatorio(LocalTime hora) {
+        return hora == null ? "Não informado" : HORA_FORMATTER.format(hora);
+    }
+
+    private static void adicionarTituloBloco(PdfPTable tabela, String titulo, EstilosPdf estilos) {
+        PdfPCell celula = new PdfPCell(new Phrase(titulo, estilos.getTituloBloco()));
+        celula.setBackgroundColor(new java.awt.Color(242, 246, 244));
+        celula.setBorderColor(new java.awt.Color(218, 226, 232));
+        celula.setPadding(5);
+        tabela.addCell(celula);
+    }
+
+    private static void adicionarCampoRelatorio(
+            PdfPTable tabela, String rotulo, String valor, EstilosPdf estilos) {
+        Paragraph campo = new Paragraph();
+        campo.setLeading(12f);
+        campo.add(new Phrase(rotulo + ": ", estilos.getRotuloCampo()));
+        campo.add(new Phrase(valorRelatorio(valor), estilos.getTextoNormal()));
+        PdfPCell celula = new PdfPCell(campo);
+        celula.setBorder(PdfPCell.NO_BORDER);
+        celula.setPaddingTop(3);
+        celula.setPaddingBottom(3);
+        celula.setPaddingLeft(6);
+        celula.setPaddingRight(6);
+        tabela.addCell(celula);
+    }
+
+    private static void adicionarBlocoAoCartao(PdfPTable cartao, PdfPTable bloco) {
+        PdfPCell celula = new PdfPCell(bloco);
+        celula.setVerticalAlignment(Element.ALIGN_TOP);
+        celula.setPadding(5);
+        celula.setBorderColor(new java.awt.Color(218, 226, 232));
+        cartao.addCell(celula);
+    }
+
+    private static PdfPTable construirDestaqueVeiculo(
+            VeiculoAbertoResponseDto veiculo, EstilosPdf estilos) {
+        boolean pendente = veiculo == null;
+        PdfPTable destaque = new PdfPTable(1);
+        destaque.setWidthPercentage(100);
+        java.awt.Color fundo = pendente
+                ? new java.awt.Color(255, 247, 224)
+                : new java.awt.Color(230, 244, 236);
+        java.awt.Color borda = pendente
+                ? new java.awt.Color(235, 205, 126)
+                : new java.awt.Color(192, 220, 202);
+
+        PdfPCell rotulo = new PdfPCell(new Phrase(
+                pendente ? "VEÍCULO PENDENTE" : "VEÍCULO ATRIBUÍDO", estilos.getRotuloVeiculo()));
+        rotulo.setBackgroundColor(fundo);
+        rotulo.setBorderColor(borda);
+        rotulo.setBorderWidth(0);
+        rotulo.setPaddingLeft(8);
+        rotulo.setPaddingTop(6);
+        rotulo.setPaddingBottom(2);
+        destaque.addCell(rotulo);
+
+        String tipo = pendente ? "Pendente" : valorRelatorio(veiculo.nomeTipoVeiculo());
+        PdfPCell nomeVeiculo = new PdfPCell(new Phrase(tipo, estilos.getVeiculoDestaque()));
+        nomeVeiculo.setBackgroundColor(fundo);
+        nomeVeiculo.setBorderColor(borda);
+        nomeVeiculo.setBorderWidth(0);
+        nomeVeiculo.setPaddingLeft(8);
+        nomeVeiculo.setPaddingBottom(6);
+        destaque.addCell(nomeVeiculo);
+
+        if (!pendente) {
+            StringBuilder informacoes = new StringBuilder("Saída: ")
+                    .append(formatarHoraRelatorio(veiculo.horarioSaida()));
+            if (veiculo.identificacao() != null && !veiculo.identificacao().isBlank()) {
+                informacoes.append("  |  Identificação: ").append(veiculo.identificacao());
+            }
+            PdfPCell detalheVeiculo = new PdfPCell(new Phrase(informacoes.toString(), estilos.getRotuloCampo()));
+            detalheVeiculo.setBackgroundColor(fundo);
+            detalheVeiculo.setBorderColor(borda);
+            detalheVeiculo.setBorderWidth(0);
+            detalheVeiculo.setPaddingLeft(8);
+            detalheVeiculo.setPaddingBottom(6);
+            destaque.addCell(detalheVeiculo);
+        }
+        return destaque;
+    }
     // ------------------------------------------------------------------
     // RELATÓRIO GERAL (A4 vertical, até oito carros por página)
     // ------------------------------------------------------------------
@@ -71,7 +250,7 @@ public final class AgendamentoPdfService {
         try {
             EstilosPdf estilos = new EstilosPdf();
             PdfWriter writer = PdfWriter.getInstance(documento, buffer);
-            writer.setPageEvent(new RodapePaginas(estilos.getBaseFont()));
+            writer.setPageEvent(new RodapePaginas(estilos.getBaseFont(), "Relatório geral de carros"));
             documento.open();
             Map<FaixaHorario, List<VeiculoAbertoResponseDto>> veiculosPorFaixa = veiculos.stream()
                     .sorted(Comparator.comparing(
@@ -641,6 +820,11 @@ public final class AgendamentoPdfService {
         private final Font tituloPrincipal = new Font(baseFont, 14.5f, Font.BOLD, new java.awt.Color(0, 92, 63));
         private final Font subtitulo = new Font(baseFont, 8.5f, Font.BOLD, new java.awt.Color(80, 95, 105));
         private final Font secao = new Font(baseFont, 11f, Font.BOLD, new java.awt.Color(0, 92, 63));
+        private final Font tituloBloco = new Font(baseFont, 7.5f, Font.BOLD, new java.awt.Color(80, 95, 105));
+        private final Font rotuloCampo = new Font(baseFont, 8.2f, Font.BOLD, new java.awt.Color(55, 70, 78));
+        private final Font totalDestaque = new Font(baseFont, 11f, Font.BOLD, new java.awt.Color(0, 92, 63));
+        private final Font rotuloVeiculo = new Font(baseFont, 7.5f, Font.BOLD, new java.awt.Color(0, 92, 63));
+        private final Font veiculoDestaque = new Font(baseFont, 12f, Font.BOLD, new java.awt.Color(0, 70, 45));
         private final Font textoNormal = new Font(baseFont, 8.5f, Font.NORMAL, new java.awt.Color(38, 48, 56));
         private final Font textoCabecalho = new Font(baseFont, 8.5f, Font.BOLD, java.awt.Color.WHITE);
         private final Font via = new Font(baseFont, 9.5f, Font.BOLD, new java.awt.Color(0, 105, 75));
@@ -662,6 +846,11 @@ public final class AgendamentoPdfService {
         public Font getTituloPrincipal() { return tituloPrincipal; }
         public Font getSubtitulo() { return subtitulo; }
         public Font getSecao() { return secao; }
+        public Font getTituloBloco() { return tituloBloco; }
+        public Font getRotuloCampo() { return rotuloCampo; }
+        public Font getTotalDestaque() { return totalDestaque; }
+        public Font getRotuloVeiculo() { return rotuloVeiculo; }
+        public Font getVeiculoDestaque() { return veiculoDestaque; }
         public Font getTextoNormal() { return textoNormal; }
         public Font getTextoCabecalho() { return textoCabecalho; }
         public Font getVia() { return via; }
@@ -679,9 +868,11 @@ public final class AgendamentoPdfService {
     private static final class RodapePaginas extends PdfPageEventHelper {
         private static final float TAMANHO_FONTE = 8f;
         private final BaseFont baseFont;
+        private final String tituloRelatorio;
         private PdfTemplate totalPaginasTemplate;
-        private RodapePaginas(BaseFont baseFont) {
+        private RodapePaginas(BaseFont baseFont, String tituloRelatorio) {
             this.baseFont = baseFont;
+            this.tituloRelatorio = tituloRelatorio;
         }
         @Override
         public void onOpenDocument(PdfWriter writer, Document document) {
@@ -690,7 +881,7 @@ public final class AgendamentoPdfService {
         @Override
         public void onEndPage(PdfWriter writer, Document document) {
             PdfContentByte cb = writer.getDirectContent();
-            String textoRodape = "Relatório Geral de Carros — Transporte de Passageiros   Página "
+            String textoRodape = tituloRelatorio + " — Transporte de Passageiros   Página "
                     + writer.getPageNumber() + " de ";
             float larguraTexto = baseFont.getWidthPoint(textoRodape, TAMANHO_FONTE);
             float posX = (document.left() + document.right() - larguraTexto - 12) / 2;

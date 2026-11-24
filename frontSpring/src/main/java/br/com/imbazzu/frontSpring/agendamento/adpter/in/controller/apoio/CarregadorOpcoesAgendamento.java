@@ -2,12 +2,18 @@ package br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.IntFunction;
 
 import org.springframework.ui.Model;
 
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.DestinoView;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.OpcoesAgendamento;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoResponseDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendaDiaResponseDto;
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaResponseDto;
 import br.com.imbazzu.frontSpring.lista.core.porta.in.ListaApplicationPorta;
@@ -44,6 +50,58 @@ public class CarregadorOpcoesAgendamento {
         model.addAttribute("tiposVeiculoCarro", opcoes.tiposCarro());
         model.addAttribute("cidades", opcoes.cidades());
         model.addAttribute("destinos", opcoes.destinos());
+    }
+
+    public Map<UUID, String> nomesListas(OpcoesAgendamento opcoes, List<AgendamentoResponseDto> passageiros) {
+        Map<UUID, String> nomes = new HashMap<>();
+        opcoes.listas().forEach(lista -> nomes.put(lista.id(), lista.nome()));
+        passageiros.forEach(passageiro -> nomes.computeIfAbsent(passageiro.idLista(),
+                id -> listas.buscarArquivada(id).nome()));
+        return nomes;
+    }
+
+    public Map<UUID, String> nomesTipos(OpcoesAgendamento opcoes, AgendaDiaResponseDto agenda) {
+        Map<UUID, String> nomes = new HashMap<>(opcoes.nomesTipoVeiculo());
+        agenda.veiculos().forEach(veiculo -> nomes.putIfAbsent(veiculo.idTipoVeiculo(), veiculo.nomeTipoVeiculo()));
+        agenda.passageirosPendentes().forEach(passageiro -> nomes.computeIfAbsent(passageiro.idTipoVeiculo(),
+                id -> tiposVeiculo.buscarArquivado(id).nome()));
+        return nomes;
+    }
+
+    public OpcoesAgendamento incluirDestinosHistoricos(
+            OpcoesAgendamento opcoes, List<AgendamentoResponseDto> passageiros) {
+        Set<UUID> faltantes = passageiros.stream().map(AgendamentoResponseDto::idDestino)
+                .filter(id -> opcoes.destino(id).isEmpty()).collect(java.util.stream.Collectors.toSet());
+        if (faltantes.isEmpty()) return opcoes;
+
+        var destinos = new ArrayList<>(opcoes.destinos());
+        for (var cidade : opcoes.cidades()) {
+            adicionarDestinosHistoricos(destinos, faltantes, cidade.id(), cidade.nome(), true);
+            if (faltantes.isEmpty()) break;
+        }
+        if (!faltantes.isEmpty()) {
+            var cidadesArquivadas = todasAsPaginas(pagina -> localidades.listarCidadesArquivadas("", pagina));
+            for (var cidade : cidadesArquivadas) {
+                adicionarDestinosHistoricos(destinos, faltantes, cidade.id(), cidade.nome(), false);
+                if (!faltantes.isEmpty()) {
+                    adicionarDestinosHistoricos(destinos, faltantes, cidade.id(), cidade.nome(), true);
+                }
+                if (faltantes.isEmpty()) break;
+            }
+        }
+        return new OpcoesAgendamento(opcoes.listas(), opcoes.tiposVeiculo(), opcoes.cidades(), destinos);
+    }
+
+    private void adicionarDestinosHistoricos(List<DestinoView> destinos, Set<UUID> faltantes,
+            UUID idCidade, String nomeCidade, boolean arquivados) {
+        var resultados = todasAsPaginas(pagina -> arquivados
+                ? localidades.listarDestinosArquivados(idCidade, "", pagina)
+                : localidades.listarDestinos(idCidade, "", pagina));
+        resultados.forEach(destino -> {
+            if (faltantes.remove(destino.id())) {
+                destinos.add(new DestinoView(destino.id(), idCidade, nomeCidade, destino.nome()));
+            }
+        });
     }
 
     private List<ListaResponseDto> listarListasAtivas() {

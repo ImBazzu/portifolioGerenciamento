@@ -15,6 +15,7 @@ O repositório contém dois módulos Java/Spring Boot:
 - **Tipos de veículo:** cadastro, consulta, edição, histórico e arquivamento de tipos de veículo.
 - **Listas e regras:** criação de listas, configuração de regras de cadastro e de separação, consulta e arquivamento.
 - **Agendamento:** abertura de uma agenda por dia, inclusão de passageiros e veículos, verificação de veículos permitidos e separação automática, além da consulta de pendências e da associação de um agendamento a um veículo.
+- **Passageiros do dia:** filtros por texto, cidade, status, tipo de veículo e busca na residência; ordenação por nome, cidade, chegada, saída ou tipo de veículo. O botão de PDF exporta os resultados visíveis na ordem escolhida.
 - **Acesso:** tela de login e API de autenticação com emissão e atualização de tokens.
 
 As operações disponíveis dependem das regras de negócio e das validações implementadas no backend. A documentação OpenAPI expõe os contratos da API.
