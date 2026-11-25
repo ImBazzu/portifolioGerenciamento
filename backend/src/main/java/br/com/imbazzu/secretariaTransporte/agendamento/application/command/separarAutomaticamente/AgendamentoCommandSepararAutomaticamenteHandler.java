@@ -55,6 +55,7 @@ public class AgendamentoCommandSepararAutomaticamenteHandler {
         var toleranciasPorTipo = AgendamentoCompatibilidadeResolver.toleranciasPorTipo(consultas, todos);
         var tiposVeiculoPorId = new HashMap<UUID, TipoVeiculoAgendaDados>();
         var destinosPorCidadeId = consultas.buscarDestinosPorCidadeId(command.data());
+        var cidadesCompativeis = consultas.buscarCidadesCompativeisAnteriores(command.data());
 
         int alocados = 0;
         for (var slot : pendentes) {
@@ -67,8 +68,9 @@ public class AgendamentoCommandSepararAutomaticamenteHandler {
             var veiculoEscolhido = veiculos.stream()
                     .filter(veiculo -> VeiculoAberto.tipoCalculaHorarioSaida(veiculo.nomeTipoVeiculo()))
                     .filter(veiculo -> tolerancias.containsKey(veiculo.idTipoVeiculo()))
-                    .filter(v->CompatibilidadeVeiculoAgendamento.compativelCidade(
+                    .filter(v -> CompatibilidadeVeiculoAgendamento.compativelCidade(
                             destinosPorCidadeId,
+                            cidadesCompativeis,
                             ocupantesPorVeiculo.getOrDefault(v.id(), List.of()),
                             slot.agendamento()))
                     .filter(veiculo -> CompatibilidadeVeiculoAgendamento.compativel(

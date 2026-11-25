@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.entidadeJpa.AgendamentoJpa;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.AgendamentoProjecao;
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.CidadesCompativeisProjecao;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.DestinoPorCidadeProjecao;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.HistoricoViagemProjecao;
 
@@ -64,6 +65,16 @@ public interface AgendamentoQueryRepository extends JpaRepository<AgendamentoJpa
                 JOIN DestinoJpa d ON d.id = a.idDestino
                 WHERE a.data = :data""")
      List<DestinoPorCidadeProjecao> buscarDestinosPorCidadeId(@Param("data") LocalDate data);
+
+    @Query("""
+            SELECT DISTINCT d1.cidadeId AS cidadeId, d2.cidadeId AS cidadeCompativelId
+            FROM AgendamentoJpa a1
+            JOIN AgendamentoJpa a2 ON a2.idVeiculoAberto = a1.idVeiculoAberto AND a2.data = a1.data
+            JOIN DestinoJpa d1 ON d1.id = a1.idDestino
+            JOIN DestinoJpa d2 ON d2.id = a2.idDestino
+            WHERE a1.data < :data AND d1.cidadeId <> d2.cidadeId
+            """)
+    List<CidadesCompativeisProjecao> buscarCidadesCompativeisAnteriores(@Param("data") LocalDate data);
 
     @Query("""
             SELECT 

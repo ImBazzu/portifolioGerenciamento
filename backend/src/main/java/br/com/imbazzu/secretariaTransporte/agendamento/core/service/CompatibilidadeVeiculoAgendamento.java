@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
@@ -70,24 +71,27 @@ public final class CompatibilidadeVeiculoAgendamento {
         return (int) (veiculo.capacidade() - lugaresOcupados - novo.quantidadePessoas());
     }
 
- public static boolean compativelCidade(Map<UUID, List<UUID>> destinosPorCidadeId,
-                                        List<Agendamento> ocupantes,
-                                        Agendamento novo) {
-    UUID cidadeNovo = cidadeDoDestino(destinosPorCidadeId, novo.getIdDestino());
+    public static boolean compativelCidade(
+            Map<UUID, List<UUID>> destinosPorCidadeId,
+            Map<UUID, Set<UUID>> cidadesCompativeis,
+            List<Agendamento> ocupantes,
+            Agendamento novo) {
+        UUID cidadeNovo = cidadeDoDestino(destinosPorCidadeId, novo.getIdDestino());
+        return ocupantes.stream().allMatch(ocupante -> {
+            UUID cidadeOcupante = cidadeDoDestino(destinosPorCidadeId, ocupante.getIdDestino());
+            return cidadeNovo.equals(cidadeOcupante)
+                    || cidadesCompativeis.getOrDefault(cidadeNovo, Set.of()).contains(cidadeOcupante);
+        });
+    }
 
-    return ocupantes.stream()
-            .allMatch(ocupante ->
-                    cidadeNovo.equals(cidadeDoDestino(destinosPorCidadeId, ocupante.getIdDestino())));
-}
-
-private static UUID cidadeDoDestino(Map<UUID, List<UUID>> destinosPorCidadeId, UUID destinoId) {
-    return destinosPorCidadeId.entrySet().stream()
-            .filter(entry -> entry.getValue().contains(destinoId))
-            .map(Map.Entry::getKey)
-            .findFirst()
-            .orElseThrow(() -> new IllegalStateException(
-                    "Destino sem cidade associada: " + destinoId));
-}
+    private static UUID cidadeDoDestino(Map<UUID, List<UUID>> destinosPorCidadeId, UUID destinoId) {
+        return destinosPorCidadeId.entrySet().stream()
+                .filter(entry -> entry.getValue().contains(destinoId))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "Destino sem cidade associada: " + destinoId));
+    }
 
     public static Slot criarSlot(Agendamento agendamento) {
         return criarSlot(agendamento, agendamento.getToleranciaSeparacao());

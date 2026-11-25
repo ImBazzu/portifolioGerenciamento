@@ -166,6 +166,8 @@ POST   /api/agendamentos/dias/{data}/abrir
 POST   /api/agendamentos/dias/{data}/separacao-automatica
 ```
 
+Na separação automática de carros, cidades diferentes podem compartilhar um veículo se cada par de cidades já tiver sido associado ao mesmo veículo em uma data anterior. A combinação é válida nos dois sentidos e não dispensa as regras de capacidade e horário.
+
 Consulte os controllers e DTOs do backend para os parâmetros, corpos de requisição, respostas e validações de cada operação. Com o backend em execução, a interface Swagger/OpenAPI do Springdoc normalmente fica disponível em:
 
 - Swagger UI: `http://localhost:8080/api/swagger-ui/index.html`

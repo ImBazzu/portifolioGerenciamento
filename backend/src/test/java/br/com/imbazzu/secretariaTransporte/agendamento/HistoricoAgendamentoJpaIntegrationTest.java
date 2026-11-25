@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -23,6 +24,7 @@ import org.testcontainers.mysql.MySQLContainer;
 
 import br.com.imbazzu.secretariaTransporte.localidades.adapters.out.repositorio.DestinoRepository;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.AgendamentoQueryRepository;
+import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.AgendamentoQueryPorta;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.adpter.out.repositorio.TipoVeiculoQueryRepository;
 import br.com.imbazzu.secretariaTransporte.veiculo.adpter.out.repositorio.VeiculoQueryRepository;
 
@@ -48,6 +50,7 @@ class HistoricoAgendamentoJpaIntegrationTest {
     @Autowired private VeiculoQueryRepository veiculos;
     @Autowired private TipoVeiculoQueryRepository tipos;
     @Autowired private AgendamentoQueryRepository agendamentos;
+    @Autowired private AgendamentoQueryPorta consultas;
 
     @Test
     @Transactional
@@ -124,5 +127,51 @@ class HistoricoAgendamentoJpaIntegrationTest {
         assertEquals(LocalDate.of(2030, 1, 1), agendamentos.buscarHistoricoViagensPorPessoa(pessoa, PageRequest.of(1, 1)).getContent().getFirst().getData());
         assertEquals(2, agendamentos.buscarHistoricoViagensPorPessoaComBusca(pessoa, "Destino", pagina).getTotalElements());
         assertEquals(0, agendamentos.buscarHistoricoViagensPorPessoaComBusca(pessoa, "inexistente", pagina).getTotalElements());
+
+        jdbc.update("INSERT INTO cidades (id,nome,estado,tempo_viagem) VALUES "
+                + "(UNHEX('00000000000000000000000000000051'),'Cidade B','SP',0),"
+                + "(UNHEX('00000000000000000000000000000052'),'Cidade C','SP',0)");
+        jdbc.update("INSERT INTO destinos (id,nome,cidade_id) VALUES "
+                + "(UNHEX('00000000000000000000000000000061'),'Destino B',UNHEX('00000000000000000000000000000051')),"
+                + "(UNHEX('00000000000000000000000000000062'),'Destino C',UNHEX('00000000000000000000000000000052'))");
+        jdbc.update("UPDATE agendamentos SET destino_id=UNHEX('00000000000000000000000000000061') "
+                + "WHERE id=UNHEX('00000000000000000000000000000042')");
+        jdbc.update("UPDATE agendamentos SET destino_id=UNHEX('00000000000000000000000000000062'), "
+                + "veiculo_agendamento_id=UNHEX('00000000000000000000000000000033') "
+                + "WHERE id=UNHEX('00000000000000000000000000000043')");
+        jdbc.update("INSERT INTO pessoas (id,nome,telefone,especificacao_id) VALUES "
+                + "(UNHEX('00000000000000000000000000000024'),'Pessoa 4','11987654321',UNHEX('00000000000000000000000000000001')),"
+                + "(UNHEX('00000000000000000000000000000025'),'Pessoa 5','11987654321',UNHEX('00000000000000000000000000000001'))");
+        jdbc.update("INSERT INTO agendamentos (id,data,pessoa_id,lista_id,regra_cadastro_id,tipo_veiculo_id,destino_id,"
+                + "tempo_viagem_segundos,tempo_viagem_nanos,tolerancia_segundos,tolerancia_nanos,hora_chegada,buscar_na_residencia,acompanhantes,veiculo_agendamento_id) "
+                + "SELECT UNHEX('00000000000000000000000000000046'),data,UNHEX('00000000000000000000000000000023'),lista_id,regra_cadastro_id,tipo_veiculo_id,"
+                + "UNHEX('00000000000000000000000000000062'),tempo_viagem_segundos,tempo_viagem_nanos,tolerancia_segundos,tolerancia_nanos,"
+                + "hora_chegada,buscar_na_residencia,acompanhantes,UNHEX('00000000000000000000000000000032') "
+                + "FROM agendamentos WHERE id=UNHEX('00000000000000000000000000000041')");
+        jdbc.update("INSERT INTO agendamentos (id,data,pessoa_id,lista_id,regra_cadastro_id,tipo_veiculo_id,destino_id,"
+                + "tempo_viagem_segundos,tempo_viagem_nanos,tolerancia_segundos,tolerancia_nanos,hora_chegada,buscar_na_residencia,acompanhantes) "
+                + "SELECT UNHEX('00000000000000000000000000000047'),data,UNHEX('00000000000000000000000000000024'),lista_id,regra_cadastro_id,tipo_veiculo_id,"
+                + "destino_id,tempo_viagem_segundos,tempo_viagem_nanos,tolerancia_segundos,tolerancia_nanos,hora_chegada,buscar_na_residencia,acompanhantes "
+                + "FROM agendamentos WHERE id=UNHEX('00000000000000000000000000000041')");
+        jdbc.update("INSERT INTO agendamentos (id,data,pessoa_id,lista_id,regra_cadastro_id,tipo_veiculo_id,destino_id,"
+                + "tempo_viagem_segundos,tempo_viagem_nanos,tolerancia_segundos,tolerancia_nanos,hora_chegada,buscar_na_residencia,acompanhantes) "
+                + "SELECT UNHEX('00000000000000000000000000000048'),data,UNHEX('00000000000000000000000000000025'),lista_id,regra_cadastro_id,tipo_veiculo_id,"
+                + "UNHEX('00000000000000000000000000000062'),tempo_viagem_segundos,tempo_viagem_nanos,tolerancia_segundos,tolerancia_nanos,"
+                + "hora_chegada,buscar_na_residencia,acompanhantes FROM agendamentos WHERE id=UNHEX('00000000000000000000000000000041')");
+        jdbc.update("INSERT INTO agendamentos (id,data,pessoa_id,lista_id,regra_cadastro_id,tipo_veiculo_id,destino_id,"
+                + "tempo_viagem_segundos,tempo_viagem_nanos,tolerancia_segundos,tolerancia_nanos,hora_chegada,buscar_na_residencia,acompanhantes,veiculo_agendamento_id) "
+                + "SELECT UNHEX('00000000000000000000000000000045'),'2030-01-02',pessoa_id,lista_id,regra_cadastro_id,tipo_veiculo_id,destino_id,"
+                + "tempo_viagem_segundos,tempo_viagem_nanos,tolerancia_segundos,tolerancia_nanos,hora_chegada,buscar_na_residencia,acompanhantes,"
+                + "UNHEX('00000000000000000000000000000033') FROM agendamentos WHERE id=UNHEX('00000000000000000000000000000041')");
+
+        var cidadeB = UUID.fromString("00000000-0000-0000-0000-000000000051");
+        var cidadeC = UUID.fromString("00000000-0000-0000-0000-000000000052");
+        assertTrue(consultas.buscarCidadesCompativeisAnteriores(LocalDate.of(2030, 1, 1)).isEmpty());
+        var anteriores = consultas.buscarCidadesCompativeisAnteriores(LocalDate.of(2030, 1, 2));
+        assertEquals(Set.of(cidadeB), anteriores.get(cidade));
+        assertEquals(Set.of(cidade), anteriores.get(cidadeB));
+        assertFalse(anteriores.containsKey(cidadeC));
+        assertEquals(Set.of(cidadeB, cidadeC),
+                consultas.buscarCidadesCompativeisAnteriores(LocalDate.of(2030, 1, 3)).get(cidade));
     }
 }

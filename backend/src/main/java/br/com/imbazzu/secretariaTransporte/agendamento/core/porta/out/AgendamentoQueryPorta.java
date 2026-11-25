@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
@@ -41,4 +42,6 @@ public interface AgendamentoQueryPorta {
     List<VeiculoAberto> listarVeiculos(LocalDate data);
 
     Map<UUID, List<UUID>> buscarDestinosPorCidadeId(LocalDate data);
+
+    Map<UUID, Set<UUID>> buscarCidadesCompativeisAnteriores(LocalDate data);
 }
