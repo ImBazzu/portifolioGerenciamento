@@ -2,6 +2,7 @@ package br.com.imbazzu.frontSpring.pessoa.adpter.in.controller;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.never;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -160,11 +162,30 @@ class PessoaFormularioWebTest {
                 .andExpect(content().string(containsString("data-especificacao=\"Gestante\"")))
                 .andExpect(content().string(containsString("action=\"/agendamentos/pdf/passageiros\"")));
 
-        byte[] pdf = mvc.perform(post("/agendamentos/pdf/passageiros").param("data", data.toString())
+        var geracao = mvc.perform(post("/agendamentos/pdf/passageiros").param("data", data.toString())
                         .param("ids", pendente.id().toString(), atribuido.id().toString()))
+                .andExpect(status().isSeeOther())
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(header().string("Location", matchesPattern(
+                        ".*/agendamentos/pdf/passageiros/[0-9a-f-]+/passageiros-2026-11-23\\.pdf")))
+                .andReturn();
+        String endereco = geracao.getResponse().getHeader("Location");
+        var sessao = (MockHttpSession) geracao.getRequest().getSession(false);
+        byte[] pdf = mvc.perform(get(endereco).session(sessao))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/pdf"))
+                .andExpect(header().string("Content-Disposition",
+                        "inline; filename=\"passageiros-2026-11-23.pdf\""))
+                .andExpect(header().string("Cache-Control", "no-store"))
                 .andReturn().getResponse().getContentAsByteArray();
+        byte[] download = mvc.perform(get(endereco).session(sessao))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsByteArray();
+        assertArrayEquals(pdf, download);
+        mvc.perform(get(endereco)).andExpect(status().isNotFound());
+        mvc.perform(get(endereco).session(new MockHttpSession())).andExpect(status().isNotFound());
+        mvc.perform(get(endereco.replace("passageiros-2026-11-23.pdf", "outro.pdf")).session(sessao))
+                .andExpect(status().isNotFound());
         var reader = new PdfReader(pdf);
         var texto = new StringBuilder();
         var extractor = new PdfTextExtractor(reader);
@@ -191,6 +212,19 @@ class PessoaFormularioWebTest {
         mvc.perform(post("/agendamentos/pdf/passageiros").param("data", data.toString())
                         .param("ids", atribuido.id().toString(), UUID.randomUUID().toString()))
                 .andExpect(status().isConflict());
+
+        String ultimoEndereco = null;
+        for (int i = 0; i < 10; i++) {
+            ultimoEndereco = mvc.perform(post("/agendamentos/pdf/passageiros").session(sessao)
+                            .param("data", data.toString()).param("ids", atribuido.id().toString()))
+                    .andExpect(status().isSeeOther())
+                    .andReturn().getResponse().getHeader("Location");
+        }
+        mvc.perform(get(endereco).session(sessao)).andExpect(status().isNotFound());
+        mvc.perform(get(ultimoEndereco).session(sessao))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition",
+                        "inline; filename=\"passageiros-2026-11-23.pdf\""));
     }
 
     @Test

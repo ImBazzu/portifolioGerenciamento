@@ -1,8 +1,13 @@
 package br.com.imbazzu.frontSpring.agendamento.adpter.in.controller;
 
+import java.io.Serializable;
+import java.net.URI;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
@@ -21,6 +26,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.CarregadorOpcoesAgendamento;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.MensagemErroApi;
@@ -36,6 +45,10 @@ import br.com.imbazzu.frontSpring.veiculo.core.TipoVeiculoUtil;
 @Controller
 @RequestMapping("/agendamentos/pdf")
 public class AgendamentoPdfController {
+
+    private static final String PDFS_PASSAGEIROS = AgendamentoPdfController.class.getName() + ".pdfsPassageiros";
+    private static final Duration VALIDADE_PDF = Duration.ofHours(1);
+    private static final int MAX_PDFS_POR_SESSAO = 10;
 
     private final AgendamentoApi agendamentoApi;
     private final CarregadorOpcoesAgendamento carregadorOpcoes;
@@ -54,8 +67,8 @@ public class AgendamentoPdfController {
     }
 
     @PostMapping("/passageiros")
-    public ResponseEntity<byte[]> pdfPassageiros(
-            @RequestParam LocalDate data, @RequestParam("ids") List<UUID> ids) {
+    public ResponseEntity<Void> pdfPassageiros(
+            @RequestParam LocalDate data, @RequestParam("ids") List<UUID> ids, HttpServletRequest request) {
         if (ids.isEmpty() || new HashSet<>(ids).size() != ids.size()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Selecione passageiros sem duplicatas.");
         }
@@ -86,14 +99,70 @@ public class AgendamentoPdfController {
                         passageiro, detalhes.get(passageiro.id()), nomesListas.get(passageiro.idLista()), veiculo);
             }).toList();
             var pdf = AgendamentoPdfService.gerarPassageiros(data, linhas);
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_PDF)
+            String nomeArquivo = "passageiros-" + data + ".pdf";
+            UUID id = UUID.randomUUID();
+            HttpSession sessao = request.getSession(true);
+            synchronized (sessao) {
+                var armazenados = pdfsDaSessao(sessao);
+                armazenados.entrySet().removeIf(entry -> expirado(entry.getValue()));
+                while (armazenados.size() >= MAX_PDFS_POR_SESSAO) {
+                    armazenados.remove(armazenados.keySet().iterator().next());
+                }
+                armazenados.put(id, new PdfArmazenado(pdf, nomeArquivo, Instant.now()));
+                sessao.setAttribute(PDFS_PASSAGEIROS, armazenados);
+            }
+            URI endereco = ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path("/agendamentos/pdf/passageiros/{id}/{nomeArquivo}")
+                    .buildAndExpand(id, nomeArquivo).toUri();
+            return ResponseEntity.status(HttpStatus.SEE_OTHER)
                     .header(HttpHeaders.CACHE_CONTROL, "no-store")
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"passageiros-" + data + ".pdf\"")
-                    .body(pdf);
+                    .location(endereco)
+                    .build();
         } catch (RestClientResponseException e) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, mensagemErro.de(e), e);
         }
+    }
+
+    @GetMapping("/passageiros/{id}/{nomeArquivo}")
+    public ResponseEntity<byte[]> visualizarPdfPassageiros(
+            @PathVariable UUID id, @PathVariable String nomeArquivo, HttpServletRequest request) {
+        HttpSession sessao = request.getSession(false);
+        if (sessao == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "PDF não encontrado ou expirado.");
+        }
+        PdfArmazenado pdf;
+        synchronized (sessao) {
+            var armazenados = pdfsDaSessao(sessao);
+            pdf = armazenados.get(id);
+            if (pdf == null || expirado(pdf) || !pdf.nomeArquivo().equals(nomeArquivo)) {
+                if (pdf != null && expirado(pdf)) {
+                    armazenados.remove(id);
+                    sessao.setAttribute(PDFS_PASSAGEIROS, armazenados);
+                }
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "PDF não encontrado ou expirado.");
+            }
+        }
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + pdf.nomeArquivo() + "\"")
+                .body(pdf.conteudo());
+    }
+
+    private static PdfsDaSessao pdfsDaSessao(HttpSession sessao) {
+        Object atributo = sessao.getAttribute(PDFS_PASSAGEIROS);
+        return atributo instanceof PdfsDaSessao armazenados ? armazenados : new PdfsDaSessao();
+    }
+
+    private static boolean expirado(PdfArmazenado pdf) {
+        return !pdf.criadoEm().plus(VALIDADE_PDF).isAfter(Instant.now());
+    }
+
+    private static final class PdfsDaSessao extends LinkedHashMap<UUID, PdfArmazenado> {
+        private static final long serialVersionUID = 1L;
+    }
+
+    private record PdfArmazenado(byte[] conteudo, String nomeArquivo, Instant criadoEm) implements Serializable {
     }
 
     @GetMapping("/carros")
