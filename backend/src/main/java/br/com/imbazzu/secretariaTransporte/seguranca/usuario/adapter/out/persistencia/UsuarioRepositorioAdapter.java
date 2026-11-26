@@ -1,6 +1,7 @@
 package br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.out.persistencia;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.model.Usuario;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.UsuarioRepositorioPorta;
@@ -16,6 +17,11 @@ public class UsuarioRepositorioAdapter implements UsuarioRepositorioPorta {
     @Override
     public Optional<Usuario> buscarPorNome(String nome) {
         return jpaRepository.findByNome(nome).map(entity -> entity.toDomain());
+    }
+
+    @Override
+    public Optional<Usuario> buscarPorId(UUID id) {
+        return jpaRepository.findById(id).map(entity -> entity.toDomain());
     }
 
     @Override

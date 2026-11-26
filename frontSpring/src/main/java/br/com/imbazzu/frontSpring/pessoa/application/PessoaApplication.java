@@ -26,6 +26,12 @@ public class PessoaApplication implements PessoaApplicationPorta {
     }
 
     @Override
+    public ResultadoPaginado<PessoaResponseDto> listarPorEspecificacao(
+            String nome, UUID especificacaoId, boolean arquivadas, int pagina) {
+        return api.listarPorEspecificacao(nome, especificacaoId, arquivadas, pagina, TAMANHO_PAGINA);
+    }
+
+    @Override
     public PessoaResponseDto buscar(UUID id) {
         return api.buscar(id);
     }

@@ -3,6 +3,8 @@ package br.com.imbazzu.frontSpring.pessoa.adpter.in.controller;
 import java.util.UUID;
 import java.util.Map;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Comparator;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import br.com.imbazzu.frontSpring.especificacao.core.porta.in.EspecificacaoApplicationPorta;
 import br.com.imbazzu.frontSpring.especificacao.core.dto.EspecificacaoResponseDto;
+import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaRequestDto;
 import br.com.imbazzu.frontSpring.pessoa.core.excecoes.PessoaDuplicadaException;
 import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
@@ -54,10 +57,15 @@ public class PessoaController {
     public String listar(
             @RequestParam(defaultValue = "") String nome,
             @RequestParam(defaultValue = "false") boolean arquivadas,
+            @RequestParam(required = false) UUID especificacaoId,
             @RequestParam(defaultValue = "0") int pagina,
             Model model) {
-        var resultado = application.listar(nome, arquivadas, pagina);
+        var resultado = especificacaoId == null
+                ? application.listar(nome, arquivadas, pagina)
+                : application.listarPorEspecificacao(nome, especificacaoId, arquivadas, pagina);
         model.addAttribute("pessoas", resultado.conteudo());
+        model.addAttribute("especificacoesFiltro", especificacoesParaFiltro());
+        model.addAttribute("especificacaoId", especificacaoId);
         model.addAttribute("nome", nome);
         model.addAttribute("arquivadas", arquivadas);
         model.addAttribute("paginaAtual", resultado.paginaAtual());
@@ -65,6 +73,20 @@ public class PessoaController {
         return arquivadas
                 ? "paginas/pessoa/tabPessoasArquivadas :: tabPessoasArquivadas"
                 : "paginas/pessoa/tabPessoasAtivas :: tabPessoasAtivas";
+    }
+
+    private List<EspecificacaoResponseDto> especificacoesParaFiltro() {
+        var todas = new ArrayList<EspecificacaoResponseDto>();
+        for (boolean arquivada : new boolean[] {false, true}) {
+            int pagina = 0;
+            ResultadoPaginado<EspecificacaoResponseDto> resultado;
+            do {
+                resultado = especificacaoApplication.listar("", arquivada, pagina++);
+                todas.addAll(resultado.conteudo());
+            } while (pagina < resultado.totalPaginas());
+        }
+        todas.sort(Comparator.comparing(EspecificacaoResponseDto::nome, String.CASE_INSENSITIVE_ORDER));
+        return todas;
     }
 
     @HxRequest
@@ -104,9 +126,11 @@ public class PessoaController {
     @GetMapping("/{id}/detalhes/arquivado")
     public String detalhesArquivado(@PathVariable UUID id,
                                     @RequestParam(defaultValue = "") String nome,
+                                    @RequestParam(required = false) UUID especificacaoId,
                                     @RequestParam(defaultValue = "0") int pagina, Model model) {
         model.addAttribute("arquivado", true);
         model.addAttribute("nome", nome);
+        model.addAttribute("especificacaoId", especificacaoId);
         model.addAttribute("paginaAtual", pagina);
         model.addAttribute("pessoa", application.buscarArquivado(id));
         return "paginas/pessoa/detalhesPessoa :: detalhesPessoa";

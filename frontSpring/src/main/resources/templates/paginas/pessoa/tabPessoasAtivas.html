@@ -10,9 +10,19 @@
                        placeholder="Buscar por nome..."
                        hx:get="@{/pessoas/listar(arquivadas=false)}"
                        hx-trigger="keyup changed delay:300ms, atualizar-pessoas from:body"
+                       hx-include="#filtroEspecificacaoPessoa"
                        hx-target="#pessoas-lista" hx-swap="innerHTML" hx-preserve="true">
               </div>
             </div>
+            <select id="filtroEspecificacaoPessoa" name="especificacaoId" class="form-select w-auto"
+                    aria-label="Filtrar por especificação"
+                    hx:get="@{/pessoas/listar(arquivadas=false)}" hx-trigger="change"
+                    hx-include="#inputBuscaPessoa" hx-target="#pessoas-lista" hx-swap="innerHTML">
+                <option value="">Todas as especificações</option>
+                <option th:each="especificacao : ${especificacoesFiltro}" th:value="${especificacao.id()}"
+                        th:selected="${especificacao.id() == especificacaoId}"
+                        th:text="${especificacao.nome() + (especificacao.dataArquivado() == null ? '' : ' (arquivada)')}"></option>
+            </select>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -55,12 +65,24 @@
              th:if="${totalPaginas > 1}">
             <span class="text-muted small"
                   th:text="'Página ' + (${paginaAtual} + 1) + ' de ' + ${totalPaginas}">Página</span>
-            <div class="btn-group btn-group-sm">
+            <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="Páginas de pessoas">
                 <button class="btn btn-outline-secondary" th:disabled="${paginaAtual == 0}"
-                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=false,pagina=${paginaAtual - 1})}"
+                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=false,especificacaoId=${especificacaoId},pagina=${paginaAtual - 1})}"
                         hx-target="#pessoas-lista" hx-swap="innerHTML">Anterior</button>
+                <button th:if="${paginaAtual > 2}" class="btn btn-outline-secondary"
+                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=false,especificacaoId=${especificacaoId},pagina=0)}"
+                        hx-target="#pessoas-lista" hx-swap="innerHTML">1</button>
+                <span th:if="${paginaAtual > 3}" class="btn btn-outline-secondary disabled">…</span>
+                <button th:each="i : ${#numbers.sequence(paginaAtual > 2 ? paginaAtual - 2 : 0, paginaAtual + 2 < totalPaginas ? paginaAtual + 2 : totalPaginas - 1)}"
+                        class="btn btn-outline-secondary" th:classappend="${i == paginaAtual} ? 'active'"
+                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=false,especificacaoId=${especificacaoId},pagina=${i})}, aria-current=${i == paginaAtual ? 'page' : null}"
+                        hx-target="#pessoas-lista" hx-swap="innerHTML" th:text="${i + 1}"></button>
+                <span th:if="${paginaAtual + 3 < totalPaginas - 1}" class="btn btn-outline-secondary disabled">…</span>
+                <button th:if="${paginaAtual + 3 < totalPaginas}" class="btn btn-outline-secondary"
+                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=false,especificacaoId=${especificacaoId},pagina=${totalPaginas - 1})}"
+                        hx-target="#pessoas-lista" hx-swap="innerHTML" th:text="${totalPaginas}"></button>
                 <button class="btn btn-outline-secondary" th:disabled="${paginaAtual + 1 >= totalPaginas}"
-                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=false,pagina=${paginaAtual + 1})}"
+                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=false,especificacaoId=${especificacaoId},pagina=${paginaAtual + 1})}"
                         hx-target="#pessoas-lista" hx-swap="innerHTML">Próxima</button>
             </div>
         </div>

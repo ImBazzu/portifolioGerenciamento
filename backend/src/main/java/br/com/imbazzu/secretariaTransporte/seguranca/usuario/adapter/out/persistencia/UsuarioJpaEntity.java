@@ -20,11 +20,12 @@ import java.util.UUID;
 public class UsuarioJpaEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     private String nome;
     private String senha;
+    @Column(name = "versao_token", nullable = false)
+    private long versaoToken;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "usuario_permissoes", joinColumns = @JoinColumn(name = "usuario_id"))
@@ -39,15 +40,12 @@ public class UsuarioJpaEntity {
         entity.id = usuario.getId();
         entity.nome = usuario.getNome().valor();
         entity.senha = usuario.getSenha();
-        // reconstrói permissoes a partir das strings "ROLE_ADMIN" → enum
-        entity.permissoes = usuario.getPermissoes().stream()
-                .map(r -> r.replace("ROLE_", ""))
-                .map(UsuarioRoleEnum::valueOf)
-                .toList();
+        entity.versaoToken = usuario.getVersaoToken();
+        entity.permissoes = usuario.getPerfisCadastrados();
         return entity;
     }
 
     public Usuario toDomain() {
-        return Usuario.reconstruir(id, new Nome(nome), senha, permissoes);
+        return Usuario.reconstruir(id, new Nome(nome), senha, permissoes, versaoToken);
     }
 }

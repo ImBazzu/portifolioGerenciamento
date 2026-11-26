@@ -149,10 +149,16 @@
                 !termo || normalizar(item.dataset.busca).includes(termo);
 
             item.classList.toggle("d-none", !combina);
+            if (!combina) {
+                const radio = item.querySelector("input[type='radio']");
+                if (radio) radio.checked = false;
+            }
 
             if (combina) visiveis++;
         });
 
+        const botao = modal.querySelector(".js-atribuir-passageiro");
+        if (botao) botao.disabled = visiveis === 0;
         modal
             .querySelector(".sem-resultados")
             ?.classList.toggle("d-none", visiveis > 0);
@@ -235,6 +241,9 @@
             selecionada.textContent = "";
             selecionada.classList.add("d-none");
         }
+        const historico = $("buscarHistoricoPassageiro");
+        if (historico) historico.disabled = true;
+        limpar("historico-agendamento-container");
     }
 
     function selecionarPessoa({ id, nome, prioridade }) {
@@ -266,6 +275,9 @@
             selecionada.classList.remove("d-none");
         }
 
+        const historico = $("buscarHistoricoPassageiro");
+        if (historico) historico.disabled = false;
+        limpar("historico-agendamento-container");
         mensagem("pessoaBuscaMensagem", "Pessoa selecionada.");
 
         $("pessoaResultados")?.replaceChildren();
@@ -672,6 +684,19 @@
             return;
         }
 
+        const historico = alvo.closest("#buscarHistoricoPassageiro");
+        if (historico) {
+            const id = $("idPessoaAgendamento")?.value;
+            const container = $("historico-agendamento-container");
+            if (id && container && window.htmx) {
+                container.textContent = "Carregando histórico...";
+                window.htmx.ajax("GET",
+                    `${historico.dataset.pessoasUrl}/${encodeURIComponent(id)}/historico-viagens?contextoAgendamento=true`,
+                    {source: historico, target: container, swap: "innerHTML"});
+            }
+            return;
+        }
+
         const cidade =
             alvo.closest("#cidadeResultados button");
 
@@ -781,6 +806,27 @@
     /* 9. Eventos HTMX                                                    */
     /* ------------------------------------------------------------------ */
 
+    function historicoDaPessoaAtual(e) {
+        const id = $("idPessoaAgendamento")?.value;
+        const caminho = e.detail?.requestConfig?.path;
+        return !!id && !!caminho &&
+            caminho.split("?")[0].includes(`/${encodeURIComponent(id)}/historico-viagens`);
+    }
+
+    document.addEventListener("htmx:beforeSwap", (e) => {
+        if (e.detail?.target?.id === "historico-agendamento-container" && !historicoDaPessoaAtual(e)) {
+            e.preventDefault();
+        }
+    });
+
+    function informarFalhaHistorico(e) {
+        if (e.detail?.target?.id === "historico-agendamento-container" && historicoDaPessoaAtual(e)) {
+            e.detail.target.textContent = "Não foi possível carregar o histórico. Tente novamente.";
+        }
+    }
+    document.addEventListener("htmx:responseError", informarFalhaHistorico);
+    document.addEventListener("htmx:sendError", informarFalhaHistorico);
+
     document.addEventListener("htmx:afterSwap", (e) => {
         if (e.detail?.target?.id === "resultadoVerificacao") {
             sincronizarVerificacao();
@@ -820,6 +866,18 @@
     /* ------------------------------------------------------------------ */
 
     function iniciarPagina(raiz) {
+        const abertura = $("abrirInsercaoAposCriacao");
+        if (abertura && raiz?.contains?.(abertura) && window.bootstrap) {
+            const modalInsercao = $(abertura.dataset.modalId);
+            if (modalInsercao) {
+                abertura.remove();
+                window.bootstrap.Modal.getOrCreateInstance(modalInsercao).show();
+            } else {
+                abertura.hidden = false;
+                abertura.className = "alert alert-warning d-block";
+                abertura.textContent = "Não foi possível abrir a seleção de passageiros para o veículo. Atualize a página e tente novamente.";
+            }
+        }
         const tabela = $("tabelaPassageiros");
         if (tabela && raiz?.contains?.(tabela) && !tabela.dataset.filtrosInicializados) {
             const tipos = new Map();
@@ -856,6 +914,7 @@
         const resultado = $("resultadoVerificacao");
 
         const temEstado =
+            modal.dataset.abrirAoCarregar === "true" ||
             $("idPessoaAgendamento")?.value ||
             $("idDestinoAgendamento")?.value ||
             (resultado && !resultado.hidden);

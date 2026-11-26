@@ -17,6 +17,8 @@ import br.com.imbazzu.secretariaTransporte.veiculo.adpter.out.entidadeJpa.Veicul
 import br.com.imbazzu.secretariaTransporte.veiculo.adpter.out.repositorio.VeiculoAgendaRepository;
 import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 import lombok.RequiredArgsConstructor;
+import jakarta.persistence.EntityManager;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.out.persistencia.UsuarioJpaEntity;
 
 @Repository
 @RequiredArgsConstructor
@@ -25,6 +27,7 @@ public class AgendamentoCommandJpaAdapter implements AgendamentoCommandPorta {
     private final AgendamentoRepository agendamentoRepository;
     private final DiaAgendamentoRepository diaRepository;
     private final VeiculoAgendaRepository veiculoRepository;
+    private final EntityManager entityManager;
 
     @Override
     @Transactional
@@ -38,7 +41,13 @@ public class AgendamentoCommandJpaAdapter implements AgendamentoCommandPorta {
     @Override
     @Transactional
     public UUID salvar(Agendamento agendamento) {
-        var entidade = agendamentoRepository.findById(agendamento.getId()).orElseGet(AgendamentoJpa::new);
+        var entidade = agendamentoRepository.findById(agendamento.getId()).orElseGet(() -> {
+            var novo = new AgendamentoJpa();
+            if (agendamento.getAutorId() != null) {
+                novo.setAutor(entityManager.getReference(UsuarioJpaEntity.class, agendamento.getAutorId()));
+            }
+            return novo;
+        });
         entidade.setId(agendamento.getId());
         entidade.setData(agendamento.getData());
         entidade.setIdPessoa(agendamento.getIdPessoa());

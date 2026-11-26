@@ -96,7 +96,8 @@ public class AgendamentoCommandCriarHandler {
                 tolerancia,
                 command.horarioChegada(),
                 pessoa.buscarNaResidencia(),
-                command.acompanhantes());
+                command.acompanhantes(),
+                java.util.Objects.requireNonNull(command.autorId(), "Autor é obrigatório"));
         if (tipoCarro && command.idVeiculo() != null) {
             throw new OperacaoNaoPermitidaException(
                     "Passageiros de carro devem ser atribuídos pela página de carros");

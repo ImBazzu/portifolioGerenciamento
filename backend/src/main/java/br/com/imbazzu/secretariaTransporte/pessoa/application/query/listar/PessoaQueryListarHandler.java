@@ -16,6 +16,6 @@ public class PessoaQueryListarHandler {
 
     @Transactional(readOnly = true)
     public ResultadoPaginado<Pessoa> handler(PessoaQueryListar query) {
-        return application.listar(query.nome(), false, query.pagina(), query.tamanho());
+        return application.listar(query.nome(), query.especificacaoId(), false, query.pagina(), query.tamanho());
     }
 }

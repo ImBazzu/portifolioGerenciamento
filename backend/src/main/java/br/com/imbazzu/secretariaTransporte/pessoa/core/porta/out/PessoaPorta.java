@@ -12,7 +12,7 @@ public interface PessoaPorta {
 
     Optional<Pessoa> buscarArquivado(UUID id);
 
-    ResultadoPaginado<Pessoa> listar(String nome, boolean arquivado, int pagina, int tamanho);
+    ResultadoPaginado<Pessoa> listar(String nome, UUID especificacaoId, boolean arquivado, int pagina, int tamanho);
 
 
 }

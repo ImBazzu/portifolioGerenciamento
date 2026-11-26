@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import br.com.imbazzu.secretariaTransporte.veiculo.adpter.out.entidadeJpa.VeiculoAgendaJpa;
 
@@ -14,4 +17,8 @@ public interface VeiculoAgendaRepository extends JpaRepository<VeiculoAgendaJpa,
 
     
     boolean existsByIdTipoVeiculo(UUID idTipoVeiculo);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE VeiculoAgendaJpa v SET v.idMotorista = :motorista WHERE v.id = :veiculo")
+    int atribuirMotorista(@Param("veiculo") UUID veiculo, @Param("motorista") UUID motorista);
 }

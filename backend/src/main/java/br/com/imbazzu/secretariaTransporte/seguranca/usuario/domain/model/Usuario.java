@@ -5,7 +5,6 @@ import br.com.imbazzu.secretariaTransporte.compartilhados.valueObjects.Nome;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 
 public class Usuario {
@@ -15,6 +14,7 @@ public class Usuario {
     private Nome nome;
 
     private String senha;
+    private long versaoToken;
 
     private List<UsuarioRoleEnum> permissoes;
 
@@ -26,26 +26,30 @@ public class Usuario {
         usuario.nome = nome;
         usuario.senha = senha;
         usuario.permissoes = new ArrayList<>();
-        usuario.permissoes.add(UsuarioRoleEnum.USUARIO);
-        if(permissao == UsuarioRoleEnum.ADMIN) {
-            usuario.permissoes.add(UsuarioRoleEnum.ADMIN);
-        }
+        usuario.permissoes.add(permissao == UsuarioRoleEnum.USUARIO ? UsuarioRoleEnum.AGENDAMENTO : permissao);
         return usuario;
     }
 
-    public static Usuario reconstruir(UUID id,Nome nome, String senha, List<UsuarioRoleEnum> permissao) {
+    public static Usuario reconstruir(UUID id, Nome nome, String senha, List<UsuarioRoleEnum> permissao, long versaoToken) {
         var  usuario = new Usuario();
         usuario.nome = nome;
         usuario.id = id;
         usuario.senha = senha;
         usuario.permissoes = new ArrayList<>(permissao);
+        usuario.versaoToken = versaoToken;
         return usuario;
     }
 
     public List<String> getPermissoes() {
-        return this.permissoes.stream()
+        int nivel = permissoes.stream().mapToInt(UsuarioRoleEnum::getNivel).max().orElse(-1);
+        return java.util.Arrays.stream(UsuarioRoleEnum.values())
+                .filter(p -> p != UsuarioRoleEnum.USUARIO && p.getNivel() <= nivel)
                 .map(permissao -> "ROLE_" + permissao.getRole())
-                .collect(Collectors.toCollection(ArrayList::new));
+                .toList();
+    }
+
+    public List<UsuarioRoleEnum> getPerfisCadastrados() {
+        return List.copyOf(permissoes);
     }
 
 
@@ -59,5 +63,9 @@ public class Usuario {
 
     public String getSenha() {
         return senha;
+    }
+
+    public long getVersaoToken() {
+        return versaoToken;
     }
 }

@@ -11,7 +11,6 @@ import org.springframework.web.client.RestClient;
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
 import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
-import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaArquivadoResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaRequestDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.excecoes.PessoaDadosInvalidosException;
@@ -33,9 +32,21 @@ public class PessoaApi implements PessoaApiPorta {
 
     @Override
     public ResultadoPaginado<PessoaResponseDto> listar(String nome, boolean arquivadas, int pagina, int tamanho) {
+        return listarComFiltro(nome, null, arquivadas, pagina, tamanho);
+    }
+
+    @Override
+    public ResultadoPaginado<PessoaResponseDto> listarPorEspecificacao(
+            String nome, UUID especificacaoId, boolean arquivadas, int pagina, int tamanho) {
+        return listarComFiltro(nome, especificacaoId, arquivadas, pagina, tamanho);
+    }
+
+    private ResultadoPaginado<PessoaResponseDto> listarComFiltro(
+            String nome, UUID especificacaoId, boolean arquivadas, int pagina, int tamanho) {
         return executarComRefresh(() -> api.get()
                 .uri(uri -> uri.path(PATH_API + (arquivadas ? "/listar/arquivado" : "/listar"))
                         .queryParam("nome", nome)
+                        .queryParamIfPresent("especificacaoId", java.util.Optional.ofNullable(especificacaoId))
                         .queryParam("pagina", pagina)
                         .queryParam("tamanho", tamanho)
                         .build())

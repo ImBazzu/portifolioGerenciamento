@@ -106,8 +106,15 @@ public class AgendamentoVeiculoController {
                         : "Veículos do tipo Carro só podem ser abertos na página de passageiros de carros.");
                 return destino;
             }
-            agendamentoApi.abrirVeiculo(data, new AbrirVeiculoRequestDto(idTipoVeiculo, identificacao, horarioSaida));
-            redirect.addFlashAttribute("sucesso", "Veículo aberto para a agenda do dia.");
+            var veiculo = agendamentoApi.abrirVeiculo(
+                    data, new AbrirVeiculoRequestDto(idTipoVeiculo, identificacao, horarioSaida));
+            if (veiculo == null || veiculo.id() == null) {
+                redirect.addFlashAttribute("erro",
+                        "Veículo aberto, mas não foi possível identificar o veículo para inserir passageiros.");
+            } else {
+                redirect.addFlashAttribute("veiculoParaInsercao", veiculo.id());
+                redirect.addFlashAttribute("sucesso", "Veículo aberto para a agenda do dia.");
+            }
         } catch (RestClientResponseException e) {
             redirect.addFlashAttribute("erro", mensagemErro.de(e));
         }

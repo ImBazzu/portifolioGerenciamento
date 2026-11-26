@@ -19,5 +19,6 @@ public record PessoaResponseDto(
         LocalDate dataArquivado,
         String endereco,
         String cpf,
-        String telefone) {
+        String telefone,
+        String autorNome) {
 }

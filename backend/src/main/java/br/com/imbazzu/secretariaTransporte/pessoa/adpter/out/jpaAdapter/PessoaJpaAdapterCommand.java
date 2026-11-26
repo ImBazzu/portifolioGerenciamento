@@ -12,17 +12,26 @@ import br.com.imbazzu.secretariaTransporte.pessoa.adpter.out.repositorio.PessoaR
 import br.com.imbazzu.secretariaTransporte.pessoa.core.domain.Pessoa;
 import br.com.imbazzu.secretariaTransporte.pessoa.core.porta.out.PessoaCommandPorta;
 import lombok.RequiredArgsConstructor;
+import jakarta.persistence.EntityManager;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.out.persistencia.UsuarioJpaEntity;
 
 @Repository
 @RequiredArgsConstructor
 public class PessoaJpaAdapterCommand implements PessoaCommandPorta {
 
     private final PessoaRepository repository;
+    private final EntityManager entityManager;
 
     @Override
     @Transactional
     public UUID salvar(Pessoa pessoa) {
-        var entidade = repository.findById(pessoa.getId()).orElseGet(PessoaJpa::new);
+        var entidade = repository.findById(pessoa.getId()).orElseGet(() -> {
+            var nova = new PessoaJpa();
+            if (pessoa.getAutorId() != null) {
+                nova.setAutor(entityManager.getReference(UsuarioJpaEntity.class, pessoa.getAutorId()));
+            }
+            return nova;
+        });
         PessoaBancoMapper.atualizarEntidade(pessoa, entidade);
         return repository.saveAndFlush(entidade).getId();
     }

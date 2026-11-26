@@ -40,17 +40,12 @@ import br.com.imbazzu.secretariaTransporte.localidades.application.query.cidade.
 import br.com.imbazzu.secretariaTransporte.localidades.application.query.cidade.listar.CidadeQueryListarHandler;
 import br.com.imbazzu.secretariaTransporte.localidades.application.query.cidade.listarArquivado.CidadeQueryListarArquivado;
 import br.com.imbazzu.secretariaTransporte.localidades.application.query.cidade.listarArquivado.CidadeQueryListarArquivadoHandler;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/cidade")
-@Tag(name = "Cidades", description = "Operações de cadastro, consulta e arquivamento de cidades")
-@SecurityRequirement(name = "bearerAuth")
 
 public class CidadeController {
 
@@ -69,7 +64,6 @@ public class CidadeController {
     // ============================================================
     // CIDADE
     // ============================================================
-    @Operation(summary = "Busca uma cidade por ID", description = "Retorna os dados de uma cidade cadastrada, incluindo suas informações relacionadas.")
     // @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping("/{id}")
     public ResponseEntity<CidadeResponseDto> buscarPorId(
@@ -85,12 +79,6 @@ public class CidadeController {
     return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Lista cidades", description = """
-    Retorna uma lista paginada de cidades.
-
-    É possível filtrar pelo nome e controlar a paginação
-    através dos parâmetros de página e tamanho.
-    """)
     // @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @GetMapping
     public ResponseEntity<ResultadoPaginado<CidadeResponseDto>> buscarPorNome(
@@ -109,12 +97,6 @@ public class CidadeController {
     return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Lista cidades arquivadas", description = """
-    Retorna uma lista paginada de cidades arquivadas.
-
-    É possível filtrar pelo nome e controlar a paginação
-    através dos parâmetros de página e tamanho.
-    """)
     @GetMapping("/listar/arquivado")
     public ResponseEntity<ResultadoPaginado<CidadeArquivadoResponseDto>> listarArquivado(
     @RequestParam(name = "nome", defaultValue = "") String nome,
@@ -130,14 +112,13 @@ public class CidadeController {
             c.id(),
             c.nome(),
             c.estado(),
-            "%s:%s".formatted(c.tempoViagem().toHoursPart(), c.tempoViagem().toMinutesPart()),
+            "%s:%s".formatted(c.tempoViagem().toHours(), c.tempoViagem().toMinutesPart()),
             c.totalDestinos(),
             c.dataArquivamento()));
 
     return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Busca uma cidade arquivada por ID", description = "Retorna os dados de uma cidade arquivada.")
     @GetMapping("/{id}/arquivado")
     public ResponseEntity<CidadeArquivadoResponseDto> buscarArquivado(
     @PathVariable UUID id) {
@@ -147,14 +128,13 @@ public class CidadeController {
             result.id(),
             result.nome(),
             result.estado(),
-            "%s:%s".formatted(result.tempoViagem().toHoursPart(), result.tempoViagem().toMinutesPart()),
+            "%s:%s".formatted(result.tempoViagem().toHours(), result.tempoViagem().toMinutesPart()),
             result.totalDestinos(),
             result.dataArquivamento());
 
     return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Cadastra uma nova cidade", description = "Cria uma nova cidade no sistema.")
     // @PreAuthorize("hasAnyRole('ADMIN')")
     @PostMapping
     public ResponseEntity<CidadeResponseDto> salvarCidade(
@@ -172,7 +152,6 @@ public class CidadeController {
     return ResponseEntity.created(uri).build();
     }
 
-    @Operation(summary = "Edita uma cidade", description = "Atualiza os dados de uma cidade existente.")
     // @PreAuthorize("hasAnyRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<CidadeResponseDto> editarCidade(
@@ -191,7 +170,6 @@ public class CidadeController {
     return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Arquiva uma cidade", description = "Arquiva uma cidade, deixando-a indisponível para utilização normal no sistema.")
     // @PreAuthorize("hasAnyRole('ADMIN')")
     @PatchMapping("/{id}/arquivar")
     public ResponseEntity<Void> arquivarCidade(
@@ -200,7 +178,6 @@ public class CidadeController {
     return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Desarquiva uma cidade", description = "Reativa uma cidade previamente arquivada.")
     // @PreAuthorize("hasAnyRole('ADMIN')")
     @PatchMapping("/{id}/desarquivar")
     public ResponseEntity<Void> desarquivarCidade(
@@ -210,7 +187,6 @@ public class CidadeController {
     return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Deleta uma cidade", description = "Remove uma cidade do sistema.")
     // @PreAuthorize("hasAnyRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarCidade(

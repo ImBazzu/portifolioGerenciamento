@@ -20,6 +20,7 @@ import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificarVeiculosRequestDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AbrirVeiculoRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoAtualizarRequestDto;
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
 import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
@@ -43,6 +44,36 @@ class AgendamentoApiTest {
                 return chamadaApi.get();
             }
         };
+    }
+
+    @Test
+    void buscaDiaComAutorDoAgendamento() {
+        server.expect(requestTo("http://localhost:8080/api/agendamentos/dias/2026-11-02"))
+                .andRespond(withSuccess("""
+                        {"data":"2026-11-02","veiculos":[],"passageirosPendentes":[{
+                          "id":"6b0d3800-2ca7-4e1f-bfb3-36f849104d83","data":"2026-11-02",
+                          "buscarNaResidencia":false,"acompanhantes":0,"idsVeiculosCompativeis":[],
+                          "autorNome":"Usuário responsável"}]}
+                        """, MediaType.APPLICATION_JSON));
+        var agenda = api.buscarDia(LocalDate.of(2026, 11, 2));
+        assertEquals("Usuário responsável", agenda.passageirosPendentes().getFirst().autorNome());
+        server.verify();
+    }
+
+    @Test
+    void aberturaRetornaIdentificacaoDoVeiculoCriado() {
+        var data = LocalDate.of(2026, 11, 2);
+        var id = UUID.randomUUID();
+        var tipo = UUID.randomUUID();
+        server.expect(requestTo("http://localhost:8080/api/agendamentos/dias/2026-11-02/veiculos"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess("""
+                        {"id":"%s","data":"2026-11-02","idTipoVeiculo":"%s",
+                         "nomeTipoVeiculo":"Carro","capacidade":4,"assentosOcupados":0,"passageiros":[]}
+                        """.formatted(id, tipo), MediaType.APPLICATION_JSON));
+
+        assertEquals(id, api.abrirVeiculo(data, new AbrirVeiculoRequestDto(tipo, null, null)).id());
+        server.verify();
     }
 
     @Test

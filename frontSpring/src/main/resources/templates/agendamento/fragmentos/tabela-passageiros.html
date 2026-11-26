@@ -106,7 +106,7 @@
 
 
 
-                    <div th:if="${!#lists.isEmpty(passageirosCadastrados)}" class="table-responsive">
+                    <div th:if="${!#lists.isEmpty(passageirosCadastrados)}" class="table-responsive tabela-passageiros-responsiva">
 
                         <table class="table align-middle mb-0 table-hover" id="tabelaPassageiros">
 
@@ -162,6 +162,9 @@
                                     <strong class="text-dark" th:text="${detalhesAgendamentos.get(passageiro.id()).nome()}"></strong>
 
                                     <div class="small text-muted" th:text="${detalhesAgendamentos.get(passageiro.id()).telefone()}"></div>
+                                    <div class="small text-muted">
+                                        Cadastrado por: <span th:text="${passageiro.autorNome() != null ? passageiro.autorNome() : 'Autor desconhecido'}"></span>
+                                    </div>
 
                                 </td>
 

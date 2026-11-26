@@ -44,14 +44,15 @@ class PrioridadeAgendamentoTest {
     private final UUID tipo = UUID.randomUUID();
     private final UUID destino = UUID.randomUUID();
     private final UUID prioridade = UUID.randomUUID();
+    private final UUID autor = UUID.randomUUID();
 
     @Test
     void permiteMenosAcompanhantesQueOMaximoERejeitaQuantidadeAcima() {
         preparar(3, prioridade);
         assertThrows(DadosInvalidosException.class, () -> new AgendamentoCommandCriarHandler(comandos, consultas)
-                .handler(new AgendamentoCommandCriar(data, pessoa, lista, null, tipo, destino, horario, true, 3)));
+                .handler(new AgendamentoCommandCriar(data, pessoa, lista, null, tipo, destino, horario, true, 3, autor)));
         new AgendamentoCommandCriarHandler(comandos, consultas).handler(
-                new AgendamentoCommandCriar(data, pessoa, lista, null, tipo, destino, horario, true, 1));
+                new AgendamentoCommandCriar(data, pessoa, lista, null, tipo, destino, horario, true, 1, autor));
         var captor = ArgumentCaptor.forClass(Agendamento.class);
         verify(comandos).salvar(captor.capture());
         assertTrue(captor.getValue().isBuscarNaResidencia());
@@ -67,7 +68,7 @@ class PrioridadeAgendamentoTest {
         assertThrows(DadosInvalidosException.class, () -> new AgendamentoQueryVerificarVeiculosHandler(consultas)
                 .handler(new AgendamentoQueryVerificarVeiculos(data, pessoa, lista, destino, horario, 3)));
         assertThrows(DadosInvalidosException.class, () -> new AgendamentoCommandCriarHandler(comandos, consultas)
-                .handler(new AgendamentoCommandCriar(data, pessoa, lista, null, tipo, destino, horario, true, 3)));
+                .handler(new AgendamentoCommandCriar(data, pessoa, lista, null, tipo, destino, horario, true, 3, autor)));
         verify(comandos, never()).salvar(any(Agendamento.class));
     }
 
@@ -86,7 +87,7 @@ class PrioridadeAgendamentoTest {
         assertThrows(OperacaoNaoPermitidaException.class, () -> new AgendamentoQueryVerificarVeiculosHandler(consultas)
                 .handler(new AgendamentoQueryVerificarVeiculos(data, pessoa, lista, destino, horario, 2)));
         assertThrows(OperacaoNaoPermitidaException.class, () -> new AgendamentoCommandCriarHandler(comandos, consultas)
-                .handler(new AgendamentoCommandCriar(data, pessoa, lista, null, tipo, destino, horario, true, 2)));
+                .handler(new AgendamentoCommandCriar(data, pessoa, lista, null, tipo, destino, horario, true, 2, autor)));
         verify(comandos, never()).salvar(any(Agendamento.class));
     }
 

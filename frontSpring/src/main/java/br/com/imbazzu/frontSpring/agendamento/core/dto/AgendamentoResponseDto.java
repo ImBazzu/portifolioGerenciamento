@@ -18,5 +18,12 @@ public record AgendamentoResponseDto(
         boolean buscarNaResidencia,
         int acompanhantes,
         UUID idVeiculoAberto,
-        List<UUID> idsVeiculosCompativeis) {
+        List<UUID> idsVeiculosCompativeis,
+        String autorNome) {
+    public AgendamentoResponseDto(UUID id, LocalDate data, UUID idPessoa, UUID idLista, UUID idRegraCadastro,
+            UUID idTipoVeiculo, UUID idDestino, LocalTime horarioChegada, LocalTime horarioSaidaNecessario,
+            boolean buscarNaResidencia, int acompanhantes, UUID idVeiculoAberto, List<UUID> idsVeiculosCompativeis) {
+        this(id, data, idPessoa, idLista, idRegraCadastro, idTipoVeiculo, idDestino, horarioChegada,
+                horarioSaidaNecessario, buscarNaResidencia, acompanhantes, idVeiculoAberto, idsVeiculosCompativeis, null);
+    }
 }

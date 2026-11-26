@@ -20,9 +20,6 @@ import br.com.imbazzu.secretariaTransporte.localidades.application.query.destino
 import br.com.imbazzu.secretariaTransporte.localidades.application.query.destino.listar.DestinoQueryListarHandler;
 import br.com.imbazzu.secretariaTransporte.localidades.application.query.destino.listarArquivado.DestinoQueryListarArquivado;
 import br.com.imbazzu.secretariaTransporte.localidades.application.query.destino.listarArquivado.DestinoQueryListarArquivadoHandler;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -34,8 +31,6 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.util.UUID;
 
-@Tag(name = "Destinos", description = "Operações de cadastro, edição, consulta e arquivamento de destinos")
-@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/destino")
 @RequiredArgsConstructor
@@ -51,7 +46,6 @@ public class DestinoController {
         private final DestinoQueryBuscarHandler buscarHandler;
         private final DestinoQueryBuscarArquivadoHandler buscarArquivadoHandler;
 
-        @Operation(summary = "Cadastra um novo destino", description = "Cria um novo destino associado a uma cidade.")
         // @PreAuthorize("hasAnyRole('ADMIN')")
         @PostMapping()
         public ResponseEntity<Void> salvarDestino(
@@ -64,7 +58,6 @@ public class DestinoController {
                 return ResponseEntity.created(uri).build();
         }
 
-        @Operation(summary = "Edita um destino", description = "Atualiza o nome de um destino existente.")
         // @PreAuthorize("hasAnyRole('ADMIN')")
         @PutMapping("/{idDestino}")
         public ResponseEntity<Void> editarDestino(
@@ -76,7 +69,6 @@ public class DestinoController {
                 return ResponseEntity.noContent().build();
         }
 
-        @Operation(summary = "Arquiva um destino", description = "Arquiva um destino existente, tornando-o indisponível para utilização normal.")
         // @PreAuthorize("hasAnyRole('ADMIN')")
         @PatchMapping("/arquivar/{idDestino}")
         public ResponseEntity<Void> arquivarDestino(
@@ -86,7 +78,6 @@ public class DestinoController {
                 return ResponseEntity.noContent().build();
         }
 
-        @Operation(summary = "Desarquiva um destino", description = "Reativa um destino que foi previamente arquivado.")
         // @PreAuthorize("hasAnyRole('ADMIN')")
         @PatchMapping("/desarquivar/{idDestino}")
         public ResponseEntity<Void> desarquivarDestino(
@@ -96,11 +87,6 @@ public class DestinoController {
                 return ResponseEntity.noContent().build();
         }
 
-        @Operation(summary = "Lista os destinos de uma cidade", description = """
-                        Retorna uma lista paginada de destinos pertencentes a uma cidade.
-                        É possível filtrar os destinos pelo nome e controlar a paginação
-                        através dos parâmetros de página e tamanho.
-                        """)
         // @PreAuthorize("hasAnyRole('USER','ADMIN')")
         @GetMapping("/listar/{idCidade}")
         public ResponseEntity<ResultadoPaginado<DestinoResponseDto>> listar(
@@ -120,11 +106,6 @@ public class DestinoController {
                 return ResponseEntity.ok(retorno);
         }
 
-        @Operation(summary = "Lista os destinos de uma cidade", description = """
-                        Retorna uma lista paginada de destinos pertencentes a uma cidade.
-                        É possível filtrar os destinos pelo nome e controlar a paginação
-                        através dos parâmetros de página e tamanho.
-                        """)
         // @PreAuthorize("hasAnyRole('USER','ADMIN')")
         @GetMapping("/listarArquivados/{idCidade}")
         public ResponseEntity<ResultadoPaginado<DestinoResponseDto>> listarArquivados(

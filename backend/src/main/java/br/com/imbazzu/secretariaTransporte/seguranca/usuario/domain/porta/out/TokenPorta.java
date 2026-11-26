@@ -10,7 +10,7 @@ public interface TokenPorta {
 
     String gerarTokenAtualizacao(Usuario usuario);
 
-    String extrairDadosDoTokenAtualizacao(String token);
+    DadosTokenDto extrairDadosDoTokenAtualizacao(String token);
 
     DadosTokenDto extrairDadosDoTokenAcesso(String token);
 

@@ -10,11 +10,15 @@ import br.com.imbazzu.frontSpring.localidade.core.porta.in.LocalidadeApplication
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxRequest;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxTriggerAfterSettle;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalTime;
 import java.util.UUID;
 
 @Controller
@@ -30,7 +34,7 @@ public class LocalidadeFormularioController {
     @HxRequest
     @GetMapping("/abrirFormulario")
     public String formNovo(Model model) {
-        prepararFormulario(model, new CidadeRequestDto("", "", 0, 0), null, false);
+        prepararFormulario(model, new CidadeFormulario("", "", LocalTime.MIDNIGHT), null, false);
         return "localidade/formCidade :: formCidade";
     }
 
@@ -41,12 +45,15 @@ public class LocalidadeFormularioController {
             @RequestParam(defaultValue = "false") boolean arquivado,
             Model model) {
         try {
-            CidadeRequestDto dto = arquivado
+            CidadeFormulario dto = arquivado
                     ? converter(application.buscarCidadeArquivada(id))
                     : converter(application.buscarCidade(id));
             prepararFormulario(model, dto, id, arquivado);
+            if (dto.tempoViagem() == null) {
+                model.addAttribute("duracaoAntiga", "A duração cadastrada é de 24 horas ou mais. Informe uma duração menor para salvar.");
+            }
         } catch (LocalidadeNaoEncontradaException e) {
-            prepararFormulario(model, new CidadeRequestDto("", "", 0, 0), id, arquivado);
+            prepararFormulario(model, new CidadeFormulario("", "", LocalTime.MIDNIGHT), id, arquivado);
             model.addAttribute("erroGlobal", "Cidade não encontrada ou removida.");
         }
         return "localidade/formCidade :: formCidade";
@@ -56,7 +63,7 @@ public class LocalidadeFormularioController {
     @PostMapping
     @HxTriggerAfterSettle("listar-ativos")
     public String salvar(
-            @Valid @ModelAttribute("cidade") CidadeRequestDto cidade,
+            @Valid @ModelAttribute("cidade") CidadeFormulario cidade,
             BindingResult result,
             Model model) {
         prepararFormulario(model, cidade, null, false);
@@ -64,7 +71,7 @@ public class LocalidadeFormularioController {
             return "localidade/formCidade :: formCidade";
         }
         try {
-            application.salvarCidade(cidade);
+            application.salvarCidade(cidade.paraRequest());
             return "layout/vazio :: vazio";
         } catch (LocalidadeDuplicadaException e) {
             result.rejectValue("nome", "duplicado", "Já existe uma cidade com este nome.");
@@ -78,7 +85,7 @@ public class LocalidadeFormularioController {
     public String editar(
             @PathVariable UUID id,
             @RequestParam(defaultValue = "false") boolean arquivado,
-            @Valid @ModelAttribute("cidade") CidadeRequestDto cidade,
+            @Valid @ModelAttribute("cidade") CidadeFormulario cidade,
             BindingResult result,
             Model model) {
         prepararFormulario(model, cidade, id, arquivado);
@@ -86,7 +93,7 @@ public class LocalidadeFormularioController {
             return "localidade/formCidade :: formCidade";
         }
         try {
-            application.editarCidade(id, cidade);
+            application.editarCidade(id, cidade.paraRequest());
             return detalhes(id, arquivado, model);
         } catch (LocalidadeDuplicadaException e) {
             result.rejectValue("nome", "duplicado", "Já existe uma cidade com este nome.");
@@ -112,28 +119,38 @@ public class LocalidadeFormularioController {
         return "localidade/detalhesCidade :: detalhesCidade";
     }
 
-    private void prepararFormulario(Model model, CidadeRequestDto cidade, UUID id, boolean arquivado) {
+    private void prepararFormulario(Model model, CidadeFormulario cidade, UUID id, boolean arquivado) {
         model.addAttribute("cidade", cidade);
         model.addAttribute("id", id);
         model.addAttribute("arquivado", arquivado);
         model.addAttribute("estados", CidadeEstadoEnum.values());
     }
 
-    private CidadeRequestDto converter(CidadeResponseDto cidade) {
-        int[] duracao = separarTempo(cidade.tempoViagem());
-        return new CidadeRequestDto(cidade.nome(), cidade.estado(), duracao[0], duracao[1]);
+    private CidadeFormulario converter(CidadeResponseDto cidade) {
+        return new CidadeFormulario(cidade.nome(), cidade.estado(), separarTempo(cidade.tempoViagem()));
     }
 
-    private CidadeRequestDto converter(CidadeArquivadoResponseDto cidade) {
-        int[] duracao = separarTempo(cidade.tempoViagem());
-        return new CidadeRequestDto(cidade.nome(), cidade.estado(), duracao[0], duracao[1]);
+    private CidadeFormulario converter(CidadeArquivadoResponseDto cidade) {
+        return new CidadeFormulario(cidade.nome(), cidade.estado(), separarTempo(cidade.tempoViagem()));
     }
 
-    private int[] separarTempo(String tempoViagem) {
+    private LocalTime separarTempo(String tempoViagem) {
         String[] partes = tempoViagem.split(":", -1);
         if (partes.length != 2) {
             throw new IllegalStateException("Formato de tempo de viagem inesperado: " + tempoViagem);
         }
-        return new int[] {Integer.parseInt(partes[0]), Integer.parseInt(partes[1])};
+        int horas = Integer.parseInt(partes[0]);
+        int minutos = Integer.parseInt(partes[1]);
+        return horas >= 24 ? null : LocalTime.of(horas, minutos);
+    }
+
+    public record CidadeFormulario(
+            @NotBlank(message = "Nome da cidade é obrigatório") String nome,
+            @NotBlank(message = "Estado é obrigatório") String estado,
+            @NotNull(message = "Tempo de viagem é obrigatório")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.TIME) LocalTime tempoViagem) {
+        CidadeRequestDto paraRequest() {
+            return new CidadeRequestDto(nome, estado, tempoViagem.getHour(), tempoViagem.getMinute());
+        }
     }
 }

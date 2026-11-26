@@ -2,16 +2,25 @@ package br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.model;
 
 public enum UsuarioRoleEnum {
 
-    ADMIN("ADMIN"),
-    USUARIO("USUARIO");
+    USUARIO("USUARIO", 0),
+    AGENDAMENTO("AGENDAMENTO", 0),
+    MOTORISTA("MOTORISTA", 1),
+    GESTAO("GESTAO", 2),
+    ADMIN("ADMIN", 3);
 
-    private String role;
+    private final String role;
+    private final int nivel;
 
-    UsuarioRoleEnum(String role) {
+    UsuarioRoleEnum(String role, int nivel) {
         this.role = role;
+        this.nivel = nivel;
     }
 
     public String getRole() {
         return role;
+    }
+
+    public int getNivel() {
+        return nivel;
     }
 }

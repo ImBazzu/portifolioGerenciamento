@@ -35,4 +35,8 @@ public interface AgendamentoProjecao {
     int getAcompanhantes();
 
     UUID getIdVeiculoAberto();
+
+    UUID getAutorId();
+
+    String getAutorNome();
 }

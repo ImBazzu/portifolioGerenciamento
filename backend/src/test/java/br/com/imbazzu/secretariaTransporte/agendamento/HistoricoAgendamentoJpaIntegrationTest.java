@@ -27,6 +27,7 @@ import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.Ag
 import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.AgendamentoQueryPorta;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.adpter.out.repositorio.TipoVeiculoQueryRepository;
 import br.com.imbazzu.secretariaTransporte.veiculo.adpter.out.repositorio.VeiculoQueryRepository;
+import br.com.imbazzu.secretariaTransporte.pessoa.adpter.out.repositorio.PessoaRepository;
 
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(properties = {
@@ -51,6 +52,32 @@ class HistoricoAgendamentoJpaIntegrationTest {
     @Autowired private TipoVeiculoQueryRepository tipos;
     @Autowired private AgendamentoQueryRepository agendamentos;
     @Autowired private AgendamentoQueryPorta consultas;
+    @Autowired private PessoaRepository pessoas;
+
+    @Test
+    @Transactional
+    void filtraPessoasPorEspecificacaoAntesDePaginar() {
+        jdbc.update("INSERT INTO especificacoes (id,nome,prioridade_id) "
+                + "SELECT UNHEX('00000000000000000000000000000071'),'Filtro A',id FROM prioridades LIMIT 1");
+        jdbc.update("INSERT INTO especificacoes (id,nome,prioridade_id,data_arquivado) "
+                + "SELECT UNHEX('00000000000000000000000000000072'),'Filtro B',id,'2030-01-01' FROM prioridades LIMIT 1");
+        jdbc.update("INSERT INTO pessoas (id,nome,telefone,especificacao_id,data_arquivado) VALUES "
+                + "(UNHEX('00000000000000000000000000000081'),'Filtro Ana','11987654321',UNHEX('00000000000000000000000000000071'),NULL),"
+                + "(UNHEX('00000000000000000000000000000082'),'Filtro Bruno','11987654321',UNHEX('00000000000000000000000000000071'),NULL),"
+                + "(UNHEX('00000000000000000000000000000083'),'Filtro Carla','11987654321',UNHEX('00000000000000000000000000000072'),NULL),"
+                + "(UNHEX('00000000000000000000000000000084'),'Filtro Davi','11987654321',UNHEX('00000000000000000000000000000072'),'2030-01-01')");
+
+        var a = UUID.fromString("00000000-0000-0000-0000-000000000071");
+        var b = UUID.fromString("00000000-0000-0000-0000-000000000072");
+        assertEquals(3, pessoas.listarAtivas("Filtro", "", null, PageRequest.of(0, 1)).getTotalElements());
+        var pagina = pessoas.listarAtivas("Filtro", "", a, PageRequest.of(1, 1));
+        assertEquals(2, pagina.getTotalElements());
+        assertEquals("Filtro Bruno", pagina.getContent().getFirst().getNome());
+        assertEquals("Filtro Carla", pessoas.listarAtivas("Filtro", "", b, PageRequest.of(0, 10))
+                .getContent().getFirst().getNome());
+        assertEquals(1, pessoas.listarArquivadas("Filtro", "", b, PageRequest.of(0, 10)).getTotalElements());
+        assertEquals(0, pessoas.listarArquivadas("Filtro", "", a, PageRequest.of(0, 10)).getTotalElements());
+    }
 
     @Test
     @Transactional

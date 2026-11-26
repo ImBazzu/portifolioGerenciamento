@@ -81,7 +81,9 @@ public class AgendamentoCommandAtualizarHandler {
                 command.horarioChegada(),
                 atual.isBuscarNaResidencia(),
                 command.acompanhantes(),
-                null);
+                null,
+                atual.getAutorId(),
+                atual.getAutorNome());
 
         var veiculos = consultas.listarVeiculos(atual.getData());
         if (tipoCarro) {

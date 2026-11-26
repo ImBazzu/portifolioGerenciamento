@@ -1,0 +1,25 @@
+<nav th:fragment="paginacao(paginaAtual, totalPaginas, url, alvo, rotulo)"
+     th:if="${totalPaginas > 1}" th:attr="aria-label=${rotulo}"
+     class="d-flex flex-wrap justify-content-between align-items-center gap-2 py-2 w-100">
+    <span class="text-muted small" th:text="'Página ' + (${paginaAtual} + 1) + ' de ' + ${totalPaginas}"></span>
+    <div class="btn-group btn-group-sm flex-wrap" role="group">
+        <button type="button" class="btn btn-outline-secondary" th:disabled="${paginaAtual <= 0}"
+                th:attr="hx-get=${url + (paginaAtual - 1)}, hx-target=${alvo}"
+                hx-swap="innerHTML">Anterior</button>
+        <button th:if="${paginaAtual > 2}" type="button" class="btn btn-outline-secondary"
+                th:attr="hx-get=${url + 0}, hx-target=${alvo}"
+                hx-swap="innerHTML">1</button>
+        <span th:if="${paginaAtual > 3}" class="btn btn-outline-secondary disabled" aria-hidden="true">…</span>
+        <button th:each="i : ${#numbers.sequence(paginaAtual > 2 ? paginaAtual - 2 : 0, paginaAtual + 2 < totalPaginas ? paginaAtual + 2 : totalPaginas - 1)}"
+                type="button" class="btn btn-outline-secondary" th:classappend="${i == paginaAtual} ? 'active'"
+                th:attr="hx-get=${url + i}, hx-target=${alvo}, aria-current=${i == paginaAtual ? 'page' : null}"
+                hx-swap="innerHTML" th:text="${i + 1}"></button>
+        <span th:if="${paginaAtual + 3 < totalPaginas - 1}" class="btn btn-outline-secondary disabled" aria-hidden="true">…</span>
+        <button th:if="${paginaAtual + 3 < totalPaginas}" type="button" class="btn btn-outline-secondary"
+                th:attr="hx-get=${url + (totalPaginas - 1)}, hx-target=${alvo}"
+                hx-swap="innerHTML" th:text="${totalPaginas}"></button>
+        <button type="button" class="btn btn-outline-secondary" th:disabled="${paginaAtual + 1 >= totalPaginas}"
+                th:attr="hx-get=${url + (paginaAtual + 1)}, hx-target=${alvo}"
+                hx-swap="innerHTML">Próxima</button>
+    </div>
+</nav>

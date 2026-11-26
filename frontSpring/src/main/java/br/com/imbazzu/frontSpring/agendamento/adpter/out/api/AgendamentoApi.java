@@ -18,6 +18,7 @@ import br.com.imbazzu.frontSpring.agendamento.core.dto.ResultadoSeparacaoRespons
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificarVeiculosRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificacaoVeiculosResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoAbertoAtualizarRequestDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoAbertoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.HistoricoViagemResponseDto;
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.RetryComRefreshPorta;
 import br.com.imbazzu.frontSpring.autenticacao.infraestrutura.httpConfig.RestClientProtegido;
@@ -50,13 +51,13 @@ public class AgendamentoApi {
                 .body(AgendamentoResponseDto.class));
     }
 
-    public void abrirVeiculo(LocalDate data, AbrirVeiculoRequestDto request) {
-        executar(() -> api.post()
+    public VeiculoAbertoResponseDto abrirVeiculo(LocalDate data, AbrirVeiculoRequestDto request) {
+        return executar(() -> api.post()
                 .uri(PATH + "/dias/{data}/veiculos", data)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(request)
                 .retrieve()
-                .toBodilessEntity());
+                .body(VeiculoAbertoResponseDto.class));
     }
 
     public void atualizarVeiculo(UUID id, VeiculoAbertoAtualizarRequestDto request) {

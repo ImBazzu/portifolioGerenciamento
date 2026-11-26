@@ -20,6 +20,8 @@
                 <th:block th:replace="~{agendamento/carros/fragmentos/modais-exclusao :: modaisExclusao}"></th:block>
                 <th:block th:replace="~{agendamento/carros/fragmentos/carros-atribuidos :: carrosAtribuidos}"></th:block>
                 <th:block th:replace="~{agendamento/carros/fragmentos/modais-insercao :: modaisInsercao}"></th:block>
+                <span th:if="${veiculoParaInsercao != null}" id="abrirInsercaoAposCriacao"
+                      th:attr="data-modal-id='atribuirPassageiroCarroModal-' + ${veiculoParaInsercao}" hidden></span>
             </th:block>
 
         </div>

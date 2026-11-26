@@ -29,6 +29,7 @@ import br.com.imbazzu.frontSpring.lista.core.porta.in.ListaApplicationPorta;
 import br.com.imbazzu.frontSpring.localidade.core.porta.in.LocalidadeApplicationPorta;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
+import br.com.imbazzu.frontSpring.prioridade.PrioridadeApi;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -44,6 +45,8 @@ class ListaEdicaoWebTest {
     private LocalidadeApplicationPorta localidades;
     @MockitoBean
     private VeiculoApplicationPorta veiculos;
+    @MockitoBean
+    private PrioridadeApi prioridades;
 
     @BeforeEach
     void configurar() {

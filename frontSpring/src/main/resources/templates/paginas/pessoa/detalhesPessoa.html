@@ -29,7 +29,7 @@
                     <!-- Botão Voltar (aparece se estiver arquivado) -->
                     <button th:if="${arquivado}"
                             class="btn btn-sm btn-outline-secondary"
-                            hx:get="@{/pessoas/listar(arquivadas=true,nome=${nome},pagina=${paginaAtual})}"
+                            th:attr="hx-get=${especificacaoId == null} ? @{/pessoas/listar(arquivadas=true,nome=${nome},pagina=${paginaAtual})} : @{/pessoas/listar(arquivadas=true,nome=${nome},pagina=${paginaAtual},especificacaoId=${especificacaoId})}"
                             hx-target="#modal"
                             hx-swap="innerHTML">
                         <i class="bi bi-arrow-left me-1"></i> Voltar
@@ -44,6 +44,10 @@
 
             <!-- Body / Dados -->
             <dl class="row g-3 mb-0">
+                <div class="col-12">
+                    <dt class="small text-secondary">Cadastrado por</dt>
+                    <dd th:text="${pessoa.autorNome() != null ? pessoa.autorNome() : 'Autor desconhecido'}"></dd>
+                </div>
                 <div class="col-12">
                     <dt class="small text-secondary">Busca na residência</dt>
                     <dd th:text="${pessoa.buscarNaResidencia() ? 'Sim' : 'Não'}"></dd>
@@ -74,7 +78,7 @@
             <footer class="border-top pt-3 mt-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <!-- Se NÃO estiver arquivado, mostra botão de Arquivar -->
                 <th:block th:unless="${arquivado}">
-                    <button th:if="${!pessoa.validada()}" class="btn btn-sm btn-success"
+                    <button th:if="${podeGerenciarOperacao and !pessoa.validada()}" class="btn btn-sm btn-success"
                             hx:patch="@{/pessoas/{id}/validar(id=${pessoa.id()})}"
                             hx-confirm="Confirma que os dados desta pessoa foram verificados e são verdadeiros?"
                             hx-target="#modal" hx-swap="innerHTML">

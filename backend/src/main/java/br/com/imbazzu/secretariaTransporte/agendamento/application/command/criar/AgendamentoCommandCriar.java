@@ -14,7 +14,8 @@ public record AgendamentoCommandCriar(
         LocalTime horarioChegada,
         boolean buscarNaResidencia,
         int acompanhantes,
-        UUID idVeiculo) {
+        UUID idVeiculo,
+        UUID autorId) {
 
     public AgendamentoCommandCriar(
             LocalDate data,
@@ -25,8 +26,8 @@ public record AgendamentoCommandCriar(
             UUID idDestino,
             LocalTime horarioChegada,
             boolean buscarNaResidencia,
-            int acompanhantes) {
+            int acompanhantes, UUID autorId) {
         this(data, idPessoa, idLista, idRegraCadastro, idTipoVeiculo, idDestino,
-                horarioChegada, buscarNaResidencia, acompanhantes, null);
+                horarioChegada, buscarNaResidencia, acompanhantes, null, autorId);
     }
 }

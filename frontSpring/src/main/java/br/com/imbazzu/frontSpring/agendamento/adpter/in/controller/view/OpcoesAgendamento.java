@@ -27,6 +27,12 @@ public record OpcoesAgendamento(
         return tiposVeiculo.stream().filter(t -> TipoVeiculoUtil.ehCarro(t.nome())).toList();
     }
 
+    public Optional<TipoVeiculoResponseDto> carroQuatroLugares() {
+        return tiposVeiculo.stream()
+                .filter(t -> "carro".equalsIgnoreCase(t.nome().strip()) && t.capacidade() == 4)
+                .findFirst();
+    }
+
     public Map<UUID, String> nomesTipoVeiculo() {
         return tiposVeiculo.stream()
                 .collect(Collectors.toMap(TipoVeiculoResponseDto::id, TipoVeiculoResponseDto::nome));

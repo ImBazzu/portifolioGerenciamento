@@ -81,23 +81,7 @@
         </div>
 
         <footer class="lista-panel-footer" th:if="${totalPaginas > 1}">
-            <span th:text="'Página ' + (${paginaAtual} + 1) + ' de ' + ${totalPaginas}">Página 1 de 1</span>
-            <nav aria-label="Paginação das listas">
-                <button type="button" class="btn btn-sm btn-light"
-                        th:disabled="${paginaAtual == 0}"
-                        hx:get="@{/listas/listar(busca=${busca}, pagina=${paginaAtual - 1})}"
-                        hx-target="#listasAtivasContainer"
-                        hx-swap="innerHTML">
-                    <i class="bi bi-arrow-left me-1"></i>Anterior
-                </button>
-                <button type="button" class="btn btn-sm btn-light"
-                        th:disabled="${paginaAtual + 1 >= totalPaginas}"
-                        hx:get="@{/listas/listar(busca=${busca}, pagina=${paginaAtual + 1})}"
-                        hx-target="#listasAtivasContainer"
-                        hx-swap="innerHTML">
-                    Próxima<i class="bi bi-arrow-right ms-1"></i>
-                </button>
-            </nav>
+            <th:block th:replace="~{fragmentos/paginacao :: paginacao(${paginaAtual}, ${totalPaginas}, @{/listas/listar(busca=${busca},pagina='')}, '#listasAtivasContainer', 'Páginas de listas')}"></th:block>
         </footer>
     </div>
 </th:block>

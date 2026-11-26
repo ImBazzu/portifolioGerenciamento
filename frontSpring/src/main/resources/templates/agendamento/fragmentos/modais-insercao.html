@@ -41,10 +41,15 @@
                                         <div class="text-muted small mt-2 d-none sem-resultados">
                                             Nenhum passageiro pendente encontrado.
                                         </div>
+                                        <a class="btn btn-sm btn-outline-primary mt-3"
+                                           th:href="@{/agendamentos(data=${data}, novoPassageiro=true, veiculoOrigem=${veiculo.id()})}">
+                                            <i class="bi bi-person-plus me-1"></i>Cadastrar passageiro
+                                        </a>
                                     </div>
                                     <div class="modal-footer bg-light">
                                         <button class="btn btn-secondary btn-sm" type="button" data-bs-dismiss="modal">Cancelar</button>
-                                        <button class="btn btn-primary btn-sm" type="submit">Atribuir ao veículo</button>
+                                        <button class="btn btn-primary btn-sm js-atribuir-passageiro" type="submit"
+                                                th:disabled="${#lists.isEmpty(agenda.passageirosPendentes())}">Atribuir ao veículo</button>
                                     </div>
                                 </form>
                             </div>

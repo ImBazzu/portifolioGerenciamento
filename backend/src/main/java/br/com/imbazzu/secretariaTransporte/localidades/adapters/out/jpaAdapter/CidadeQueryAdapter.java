@@ -44,7 +44,7 @@ public class CidadeQueryAdapter implements CidadeQueryPorta {
                                     c.getId(),
                                     c.getNome(),
                                     c.getEstado(),
-                                    String.format("%s:%s",c.getTempoViagem().toHoursPart(),c.getTempoViagem().toMinutesPart()),
+                                    String.format("%s:%s",c.getTempoViagem().toHours(),c.getTempoViagem().toMinutesPart()),
                                     c.getTotalDestinos()
                             );
                         });
@@ -102,7 +102,7 @@ public class CidadeQueryAdapter implements CidadeQueryPorta {
                         c.getId(),
                         c.getNome(),
                         c.getEstado(),
-                        "%s:%s".formatted(c.getTempoViagem().toHoursPart(),c.getTempoViagem().toMinutesPart()),
+                        "%s:%s".formatted(c.getTempoViagem().toHours(),c.getTempoViagem().toMinutesPart()),
                         c.getTotalDestinos()
                 ));
     }

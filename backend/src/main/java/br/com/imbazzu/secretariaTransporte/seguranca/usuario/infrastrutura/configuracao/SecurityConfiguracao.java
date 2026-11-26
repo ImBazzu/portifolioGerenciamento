@@ -12,6 +12,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.out.seguranca.BcriptVerificadorSenhaAdapter;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.out.seguranca.CriptografarSenhaAdapter;
@@ -28,8 +32,15 @@ import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.Ve
 public class SecurityConfiguracao {
 
     @Bean
-    public SecurityFiltroToken securityFiltroToken(TokenPorta tokenPorta) {
-        return new SecurityFiltroToken(tokenPorta);
+    public SecurityFiltroToken securityFiltroToken(TokenPorta tokenPorta, UsuarioRepositorioPorta usuarios) {
+        return new SecurityFiltroToken(tokenPorta, usuarios);
+    }
+
+    @Bean
+    public FilterRegistrationBean<SecurityFiltroToken> registroFiltroToken(SecurityFiltroToken filtro) {
+        var registro = new FilterRegistrationBean<>(filtro);
+        registro.setEnabled(false);
+        return registro;
     }
 
     @Bean
@@ -59,7 +70,23 @@ public class SecurityConfiguracao {
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(r -> r.anyRequest().permitAll())
+                .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .authorizeHttpRequests(r -> r
+                        .requestMatchers(HttpMethod.GET, "/health").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/atualizarToken").permitAll()
+                        .requestMatchers("/auth/registrar", "/auth/registrarAdm").hasRole("ADMIN")
+                        .requestMatchers("/usuarios/eu").authenticated()
+                        .requestMatchers("/usuarios/**").hasRole("ADMIN")
+                        .requestMatchers("/relatorios/**").hasRole("GESTAO")
+                        .requestMatchers(HttpMethod.PATCH, "/pessoa/*/validar").hasRole("GESTAO")
+                        .requestMatchers(HttpMethod.GET, "/motoristas/atribuicoes").hasRole("AGENDAMENTO")
+                        .requestMatchers("/motoristas/**").hasRole("MOTORISTA")
+                        .requestMatchers(HttpMethod.GET, "/cidade/**", "/destino/**", "/lista/**",
+                                "/prioridades/**", "/veiculo/**").hasRole("AGENDAMENTO")
+                        .requestMatchers("/cidade/**", "/destino/**", "/lista/**",
+                                "/prioridades/**", "/veiculo/**").hasRole("GESTAO")
+                        .requestMatchers("/agendamentos/**", "/pessoa/**", "/especificacao/**").hasRole("AGENDAMENTO")
+                        .anyRequest().denyAll())
                 .addFilterBefore(filtroToken, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

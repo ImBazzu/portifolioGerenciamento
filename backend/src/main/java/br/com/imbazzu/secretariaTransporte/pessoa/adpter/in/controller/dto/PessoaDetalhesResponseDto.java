@@ -33,5 +33,7 @@ public record PessoaDetalhesResponseDto(
         @JsonProperty("cpf")
         String cpf,
         @JsonProperty("telefone")
-        String telefone) {
+        String telefone,
+        @JsonProperty("autorNome")
+        String autorNome) {
 }

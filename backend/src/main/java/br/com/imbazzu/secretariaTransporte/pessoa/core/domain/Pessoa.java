@@ -24,10 +24,12 @@ public final class Pessoa {
     private Endereco endereco;
     private Cpf cpf;
     private Telefone telefone;
+    private final UUID autorId;
+    private final String autorNome;
 
     private Pessoa(UUID id, Nome nome, Observacao observacao, Especificacao especificacao,
             boolean buscarNaResidencia, int quantidadeAcompanhantes, boolean validada, LocalDate dataArquivado,
-            Endereco endereco, Cpf cpf, Telefone telefone) {
+            Endereco endereco, Cpf cpf, Telefone telefone, UUID autorId, String autorNome) {
         this.id = Objects.requireNonNull(id, "ID é obrigatório");
         this.nome = Objects.requireNonNull(nome, "Nome é obrigatório");
         this.observacao = observacao;
@@ -39,19 +41,28 @@ public final class Pessoa {
         this.endereco = endereco;
         this.cpf = cpf;
         this.telefone = Objects.requireNonNull(telefone, "Telefone é obrigatório");
+        this.autorId = autorId;
+        this.autorNome = autorNome;
     }
 
     public static Pessoa criar(Nome nome, Observacao observacao, Especificacao especificacao,
             boolean buscarNaResidencia, int quantidadeAcompanhantes, Endereco endereco, Cpf cpf, Telefone telefone) {
-        return new Pessoa(UUID.randomUUID(), nome, observacao, especificacao, buscarNaResidencia, 
-            quantidadeAcompanhantes, false, null, endereco, cpf, telefone);
+        return criar(nome, observacao, especificacao, buscarNaResidencia, quantidadeAcompanhantes,
+                endereco, cpf, telefone, null);
+    }
+
+    public static Pessoa criar(Nome nome, Observacao observacao, Especificacao especificacao,
+            boolean buscarNaResidencia, int quantidadeAcompanhantes, Endereco endereco, Cpf cpf, Telefone telefone,
+            UUID autorId) {
+        return new Pessoa(UUID.randomUUID(), nome, observacao, especificacao, buscarNaResidencia,
+            quantidadeAcompanhantes, false, null, endereco, cpf, telefone, autorId, null);
     }
 
     public static Pessoa recriar(UUID id, Nome nome, Observacao observacao, Especificacao especificacao,
             boolean buscarNaResidencia, int quantidadeAcompanhantes, boolean validada, LocalDate dataArquivado,
-            Endereco endereco, Cpf cpf, Telefone telefone) {
+            Endereco endereco, Cpf cpf, Telefone telefone, UUID autorId, String autorNome) {
         return new Pessoa(id, nome, observacao, especificacao, buscarNaResidencia, quantidadeAcompanhantes,
-            validada, dataArquivado, endereco, cpf, telefone);
+            validada, dataArquivado, endereco, cpf, telefone, autorId, autorNome);
     }
 
     public void editar(Nome nome, Observacao observacao, Especificacao especificacao,
@@ -124,4 +135,7 @@ public final class Pessoa {
     public Telefone getTelefone() {
         return telefone;
     }
+
+    public UUID getAutorId() { return autorId; }
+    public String getAutorNome() { return autorNome; }
 }

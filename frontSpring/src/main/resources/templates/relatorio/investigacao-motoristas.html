@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Análise de motoristas')}"></head>
+<body class="bg-light">
+<div class="d-flex min-vh-100">
+    <aside th:replace="~{layout/sidebar :: sidebar}"></aside>
+    <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
+        <div th:fragment="conteudo" class="app-page">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h1 class="h3 mb-0">Análise de motoristas</h1>
+                <a class="btn btn-outline-secondary" th:href="@{/relatorios}">Voltar aos relatórios</a>
+            </div>
+            <div class="alert alert-info">
+                A contagem corresponde a veículos abertos com o motorista atualmente atribuído, não a viagens confirmadas.
+                Alterações ou exclusões de veículos, passageiros e motoristas não preservam um histórico de auditoria.
+            </div>
+            <div th:if="${erro != null}" class="alert alert-danger" role="alert" th:text="${erro}"></div>
+            <section class="card shadow-sm mb-3"><div class="card-body">
+                <h2 class="h5">Filtros</h2>
+                <form method="get" th:action="@{/relatorios/investigacao/motoristas}" class="row g-2">
+                    <input th:if="${motoristaId != null}" type="hidden" name="motorista" th:value="${motoristaId}">
+                    <div class="col-sm-6 col-lg-3"><label class="form-label" for="nome">Nome do motorista</label><input id="nome" class="form-control" name="nome" th:value="${nome}"></div>
+                    <div class="col-sm-6 col-lg-3"><label class="form-label" for="categoria">Categoria</label><input id="categoria" class="form-control" name="categoria" th:value="${categoria}"></div>
+                    <div class="col-sm-6 col-lg-3"><label class="form-label" for="inicio">De</label><input id="inicio" class="form-control" type="date" name="inicio" th:value="${inicio}"></div>
+                    <div class="col-sm-6 col-lg-3"><label class="form-label" for="fim">Até</label><input id="fim" class="form-control" type="date" name="fim" th:value="${fim}"></div>
+                    <div class="col-sm-6 col-lg-3"><label class="form-label" for="cidade">Cidade</label><input id="cidade" class="form-control" name="cidade" th:value="${cidade}"></div>
+                    <div class="col-sm-6 col-lg-3"><label class="form-label" for="destino">Destino</label><input id="destino" class="form-control" name="destino" th:value="${destino}"></div>
+                    <div class="col-sm-6 col-lg-2 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Filtrar</button></div>
+                    <div class="col-sm-6 col-lg-2 d-flex align-items-end"><a class="btn btn-outline-secondary w-100" th:href="@{/relatorios/investigacao/motoristas}">Limpar</a></div>
+                </form>
+                <p th:if="${motoristaId != null}" class="mt-2 mb-0">Um motorista está selecionado. Use <strong>Limpar</strong> para consultar todos novamente.</p>
+                <p class="text-muted small mt-3 mb-0">Cidade e destino selecionam veículos com pelo menos um passageiro correspondente. As contagens e detalhes incluem todos os passageiros desses veículos. Veículos sem passageiros aparecem quando esses filtros estão vazios.</p>
+            </div></section>
+            <th:block th:if="${resultado != null}">
+                <section class="card shadow-sm mb-3"><div class="card-body">
+                    <h2 class="h5">Resumo do filtro</h2>
+                    <div class="row g-2">
+                        <div class="col-sm-4"><div class="border rounded p-3"><strong th:text="${resultado.resumo().motoristas()}"></strong> motoristas com veículos</div></div>
+                        <div class="col-sm-4"><div class="border rounded p-3"><strong th:text="${resultado.resumo().veiculos()}"></strong> veículos atribuídos</div></div>
+                        <div class="col-sm-4"><div class="border rounded p-3"><strong th:text="${resultado.resumo().passageiros()}"></strong> passageiros agendados, sem acompanhantes</div></div>
+                    </div>
+                    <h3 class="h6 mt-4">Por motorista</h3>
+                    <p th:if="${#lists.isEmpty(resultado.porMotorista().content())}">Nenhum veículo com motorista encontrado para os filtros.</p>
+                    <div class="table-responsive" th:unless="${#lists.isEmpty(resultado.porMotorista().content())}"><table class="table table-striped align-middle">
+                        <thead><tr><th>Motorista</th><th>Categoria atual</th><th>Veículos atribuídos</th><th>Passageiros</th><th><span class="visually-hidden">Ação</span></th></tr></thead>
+                        <tbody><tr th:each="m : ${resultado.porMotorista().content()}">
+                            <td th:text="${m.nome()}"></td><td th:text="${m.categoria()}"></td><td th:text="${m.veiculos()}"></td><td th:text="${m.passageiros()}"></td>
+                            <td><a class="btn btn-sm btn-outline-primary" th:href="@{/relatorios/investigacao/motoristas(motorista=${m.id()},inicio=${inicio},fim=${fim},cidade=${cidade},destino=${destino})}">Investigar</a></td>
+                        </tr></tbody>
+                    </table></div>
+                    <th:block th:replace="~{relatorio/fragmentos/paginacao-investigacao :: paginacao(${resultado.porMotorista()}, @{/relatorios/investigacao/motoristas(nome=${nome},motorista=${motoristaId},categoria=${categoria},inicio=${inicio},fim=${fim},cidade=${cidade},destino=${destino},pagina=${resultado.veiculos().number()},resumoPagina='')}, 'Páginas do resumo de motoristas')}"></th:block>
+                </div></section>
+                <section class="card shadow-sm"><div class="card-body">
+                    <h2 class="h5">Veículos e passageiros</h2>
+                    <p th:if="${#lists.isEmpty(resultado.veiculos().content())}">Nenhum veículo encontrado para os filtros.</p>
+                    <article th:each="v : ${resultado.veiculos().content()}" class="border rounded p-3 mb-3">
+                        <h3 class="h6">
+                            <span th:text="${#temporals.format(v.data(), 'dd/MM/yyyy')}"></span> —
+                            <span th:text="${v.motorista()}"></span> · <span th:text="${v.tipo()}"></span>
+                            <span th:if="${v.identificacao() != null}" th:text="${' — ' + v.identificacao()}"></span>
+                        </h3>
+                        <p class="text-muted small mb-2">
+                            Saída prevista:
+                            <span th:text="${v.saida() == null ? 'não informada' : #temporals.format(v.saida(), 'HH:mm')}"></span>
+                            <span th:if="${v.saida() != null and v.saidaCalculada()}">(calculada)</span>
+                            · Categoria atual: <span th:text="${v.categoria()}"></span>
+                        </p>
+                        <p th:if="${#lists.isEmpty(v.passageiros())}" class="text-muted mb-0">Nenhum passageiro atribuído a este veículo.</p>
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(v.passageiros())}"><table class="table table-sm mb-0">
+                            <thead><tr><th>Passageiro</th><th>Cidade</th><th>Destino</th><th>Chegada prevista</th><th>Acompanhantes</th></tr></thead>
+                            <tbody><tr th:each="p : ${v.passageiros()}"><td th:text="${p.nome()}"></td><td th:text="${p.cidade()}"></td><td th:text="${p.destino()}"></td><td th:text="${#temporals.format(p.chegada(), 'HH:mm')}"></td><td th:text="${p.acompanhantes()}"></td></tr></tbody>
+                        </table></div>
+                    </article>
+                    <th:block th:replace="~{relatorio/fragmentos/paginacao-investigacao :: paginacao(${resultado.veiculos()}, @{/relatorios/investigacao/motoristas(nome=${nome},motorista=${motoristaId},categoria=${categoria},inicio=${inicio},fim=${fim},cidade=${cidade},destino=${destino},resumoPagina=${resultado.porMotorista().number()},pagina='')}, 'Páginas de veículos')}"></th:block>
+                </div></section>
+            </th:block>
+        </div>
+    </main>
+</div>
+</body>
+</html>

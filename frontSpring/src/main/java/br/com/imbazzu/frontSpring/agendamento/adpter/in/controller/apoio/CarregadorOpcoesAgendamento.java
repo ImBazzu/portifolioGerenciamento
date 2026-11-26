@@ -48,6 +48,7 @@ public class CarregadorOpcoesAgendamento {
         model.addAttribute("tiposVeiculo", opcoes.tiposVeiculo());
         model.addAttribute("tiposVeiculoNaoCarro", opcoes.tiposNaoCarro());
         model.addAttribute("tiposVeiculoCarro", opcoes.tiposCarro());
+        model.addAttribute("carroQuatroLugares", opcoes.carroQuatroLugares().orElse(null));
         model.addAttribute("cidades", opcoes.cidades());
         model.addAttribute("destinos", opcoes.destinos());
     }

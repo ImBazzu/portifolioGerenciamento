@@ -27,6 +27,7 @@ import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendaDiaResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificacaoVeiculosResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
+import br.com.imbazzu.frontSpring.motorista.MotoristaApi;
 
 /** Renderiza as duas páginas de agendamento: /agendamentos e /agendamentos/carros. */
 @Controller
@@ -39,6 +40,7 @@ public class AgendamentoPaginaController {
     private final MontadorAgendaDia montadorAgenda;
     private final MontadorDetalhesPassageiros montadorDetalhes;
     private final MensagemErroApi mensagemErro;
+    private final MotoristaApi motoristas;
 
     public AgendamentoPaginaController(
             AgendamentoApi agendamentoApi,
@@ -46,22 +48,35 @@ public class AgendamentoPaginaController {
             CarregadorOpcoesAgendamento carregadorOpcoes,
             MontadorAgendaDia montadorAgenda,
             MontadorDetalhesPassageiros montadorDetalhes,
-            MensagemErroApi mensagemErro) {
+            MensagemErroApi mensagemErro,
+            MotoristaApi motoristas) {
         this.agendamentoApi = agendamentoApi;
         this.pessoas = pessoas;
         this.carregadorOpcoes = carregadorOpcoes;
         this.montadorAgenda = montadorAgenda;
         this.montadorDetalhes = montadorDetalhes;
         this.mensagemErro = mensagemErro;
+        this.motoristas = motoristas;
     }
 
     @GetMapping
-    public String inicio(@RequestParam(required = false) LocalDate data, Model model) {
+    public String inicio(@RequestParam(required = false) LocalDate data,
+            @RequestParam(required = false) UUID veiculoOrigem,
+            @RequestParam(defaultValue = "false") boolean origemCarros,
+            @RequestParam(defaultValue = "false") boolean novoPassageiro,
+            Model model) {
         var dia = data == null ? LocalDate.now() : data;
         var opcoes = carregadorOpcoes.carregar();
 
         model.addAttribute("pagina", "agendamentos");
         model.addAttribute("data", dia);
+        if (!model.containsAttribute("veiculoOrigem")) {
+            model.addAttribute("veiculoOrigem", veiculoOrigem);
+        }
+        if (!model.containsAttribute("origemCarros")) {
+            model.addAttribute("origemCarros", origemCarros);
+        }
+        model.addAttribute("novoPassageiro", novoPassageiro);
         carregadorOpcoes.adicionarAoModel(model, opcoes);
 
         restaurarSelecaoDoFormulario(model, opcoes);
@@ -112,6 +127,12 @@ public class AgendamentoPaginaController {
             Map<UUID, PassageiroDetalheView> detalhes) {
         model.addAttribute("agenda", agenda);
         model.addAttribute("detalhesPassageiros", detalhes);
+        try {
+            model.addAttribute("motoristasPorVeiculo", motoristas.atribuicoes(agenda.data()).stream()
+                    .collect(Collectors.toMap(MotoristaApi.Atribuicao::veiculoId, MotoristaApi.Atribuicao::nome)));
+        } catch (RestClientResponseException e) {
+            model.addAttribute("erroMotoristas", mensagemErro.de(e));
+        }
         montadorAgenda.dividirPorTipo(model, agenda, opcoes);
         if (model.getAttribute("verificacao") instanceof VerificacaoVeiculosResponseDto verificacao) {
             int acompanhantes = model.getAttribute("acompanhantesSelecionados") instanceof Number numero

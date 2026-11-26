@@ -7,9 +7,12 @@
                         </div>
                         <button class="btn btn-primary shadow-sm" type="button"
                                 data-bs-toggle="modal" data-bs-target="#abrirCarroModal"
-                                th:disabled="${#lists.isEmpty(tiposVeiculoCarro)}">
+                                th:disabled="${carroQuatroLugares == null}">
                             <i class="bi bi-plus-lg me-1"></i>Abrir carro
                         </button>
+                    </div>
+                    <div th:if="${carroQuatroLugares == null}" class="alert alert-warning mx-4">
+                        Cadastre ou reative o tipo Carro com 4 lugares para abrir um carro.
                     </div>
                 </section>
 
@@ -19,25 +22,14 @@
                         <div class="modal-content border-0 shadow">
                             <form method="post" th:action="@{/agendamentos/carros/veiculos}">
                                 <input type="hidden" name="data" th:value="${data}">
+                                <input th:if="${carroQuatroLugares != null}" type="hidden" name="idTipoVeiculo"
+                                       th:value="${carroQuatroLugares.id()}">
                                 <div class="modal-header bg-primary text-white">
                                     <h2 class="modal-title fs-5" id="abrirCarroTitulo">Abrir carro</h2>
                                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold" for="tipoCarro">Tipo de carro</label>
-                                        <select class="form-select" name="idTipoVeiculo" id="tipoCarro" required>
-                                            <option value="">Selecione</option>
-                                            <option th:each="tipo : ${tiposVeiculoCarro}" th:value="${tipo.id()}"
-                                                    th:text="${tipo.nome() + ' — ' + tipo.capacidade() + ' lugares'}">
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="form-label fw-semibold" for="identificacaoCarro">Identificação</label>
-                                        <input class="form-control" id="identificacaoCarro" name="identificacao"
-                                               maxlength="80" placeholder="Ex.: carro 01">
-                                    </div>
+                                    <p class="mb-0">Tipo: <strong>Carro — 4 lugares</strong></p>
                                 </div>
                                 <div class="modal-footer bg-light">
                                     <button class="btn btn-secondary btn-sm" type="button" data-bs-dismiss="modal">Cancelar</button>

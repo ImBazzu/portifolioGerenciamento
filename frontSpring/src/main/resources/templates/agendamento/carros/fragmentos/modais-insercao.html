@@ -27,7 +27,7 @@
                                                 th:data-busca="${detalhesPassageiros.get(p.idPessoa()).nome() + ' ' + detalhesPassageiros.get(p.idPessoa()).cidade() + ' ' + detalhesPassageiros.get(p.idPessoa()).destino()}">
                                                 <div>
                                                     <input class="form-check-input me-2" type="radio" name="idAgendamento"
-                                                        th:value="${p.id()}" required>
+                                                        th:value="${p.id()}" th:checked="${pessoaParaInsercao != null and p.idPessoa() == pessoaParaInsercao}" required>
                                                     <strong th:text="${detalhesPassageiros.get(p.idPessoa()).nome()}"></strong>
                                                     <span class="text-muted small"
                                                         th:text="${' · ' + detalhesPassageiros.get(p.idPessoa()).cidade() + ' · ' + p.acompanhantes() + ' acomp.'}"></span>
@@ -42,10 +42,15 @@
                                         <div class="text-muted small mt-2 d-none sem-resultados">
                                             Nenhum passageiro pendente encontrado.
                                         </div>
+                                        <a class="btn btn-sm btn-outline-primary mt-3"
+                                           th:href="@{/agendamentos(data=${data}, novoPassageiro=true, veiculoOrigem=${veiculo.id()}, origemCarros=true)}">
+                                            <i class="bi bi-person-plus me-1"></i>Cadastrar passageiro
+                                        </a>
                                     </div>
                                     <div class="modal-footer bg-light">
                                         <button class="btn btn-secondary btn-sm" type="button" data-bs-dismiss="modal">Cancelar</button>
-                                        <button class="btn btn-primary btn-sm" type="submit">Atribuir ao carro</button>
+                                        <button class="btn btn-primary btn-sm js-atribuir-passageiro" type="submit"
+                                                th:disabled="${#lists.isEmpty(agenda.passageirosPendentes())}">Atribuir ao carro</button>
                                     </div>
                                 </form>
                             </div>

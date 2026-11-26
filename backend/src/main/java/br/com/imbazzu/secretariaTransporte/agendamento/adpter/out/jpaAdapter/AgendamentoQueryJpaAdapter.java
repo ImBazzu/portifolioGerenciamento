@@ -178,7 +178,9 @@ public class AgendamentoQueryJpaAdapter implements AgendamentoQueryPorta {
                 projeccao.getHorarioChegada(),
                 projeccao.isBuscarNaResidencia(),
                 projeccao.getAcompanhantes(),
-                projeccao.getIdVeiculoAberto());
+                projeccao.getIdVeiculoAberto(),
+                projeccao.getAutorId(),
+                projeccao.getAutorNome());
     }
 
     private static VeiculoAberto paraVeiculoDomain(VeiculoAgendaProjecao projeccao) {

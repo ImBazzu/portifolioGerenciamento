@@ -25,7 +25,7 @@
 
     <!-- MENU DE NAVEGAÇÃO -->
     <nav class="nav nav-pills flex-column gap-1" id="sidebar-menu">
-        <a th:href="@{/relatorios}" class="nav-link text-white"
+        <a th:if="${podeGerenciarOperacao}" th:href="@{/relatorios}" class="nav-link text-white"
            th:classappend="${pagina == 'relatorios' ? 'active' : ''}">
             <i class="bi bi-graph-up"></i> Relatórios
         </a>
@@ -38,28 +38,40 @@
            th:classappend="${pagina == 'pessoas' ? 'active' : ''}">
             <i class="bi bi-person"></i> Pessoas
         </a>
+        <a th:if="${podeGerenciarMotoristas}" th:href="@{/motoristas}" class="nav-link text-white"
+           th:classappend="${pagina == 'motoristas' ? 'active' : ''}">
+            <i class="bi bi-person-badge"></i> Motoristas
+        </a>
         <a th:href="@{/especificacoes}" class="nav-link text-white"
            th:classappend="${pagina == 'especificacoes' ? 'active' : ''}">
             <i class="bi bi-card-checklist"></i> Especificações
         </a>
-        <a th:href="@{/prioridades}" class="nav-link text-white"
+        <a th:if="${podeGerenciarOperacao}" th:href="@{/prioridades}" class="nav-link text-white"
            th:classappend="${pagina == 'prioridades' ? 'active' : ''}">
             <i class="bi bi-flag"></i> Prioridades
         </a>
         
-        <a th:href="@{/localidade}" class="nav-link text-white"
+        <a th:if="${podeGerenciarOperacao}" th:href="@{/localidade}" class="nav-link text-white"
            th:classappend="${pagina == 'localidade' ? 'active' : ''}">
             <i class="bi bi-geo-alt"></i> Cidades e destinos
         </a>
 
-        <a th:href="@{/listas}" class="nav-link text-white"
+        <a th:if="${podeGerenciarOperacao}" th:href="@{/listas}" class="nav-link text-white"
            th:classappend="${pagina == 'listas' ? 'active' : ''}">
             <i class="bi bi-list-ul"></i> Listas
         </a>
 
-        <a th:href="@{/veiculo}" class="nav-link text-white"
+        <a th:if="${podeGerenciarOperacao}" th:href="@{/veiculo}" class="nav-link text-white"
            th:classappend="${pagina == 'veiculos' ? 'active' : ''}">
             <i class="bi bi-bus-front"></i> Tipos de veículos
+        </a>
+        <a th:if="${podeGerenciarUsuarios}" th:href="@{/usuarios}" class="nav-link text-white"
+           th:classappend="${pagina == 'usuarios' ? 'active' : ''}">
+            <i class="bi bi-people"></i> Usuários
+        </a>
+        <a th:href="@{/minha-conta}" class="nav-link text-white"
+           th:classappend="${pagina == 'minha-conta' ? 'active' : ''}">
+            <i class="bi bi-person-gear"></i> Minha conta
         </a>
     </nav>
 
@@ -72,7 +84,7 @@
                 <i class="bi bi-person-fill text-white"></i>
             </div>
             <div>
-                <div class="small fw-bold text-white lh-1">Administrador</div>
+                <div class="small fw-bold text-white lh-1" th:text="${nomeUsuarioAtual}"></div>
                 <div class="small text-white-50" style="font-size: 0.75rem;">Online</div>
             </div>
         </div>

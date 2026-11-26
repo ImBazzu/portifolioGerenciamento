@@ -52,13 +52,10 @@ import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.CompatibilidadeVeiculoAgendamento;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.AgendamentoQueryRepository;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.HistoricoViagemProjecao;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
-@Tag(name = "Agendamentos", description = "Abertura diária de veículos, agendamentos e separação de passageiros")
-@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/agendamentos")
 @RequiredArgsConstructor
@@ -101,7 +98,8 @@ public class AgendamentoController {
     @PostMapping("/dias/{data}/passageiros")
     public ResponseEntity<Void> criar(
             @PathVariable LocalDate data,
-            @RequestBody @Valid AgendamentoRequestDto request) {
+            @RequestBody @Valid AgendamentoRequestDto request,
+            @AuthenticationPrincipal UUID autorId) {
         var id = criarHandler.handler(new AgendamentoCommandCriar(
                 data,
                 request.idPessoa(),
@@ -112,7 +110,8 @@ public class AgendamentoController {
                 request.horarioChegada(),
                 request.buscarNaResidencia(),
                 request.acompanhantes(),
-                request.idVeiculo()));
+                request.idVeiculo(),
+                autorId));
         return ResponseEntity.created(URI.create("/api/agendamentos/%s".formatted(id))).build();
     }
 
@@ -246,7 +245,8 @@ public class AgendamentoController {
                 agendamento.buscarNaResidencia(),
                 agendamento.acompanhantes(),
                 agendamento.idVeiculoAberto(),
-                agendamento.idsVeiculosCompativeis());
+                agendamento.idsVeiculosCompativeis(),
+                agendamento.autorNome());
     }
 
     private AgendamentoResponseDto toResponse(Agendamento agendamento) {
@@ -263,7 +263,8 @@ public class AgendamentoController {
                 agendamento.isBuscarNaResidencia(),
                 agendamento.getAcompanhantes(),
                 agendamento.getIdVeiculoAberto(),
-                List.of());
+                List.of(),
+                agendamento.getAutorNome());
     }
 
 

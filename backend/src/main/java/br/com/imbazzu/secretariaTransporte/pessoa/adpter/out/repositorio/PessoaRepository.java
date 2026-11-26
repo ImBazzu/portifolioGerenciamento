@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -13,8 +14,10 @@ import br.com.imbazzu.secretariaTransporte.pessoa.adpter.out.entidadeJpa.PessoaJ
 
 public interface PessoaRepository extends JpaRepository<PessoaJpa, UUID> {
 
+    @EntityGraph(attributePaths = {"autor", "especificacao"})
     Optional<PessoaJpa> findByIdAndDataArquivadoIsNull(UUID id);
 
+    @EntityGraph(attributePaths = {"autor", "especificacao"})
     @Query("""
         SELECT p FROM PessoaJpa p
         WHERE p.dataArquivado IS NOT NULL AND p.id = :id
@@ -25,9 +28,11 @@ public interface PessoaRepository extends JpaRepository<PessoaJpa, UUID> {
 
     boolean existsByCpfAndIdNot(String cpf, UUID id);
 
+    @EntityGraph(attributePaths = {"autor", "especificacao"})
     @Query("""
             SELECT p FROM PessoaJpa p
             WHERE p.dataArquivado IS NULL
+              AND (:especificacaoId IS NULL OR p.especificacao.id = :especificacaoId)
               AND (
                     LOWER(p.nome) LIKE LOWER(CONCAT('%', :nome, '%'))
                     OR (:numero <> '' AND (p.cpf LIKE CONCAT('%', :numero, '%')
@@ -36,11 +41,14 @@ public interface PessoaRepository extends JpaRepository<PessoaJpa, UUID> {
             ORDER BY p.nome ASC
             """)
     Page<PessoaJpa> listarAtivas(
-            @Param("nome") String nome, @Param("numero") String numero, Pageable pageable);
+            @Param("nome") String nome, @Param("numero") String numero,
+            @Param("especificacaoId") UUID especificacaoId, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"autor", "especificacao"})
     @Query("""
             SELECT p FROM PessoaJpa p
             WHERE p.dataArquivado IS NOT NULL
+              AND (:especificacaoId IS NULL OR p.especificacao.id = :especificacaoId)
               AND (
                     LOWER(p.nome) LIKE LOWER(CONCAT('%', :nome, '%'))
                     OR (:numero <> '' AND (p.cpf LIKE CONCAT('%', :numero, '%')
@@ -49,5 +57,6 @@ public interface PessoaRepository extends JpaRepository<PessoaJpa, UUID> {
             ORDER BY p.nome ASC
             """)
     Page<PessoaJpa> listarArquivadas(
-            @Param("nome") String nome, @Param("numero") String numero, Pageable pageable);
+            @Param("nome") String nome, @Param("numero") String numero,
+            @Param("especificacaoId") UUID especificacaoId, Pageable pageable);
 }

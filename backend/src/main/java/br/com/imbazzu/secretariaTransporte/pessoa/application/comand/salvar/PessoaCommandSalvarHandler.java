@@ -51,7 +51,7 @@ public class PessoaCommandSalvarHandler {
         
         var pessoa = Pessoa.criar(new Nome(command.nome()), observacao, especificacao,
                 command.buscarNaResidencia(), 0,
-                endereco, cpf, new Telefone(command.telefone()));
+                endereco, cpf, new Telefone(command.telefone()), java.util.Objects.requireNonNull(command.autorId(), "Autor é obrigatório"));
         
      
         

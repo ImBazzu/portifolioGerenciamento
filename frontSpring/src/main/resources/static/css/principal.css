@@ -665,6 +665,10 @@ body.htmx-request #global-loader,
         touch-action: pan-x;
     }
 
+    .tabela-passageiros-responsiva {
+        touch-action: pan-x pan-y;
+    }
+
     .table th,
     .table td {
         padding: 0.65rem 0.75rem;
@@ -1028,6 +1032,11 @@ body.htmx-request #global-loader,
 .lista-panel-footer .btn {
     border: 1px solid #e1e8eb;
     color: #435a67;
+}
+
+.lista-panel-footer .btn.active {
+    color: #fff;
+    background-color: #6c757d;
 }
 
 .lista-panel-footer .btn:disabled {

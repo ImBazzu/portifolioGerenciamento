@@ -39,12 +39,8 @@ import br.com.imbazzu.secretariaTransporte.veiculo.application.query.listarVeicu
 import br.com.imbazzu.secretariaTransporte.veiculo.application.query.listarVeiculos.AgendamentoQueryListarVeiculosHandler;
 import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 import jakarta.validation.Valid;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "Veículos do agendamento", description = "Abertura e gerenciamento dos veículos disponíveis por dia")
-@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/agendamentos")
 @RequiredArgsConstructor
@@ -153,6 +149,7 @@ public class VeiculoController {
                 agendamento.isBuscarNaResidencia(),
                 agendamento.getAcompanhantes(),
                 agendamento.getIdVeiculoAberto(),
-                List.of());
+                List.of(),
+                agendamento.getAutorNome());
     }
 }

@@ -95,23 +95,7 @@
                 </div>
 
                 <footer class="lista-panel-footer" th:if="${totalPaginasArquivadas > 1}">
-                    <span th:text="'Página ' + (${paginaAtualArquivadas} + 1) + ' de ' + ${totalPaginasArquivadas}">Página 1 de 1</span>
-                    <nav aria-label="Paginação das listas arquivadas">
-                        <button type="button" class="btn btn-sm btn-light"
-                                th:disabled="${paginaAtualArquivadas == 0}"
-                                hx:get="@{/listas/listarArquivadas(busca=${busca}, pagina=${paginaAtualArquivadas - 1})}"
-                                hx-target="#modal"
-                                hx-swap="innerHTML">
-                            <i class="bi bi-arrow-left me-1"></i>Anterior
-                        </button>
-                        <button type="button" class="btn btn-sm btn-light"
-                                th:disabled="${paginaAtualArquivadas + 1 >= totalPaginasArquivadas}"
-                                hx:get="@{/listas/listarArquivadas(busca=${busca}, pagina=${paginaAtualArquivadas + 1})}"
-                                hx-target="#modal"
-                                hx-swap="innerHTML">
-                            Próxima<i class="bi bi-arrow-right ms-1"></i>
-                        </button>
-                    </nav>
+                    <th:block th:replace="~{fragmentos/paginacao :: paginacao(${paginaAtualArquivadas}, ${totalPaginasArquivadas}, @{/listas/listarArquivadas(busca=${busca},pagina='')}, '#modal', 'Páginas de listas arquivadas')}"></th:block>
                 </footer>
             </div>
         </section>

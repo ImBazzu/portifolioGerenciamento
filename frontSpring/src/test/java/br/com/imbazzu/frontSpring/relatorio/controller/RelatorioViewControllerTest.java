@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
@@ -20,6 +21,7 @@ class RelatorioViewControllerTest {
     private MockMvc mvc;
 
     @Test
+    @WithMockUser(roles = "GESTAO")
     void paginaRenderizaLayoutEFragmentosDeRelatorio() throws Exception {
         mvc.perform(get("/relatorios"))
                 .andExpect(status().isOk())
@@ -28,6 +30,8 @@ class RelatorioViewControllerTest {
                 .andExpect(content().string(containsString("id=\"btnToggleSidebar\"")))
                 .andExpect(content().string(containsString("id=\"filtroForm\"")))
                 .andExpect(content().string(containsString("id=\"formPdfPassageiros\"")))
+                .andExpect(content().string(containsString("/relatorios/investigacao/pessoas")))
+                .andExpect(content().string(containsString("/relatorios/investigacao/motoristas")))
                 .andExpect(content().string(containsString("id=\"chartAgendamentosPeriodo\"")))
                 .andExpect(content().string(containsString("id=\"tabelaPessoasFrequentes\"")))
                 .andExpect(content().string(containsString("id=\"metricsVeiculos\"")))

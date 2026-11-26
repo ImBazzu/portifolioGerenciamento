@@ -12,6 +12,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.SessionAuthPorta;
+import br.com.imbazzu.frontSpring.usuario.UsuarioApi;
+import org.springframework.http.HttpMethod;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
@@ -24,6 +27,11 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login","/error","/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/usuarios/**").hasRole("ADMIN")
+                        .requestMatchers("/motoristas/**").hasRole("MOTORISTA")
+                        .requestMatchers(HttpMethod.PATCH, "/pessoas/*/validar").hasRole("GESTAO")
+                        .requestMatchers("/relatorios/**", "/api/relatorios/**", "/prioridades/**",
+                                "/localidade/**", "/cidade/**", "/listas/**", "/veiculo/**").hasRole("GESTAO")
                         .anyRequest().authenticated())
                 .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -44,8 +52,15 @@ public class SecurityConfig {
 
     @Bean
     public SessionTokenAuthFilter sessionTokenAuthFilter(
-            SessionAuthPorta sessionAuth, ObjectMapper objectMapper) {
-        return new SessionTokenAuthFilter(sessionAuth, objectMapper);
+            SessionAuthPorta sessionAuth, UsuarioApi usuarios) {
+        return new SessionTokenAuthFilter(sessionAuth, usuarios);
+    }
+
+    @Bean
+    public FilterRegistrationBean<SessionTokenAuthFilter> registroFiltroSessao(SessionTokenAuthFilter filtro) {
+        var registro = new FilterRegistrationBean<>(filtro);
+        registro.setEnabled(false);
+        return registro;
     }
 
     private AuthenticationEntryPoint htmxAwareEntryPoint() {

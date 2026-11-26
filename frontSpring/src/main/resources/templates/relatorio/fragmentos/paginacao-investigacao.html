@@ -1,0 +1,16 @@
+<nav xmlns:th="http://www.thymeleaf.org" th:fragment="paginacao(pagina, url, rotulo)"
+     th:if="${pagina.totalPages() > 1}" th:attr="aria-label=${rotulo}"
+     class="d-flex flex-wrap align-items-center gap-1 mt-3"
+     th:with="atual=${pagina.number()}, total=${pagina.totalPages()}, centro=${atual < total ? atual : total - 1},
+              primeiro=${centro > 2 ? centro - 2 : 0}, ultimo=${centro + 2 < total ? centro + 2 : total - 1}">
+    <span class="text-muted small me-2" th:text="'Página ' + (${atual} + 1) + ' de ' + ${total}"></span>
+    <a class="btn btn-sm btn-outline-secondary" th:if="${atual > 0}" th:href="${url + (atual - 1)}">Anterior</a>
+    <a class="btn btn-sm btn-outline-secondary" th:if="${primeiro > 0}" th:href="${url + 0}">1</a>
+    <span th:if="${primeiro > 1}" aria-hidden="true">…</span>
+    <a th:each="i : ${#numbers.sequence(primeiro, ultimo)}" class="btn btn-sm btn-outline-secondary"
+       th:classappend="${i == atual ? 'active' : ''}" th:attr="aria-current=${i == atual ? 'page' : null}"
+       th:href="${url + i}" th:text="${i + 1}"></a>
+    <span th:if="${ultimo < total - 2}" aria-hidden="true">…</span>
+    <a class="btn btn-sm btn-outline-secondary" th:if="${ultimo < total - 1}" th:href="${url + (total - 1)}" th:text="${total}"></a>
+    <a class="btn btn-sm btn-outline-secondary" th:if="${atual + 1 < total}" th:href="${url + (atual + 1)}">Próxima</a>
+</nav>

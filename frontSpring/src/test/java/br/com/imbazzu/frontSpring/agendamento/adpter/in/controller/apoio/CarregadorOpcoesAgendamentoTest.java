@@ -1,6 +1,7 @@
 package br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -18,9 +19,23 @@ import br.com.imbazzu.frontSpring.lista.core.porta.in.ListaApplicationPorta;
 import br.com.imbazzu.frontSpring.localidade.core.dto.CidadeArquivadoResponseDto;
 import br.com.imbazzu.frontSpring.localidade.core.dto.DestinoResponseDto;
 import br.com.imbazzu.frontSpring.localidade.core.porta.in.LocalidadeApplicationPorta;
+import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
 
 class CarregadorOpcoesAgendamentoTest {
+    @Test
+    void selecionaSomenteOCarroPadraoDeQuatroLugares() {
+        var carro = new TipoVeiculoResponseDto(UUID.randomUUID(), "Carro", 4);
+        var opcoes = new OpcoesAgendamento(List.of(), List.of(
+                new TipoVeiculoResponseDto(UUID.randomUUID(), "Carro especial", 4),
+                new TipoVeiculoResponseDto(UUID.randomUUID(), "Carro", 5),
+                carro), List.of(), List.of());
+
+        assertEquals(carro, opcoes.carroQuatroLugares().orElseThrow());
+        assertTrue(new OpcoesAgendamento(List.of(), List.of(), List.of(), List.of())
+                .carroQuatroLugares().isEmpty());
+    }
+
     @Test
     void encontraDestinoArquivadoEmCidadeArquivada() {
         var localidades = mock(LocalidadeApplicationPorta.class);

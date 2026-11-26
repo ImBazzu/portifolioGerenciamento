@@ -23,11 +23,13 @@ public final class Agendamento {
     private final boolean buscarNaResidencia;
     private final int acompanhantes;
     private UUID idVeiculoAberto;
+    private final UUID autorId;
+    private final String autorNome;
 
     private Agendamento(UUID id, LocalDate data, UUID idPessoa, UUID idLista, UUID idRegraCadastro,
             UUID idTipoVeiculo, UUID idDestino, Duration tempoViagem, Duration toleranciaSeparacao,
             LocalTime horarioChegada,
-            boolean buscarNaResidencia, int acompanhantes, UUID idVeiculoAberto) {
+            boolean buscarNaResidencia, int acompanhantes, UUID idVeiculoAberto, UUID autorId, String autorNome) {
         this.id = Objects.requireNonNull(id, "ID do agendamento é obrigatório");
         this.data = Objects.requireNonNull(data, "Data do agendamento é obrigatória");
         this.idPessoa = Objects.requireNonNull(idPessoa, "Pessoa é obrigatória");
@@ -47,24 +49,41 @@ public final class Agendamento {
         this.buscarNaResidencia = buscarNaResidencia;
         this.acompanhantes = acompanhantes;
         this.idVeiculoAberto = idVeiculoAberto;
+        this.autorId = autorId;
+        this.autorNome = autorNome;
     }
 
     public static Agendamento criar(LocalDate data, UUID idPessoa, UUID idLista, UUID idRegraCadastro,
             UUID idTipoVeiculo, UUID idDestino, Duration tempoViagem, Duration toleranciaSeparacao,
             LocalTime horarioChegada,
             boolean buscarNaResidencia, int acompanhantes) {
+        return criar(data, idPessoa, idLista, idRegraCadastro, idTipoVeiculo, idDestino, tempoViagem,
+                toleranciaSeparacao, horarioChegada, buscarNaResidencia, acompanhantes, null);
+    }
+
+    public static Agendamento criar(LocalDate data, UUID idPessoa, UUID idLista, UUID idRegraCadastro,
+            UUID idTipoVeiculo, UUID idDestino, Duration tempoViagem, Duration toleranciaSeparacao,
+            LocalTime horarioChegada, boolean buscarNaResidencia, int acompanhantes, UUID autorId) {
         return new Agendamento(UUID.randomUUID(), data, idPessoa, idLista, idRegraCadastro,
                 idTipoVeiculo, idDestino, tempoViagem, toleranciaSeparacao, horarioChegada,
-                buscarNaResidencia, acompanhantes, null);
+                buscarNaResidencia, acompanhantes, null, autorId, null);
     }
 
     public static Agendamento recriar(UUID id, LocalDate data, UUID idPessoa, UUID idLista,
             UUID idRegraCadastro, UUID idTipoVeiculo, UUID idDestino, Duration tempoViagem,
             Duration toleranciaSeparacao, LocalTime horarioChegada,
             boolean buscarNaResidencia, int acompanhantes, UUID idVeiculoAberto) {
+        return recriar(id, data, idPessoa, idLista, idRegraCadastro, idTipoVeiculo, idDestino, tempoViagem,
+                toleranciaSeparacao, horarioChegada, buscarNaResidencia, acompanhantes, idVeiculoAberto, null, null);
+    }
+
+    public static Agendamento recriar(UUID id, LocalDate data, UUID idPessoa, UUID idLista,
+            UUID idRegraCadastro, UUID idTipoVeiculo, UUID idDestino, Duration tempoViagem,
+            Duration toleranciaSeparacao, LocalTime horarioChegada, boolean buscarNaResidencia,
+            int acompanhantes, UUID idVeiculoAberto, UUID autorId, String autorNome) {
         return new Agendamento(id, data, idPessoa, idLista, idRegraCadastro,
                 idTipoVeiculo, idDestino, tempoViagem, toleranciaSeparacao, horarioChegada,
-                buscarNaResidencia, acompanhantes, idVeiculoAberto);
+                buscarNaResidencia, acompanhantes, idVeiculoAberto, autorId, autorNome);
     }
 
     public void atribuirVeiculo(UUID idVeiculoAberto) {
@@ -104,4 +123,6 @@ public final class Agendamento {
     public boolean isBuscarNaResidencia() { return buscarNaResidencia; }
     public int getAcompanhantes() { return acompanhantes; }
     public UUID getIdVeiculoAberto() { return idVeiculoAberto; }
+    public UUID getAutorId() { return autorId; }
+    public String getAutorNome() { return autorNome; }
 }

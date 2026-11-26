@@ -51,22 +51,6 @@
                 </tbody>
             </table>
         </div>
-        <div class="d-flex justify-content-between align-items-center pt-3"
-             th:if="${totalPaginas > 1}">
-            <span class="text-muted small"
-                  th:text="'Página ' + (${paginaAtual} + 1) + ' de ' + ${totalPaginas}">Página 1 de 1</span>
-            <ul class="pagination pagination-sm mb-0">
-                <li class="page-item" th:classappend="${paginaAtual == 0} ? 'disabled'">
-                    <button class="page-link"
-                            hx:get="@{/localidade/{id}/destinos/arquivados(id=${idCidade}, busca=${busca}, pagina=${paginaAtual - 1})}"
-                            hx-target="#destinosContainer" hx-swap="innerHTML">Anterior</button>
-                </li>
-                <li class="page-item" th:classappend="${paginaAtual + 1 >= totalPaginas} ? 'disabled'">
-                    <button class="page-link"
-                            hx:get="@{/localidade/{id}/destinos/arquivados(id=${idCidade}, busca=${busca}, pagina=${paginaAtual + 1})}"
-                            hx-target="#destinosContainer" hx-swap="innerHTML">Próxima</button>
-                </li>
-            </ul>
-        </div>
+        <th:block th:replace="~{fragmentos/paginacao :: paginacao(${paginaAtual}, ${totalPaginas}, @{/localidade/{id}/destinos/arquivados(id=${idCidade},busca=${busca},pagina='')}, '#destinosContainer', 'Páginas de destinos arquivados')}"></th:block>
     </div>
 </th:block>

@@ -92,24 +92,8 @@
             </div>
 
             <!-- Paginação no Footer -->
-            <div class="border-top pt-3 mt-3 d-flex justify-content-between align-items-center" th:if="${totalPaginasArquivados > 1}">
-                <span class="text-muted small"
-                      th:text="'Página ' + (${paginaAtualArquivados} + 1) + ' de ' + ${totalPaginasArquivados}">Página 1 de 1</span>
-
-                <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item" th:classappend="${paginaAtualArquivados == 0} ? 'disabled'">
-                        <button class="page-link"
-                                hx:get="@{/veiculo/listarArquivado(busca=${busca}, pagina=${paginaAtualArquivados - 1})}"
-                                hx-target="#modal"
-                                hx-swap="innerHTML">Anterior</button>
-                    </li>
-                    <li class="page-item" th:classappend="${paginaAtualArquivados + 1 >= totalPaginasArquivados} ? 'disabled'">
-                        <button class="page-link"
-                                hx:get="@{/veiculo/listarArquivado(busca=${busca}, pagina=${paginaAtualArquivados + 1})}"
-                                hx-target="#modal"
-                                hx-swap="innerHTML">Próxima</button>
-                    </li>
-                </ul>
+            <div class="border-top pt-3 mt-3" th:if="${totalPaginasArquivados > 1}">
+                <th:block th:replace="~{fragmentos/paginacao :: paginacao(${paginaAtualArquivados}, ${totalPaginasArquivados}, @{/veiculo/listarArquivado(busca=${busca},pagina='')}, '#modal', 'Páginas de tipos de veículos arquivados')}"></th:block>
             </div>
 
         </div>

@@ -45,13 +45,9 @@ import br.com.imbazzu.secretariaTransporte.lista.application.query.listarArquiva
 import br.com.imbazzu.secretariaTransporte.lista.application.query.listarArquivado.ListaQueryListarArquivadoHandler;
 import br.com.imbazzu.secretariaTransporte.lista.application.query.listarAtivos.ListaQueryListarAtivos;
 import br.com.imbazzu.secretariaTransporte.lista.application.query.listarAtivos.ListaQueryListarAtivosHandler;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "Listas", description = "Cadastro e gerenciamento de tipos de lista e suas regras")
-@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("lista")
 @RequiredArgsConstructor

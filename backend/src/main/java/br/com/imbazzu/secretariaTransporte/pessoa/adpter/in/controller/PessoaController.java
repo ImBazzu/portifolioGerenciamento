@@ -45,13 +45,10 @@ import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.
 import br.com.imbazzu.secretariaTransporte.pessoa.core.domain.Pessoa;
 import br.com.imbazzu.secretariaTransporte.prioridade.PrioridadeRepository;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.EntidadeNaoEncontradoException;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
-@Tag(name = "Pessoas", description = "Cadastro e gerenciamento de pessoas")
-@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("pessoa")
 @RequiredArgsConstructor
@@ -72,9 +69,9 @@ public class PessoaController {
     private final AgendamentoQueryListarHistoricoPessoaHandler historicoHandler;
 
     @PostMapping
-    public ResponseEntity<Void> criar(@RequestBody @Valid PessoaRequestDto request) {
+    public ResponseEntity<Void> criar(@RequestBody @Valid PessoaRequestDto request, @AuthenticationPrincipal UUID autorId) {
         var id = salvarHandler.handler(new PessoaCommandSalvar(request.nome(), request.observacao(), request.especificacaoId(),
-                request.endereco(), request.cpf(), request.telefone(), request.buscarNaResidencia()));
+                request.endereco(), request.cpf(), request.telefone(), request.buscarNaResidencia(), autorId));
                 
         return ResponseEntity.created(URI.create("/api/pessoa/%s".formatted(id))).build();
     }
@@ -93,18 +90,20 @@ public class PessoaController {
     @GetMapping("/listar")
     public ResponseEntity<ResultadoPaginado<PessoaResponseDto>> listarAtivos(
             @RequestParam(defaultValue = "") String nome,
+            @RequestParam(required = false) UUID especificacaoId,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamanho) {
-        var resultado = listarHandler.handler(new PessoaQueryListar(nome, pagina, tamanho));
+        var resultado = listarHandler.handler(new PessoaQueryListar(nome, especificacaoId, pagina, tamanho));
         return ResponseEntity.ok(resultado.map(this::toResponse));
     }
 
     @GetMapping("/listar/arquivado")
     public ResponseEntity<ResultadoPaginado<PessoaResponseDto>> listarArquivados(
             @RequestParam(defaultValue = "") String nome,
+            @RequestParam(required = false) UUID especificacaoId,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamanho) {
-        var resultado = listarArquivadoHandler.handler(new PessoaQueryListarArquivado(nome, pagina, tamanho));
+        var resultado = listarArquivadoHandler.handler(new PessoaQueryListarArquivado(nome, especificacaoId, pagina, tamanho));
         return ResponseEntity.ok(resultado.map(this::toResponse));
     }
 
@@ -184,7 +183,8 @@ public class PessoaController {
                 pessoa.getDataArquivado(),
                 pessoa.getEndereco() == null ? null : pessoa.getEndereco().valor(),
                 pessoa.getCpf() == null ? null : pessoa.getCpf().valor(),
-                pessoa.getTelefone().valor());
+                pessoa.getTelefone().valor(),
+                pessoa.getAutorNome());
     }
 
     private PessoaDetalhesResponseDto toResponseDetalhes(Pessoa pessoa) {
@@ -205,6 +205,7 @@ public class PessoaController {
                 pessoa.getDataArquivado() == null ? null : pessoa.getDataArquivado().toString(),
                 pessoa.getEndereco() == null ? null : pessoa.getEndereco().valor(),
                 pessoa.getCpf() == null ? null : pessoa.getCpf().valor(),
-                pessoa.getTelefone().valor());
+                pessoa.getTelefone().valor(),
+                pessoa.getAutorNome());
     }
 }

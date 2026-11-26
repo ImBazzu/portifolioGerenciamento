@@ -1,4 +1,6 @@
-<th:block th:fragment="tabelaHistoricoViagens" xmlns:hx="http://www.w3.org/1999/xhtml">
+<th:block th:fragment="tabelaHistoricoViagens" xmlns:hx="http://www.w3.org/1999/xhtml"
+          th:with="containerId=${contextoAgendamento ? 'historico-agendamento-container' : 'historico-viagens-container'},
+                   buscaId=${contextoAgendamento ? 'destinoBuscaAgendamento' : 'destinoBusca'}">
     <div class="mt-4">
         <h5 class="mb-3 fw-bold">Histórico de Viagens</h5>
         
@@ -7,12 +9,10 @@
             <input 
                 type="text" 
                 class="form-control" 
-                id="destinoBusca"
+                th:id="${buscaId}"
                 placeholder="Buscar por destino..."
-                hx:get="@{/pessoas/{id}/historico-viagens/buscar(id=${pessoaId})}"
                 hx-trigger="keyup changed delay:500ms"
-                hx-target="#historico-viagens-container"
-                hx-sync="#historico-viagens-container:replace"
+                th:attr="hx-get=${contextoAgendamento} ? @{/pessoas/{id}/historico-viagens/buscar(id=${pessoaId}, contextoAgendamento=true)} : @{/pessoas/{id}/historico-viagens/buscar(id=${pessoaId})}, hx-target='#' + ${containerId}, hx-sync='#' + ${containerId} + ':replace'"
                 hx-swap="innerHTML"
                 th:value="${destinoBusca}"
                 name="destinoBusca">
@@ -64,10 +64,7 @@
                             th:if="${paginaAtual > 0}"
                             class="page-link" 
                             href="#"
-                            hx:get="@{/pessoas/{id}/historico-viagens/buscar(id=${pessoaId}, pagina=${paginaAtual - 1})}"
-                            hx-include="#destinoBusca"
-                            hx-target="#historico-viagens-container"
-                            hx-sync="#historico-viagens-container:replace"
+                            th:attr="hx-get=${contextoAgendamento} ? @{/pessoas/{id}/historico-viagens/buscar(id=${pessoaId}, pagina=${paginaAtual - 1}, contextoAgendamento=true)} : @{/pessoas/{id}/historico-viagens/buscar(id=${pessoaId}, pagina=${paginaAtual - 1})}, hx-include='#' + ${buscaId}, hx-target='#' + ${containerId}, hx-sync='#' + ${containerId} + ':replace'"
                             hx-swap="innerHTML">
                             Anterior
                         </a>
@@ -81,10 +78,7 @@
                                 class="page-link" 
                                 href="#"
                                 th:text="${i + 1}"
-                                hx:get="@{/pessoas/{id}/historico-viagens/buscar(id=${pessoaId}, pagina=${i})}"
-                                hx-include="#destinoBusca"
-                                hx-target="#historico-viagens-container"
-                                hx-sync="#historico-viagens-container:replace"
+                                th:attr="hx-get=${contextoAgendamento} ? @{/pessoas/{id}/historico-viagens/buscar(id=${pessoaId}, pagina=${i}, contextoAgendamento=true)} : @{/pessoas/{id}/historico-viagens/buscar(id=${pessoaId}, pagina=${i})}, hx-include='#' + ${buscaId}, hx-target='#' + ${containerId}, hx-sync='#' + ${containerId} + ':replace'"
                                 hx-swap="innerHTML">
                             </a>
                         </li>
@@ -96,10 +90,7 @@
                             th:if="${paginaAtual < totalPaginas - 1}"
                             class="page-link" 
                             href="#"
-                            hx:get="@{/pessoas/{id}/historico-viagens/buscar(id=${pessoaId}, pagina=${paginaAtual + 1})}"
-                            hx-include="#destinoBusca"
-                            hx-target="#historico-viagens-container"
-                            hx-sync="#historico-viagens-container:replace"
+                            th:attr="hx-get=${contextoAgendamento} ? @{/pessoas/{id}/historico-viagens/buscar(id=${pessoaId}, pagina=${paginaAtual + 1}, contextoAgendamento=true)} : @{/pessoas/{id}/historico-viagens/buscar(id=${pessoaId}, pagina=${paginaAtual + 1})}, hx-include='#' + ${buscaId}, hx-target='#' + ${containerId}, hx-sync='#' + ${containerId} + ':replace'"
                             hx-swap="innerHTML">
                             Próxima
                         </a>

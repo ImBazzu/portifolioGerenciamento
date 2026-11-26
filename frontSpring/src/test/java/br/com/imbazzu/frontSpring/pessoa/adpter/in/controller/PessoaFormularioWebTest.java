@@ -16,6 +16,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
@@ -28,12 +30,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.mock.web.MockHttpSession;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.HistoricoViagemResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendaDiaResponseDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AbrirVeiculoRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoAbertoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoPermitidoDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificacaoVeiculosResponseDto;
@@ -59,6 +65,7 @@ import br.com.imbazzu.frontSpring.localidade.core.dto.CidadeResponseDto;
 import br.com.imbazzu.frontSpring.localidade.core.dto.DestinoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
+import br.com.imbazzu.frontSpring.motorista.MotoristaApi;
 import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.parser.PdfTextExtractor;
 
@@ -83,6 +90,9 @@ class PessoaFormularioWebTest {
 
     @MockitoBean
     private AgendamentoApi agendamentos;
+
+    @MockitoBean
+    private MotoristaApi motoristas;
 
     @MockitoBean
     private ListaApplicationPorta listas;
@@ -292,11 +302,14 @@ class PessoaFormularioWebTest {
                         .param("idPessoa", PESSOA_ID.toString())
                         .param("idLista", listaId.toString())
                         .param("idDestino", destinoId.toString())
+                        .param("veiculoOrigem", idVeiculo.toString())
                         .param("horarioChegada", "09:00")
                         .param("acompanhantes", "1"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("VAN-01")))
                 .andExpect(content().string(containsString("Agendar neste veículo")))
+                .andExpect(content().string(containsString("Veículo selecionado")))
+                .andExpect(content().string(containsString("name=\"veiculoOrigem\" value=\"" + idVeiculo + "\"")))
                 .andExpect(content().string(containsString("1 acompanhante(s) selecionado(s), máximo de 2")))
                 .andExpect(content().string(containsString("name=\"acompanhantes\" value=\"1\"")))
                 .andExpect(content().string(containsString("hx-trigger=\"change, submit\"")))
@@ -330,7 +343,7 @@ class PessoaFormularioWebTest {
                 "Alta", PRIORIDADE_ID, 2, true, 2, false, null, "", "52998224725", "11987654321");
         var passageiro = new AgendamentoResponseDto(idAgendamento, data, PESSOA_ID, UUID.randomUUID(),
                 UUID.randomUUID(), idTipo, idDestino, LocalTime.of(9, 0), LocalTime.of(8, 0),
-                true, 1, null, List.of());
+                true, 1, null, List.of(), "Responsável pelo agendamento");
         when(pessoas.buscar(PESSOA_ID)).thenReturn(pessoa);
         when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(), List.of(passageiro)));
         when(listas.listarAtivas("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
@@ -349,6 +362,16 @@ class PessoaFormularioWebTest {
                     .andExpect(content().string(matchesPattern("(?s).*id=\"editar-acompanhantes-"
                             + idAgendamento + "-1\"\\s+value=\"1\"\\s+required\\s+checked=\"checked\".*")));
         }
+        mvc.perform(get("/agendamentos").param("data", data.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Responsável pelo agendamento")));
+        var antigo = new AgendamentoResponseDto(idAgendamento, data, PESSOA_ID, passageiro.idLista(),
+                passageiro.idRegraCadastro(), idTipo, idDestino, LocalTime.of(9, 0), LocalTime.of(8, 0),
+                true, 1, null, List.of());
+        when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(), List.of(antigo)));
+        mvc.perform(get("/agendamentos").param("data", data.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Autor desconhecido")));
 
         when(pessoas.buscar(PESSOA_ID)).thenReturn(new PessoaResponseDto(PESSOA_ID, "Ana Souza", "",
                 ESPECIFICACAO_ID, "Padrão", "Alta", PRIORIDADE_ID, 0, true, 2, false,
@@ -365,6 +388,22 @@ class PessoaFormularioWebTest {
                 .andExpect(status().is3xxRedirection());
         verify(agendamentos).atualizar(idAgendamento, new AgendamentoAtualizarRequestDto(
                 idTipo, idDestino, LocalTime.of(9, 0), true, 2, null));
+    }
+
+    @Test
+    void detalhesMostramAutorConhecidoOuDesconhecido() throws Exception {
+        when(pessoas.buscar(PESSOA_ID)).thenReturn(new PessoaResponseDto(PESSOA_ID, "Ana Souza", "",
+                ESPECIFICACAO_ID, "Padrão", "Alta", PRIORIDADE_ID, 2, false, 0, false, null,
+                "", null, "11987654321", "Responsável pela pessoa"));
+        mvc.perform(get("/pessoas/{id}/detalhes", PESSOA_ID).header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Responsável pela pessoa")));
+        when(pessoas.buscar(PESSOA_ID)).thenReturn(new PessoaResponseDto(PESSOA_ID, "Ana Souza", "",
+                ESPECIFICACAO_ID, "Padrão", "Alta", PRIORIDADE_ID, 2, false, 0, false, null,
+                "", null, "11987654321"));
+        mvc.perform(get("/pessoas/{id}/detalhes", PESSOA_ID).header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Autor desconhecido")));
     }
 
     @Test
@@ -441,6 +480,7 @@ class PessoaFormularioWebTest {
 
     @Test
     void listaPessoasComPrioridadeDaEspecificacao() throws Exception {
+        prepararEspecificacoesFiltro();
         var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
                 "Alta", PRIORIDADE_ID, 2, true, 2, false, null, "", "52998224725", "11987654321");
         when(pessoas.listar("", false, 0))
@@ -466,6 +506,7 @@ class PessoaFormularioWebTest {
 
     @Test
     void apresentaDetalhesEListaArquivada() throws Exception {
+        prepararEspecificacoesFiltro();
         var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
                 "Alta", PRIORIDADE_ID, 2, true, 2, false, LocalDate.of(2026, 1, 15), "", "52998224725", "11987654321");
         when(pessoas.listar("Ana", true, 1))
@@ -478,7 +519,8 @@ class PessoaFormularioWebTest {
                 .andExpect(content().string(containsString("15/01/2026")))
                 .andExpect(content().string(containsString("aria-labelledby=\"pessoasArquivadasTitulo\"")))
                 .andExpect(content().string(containsString("atualizar-pessoas from:body")))
-                .andExpect(content().string(containsString("nome=Ana&amp;arquivadas=true&amp;pagina=2")))
+                .andExpect(content().string(containsString("nome=Ana&amp;arquivadas=true")))
+                .andExpect(content().string(containsString("pagina=2")))
                 .andExpect(content().string(containsString("hx-target=\"#modal\"")))
                 .andExpect(content().string(containsString("/pessoas/" + PESSOA_ID + "/desarquivar")));
         mvc.perform(get("/pessoas/{id}/detalhes/arquivado", PESSOA_ID)
@@ -491,6 +533,185 @@ class PessoaFormularioWebTest {
                 .andExpect(status().isOk())
                 .andExpect(header().string("HX-Trigger-After-Settle", "atualizar-pessoas"));
         verify(pessoas).desarquivar(PESSOA_ID);
+    }
+
+    private void prepararEspecificacoesFiltro() {
+        when(especificacoes.listar("", false, 0)).thenReturn(new ResultadoPaginado<>(
+                List.of(new EspecificacaoResponseDto(ESPECIFICACAO_ID, "Padrão", PRIORIDADE_ID, "Alta", "", null)),
+                0, 10, 1, 1));
+        when(especificacoes.listar("", true, 0))
+                .thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+    }
+
+    @Test
+    void filtraPessoasPorEspecificacaoESaltaPaginas() throws Exception {
+        prepararEspecificacoesFiltro();
+        when(pessoas.listarPorEspecificacao("Ana", ESPECIFICACAO_ID, false, 3))
+                .thenReturn(new ResultadoPaginado<>(List.of(), 3, 10, 90, 9));
+
+        mvc.perform(get("/pessoas/listar").header("HX-Request", "true")
+                        .param("nome", "Ana").param("especificacaoId", ESPECIFICACAO_ID.toString())
+                        .param("pagina", "3"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("id=\"filtroEspecificacaoPessoa\"")))
+                .andExpect(content().string(containsString("especificacaoId=" + ESPECIFICACAO_ID)))
+                .andExpect(content().string(containsString("pagina=0")))
+                .andExpect(content().string(containsString("pagina=8")))
+                .andExpect(content().string(containsString("aria-current=\"page\"")));
+    }
+
+    @Test
+    void preservaFiltroAoVoltarDosDetalhesDePessoaArquivada() throws Exception {
+        var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
+                "Alta", PRIORIDADE_ID, 2, true, 2, false, LocalDate.of(2026, 1, 15), "", "52998224725", "11987654321");
+        when(pessoas.buscarArquivado(PESSOA_ID)).thenReturn(pessoa);
+
+        mvc.perform(get("/pessoas/{id}/detalhes/arquivado", PESSOA_ID)
+                        .param("nome", "Ana").param("pagina", "1")
+                        .param("especificacaoId", ESPECIFICACAO_ID.toString()).header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("especificacaoId=" + ESPECIFICACAO_ID)))
+                .andExpect(content().string(containsString("pagina=1")));
+    }
+
+    @Test
+    @WithMockUser(roles = {"AGENDAMENTO", "MOTORISTA"})
+    void paginaDeCarrosOfereceCadastroEAbreInsercaoAposCriacao() throws Exception {
+        var data = LocalDate.of(2026, 11, 23);
+        var idTipo = UUID.randomUUID();
+        var idVeiculo = UUID.randomUUID();
+        var veiculo = new VeiculoAbertoResponseDto(idVeiculo, data, idTipo, "Carro", 4,
+                "Carro 01", null, 0, List.of());
+        var semIdentificacao = new VeiculoAbertoResponseDto(UUID.randomUUID(), data, idTipo, "Carro", 4,
+                null, null, 0, List.of());
+        when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(veiculo, semIdentificacao), List.of()));
+        when(listas.listarAtivas("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(tiposVeiculo.listar("", 0)).thenReturn(new ResultadoPaginado<>(
+                List.of(new TipoVeiculoResponseDto(idTipo, "Carro", 4)), 0, 10, 1, 1));
+        when(localidades.listarCidades("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+
+        mvc.perform(get("/agendamentos/carros").param("data", data.toString())
+                        .flashAttr("veiculoParaInsercao", idVeiculo))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("data-modal-id=\"atribuirPassageiroCarroModal-" + idVeiculo + "\"")))
+                .andExpect(content().string(containsString("Cadastrar passageiro")))
+                .andExpect(content().string(containsString("veiculoOrigem=" + idVeiculo)))
+                .andExpect(content().string(containsString("origemCarros=true")))
+                .andExpect(content().string(containsString("Sem motorista")))
+                .andExpect(content().string(containsString("border-warning border-2")))
+                .andExpect(content().string(containsString("Carro 01")))
+                .andExpect(content().string(not(containsString("Sem identificação"))))
+                .andExpect(content().string(not(containsString("id=\"identificacaoCarro\""))))
+                .andExpect(content().string(containsString("/motoristas/selecionar/" + idVeiculo)));
+
+        when(motoristas.atribuicoes(data)).thenReturn(List.of(
+                new MotoristaApi.Atribuicao(idVeiculo, UUID.randomUUID(), "Motorista Ana")));
+        mvc.perform(get("/agendamentos/carros").param("data", data.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Motorista: Motorista Ana")))
+                .andExpect(content().string(containsString("border-success border-2")));
+
+        mvc.perform(get("/agendamentos").param("data", data.toString())
+                        .param("novoPassageiro", "true").param("veiculoOrigem", idVeiculo.toString())
+                        .param("origemCarros", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("data-abrir-ao-carregar=\"true\"")))
+                .andExpect(content().string(containsString("name=\"veiculoOrigem\" value=\"" + idVeiculo + "\"")))
+                .andExpect(content().string(containsString("Buscar histórico do passageiro")));
+    }
+
+    @Test
+    @WithMockUser(roles = {"AGENDAMENTO", "MOTORISTA"})
+    void paginaDeVeiculosDistingueMotoristasAtribuidosEIndisponibilidadeDaConsulta() throws Exception {
+        var data = LocalDate.of(2026, 11, 23);
+        var tipo = UUID.randomUUID();
+        var primeiro = UUID.randomUUID();
+        var segundo = UUID.randomUUID();
+        var van1 = new VeiculoAbertoResponseDto(primeiro, data, tipo, "Van", 8, "VAN-01", null, 0, List.of());
+        var van2 = new VeiculoAbertoResponseDto(segundo, data, tipo, "Van", 8, "VAN-02", null, 0, List.of());
+        when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(van1, van2), List.of()));
+        when(listas.listarAtivas("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(tiposVeiculo.listar("", 0)).thenReturn(new ResultadoPaginado<>(
+                List.of(new TipoVeiculoResponseDto(tipo, "Van", 8)), 0, 10, 1, 1));
+        when(localidades.listarCidades("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(motoristas.atribuicoes(data)).thenReturn(List.of(
+                new MotoristaApi.Atribuicao(primeiro, UUID.randomUUID(), "Ana")));
+        mvc.perform(get("/agendamentos").param("data", data.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Motorista: Ana")))
+                .andExpect(content().string(containsString("Sem motorista")))
+                .andExpect(content().string(containsString("border-warning border-2")))
+                .andExpect(content().string(containsString("border-success border-2")))
+                .andExpect(content().string(containsString("/motoristas/selecionar/" + segundo)));
+        when(motoristas.atribuicoes(data)).thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+        mvc.perform(get("/agendamentos").param("data", data.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Não foi possível carregar motoristas")))
+                .andExpect(content().string(containsString("Motorista indisponível")))
+                .andExpect(content().string(not(containsString("Sem motorista"))));
+    }
+
+    @Test
+    void historicoNoAgendamentoMantemBuscaEPaginacaoNoSeuContainer() throws Exception {
+        var viagem = new HistoricoViagemResponseDto(UUID.randomUUID(), LocalDate.of(2026, 11, 2),
+                LocalTime.of(9, 0), LocalTime.of(8, 0), "Hospital", "Consulta", "Van", true, 1);
+        when(historico.buscarHistoricoViagens(PESSOA_ID, 0))
+                .thenReturn(new ResultadoPaginado<>(List.of(viagem), 0, 10, 11, 2));
+        when(historico.buscarHistoricoViagensComFiltro(PESSOA_ID, "Hospital", 1))
+                .thenReturn(new ResultadoPaginado<>(List.of(viagem), 1, 10, 11, 2));
+
+        mvc.perform(get("/pessoas/{id}/historico-viagens", PESSOA_ID)
+                        .param("contextoAgendamento", "true").header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("hx-target=\"#historico-agendamento-container\"")))
+                .andExpect(content().string(containsString("hx-include=\"#destinoBuscaAgendamento\"")))
+                .andExpect(content().string(containsString("contextoAgendamento=true")))
+                .andExpect(content().string(containsString("02/11/2026")));
+        mvc.perform(get("/pessoas/{id}/historico-viagens/buscar", PESSOA_ID)
+                        .param("contextoAgendamento", "true").param("destinoBusca", "Hospital")
+                        .param("pagina", "1").header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("value=\"Hospital\"")))
+                .andExpect(content().string(containsString("hx-target=\"#historico-agendamento-container\"")));
+    }
+
+    @Test
+    void aberturaDeCarroPreparaInsercaoNoVeiculoCriado() throws Exception {
+        var data = LocalDate.of(2026, 11, 23);
+        var idTipo = UUID.randomUUID();
+        var idVeiculo = UUID.randomUUID();
+        when(tiposVeiculo.buscar(idTipo)).thenReturn(new TipoVeiculoResponseDto(idTipo, "Carro", 4));
+        when(agendamentos.abrirVeiculo(eq(data), any())).thenReturn(
+                new VeiculoAbertoResponseDto(idVeiculo, data, idTipo, "Carro", 4,
+                        null, null, 0, List.of()));
+
+        mvc.perform(post("/agendamentos/carros/veiculos").param("data", data.toString())
+                        .param("idTipoVeiculo", idTipo.toString()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/agendamentos/carros?data=" + data))
+                .andExpect(flash().attribute("veiculoParaInsercao", idVeiculo));
+        verify(agendamentos).abrirVeiculo(data, new AbrirVeiculoRequestDto(idTipo, null, null));
+    }
+
+    @Test
+    void cadastroDePassageiroDeCarroRetornaAInsercaoNoCarroDeOrigem() throws Exception {
+        var data = LocalDate.of(2026, 11, 23);
+        var idTipo = UUID.randomUUID();
+        var idLista = UUID.randomUUID();
+        var idDestino = UUID.randomUUID();
+        var idVeiculo = UUID.randomUUID();
+
+        mvc.perform(post("/agendamentos/passageiros").param("data", data.toString())
+                        .param("idPessoa", PESSOA_ID.toString()).param("idLista", idLista.toString())
+                        .param("idTipoVeiculo", idTipo.toString()).param("idDestino", idDestino.toString())
+                        .param("horarioChegada", "09:00").param("veiculoOrigem", idVeiculo.toString())
+                        .param("origemCarros", "true"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/agendamentos/carros?data=" + data))
+                .andExpect(flash().attribute("veiculoParaInsercao", idVeiculo))
+                .andExpect(flash().attribute("pessoaParaInsercao", PESSOA_ID));
+        verify(agendamentos).criar(data, new AgendamentoRequestDto(PESSOA_ID, idLista, idTipo,
+                idDestino, LocalTime.of(9, 0), false, 0, null));
     }
 
     @Test

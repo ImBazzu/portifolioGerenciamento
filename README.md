@@ -9,16 +9,23 @@ O repositório contém dois módulos Java/Spring Boot:
 
 ## Funcionalidades
 
-- **Pessoas:** cadastro, consulta, edição, arquivamento e reativação; os dados cadastrais incluem informações usadas no atendimento e no transporte.
+- **Pessoas:** cadastro, consulta, edição, arquivamento e reativação; a listagem permite filtrar por especificação e navegar por páginas.
 - **Prioridades e especificações:** a prioridade define a busca na residência e a quantidade exata de acompanhantes. Uma especificação associa a pessoa à prioridade; as regras de listas selecionam as prioridades aceitas por veículo.
-- **Cidades e destinos:** manutenção de cidades, estado e tempo de viagem, além dos destinos associados; consulta e gerenciamento de registros arquivados.
+- **Cidades e destinos:** manutenção de cidades, estado e tempo de viagem (de 00:01 a 23:59), além dos destinos associados; consulta e gerenciamento de registros arquivados. Durações antigas de 24 horas ou mais são preservadas, mas precisam ser ajustadas para editar a cidade.
 - **Tipos de veículo:** cadastro, consulta, edição, histórico e arquivamento de tipos de veículo.
 - **Listas e regras:** criação de listas, configuração de regras de cadastro e de separação, consulta e arquivamento.
-- **Agendamento:** abertura de uma agenda por dia, inclusão de passageiros e veículos, verificação de veículos permitidos e separação automática, além da consulta de pendências e da associação de um agendamento a um veículo.
+- **Agendamento:** abertura de uma agenda por dia, inclusão de passageiros e veículos, consulta do histórico do passageiro, verificação de veículos permitidos e separação automática. Ao abrir um veículo, é possível selecionar um passageiro pendente ou iniciar um novo agendamento.
+- **Motoristas:** cadastro e edição de categorias e motoristas, com telefone único e uma categoria por motorista. Veículos abertos podem receber um motorista; a seleção permite combinar filtros de nome e categoria, e o mesmo motorista pode ser vinculado a vários veículos no dia.
 - **Passageiros do dia:** filtros por texto, cidade, status, tipo de veículo e busca na residência; ordenação por nome, cidade, chegada, saída ou tipo de veículo. O botão de PDF exporta os resultados visíveis na ordem escolhida. O PDF fica disponível para visualização e download na mesma sessão por até uma hora; são mantidos os 10 relatórios mais recentes.
-- **Acesso:** tela de login e API de autenticação com emissão e atualização de tokens.
+- **Tabelas paginadas:** navegação numerada com acesso à primeira e à última página, preservando os filtros de busca.
+- **Investigações nos relatórios:** consulta individual de pessoas por nome ou CPF, incluindo arquivadas, com filtros de período, cidade, destino e atribuição de veículo. A análise de motoristas apresenta totais por motorista e veículos atribuídos, com passageiros, destinos e horários previstos; filtros de cidade e destino selecionam veículos que têm ao menos um passageiro correspondente.
+- **Acesso:** autenticação, perfis cumulativos e gestão de usuários; cada usuário pode alterar seu nome de acesso e senha.
 
-As operações disponíveis dependem das regras de negócio e das validações implementadas no backend. A documentação OpenAPI expõe os contratos da API.
+Os formulários de motoristas, categorias e usuários são abertos em modais. Na página de carros de quatro lugares, a abertura não solicita identificação.
+
+As operações disponíveis dependem das regras de negócio e das validações implementadas no backend.
+
+Os relatórios mostram agendamentos e atribuições atuais, não comprovam viagens realizadas. Reatribuições ou exclusões não ficam registradas como histórico de auditoria; nomes, categorias e demais cadastros associados refletem seus valores atuais. Os totais de passageiros não incluem acompanhantes.
 
 Alterações de prioridade aplicam-se apenas a novos agendamentos. Agendamentos existentes mantêm os valores originais, inclusive durante a edição. Os antigos valores cadastrados diretamente na pessoa permanecem disponíveis nos detalhes para consulta, mas não determinam novos agendamentos.
 
@@ -145,6 +152,7 @@ O endereço base é `http://localhost:8080/api`. Os principais grupos de recurso
 | Recurso | Prefixo |
 |---|---|
 | Autenticação e usuários | `/auth` |
+| Gestão de usuários e conta | `/usuarios` |
 | Pessoas | `/pessoa` |
 | Prioridades | `/prioridades` |
 | Especificações | `/especificacao` |
@@ -153,6 +161,7 @@ O endereço base é `http://localhost:8080/api`. Os principais grupos de recurso
 | Tipos de veículo | `/veiculo` |
 | Listas e regras | `/lista` |
 | Agendamentos | `/agendamentos` |
+| Motoristas | `/motoristas` |
 
 Exemplos de operações:
 
@@ -168,10 +177,15 @@ POST   /api/agendamentos/dias/{data}/separacao-automatica
 
 Na separação automática de carros, cidades diferentes podem compartilhar um veículo se cada par de cidades já tiver sido associado ao mesmo veículo em uma data anterior. A combinação é válida nos dois sentidos e não dispensa as regras de capacidade e horário.
 
-Consulte os controllers e DTOs do backend para os parâmetros, corpos de requisição, respostas e validações de cada operação. Com o backend em execução, a interface Swagger/OpenAPI do Springdoc normalmente fica disponível em:
+Consulte os controllers e DTOs do backend para os parâmetros, corpos de requisição, respostas e validações de cada operação. O endpoint `GET /api/health` verifica se a aplicação está respondendo.
 
-- Swagger UI: `http://localhost:8080/api/swagger-ui/index.html`
-- Especificação OpenAPI: `http://localhost:8080/api/v3/api-docs`
+### Perfis de acesso
+
+Os perfis são cumulativos: **Agendamento**, **Motoristas**, **Gestão operacional** e **Administração**. A gestão operacional inclui validação de pessoas, cadastros operacionais e relatórios; somente administradores podem cadastrar usuários e alterar perfis. Consultas de dados operacionais necessárias ao agendamento continuam disponíveis aos perfis de agendamento. O último administrador não pode perder esse perfil.
+
+A migração V24 converte o perfil antigo `USUARIO` em `AGENDAMENTO` e mantém os administradores. Sessões anteriores à atualização precisam entrar novamente. A alteração de senha invalida as demais sessões; nomes e senhas são alterados em **Minha conta** mediante confirmação da senha atual.
+
+A migração V25 vincula novos cadastros de pessoas e agendamentos ao usuário autenticado. O autor permanece o mesmo após edições e é exibido pelo nome atual; registros anteriores aparecem como **Autor desconhecido**.
 
 ## Testes e build
 
@@ -244,7 +258,7 @@ Antes de publicar ou implantar o sistema:
 - forneça credenciais e segredos por um gerenciador de segredos ou variáveis de ambiente protegidas;
 - substitua credenciais de desenvolvimento e revise os scripts de inicialização do banco;
 - use segredos JWT fortes e exclusivos por ambiente;
-- revise as permissões: a cadeia HTTP do backend está configurada atualmente com `anyRequest().permitAll()`. A existência de login e JWT não protege automaticamente todos os recursos; regras como `@PreAuthorize` atuam separadamente;
+- revise os perfis e os usuários administrativos antes de disponibilizar o sistema;
 - restrinja o acesso ao banco e às rotas de administração conforme as regras de acesso desejadas;
 - habilite HTTPS e revise CORS, logs e configurações de segurança.
 

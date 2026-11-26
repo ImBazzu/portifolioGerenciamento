@@ -3,12 +3,12 @@ package br.com.imbazzu.frontSpring.pessoa.core.porta.in;
 import java.util.UUID;
 
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
-import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaArquivadoResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaRequestDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 
 public interface PessoaApplicationPorta {
     ResultadoPaginado<PessoaResponseDto> listar(String nome, boolean arquivadas, int pagina);
+    ResultadoPaginado<PessoaResponseDto> listarPorEspecificacao(String nome, UUID especificacaoId, boolean arquivadas, int pagina);
 
     PessoaResponseDto buscar(UUID id);
 

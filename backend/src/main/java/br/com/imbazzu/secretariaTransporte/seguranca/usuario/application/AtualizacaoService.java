@@ -1,7 +1,6 @@
 package br.com.imbazzu.secretariaTransporte.seguranca.usuario.application;
 
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.excecoes.UsuarioNaoAutorizadoException;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.in.AtualizarTokenUseCase;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.TokenPorta;
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.UsuarioRepositorioPorta;
@@ -20,10 +19,13 @@ public class AtualizacaoService implements AtualizarTokenUseCase {
 
     @Override
     public TokenResponseDto atualizarToken(String refreshToken) {
-        String nome = tokenPorta.extrairDadosDoTokenAtualizacao(refreshToken);
+        var dados = tokenPorta.extrairDadosDoTokenAtualizacao(refreshToken);
 
-        var usuario = usuarioRepositorioPorta.buscarPorNome(nome)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
+        var usuario = usuarioRepositorioPorta.buscarPorId(dados.id())
+                .orElseThrow(() -> new UsuarioNaoAutorizadoException("Usuário não encontrado."));
+        if (usuario.getVersaoToken() != dados.versao()) {
+            throw new UsuarioNaoAutorizadoException("Sessão invalidada.");
+        }
 
         return new TokenResponseDto(
                 tokenPorta.gerarTokenAcesso(usuario),

@@ -74,6 +74,8 @@ public class AgendamentoPassageiroController {
             @RequestParam LocalTime horarioChegada,
             @RequestParam(required = false) Integer acompanhantes,
             @RequestParam(defaultValue = "false") boolean buscarNaResidencia,
+            @RequestParam(required = false) UUID veiculoOrigem,
+            @RequestParam(defaultValue = "false") boolean origemCarros,
             @RequestHeader(value = "HX-Request", required = false) String hxRequest,
             Model model,
             RedirectAttributes redirect) {
@@ -96,6 +98,8 @@ public class AgendamentoPassageiroController {
 
         if ("true".equalsIgnoreCase(hxRequest)) {
             model.addAttribute("data", data);
+            model.addAttribute("veiculoOrigem", veiculoOrigem);
+            model.addAttribute("origemCarros", origemCarros);
             model.addAttribute("idPessoaSelecionada", idPessoa);
             model.addAttribute("idListaSelecionada", idLista);
             model.addAttribute("idDestinoSelecionado", idDestino);
@@ -132,6 +136,8 @@ public class AgendamentoPassageiroController {
         // Fallback sem htmx: guarda o estado e volta para a página.
         manterDadosAgendamento(
                 redirect, idPessoa, idLista, idDestino, horarioChegada, acompanhantes, buscarNaResidencia);
+        redirect.addFlashAttribute("veiculoOrigem", veiculoOrigem);
+        redirect.addFlashAttribute("origemCarros", origemCarros);
         if (resposta != null) {
             redirect.addFlashAttribute("verificacao", resposta);
         }
@@ -152,6 +158,8 @@ public class AgendamentoPassageiroController {
             @RequestParam(defaultValue = "false") boolean buscarNaResidencia,
             @RequestParam(defaultValue = "0") int acompanhantes,
             @RequestParam(required = false) UUID idVeiculo,
+            @RequestParam(required = false) UUID veiculoOrigem,
+            @RequestParam(defaultValue = "false") boolean origemCarros,
             RedirectAttributes redirect) {
         try {
             agendamentoApi.criar(data, new AgendamentoRequestDto(
@@ -160,10 +168,17 @@ public class AgendamentoPassageiroController {
             redirect.addFlashAttribute("sucesso", idVeiculo == null
                     ? "Passageiro de carro agendado para separação."
                     : "Passageiro agendado e atribuído ao veículo físico.");
+            if (idVeiculo == null && origemCarros && veiculoOrigem != null) {
+                redirect.addFlashAttribute("veiculoParaInsercao", veiculoOrigem);
+                redirect.addFlashAttribute("pessoaParaInsercao", idPessoa);
+                return AgendamentoRedirect.carros(data);
+            }
         } catch (RestClientResponseException e) {
             redirect.addFlashAttribute("erro", mensagemErro.de(e));
             manterDadosAgendamento(
                     redirect, idPessoa, idLista, idDestino, horarioChegada, acompanhantes, buscarNaResidencia);
+            redirect.addFlashAttribute("veiculoOrigem", veiculoOrigem);
+            redirect.addFlashAttribute("origemCarros", origemCarros);
             try {
                 redirect.addFlashAttribute("verificacao", agendamentoApi.verificarVeiculos(
                         data, new VerificarVeiculosRequestDto(

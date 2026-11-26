@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Investigação de pessoas')}"></head>
+<body class="bg-light">
+<div class="d-flex min-vh-100">
+    <aside th:replace="~{layout/sidebar :: sidebar}"></aside>
+    <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
+        <div th:fragment="conteudo" class="app-page">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                <h1 class="h3 mb-0">Investigação de pessoas</h1>
+                <a class="btn btn-outline-secondary" th:href="@{/relatorios}">Voltar aos relatórios</a>
+            </div>
+            <div class="alert alert-info">O histórico mostra agendamentos registrados, não viagens comprovadamente realizadas. Alterações e exclusões não são preservadas como histórico de auditoria.</div>
+            <div th:if="${erro != null}" class="alert alert-danger" role="alert" th:text="${erro}"></div>
+            <section class="card shadow-sm mb-3"><div class="card-body">
+                <h2 class="h5">Encontrar pessoa</h2>
+                <form method="get" th:action="@{/relatorios/investigacao/pessoas}" class="d-flex flex-wrap gap-2">
+                    <label class="visually-hidden" for="buscaPessoa">Nome ou CPF</label>
+                    <input class="form-control flex-grow-1" style="min-width: 12rem; width: auto" id="buscaPessoa" name="nome" th:value="${nome}" placeholder="Nome ou CPF (somente números)">
+                    <button class="btn btn-primary" type="submit">Buscar</button>
+                </form>
+                <div th:if="${pessoas != null}">
+                    <p class="text-muted small mt-3 mb-2">Inclui pessoas arquivadas. Selecione uma pessoa para consultar seu histórico.</p>
+                    <p th:if="${#lists.isEmpty(pessoas.content())}">Nenhuma pessoa encontrada.</p>
+                    <div class="table-responsive" th:unless="${#lists.isEmpty(pessoas.content())}"><table class="table table-hover align-middle">
+                        <thead><tr><th>Nome</th><th>CPF</th><th>Especificação atual</th><th>Situação</th><th><span class="visually-hidden">Ação</span></th></tr></thead>
+                        <tbody><tr th:each="p : ${pessoas.content()}">
+                            <td th:text="${p.nome()}"></td><td th:text="${p.cpf() == null ? 'Não informado' : p.cpf()}"></td>
+                            <td th:text="${p.especificacao()}"></td><td th:text="${p.arquivadaEm() == null ? 'Ativa' : 'Arquivada'}"></td>
+                            <td><a class="btn btn-sm btn-outline-primary" th:href="@{/relatorios/investigacao/pessoas(nome=${nome},pessoa=${p.id()},pessoaPagina=${pessoas.number()},inicio=${inicio},fim=${fim},cidade=${cidade},destino=${destino},situacao=${situacao})}">Investigar</a></td>
+                        </tr></tbody>
+                    </table></div>
+                    <th:block th:replace="~{relatorio/fragmentos/paginacao-investigacao :: paginacao(${pessoas}, @{/relatorios/investigacao/pessoas(nome=${nome},pessoa=${pessoaId},inicio=${inicio},fim=${fim},cidade=${cidade},destino=${destino},situacao=${situacao},pagina=${detalhe != null ? detalhe.agendamentos().number() : 0},pessoaPagina='')}, 'Páginas de pessoas')}"></th:block>
+                </div>
+            </div></section>
+            <section th:if="${detalhe != null}" class="card shadow-sm"><div class="card-body">
+                <h2 class="h5" th:text="${'Histórico: ' + detalhe.pessoa().nome()}"></h2>
+                <p class="text-muted" th:text="${'Telefone: ' + detalhe.pessoa().telefone() + ' · Especificação atual: ' + detalhe.pessoa().especificacao()}"></p>
+                <form method="get" th:action="@{/relatorios/investigacao/pessoas}" class="row g-2 mb-3">
+                    <input type="hidden" name="pessoa" th:value="${detalhe.pessoa().id()}">
+                    <input type="hidden" name="nome" th:value="${nome}">
+                    <input type="hidden" name="pessoaPagina" th:value="${pessoas.number()}">
+                    <div class="col-sm-6 col-lg-2"><label class="form-label" for="inicio">De</label><input id="inicio" class="form-control" type="date" name="inicio" th:value="${inicio}"></div>
+                    <div class="col-sm-6 col-lg-2"><label class="form-label" for="fim">Até</label><input id="fim" class="form-control" type="date" name="fim" th:value="${fim}"></div>
+                    <div class="col-sm-6 col-lg-2"><label class="form-label" for="cidade">Cidade</label><input id="cidade" class="form-control" name="cidade" th:value="${cidade}"></div>
+                    <div class="col-sm-6 col-lg-2"><label class="form-label" for="destino">Destino</label><input id="destino" class="form-control" name="destino" th:value="${destino}"></div>
+                    <div class="col-sm-6 col-lg-2"><label class="form-label" for="situacao">Veículo</label><select id="situacao" class="form-select" name="situacao">
+                        <option value="TODOS" th:selected="${situacao == 'TODOS'}">Todos</option>
+                        <option value="ALOCADO" th:selected="${situacao == 'ALOCADO'}">Atribuído</option>
+                        <option value="PENDENTE" th:selected="${situacao == 'PENDENTE'}">Pendente</option>
+                    </select></div>
+                    <div class="col-sm-6 col-lg-2 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Filtrar</button></div>
+                </form>
+                <p class="fw-semibold" th:text="${detalhe.agendamentos().totalElements() + ' agendamento(s) no filtro'}"></p>
+                <p th:if="${#lists.isEmpty(detalhe.agendamentos().content())}">Nenhum agendamento encontrado para os filtros.</p>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(detalhe.agendamentos().content())}"><table class="table table-striped align-middle">
+                    <thead><tr><th>Data</th><th>Chegada prevista</th><th>Cidade / destino</th><th>Lista</th><th>Veículo / motorista</th><th>Acompanhantes</th><th>Busca</th><th>Cadastrado por</th></tr></thead>
+                    <tbody><tr th:each="a : ${detalhe.agendamentos().content()}">
+                        <td th:text="${#temporals.format(a.data(), 'dd/MM/yyyy')}"></td><td th:text="${#temporals.format(a.chegada(), 'HH:mm')}"></td>
+                        <td><span th:text="${a.cidade()}"></span><br><span th:text="${a.destino()}"></span></td>
+                        <td th:text="${a.lista()}"></td>
+                        <td><span th:if="${a.veiculoId() == null}">Tipo previsto: </span><span th:text="${a.tipoVeiculo()}"></span><span th:if="${a.identificacao() != null}" th:text="${' — ' + a.identificacao()}"></span><br>
+                            <span th:text="${a.veiculoId() == null ? 'Sem veículo atribuído' : (a.motorista() == null ? 'Sem motorista atribuído' : a.motorista())}"></span></td>
+                        <td th:text="${a.acompanhantes()}"></td><td th:text="${a.buscarNaResidencia() ? 'Residência' : 'Não'}"></td>
+                        <td th:text="${a.autor() == null ? 'Autor desconhecido' : a.autor()}"></td>
+                    </tr></tbody>
+                </table></div>
+                <th:block th:replace="~{relatorio/fragmentos/paginacao-investigacao :: paginacao(${detalhe.agendamentos()}, @{/relatorios/investigacao/pessoas(nome=${nome},pessoa=${pessoaId},pessoaPagina=${pessoas.number()},inicio=${inicio},fim=${fim},cidade=${cidade},destino=${destino},situacao=${situacao},pagina='')}, 'Páginas do histórico')}"></th:block>
+            </div></section>
+        </div>
+    </main>
+</div>
+</body>
+</html>

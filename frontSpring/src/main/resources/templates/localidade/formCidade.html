@@ -27,21 +27,14 @@
                     <div th:if="${#fields.hasErrors('estado')}" class="invalid-feedback"
                          th:errors="*{estado}"></div>
                 </div>
-                <div class="row g-3">
-                    <div class="col-sm-6 mb-3">
-                        <label for="horasViagem" class="form-label fw-bold">Horas de viagem</label>
-                        <input id="horasViagem" type="number" min="0" th:field="*{horas}" class="form-control"
-                               th:classappend="${#fields.hasErrors('horas')} ? 'is-invalid'">
-                        <div th:if="${#fields.hasErrors('horas')}" class="invalid-feedback"
-                             th:errors="*{horas}"></div>
-                    </div>
-                    <div class="col-sm-6 mb-3">
-                        <label for="minutosViagem" class="form-label fw-bold">Minutos de viagem</label>
-                        <input id="minutosViagem" type="number" min="0" max="59" th:field="*{minutos}" class="form-control"
-                               th:classappend="${#fields.hasErrors('minutos')} ? 'is-invalid'">
-                        <div th:if="${#fields.hasErrors('minutos')}" class="invalid-feedback"
-                             th:errors="*{minutos}"></div>
-                    </div>
+                <div class="mb-3">
+                    <label for="tempoViagem" class="form-label fw-bold">Tempo de viagem</label>
+                    <input id="tempoViagem" type="time" min="00:01" th:field="*{tempoViagem}" class="form-control"
+                           th:classappend="${#fields.hasErrors('tempoViagem')} ? 'is-invalid'" required>
+                    <div class="form-text">Informe um tempo entre 00:01 e 23:59.</div>
+                    <div th:if="${#fields.hasErrors('tempoViagem')}" class="invalid-feedback"
+                         th:errors="*{tempoViagem}"></div>
+                    <div th:if="${duracaoAntiga != null}" class="form-text text-danger" th:text="${duracaoAntiga}"></div>
                 </div>
                 <div class="border-top pt-3 mt-2 d-flex justify-content-end gap-2">
                     <button th:if="${edicao}" type="button" class="btn btn-light border"

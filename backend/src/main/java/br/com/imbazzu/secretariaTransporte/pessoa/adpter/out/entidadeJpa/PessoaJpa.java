@@ -14,6 +14,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import br.com.imbazzu.secretariaTransporte.especificacao.adpter.out.entidadeJpa.EspecificacaoJpa;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.out.persistencia.UsuarioJpaEntity;
+import jakarta.persistence.FetchType;
 
 @Entity
 @Table(name = "pessoas")
@@ -56,4 +58,8 @@ public class PessoaJpa {
 
     @Column(name = "telefone", nullable = false, length = 11)
     private String telefone;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "autor_id", updatable = false, foreignKey = @ForeignKey(name = "fk_pessoa_autor"))
+    private UsuarioJpaEntity autor;
 }

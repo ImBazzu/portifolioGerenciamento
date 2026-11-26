@@ -26,7 +26,9 @@ public final class PessoaBancoMapper {
                 entidade.getDataArquivado(),
                 enderecoOpcional(entidade.getEndereco()),
                 cpfOpcional(entidade.getCpf()),
-                new Telefone(entidade.getTelefone()));
+                new Telefone(entidade.getTelefone()),
+                entidade.getAutor() == null ? null : entidade.getAutor().getId(),
+                entidade.getAutor() == null ? null : entidade.getAutor().getNome());
     }
 
     public static void atualizarEntidade(Pessoa dominio, PessoaJpa entidade) {

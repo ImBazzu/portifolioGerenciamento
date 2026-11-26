@@ -1,6 +1,8 @@
 package br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.out.seguranca;
 
 import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.TokenPorta;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.porta.out.UsuarioRepositorioPorta;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.domain.excecoes.UsuarioNaoAutorizadoException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,9 +17,11 @@ import java.io.IOException;
 public class SecurityFiltroToken extends OncePerRequestFilter {
 
     private final TokenPorta tokenPorta;
+    private final UsuarioRepositorioPorta usuarios;
 
-    public SecurityFiltroToken(TokenPorta tokenPorta) {
+    public SecurityFiltroToken(TokenPorta tokenPorta, UsuarioRepositorioPorta usuarios) {
         this.tokenPorta = tokenPorta;
+        this.usuarios = usuarios;
     }
 
     @Override
@@ -30,12 +34,17 @@ public class SecurityFiltroToken extends OncePerRequestFilter {
             String token = header.substring(7);
             try {
                 var dadosToken = tokenPorta.extrairDadosDoTokenAcesso(token);
-                var authorities = dadosToken.roles().stream()
+                var usuario = usuarios.buscarPorId(dadosToken.id())
+                        .orElseThrow(() -> new UsuarioNaoAutorizadoException("Usuário não encontrado."));
+                if (usuario.getVersaoToken() != dadosToken.versao()) {
+                    throw new UsuarioNaoAutorizadoException("Sessão invalidada.");
+                }
+                var authorities = usuario.getPermissoes().stream()
                         .map(SimpleGrantedAuthority::new)
                         .toList();
-                var auth = new UsernamePasswordAuthenticationToken(dadosToken.nome(), null,authorities);
+                var auth = new UsernamePasswordAuthenticationToken(usuario.getId(), null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(auth);
-            } catch (Exception e) {
+            } catch (UsuarioNaoAutorizadoException e) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }

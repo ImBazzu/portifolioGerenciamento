@@ -21,9 +21,11 @@ public class MensagemErroApi {
     public String de(RestClientResponseException e) {
         try {
             var json = objectMapper.readTree(e.getResponseBodyAsString());
-            for (var campo : CAMPOS) {
-                if (json.hasNonNull(campo)) {
-                    return json.get(campo).asText();
+            if (json != null) {
+                for (var campo : CAMPOS) {
+                    if (json.hasNonNull(campo)) {
+                        return json.get(campo).asText();
+                    }
                 }
             }
         } catch (JsonProcessingException ignored) {

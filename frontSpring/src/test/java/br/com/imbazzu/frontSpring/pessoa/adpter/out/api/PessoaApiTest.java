@@ -68,7 +68,8 @@ class PessoaApiTest {
                             "dataArquivado": null,
                             "endereco": "Rua das Flores, 123",
                             "cpf": "52998224725",
-                            "telefone": "11987654321"
+                            "telefone": "11987654321",
+                            "autorNome": "Usuário responsável"
                           }],
                           "paginaAtual": 0,
                           "tamanhoPagina": 10,
@@ -84,6 +85,18 @@ class PessoaApiTest {
         assertEquals(true, page.conteudo().getFirst().buscarNaResidencia());
         assertEquals(2, page.conteudo().getFirst().quantidadeAcompanhantes());
         assertNull(page.conteudo().getFirst().dataArquivado());
+        assertEquals("Usuário responsável", page.conteudo().getFirst().autorNome());
+    }
+
+    @Test
+    void enviaFiltroDeEspecificacaoComPaginacao() {
+        var id = UUID.fromString("c5d0a150-2d80-4f0b-9a1d-3cfb8d8a0f22");
+        server.expect(requestTo("http://localhost:8080/api/pessoa/listar/arquivado?nome=Ana&especificacaoId="
+                        + id + "&pagina=3&tamanho=10"))
+                .andRespond(withSuccess("""
+                        {"conteudo":[],"paginaAtual":3,"tamanhoPagina":10,"totalElementos":0,"totalPaginas":0}
+                        """, MediaType.APPLICATION_JSON));
+        api.listarPorEspecificacao("Ana", id, true, 3, 10);
     }
 
     @Test

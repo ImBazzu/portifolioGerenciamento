@@ -1,6 +1,6 @@
 package br.com.imbazzu.secretariaTransporte.seguranca.usuario.dto;
 
-import java.util.List;
+import java.util.UUID;
 
-public record DadosTokenDto(String nome, List<String> roles) {
+public record DadosTokenDto(UUID id, long versao) {
 }

@@ -25,6 +25,7 @@ public class HistoricoViagemController {
     @GetMapping("/{id}/historico-viagens")
     public String historico(@PathVariable UUID id, 
                            @RequestParam(defaultValue = "0") int pagina,
+                           @RequestParam(defaultValue = "false") boolean contextoAgendamento,
                            Model model) {
         var historicoResult = historicoViagem.buscarHistoricoViagens(id, pagina);
         model.addAttribute("historicoViagens", historicoResult.conteudo());
@@ -32,6 +33,7 @@ public class HistoricoViagemController {
         model.addAttribute("totalPaginas", historicoResult.totalPaginas());
         model.addAttribute("pessoaId", id);
         model.addAttribute("destinoBusca", "");
+        model.addAttribute("contextoAgendamento", contextoAgendamento);
         return "paginas/pessoa/tabelaHistoricoViagens :: tabelaHistoricoViagens";
     }
 
@@ -40,6 +42,7 @@ public class HistoricoViagemController {
     public String historicoComBusca(@PathVariable UUID id,
                                    @RequestParam(defaultValue = "") String destinoBusca,
                                    @RequestParam(defaultValue = "0") int pagina,
+                                   @RequestParam(defaultValue = "false") boolean contextoAgendamento,
                                    Model model) {
         var historicoResult = historicoViagem.buscarHistoricoViagensComFiltro(id, destinoBusca, pagina);
         model.addAttribute("historicoViagens", historicoResult.conteudo());
@@ -47,6 +50,7 @@ public class HistoricoViagemController {
         model.addAttribute("totalPaginas", historicoResult.totalPaginas());
         model.addAttribute("pessoaId", id);
         model.addAttribute("destinoBusca", destinoBusca);
+        model.addAttribute("contextoAgendamento", contextoAgendamento);
         return "paginas/pessoa/tabelaHistoricoViagens :: tabelaHistoricoViagens";
     }
 }

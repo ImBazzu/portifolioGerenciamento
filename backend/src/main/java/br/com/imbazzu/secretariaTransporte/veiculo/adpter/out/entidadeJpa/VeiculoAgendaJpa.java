@@ -11,12 +11,14 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicUpdate;
 
 @Entity
 @Table(name = "veiculos_agendamento")
 @Getter
 @Setter
 @NoArgsConstructor
+@DynamicUpdate
 public class VeiculoAgendaJpa {
 
     @Id
@@ -43,4 +45,7 @@ public class VeiculoAgendaJpa {
 
     @Column(name = "hora_saida_calculada", nullable = false)
     private boolean horarioSaidaCalculado;
+
+    @Column(name = "motorista_id")
+    private UUID idMotorista;
 }

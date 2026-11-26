@@ -82,6 +82,7 @@ public class AgendamentoQueryBuscarDiaHandler {
                 agendamento.isBuscarNaResidencia(),
                 agendamento.getAcompanhantes(),
                 agendamento.getIdVeiculoAberto(),
-                idsVeiculosCompativeis);
+                idsVeiculosCompativeis,
+                agendamento.getAutorNome());
     }
 }

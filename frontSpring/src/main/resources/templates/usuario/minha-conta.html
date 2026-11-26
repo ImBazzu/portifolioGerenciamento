@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Minha conta')}"></head>
+<body class="bg-light">
+<div class="d-flex min-vh-100">
+    <aside th:replace="~{layout/sidebar :: sidebar}"></aside>
+    <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
+        <div th:fragment="conteudo" class="app-page">
+            <h1 class="h3 mb-3">Minha conta</h1>
+            <div th:if="${sucesso != null}" class="alert alert-success" th:text="${sucesso}"></div>
+            <div th:if="${erro != null}" class="alert alert-danger" th:text="${erro}"></div>
+            <div class="card shadow-sm"><div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>Altere seu nome de acesso ou sua senha.</div>
+                    <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#editarContaModal">Editar conta</button>
+                </div>
+            </div></div>
+            <div class="modal fade" id="editarContaModal" tabindex="-1" aria-labelledby="editarContaTitulo" aria-hidden="true">
+                <div class="modal-dialog"><div class="modal-content">
+                    <form method="post" th:action="@{/minha-conta}">
+                        <div class="modal-header"><h2 class="modal-title fs-5" id="editarContaTitulo">Editar conta</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+                        <div class="modal-body">
+                            <div class="mb-3"><label for="nomeConta" class="form-label">Nome de acesso</label>
+                                <input id="nomeConta" name="nome" th:value="${nomeConta}" minlength="3" maxlength="59" class="form-control" required></div>
+                            <div class="mb-3"><label for="senhaAtual" class="form-label">Senha atual</label>
+                                <input id="senhaAtual" type="password" name="senhaAtual" autocomplete="current-password" class="form-control" required></div>
+                            <div><label for="novaSenha" class="form-label">Nova senha (opcional)</label>
+                                <input id="novaSenha" type="password" name="novaSenha" minlength="8" maxlength="72" autocomplete="new-password" class="form-control">
+                                <div class="form-text">Ao trocar a senha, as outras sessões serão encerradas.</div></div>
+                        </div>
+                        <div class="modal-footer"><button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Salvar alterações</button></div>
+                    </form>
+                </div></div>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

@@ -37,13 +37,9 @@ import br.com.imbazzu.secretariaTransporte.especificacao.application.query.lista
 import br.com.imbazzu.secretariaTransporte.especificacao.core.domain.Especificacao;
 import br.com.imbazzu.secretariaTransporte.prioridade.PrioridadeRepository;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.EntidadeNaoEncontradoException;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "Especificações", description = "Cadastro e gerenciamento de especificações com prioridades")
-@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("especificacao")
 @RequiredArgsConstructor

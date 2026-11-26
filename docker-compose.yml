@@ -66,8 +66,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      # Quando adicionar o Actuator, troque por /api/actuator/health
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/api/v3/api-docs"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/api/health"]
       interval: 10s
       timeout: 5s
       retries: 12

@@ -12,6 +12,10 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.out.persistencia.UsuarioJpaEntity;
 
 @Entity
 @Table(name = "agendamentos")
@@ -65,6 +69,10 @@ public class AgendamentoJpa {
 
     @Column(name = "veiculo_agendamento_id")
     private UUID idVeiculoAberto;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "autor_id", updatable = false)
+    private UsuarioJpaEntity autor;
 
     public Duration getTempoViagem() {
         return Duration.ofSeconds(tempoViagemSegundos, tempoViagemNanos);

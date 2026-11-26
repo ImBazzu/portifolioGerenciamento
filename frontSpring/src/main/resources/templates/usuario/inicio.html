@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{layout/head :: head('Usuários')}"></head>
+<body class="bg-light">
+<div class="d-flex min-vh-100">
+    <aside th:replace="~{layout/sidebar :: sidebar}"></aside>
+    <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
+        <div th:fragment="conteudo" class="app-page">
+            <h1 class="h3 mb-3">Usuários e permissões</h1>
+            <div th:if="${sucesso != null}" class="alert alert-success" th:text="${sucesso}"></div>
+            <div th:if="${erro != null}" class="alert alert-danger" th:text="${erro}"></div>
+            <div class="alert alert-info">Os perfis são cumulativos: agendamento, motoristas, gestão operacional e administração.</div>
+            <section class="card shadow-sm mb-3"><div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <h2 class="h5 mb-0">Usuários</h2>
+                    <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#novoUsuarioModal">Cadastrar usuário</button>
+                </div>
+            </div></section>
+            <section class="card shadow-sm"><div class="card-body">
+                <h2 class="h5">Consultar usuários</h2>
+                <form method="get" th:action="@{/usuarios}" class="d-flex gap-2 mb-3">
+                    <label class="visually-hidden" for="filtroNome">Nome</label>
+                    <input id="filtroNome" name="nome" th:value="${nome}" class="form-control" placeholder="Buscar por nome">
+                    <button class="btn btn-outline-primary">Buscar</button>
+                </form>
+                <p th:if="${#lists.isEmpty(resultado.content())}" class="text-muted">Nenhum usuário encontrado.</p>
+                <div th:each="u : ${resultado.content()}" class="border rounded p-3 mb-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div><strong th:text="${u.nome()}"></strong> —
+                        <span th:switch="${u.perfil()}">
+                            <span th:case="'AGENDAMENTO'">Agendamento</span>
+                            <span th:case="'MOTORISTA'">Motoristas</span>
+                            <span th:case="'GESTAO'">Gestão operacional</span>
+                            <span th:case="'ADMIN'">Administração</span>
+                            <span th:case="*" th:text="${u.perfil()}"></span>
+                        </span>
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" th:attr="data-bs-target='#editarPerfil-' + ${u.id()}">Editar perfil</button>
+                    <div class="modal fade" th:id="${'editarPerfil-' + u.id()}" tabindex="-1" th:attr="aria-labelledby='tituloPerfil-' + ${u.id()}" aria-hidden="true">
+                        <div class="modal-dialog"><div class="modal-content">
+                            <form method="post" th:action="@{/usuarios/{id}/perfil(id=${u.id()})}">
+                                <div class="modal-header"><h2 class="modal-title fs-5" th:id="${'tituloPerfil-' + u.id()}">Editar perfil</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+                                <div class="modal-body">
+                                    <p><strong th:text="${u.nome()}"></strong></p>
+                                    <label class="form-label" th:for="${'perfil-' + u.id()}">Perfil</label>
+                                    <select class="form-select" name="perfil" th:id="${'perfil-' + u.id()}" required>
+                                        <option value="AGENDAMENTO" th:selected="${u.perfil() == 'AGENDAMENTO'}">Agendamento</option>
+                                        <option value="MOTORISTA" th:selected="${u.perfil() == 'MOTORISTA'}">Motoristas</option>
+                                        <option value="GESTAO" th:selected="${u.perfil() == 'GESTAO'}">Gestão operacional</option>
+                                        <option value="ADMIN" th:selected="${u.perfil() == 'ADMIN'}">Administração</option>
+                                    </select>
+                                </div>
+                                <div class="modal-footer"><button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Salvar perfil</button></div>
+                            </form>
+                        </div></div>
+                    </div>
+                </div>
+                <nav th:if="${resultado.totalPages() > 1}" aria-label="Páginas de usuários" class="d-flex flex-wrap gap-1">
+                    <a th:each="p : ${#numbers.sequence(0, resultado.totalPages() - 1)}"
+                       class="btn btn-sm" th:classappend="${p == resultado.number() ? 'btn-primary' : 'btn-outline-primary'}"
+                       th:href="@{/usuarios(nome=${nome},pagina=${p})}" th:text="${p + 1}"></a>
+                </nav>
+            </div></section>
+            <div class="modal fade" id="novoUsuarioModal" tabindex="-1" aria-labelledby="novoUsuarioTitulo" aria-hidden="true">
+                <div class="modal-dialog"><div class="modal-content">
+                    <form method="post" th:action="@{/usuarios}">
+                        <div class="modal-header"><h2 class="modal-title fs-5" id="novoUsuarioTitulo">Cadastrar usuário</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
+                        <div class="modal-body">
+                            <div class="mb-3"><label class="form-label" for="novoNome">Nome de acesso</label>
+                                <input id="novoNome" name="nome" th:value="${novoNome}" minlength="3" maxlength="59" required class="form-control"></div>
+                            <div class="mb-3"><label class="form-label" for="novaSenha">Senha inicial</label>
+                                <input id="novaSenha" type="password" name="senha" minlength="8" maxlength="72" autocomplete="new-password" required class="form-control"></div>
+                            <div><label class="form-label" for="novoPerfil">Perfil</label>
+                                <select id="novoPerfil" name="perfil" class="form-select" required>
+                                    <option value="AGENDAMENTO" th:selected="${novoPerfil == 'AGENDAMENTO'}">Agendamento</option>
+                                    <option value="MOTORISTA" th:selected="${novoPerfil == 'MOTORISTA'}">Motoristas</option>
+                                    <option value="GESTAO" th:selected="${novoPerfil == 'GESTAO'}">Gestão operacional</option>
+                                    <option value="ADMIN" th:selected="${novoPerfil == 'ADMIN'}">Administração</option>
+                                </select></div>
+                        </div>
+                        <div class="modal-footer"><button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary" type="submit">Cadastrar</button></div>
+                    </form>
+                </div></div>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>

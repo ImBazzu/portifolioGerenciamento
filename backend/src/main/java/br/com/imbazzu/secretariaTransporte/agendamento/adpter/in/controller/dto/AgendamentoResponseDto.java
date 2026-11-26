@@ -18,5 +18,6 @@ public record AgendamentoResponseDto(
         boolean buscarNaResidencia,
         int acompanhantes,
         UUID idVeiculoAberto,
-        List<UUID> idsVeiculosCompativeis) {
+        List<UUID> idsVeiculosCompativeis,
+        String autorNome) {
 }

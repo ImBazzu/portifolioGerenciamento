@@ -23,6 +23,8 @@
                     <th:block th:replace="~{agendamento/fragmentos/acoes :: acoes}"></th:block>
                     <th:block th:replace="~{agendamento/fragmentos/resumo-veiculos :: resumoVeiculos}"></th:block>
                     <th:block th:replace="~{agendamento/fragmentos/modais-insercao :: modaisInsercao}"></th:block>
+                    <span th:if="${veiculoParaInsercao != null}" id="abrirInsercaoAposCriacao"
+                          th:attr="data-modal-id='atribuirPassageiroModal-' + ${veiculoParaInsercao}" hidden></span>
                     <th:block th:replace="~{agendamento/fragmentos/modal-abrir-veiculo :: modalAbrirVeiculo}"></th:block>
                     <th:block th:replace="~{agendamento/fragmentos/modal-agendamento :: modalAgendamento}"></th:block>
                     <th:block th:replace="~{agendamento/fragmentos/tabela-passageiros :: tabelaPassageiros}"></th:block>

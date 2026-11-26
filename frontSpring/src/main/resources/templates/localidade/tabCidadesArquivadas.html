@@ -59,22 +59,8 @@
                     </tbody>
                 </table>
             </div>
-            <div class="border-top pt-3 mt-3 d-flex justify-content-between align-items-center"
-                 th:if="${totalPaginasArquivadas > 1}">
-                <span class="text-muted small"
-                      th:text="'Página ' + (${paginaAtualArquivadas} + 1) + ' de ' + ${totalPaginasArquivadas}">Página 1 de 1</span>
-                <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item" th:classappend="${paginaAtualArquivadas == 0} ? 'disabled'">
-                        <button class="page-link"
-                                hx:get="@{/localidade/listarArquivado(busca=${busca}, pagina=${paginaAtualArquivadas - 1})}"
-                                hx-target="#modal" hx-swap="innerHTML">Anterior</button>
-                    </li>
-                    <li class="page-item" th:classappend="${paginaAtualArquivadas + 1 >= totalPaginasArquivadas} ? 'disabled'">
-                        <button class="page-link"
-                                hx:get="@{/localidade/listarArquivado(busca=${busca}, pagina=${paginaAtualArquivadas + 1})}"
-                                hx-target="#modal" hx-swap="innerHTML">Próxima</button>
-                    </li>
-                </ul>
+            <div class="border-top pt-3 mt-3" th:if="${totalPaginasArquivadas > 1}">
+                <th:block th:replace="~{fragmentos/paginacao :: paginacao(${paginaAtualArquivadas}, ${totalPaginasArquivadas}, @{/localidade/listarArquivado(busca=${busca},pagina='')}, '#modal', 'Páginas de cidades arquivadas')}"></th:block>
             </div>
         </div>
     </div>

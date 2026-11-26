@@ -40,8 +40,6 @@ import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.listarA
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.listarArquivados.TipoVeiculoQueryListarArquivadoHandler;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.listarAtivos.TipoVeiculoQueryListarAtivoHandler;
 import br.com.imbazzu.secretariaTransporte.tipoVeiculo.application.query.listarAtivos.TipoVeiculoQueryListarAtivo;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -49,8 +47,6 @@ import lombok.RequiredArgsConstructor;
  * Responsável pela interação do navegador e o servidor
  */
 
-@Tag(name = "Veículos", description = "Operações de cadastro, consulta, edição e gerenciamento de veículos")
-@SecurityRequirement(name = "bearerAuth")
 
 @RestController
 @RequestMapping("veiculo")

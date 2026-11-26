@@ -20,6 +20,14 @@
 
             <div class="container-custom">
                 <div id="erroRelatorio" class="alert alert-danger" role="alert" hidden></div>
+                <section class="filter-panel">
+                    <h2 class="filter-title">Investigações detalhadas</h2>
+                    <p class="text-muted">Pesquise pessoas e agendamentos ou analise as atribuições atuais de motoristas por período, cidade e destino.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-primary" th:href="@{/relatorios/investigacao/pessoas}">Investigar pessoas</a>
+                        <a class="btn btn-primary" th:href="@{/relatorios/investigacao/motoristas}">Analisar motoristas</a>
+                    </div>
+                </section>
                 <section class="filter-panel" aria-labelledby="tituloPdfPassageiros">
                     <h2 id="tituloPdfPassageiros" class="filter-title">PDF de passageiros por período</h2>
                     <p class="text-muted small">O relatório contém agendamentos, inclusive sem veículo atribuído; não confirma que a viagem ocorreu. Os filtros incluem cadastros arquivados.</p>

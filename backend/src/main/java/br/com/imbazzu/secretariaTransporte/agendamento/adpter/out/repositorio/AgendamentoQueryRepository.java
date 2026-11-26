@@ -33,8 +33,10 @@ public interface AgendamentoQueryRepository extends JpaRepository<AgendamentoJpa
                    a.horarioChegada AS horarioChegada,
                    a.buscarNaResidencia AS buscarNaResidencia,
                    a.acompanhantes AS acompanhantes,
-                   a.idVeiculoAberto AS idVeiculoAberto
+                   a.idVeiculoAberto AS idVeiculoAberto,
+                   autor.id AS autorId, autor.nome AS autorNome
             FROM AgendamentoJpa a
+            LEFT JOIN a.autor autor
             WHERE a.id = :id
             """)
     Optional<AgendamentoProjecao> buscarProjecaoPorId(@Param("id") UUID id);
@@ -50,8 +52,10 @@ public interface AgendamentoQueryRepository extends JpaRepository<AgendamentoJpa
                    a.horarioChegada AS horarioChegada,
                    a.buscarNaResidencia AS buscarNaResidencia,
                    a.acompanhantes AS acompanhantes,
-                   a.idVeiculoAberto AS idVeiculoAberto
+                   a.idVeiculoAberto AS idVeiculoAberto,
+                   autor.id AS autorId, autor.nome AS autorNome
             FROM AgendamentoJpa a
+            LEFT JOIN a.autor autor
             WHERE a.data = :data
             ORDER BY a.horarioChegada ASC
             """)

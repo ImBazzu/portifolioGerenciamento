@@ -60,24 +60,8 @@
         </div>
 
         <!-- Pager -->
-        <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2"
-             th:if="${totalPaginas > 1}">
-            <span class="text-muted small"
-                  th:text="'Página ' + (${paginaAtual} + 1) + ' de ' + ${totalPaginas}">Página 1 de 1</span>
-            <ul class="pagination pagination-sm mb-0">
-                <li class="page-item" th:classappend="${paginaAtual == 0} ? 'disabled'">
-                    <button class="page-link"
-                            hx:get="@{/veiculo/listar(busca=${busca}, pagina=${paginaAtual - 1})}"
-                            hx-target="#veiculosAtivosContainer"
-                            hx-swap="innerHTML">Anterior</button>
-                </li>
-                <li class="page-item" th:classappend="${paginaAtual + 1 >= totalPaginas} ? 'disabled'">
-                    <button class="page-link"
-                            hx:get="@{/veiculo/listar(busca=${busca}, pagina=${paginaAtual + 1})}"
-                            hx-target="#veiculosAtivosContainer"
-                            hx-swap="innerHTML">Próxima</button>
-                </li>
-            </ul>
+        <div class="card-footer bg-white" th:if="${totalPaginas > 1}">
+            <th:block th:replace="~{fragmentos/paginacao :: paginacao(${paginaAtual}, ${totalPaginas}, @{/veiculo/listar(busca=${busca},pagina='')}, '#veiculosAtivosContainer', 'Páginas de tipos de veículos')}"></th:block>
         </div>
     </div>
 </th:block>

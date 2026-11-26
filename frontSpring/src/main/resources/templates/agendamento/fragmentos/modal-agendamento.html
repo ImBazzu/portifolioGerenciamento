@@ -8,6 +8,7 @@
          tabindex="-1"
          aria-labelledby="agendamentoModalTitulo"
          aria-hidden="true"
+         th:attr="data-abrir-ao-carregar=${novoPassageiro == true}"
          data-bs-focus="false">
 
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -49,6 +50,8 @@
                         <input type="hidden"
                                name="data"
                                th:value="${data}">
+                        <input th:if="${veiculoOrigem != null}" type="hidden" name="veiculoOrigem" th:value="${veiculoOrigem}">
+                        <input type="hidden" name="origemCarros" th:value="${origemCarros == true}">
 
                         <!-- PESSOA (busca via htmx) -->
                         <div class="col-12 col-md-6 position-relative">
@@ -113,6 +116,14 @@
                                     hx-swap="innerHTML">
                                 <i class="bi bi-person-plus me-1"></i>
                                 Cadastrar pessoa
+                            </button>
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-primary mt-2"
+                                    id="buscarHistoricoPassageiro"
+                                    th:attr="data-pessoas-url=@{/pessoas}"
+                                    th:disabled="${idPessoaSelecionada == null}">
+                                <i class="bi bi-clock-history me-1"></i>
+                                Buscar histórico do passageiro
                             </button>
 
                         </div>
@@ -281,6 +292,8 @@
 
                     </form>
 
+                    <div id="historico-agendamento-container" aria-live="polite"></div>
+
                     <!-- RESULTADO DA VERIFICAÇÃO -->
                     <div id="resultadoVerificacao"
                          th:fragment="resultadoVerificacao"
@@ -341,6 +354,8 @@
                                   hx-sync="this:replace"
                                   class="card card-body bg-light mb-3 js-reverificar-acompanhantes">
                                 <input type="hidden" name="data" th:value="${data}">
+                                <input th:if="${veiculoOrigem != null}" type="hidden" name="veiculoOrigem" th:value="${veiculoOrigem}">
+                                <input type="hidden" name="origemCarros" th:value="${origemCarros == true}">
                                 <input type="hidden" name="idPessoa" th:value="${idPessoaSelecionada}">
                                 <input type="hidden" name="idLista" th:value="${idListaSelecionada}">
                                 <input type="hidden" name="idDestino" th:value="${idDestinoSelecionado}">
@@ -418,6 +433,8 @@
                                          class="col-12 col-md-6">
                                         <article class="card h-100 border-success-subtle">
                                             <div class="card-body d-flex flex-column">
+                                                <span th:if="${veiculoOrigem != null and veiculo.idVeiculo() == veiculoOrigem}"
+                                                      class="badge text-bg-primary align-self-start mb-2">Veículo selecionado</span>
                                                 <h5 class="h6 fw-bold"
                                                     th:text="${veiculo.nome() + (veiculo.identificacao() == null ? '' : ' — ' + veiculo.identificacao())}"></h5>
                                                 <p th:if="${veiculo.idVeiculo() != null}"
@@ -431,6 +448,8 @@
                                                       th:action="@{/agendamentos/passageiros}"
                                                       class="mt-auto">
                                                     <input type="hidden" name="data" th:value="${data}">
+                                                    <input th:if="${veiculoOrigem != null}" type="hidden" name="veiculoOrigem" th:value="${veiculoOrigem}">
+                                                    <input type="hidden" name="origemCarros" th:value="${origemCarros == true}">
                                                     <input type="hidden" name="idPessoa" th:value="${idPessoaSelecionada}">
                                                     <input type="hidden" name="idLista" th:value="${idListaSelecionada}">
                                                     <input type="hidden" name="idTipoVeiculo" th:value="${veiculo.idTipoVeiculo()}">

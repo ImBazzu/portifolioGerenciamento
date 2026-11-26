@@ -1,95 +1,67 @@
 package br.com.imbazzu.frontSpring.autenticacao.infraestrutura.seguranca;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
-
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import br.com.imbazzu.frontSpring.autenticacao.core.exception.RefreshTokenInvalidoException;
+import br.com.imbazzu.frontSpring.autenticacao.core.exception.TokenInvalidadoException;
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.SessionAuthPorta;
+import br.com.imbazzu.frontSpring.usuario.UsuarioApi;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 public class SessionTokenAuthFilter extends OncePerRequestFilter {
-
     private final SessionAuthPorta sessionAuth;
+    private final UsuarioApi usuarios;
 
-    private final ObjectMapper objectMapper;
-
-    public SessionTokenAuthFilter(SessionAuthPorta sessionAuth, ObjectMapper objectMapper) {
+    public SessionTokenAuthFilter(SessionAuthPorta sessionAuth, UsuarioApi usuarios) {
         this.sessionAuth = sessionAuth;
-        this.objectMapper = objectMapper;
+        this.usuarios = usuarios;
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.equals("/login") || path.equals("/error") || path.equals("/logout")
+                || path.startsWith("/css/") || path.startsWith("/js/") || path.startsWith("/images/");
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            var accessToken = sessionAuth.access();
-
-            if (accessToken != null) {
-                JwtClaims claims = extractClaims(accessToken);
-
-                if (claims != null) {
-                    var authorities = claims.roles().stream()
-                            .map(SimpleGrantedAuthority::new)
-                            .toList();
-                    var auth = UsernamePasswordAuthenticationToken.authenticated(
-                            claims.subject(), null, authorities);
-                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(auth);
+        if (sessionAuth.access() != null) {
+            try {
+                var usuario = usuarios.proprio();
+                if (usuario == null || usuario.nome() == null) {
+                    throw new ServletException("A API não retornou os dados do usuário autenticado.");
                 }
+                var authorities = permissoes(usuario.perfil()).stream().map(SimpleGrantedAuthority::new).toList();
+                var auth = UsernamePasswordAuthenticationToken.authenticated(usuario.nome(), null, authorities);
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            } catch (TokenInvalidadoException | RefreshTokenInvalidoException e) {
+                sessionAuth.clear();
+                SecurityContextHolder.clearContext();
             }
+        } else {
+            SecurityContextHolder.clearContext();
         }
-        filterChain.doFilter(request, response);
-
+        chain.doFilter(request, response);
     }
 
-    private JwtClaims extractClaims(String token) {
-        try {
-            String[] parts = token.split("\\.");
-            if (parts.length != 3)
-                return null;
-
-            byte[] payloadBytes = Base64.getUrlDecoder().decode(parts[1]);
-            JsonNode payload = objectMapper.readTree(payloadBytes);
-
-            String subject = payload.path("sub").asText(null);
-
-            if (subject == null) {
-                return null; // token malformado — trata como não autenticado
-            }
-
-            String type = payload.path("type").asText(null);
-            if (!"access".equals(type)) {
-                return null; // token malformado — trata como não autenticado
-            }
-
-            List<String> roles = new ArrayList<>();
-            JsonNode rolesNode = payload.path("roles"); // ajuste o campo conforme seu backend
-            if (rolesNode.isArray()) {
-                rolesNode.forEach(r -> roles.add(r.asText()));
-            }
-
-            return new JwtClaims(subject, roles);
-
-        } catch (Exception e) {
-            return null; // token malformado — trata como não autenticado
-        }
+    private static List<String> permissoes(String perfil) throws ServletException {
+        return switch (perfil) {
+            case "AGENDAMENTO" -> List.of("ROLE_AGENDAMENTO");
+            case "MOTORISTA" -> List.of("ROLE_AGENDAMENTO", "ROLE_MOTORISTA");
+            case "GESTAO" -> List.of("ROLE_AGENDAMENTO", "ROLE_MOTORISTA", "ROLE_GESTAO");
+            case "ADMIN" -> List.of("ROLE_AGENDAMENTO", "ROLE_MOTORISTA", "ROLE_GESTAO", "ROLE_ADMIN");
+            case null, default -> throw new ServletException("A API retornou um perfil de usuário inválido.");
+        };
     }
-
-    private record JwtClaims(String subject, List<String> roles) {
-
-    }
-
 }
