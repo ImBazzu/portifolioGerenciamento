@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Table(name = "usuarios",
@@ -26,6 +27,8 @@ public class UsuarioJpaEntity {
     private String senha;
     @Column(name = "versao_token", nullable = false)
     private long versaoToken;
+    @Column(name = "data_arquivado")
+    private LocalDateTime dataArquivado;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "usuario_permissoes", joinColumns = @JoinColumn(name = "usuario_id"))

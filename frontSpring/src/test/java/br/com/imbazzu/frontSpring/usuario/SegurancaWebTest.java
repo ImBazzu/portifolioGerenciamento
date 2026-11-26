@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -89,5 +90,25 @@ class SegurancaWebTest {
         mvc.perform(get("/minha-conta")).andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login"));
         verify(sessao).clear();
+    }
+
+    @Test
+    void bloqueiaValidacaoParaPerfisInferioresEApenasAdminGerenciaArquivados() throws Exception {
+        when(usuarios.proprio()).thenReturn(new UsuarioApi.Usuario(id, "Ana", "MOTORISTA"));
+        mvc.perform(patch("/pessoas/{id}/validar", id).with(csrf())).andExpect(status().isForbidden());
+        mvc.perform(patch("/pessoas/{id}/retirar-validacao", id).with(csrf())).andExpect(status().isForbidden());
+        mvc.perform(post("/usuarios/{id}/situacao/excluir", id).with(csrf())).andExpect(status().isForbidden());
+
+        when(usuarios.proprio()).thenReturn(new UsuarioApi.Usuario(id, "Ana", "ADMIN"));
+        var outro = UUID.randomUUID();
+        when(usuarios.listar("", true, 0)).thenReturn(new UsuarioApi.Pagina(
+                List.of(new UsuarioApi.Usuario(outro, "Arquivado", "AGENDAMENTO")), 1, 0));
+        mvc.perform(get("/usuarios").param("arquivados", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Usuários arquivados")))
+                .andExpect(content().string(containsString("/usuarios/" + outro + "/situacao/reativar")));
+        mvc.perform(post("/usuarios/{id}/situacao/reativar", outro).with(csrf()).param("arquivados", "true"))
+                .andExpect(redirectedUrl("/usuarios?arquivados=true"));
+        verify(usuarios).alterarSituacao(outro, "reativar");
     }
 }

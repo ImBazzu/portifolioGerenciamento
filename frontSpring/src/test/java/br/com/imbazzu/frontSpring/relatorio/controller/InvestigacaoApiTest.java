@@ -38,8 +38,9 @@ class InvestigacaoApiTest {
             assertEquals("Ana & Bia", URLDecoder.decode(params.getFirst("nome"), StandardCharsets.UTF_8));
             assertEquals("1", params.getFirst("pagina"));
             assertEquals("2", params.getFirst("resumoPagina"));
+            assertEquals("3", params.getFirst("cidadePagina"));
         }).andRespond(withSuccess("""
-                {"resumo":{"motoristas":1,"veiculos":1,"passageiros":1},
+                {"resumo":{"motoristas":1,"veiculos":1,"passageiros":1,"cidades":1},
                  "porMotorista":{"content":[],"totalElements":0,"totalPages":0,"number":2},
                  "veiculos":{"content":[{"id":"%s","data":"2030-01-01","motorista":"Ana","categoria":"Dia",
                  "tipo":"Van","identificacao":null,"saida":"07:00:00","saidaCalculada":true,
@@ -47,7 +48,7 @@ class InvestigacaoApiTest {
                  "chegada":"09:00:00","acompanhantes":1}]}],"totalElements":1,"totalPages":1,"number":1}}
                 """.formatted(veiculo), MediaType.APPLICATION_JSON));
         var resultado = api.motoristas("Ana & Bia", motorista, "Dia",
-                new InvestigacaoApi.Filtros(LocalDate.of(2030, 1, 1), null, "Cidade + Centro", ""), 1, 2);
+                new InvestigacaoApi.Filtros(LocalDate.of(2030, 1, 1), null, "Cidade + Centro", ""), 1, 2, 3);
         assertEquals(LocalTime.of(7, 0), resultado.veiculos().content().getFirst().saida());
         assertEquals("Hospital", resultado.veiculos().content().getFirst().passageiros().getFirst().destino());
         server.verify();

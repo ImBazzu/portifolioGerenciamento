@@ -9,6 +9,7 @@ import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.En
 import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.Observacao;
 import br.com.imbazzu.secretariaTransporte.cadastrais.core.model.valueobjects.Telefone;
 import br.com.imbazzu.secretariaTransporte.compartilhados.valueObjects.Nome;
+import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.RegraDeNegocioException;
 import br.com.imbazzu.secretariaTransporte.especificacao.core.domain.Especificacao;
 
 public final class Pessoa {
@@ -67,6 +68,7 @@ public final class Pessoa {
 
     public void editar(Nome nome, Observacao observacao, Especificacao especificacao,
             boolean buscarNaResidencia, int quantidadeAcompanhantes, Endereco endereco, Cpf cpf, Telefone telefone) {
+        garantirNaoValidada();
         this.nome = Objects.requireNonNull(nome, "Nome é obrigatório");
         this.observacao = observacao;
         this.especificacao = Objects.requireNonNull(especificacao, "Especificação é obrigatória");
@@ -75,21 +77,32 @@ public final class Pessoa {
         this.endereco = endereco;
         this.cpf = cpf;
         this.telefone = Objects.requireNonNull(telefone, "Telefone é obrigatório");
-        this.validada = false;
     }
 
     public void validar() {
         this.validada = true;
     }
 
+    public void retirarValidacao() {
+        this.validada = false;
+    }
+
     public void arquivar() {
+        garantirNaoValidada();
         if (dataArquivado == null) {
             dataArquivado = LocalDate.now();
         }
     }
 
     public void desarquivar() {
+        garantirNaoValidada();
         dataArquivado = null;
+    }
+
+    public void garantirNaoValidada() {
+        if (validada) {
+            throw new RegraDeNegocioException("Retire a validação da pessoa antes de alterá-la.");
+        }
     }
 
     public UUID getId() {

@@ -1,6 +1,7 @@
 package br.com.imbazzu.secretariaTransporte.seguranca.usuario.application;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -40,8 +41,16 @@ public class GerenciarUsuariosService {
 
     @Transactional(readOnly = true)
     public Page<UsuarioResumo> listar(String nome, int pagina) {
+        return listar(nome, false, pagina);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UsuarioResumo> listar(String nome, boolean arquivados, int pagina) {
         if (pagina < 0) throw new RegraDeNegocioException("Página inválida.");
-        return usuarios.findByNomeContainingIgnoreCaseOrderByNomeAsc(nome.trim(), PageRequest.of(pagina, 20))
+        var resultado = arquivados
+                ? usuarios.findByNomeContainingIgnoreCaseAndDataArquivadoIsNotNullOrderByNomeAsc(nome.trim(), PageRequest.of(pagina, 20))
+                : usuarios.findByNomeContainingIgnoreCaseAndDataArquivadoIsNullOrderByNomeAsc(nome.trim(), PageRequest.of(pagina, 20));
+        return resultado
                 .map(GerenciarUsuariosService::resumo);
     }
 
@@ -66,11 +75,10 @@ public class GerenciarUsuariosService {
     @Transactional
     public void alterarPerfil(UUID id, String perfil) {
         var novoPerfil = perfil(perfil);
-        var administradores = jdbc.queryForList(
-                "SELECT DISTINCT usuario_id FROM usuario_permissoes WHERE permissao = 'ADMIN' FOR UPDATE", byte[].class);
-        var usuario = encontrar(id);
+        var administradores = bloquearAdministradoresAtivos();
+        var usuario = bloquear(id);
         if (usuario.getPermissoes().contains(UsuarioRoleEnum.ADMIN)
-                && novoPerfil != UsuarioRoleEnum.ADMIN && administradores.size() <= 1) {
+                && usuario.getDataArquivado() == null && novoPerfil != UsuarioRoleEnum.ADMIN && administradores <= 1) {
             throw new RegraDeNegocioException("O último administrador não pode perder o perfil de administrador.");
         }
         usuario.setPermissoes(new ArrayList<>(java.util.List.of(novoPerfil)));
@@ -78,9 +86,54 @@ public class GerenciarUsuariosService {
     }
 
     @Transactional
+    public void alterarArquivamento(UUID id, UUID operador, boolean arquivar) {
+        if (id.equals(operador)) throw new RegraDeNegocioException("Você não pode arquivar a própria conta.");
+        long administradores = bloquearAdministradoresAtivos();
+        var usuario = bloquear(id);
+        if (arquivar && usuario.getDataArquivado() == null) {
+            if (usuario.getPermissoes().contains(UsuarioRoleEnum.ADMIN) && administradores <= 1) {
+                throw new RegraDeNegocioException("O último administrador ativo não pode ser arquivado.");
+            }
+            usuario.setDataArquivado(LocalDateTime.now());
+            usuario.setVersaoToken(usuario.getVersaoToken() + 1);
+        } else if (!arquivar) {
+            usuario.setDataArquivado(null);
+        }
+        usuarios.saveAndFlush(usuario);
+    }
+
+    @Transactional
+    public void excluir(UUID id, UUID operador) {
+        if (id.equals(operador)) throw new RegraDeNegocioException("Você não pode excluir a própria conta.");
+        long administradores = bloquearAdministradoresAtivos();
+        var usuario = bloquear(id);
+        if (usuario.getDataArquivado() == null && usuario.getPermissoes().contains(UsuarioRoleEnum.ADMIN)
+                && administradores <= 1) {
+            throw new RegraDeNegocioException("O último administrador ativo não pode ser excluído.");
+        }
+        Integer vinculos = jdbc.queryForObject("""
+                SELECT (SELECT COUNT(*) FROM pessoas WHERE autor_id = UUID_TO_BIN(?))
+                     + (SELECT COUNT(*) FROM agendamentos WHERE autor_id = UUID_TO_BIN(?))
+                """, Integer.class, id.toString(), id.toString());
+        if (vinculos != null && vinculos > 0) {
+            throw new RegraDeNegocioException("Usuário vinculado a cadastros não pode ser excluído; arquive-o.");
+        }
+        try {
+            usuarios.delete(usuario);
+            usuarios.flush();
+        } catch (DataIntegrityViolationException e) {
+            if (causadaPor(e, "fk_pessoa_autor") || causadaPor(e, "fk_agendamento_autor")) {
+                throw new RegraDeNegocioException("Usuário vinculado a cadastros não pode ser excluído; arquive-o.");
+            }
+            throw e;
+        }
+    }
+
+    @Transactional
     public TokenResponseDto atualizarProprio(UUID id, String nome, String senhaAtual, String novaSenha) {
         var usuario = usuarios.buscarParaAtualizacao(id)
                 .orElseThrow(() -> new EntidadeNaoEncontradoException("Usuário não encontrado."));
+        if (usuario.getDataArquivado() != null) throw new RegraDeNegocioException("Usuário arquivado.");
         if (senhaAtual == null || !senhas.matches(senhaAtual, usuario.getSenha())) {
             throw new RegraDeNegocioException("Senha atual incorreta.");
         }
@@ -101,6 +154,25 @@ public class GerenciarUsuariosService {
 
     private UsuarioJpaEntity encontrar(UUID id) {
         return usuarios.findById(id).orElseThrow(() -> new EntidadeNaoEncontradoException("Usuário não encontrado."));
+    }
+
+    private UsuarioJpaEntity bloquear(UUID id) {
+        return usuarios.buscarParaAtualizacao(id)
+                .orElseThrow(() -> new EntidadeNaoEncontradoException("Usuário não encontrado."));
+    }
+
+    private long bloquearAdministradoresAtivos() {
+        return jdbc.queryForList("""
+                SELECT u.id FROM usuarios u JOIN usuario_permissoes p ON p.usuario_id = u.id
+                WHERE p.permissao = 'ADMIN' AND u.data_arquivado IS NULL ORDER BY u.id FOR UPDATE
+                """, byte[].class).stream().map(java.util.Arrays::toString).distinct().count();
+    }
+
+    private static boolean causadaPor(Throwable e, String constraint) {
+        for (Throwable causa = e; causa != null; causa = causa.getCause()) {
+            if (causa.getMessage() != null && causa.getMessage().contains(constraint)) return true;
+        }
+        return false;
     }
 
     private void salvar(UsuarioJpaEntity usuario) {

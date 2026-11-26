@@ -52,6 +52,7 @@ public class InvestigacaoPaginaController {
             @RequestParam(required = false) LocalDate inicio, @RequestParam(required = false) LocalDate fim,
             @RequestParam(defaultValue = "") String cidade, @RequestParam(defaultValue = "") String destino,
             @RequestParam(defaultValue = "0") int pagina, @RequestParam(defaultValue = "0") int resumoPagina,
+            @RequestParam(defaultValue = "0") int cidadePagina,
             Model model) {
         preencher(model, inicio, fim, cidade, destino);
         model.addAttribute("nome", nome);
@@ -59,7 +60,7 @@ public class InvestigacaoPaginaController {
         model.addAttribute("categoria", categoria);
         if (valido(model, inicio, fim)) {
             model.addAttribute("resultado", api.motoristas(nome, motorista, categoria,
-                    new InvestigacaoApi.Filtros(inicio, fim, cidade, destino), pagina, resumoPagina));
+                    new InvestigacaoApi.Filtros(inicio, fim, cidade, destino), pagina, resumoPagina, cidadePagina));
         }
         return "relatorio/investigacao-motoristas";
     }

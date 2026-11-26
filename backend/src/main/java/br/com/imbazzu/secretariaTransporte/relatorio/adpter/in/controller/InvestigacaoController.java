@@ -48,12 +48,13 @@ public class InvestigacaoController {
             String lista, String tipoVeiculo, String identificacao, String motorista, UUID veiculoId,
             int acompanhantes, boolean buscarNaResidencia, String autor) {}
     public record PessoaDetalhe(Pessoa pessoa, Pagina<Agendamento> agendamentos) {}
-    public record Motorista(UUID id, String nome, String categoria, long veiculos, long passageiros) {}
-    public record Resumo(long motoristas, long veiculos, long passageiros) {}
+    public record Motorista(UUID id, String nome, String categoria, long veiculos, long passageiros, long cidades) {}
+    public record Resumo(long motoristas, long veiculos, long passageiros, long cidades) {}
+    public record Cidade(UUID id, String nome, String estado, long veiculos) {}
     public record Passageiro(String nome, String cidade, String destino, LocalTime chegada, int acompanhantes) {}
     public record Veiculo(UUID id, LocalDate data, String motorista, String categoria, String tipo,
             String identificacao, LocalTime saida, boolean saidaCalculada, List<Passageiro> passageiros) {}
-    public record Motoristas(Resumo resumo, Pagina<Motorista> porMotorista, Pagina<Veiculo> veiculos) {}
+    public record Motoristas(Resumo resumo, Pagina<Motorista> porMotorista, Pagina<Veiculo> veiculos, Pagina<Cidade> cidades) {}
 
     @GetMapping("/pessoas")
     public ResponseEntity<Pagina<Pessoa>> pessoas(@RequestParam(defaultValue = "") String nome,
@@ -86,7 +87,8 @@ public class InvestigacaoController {
             @RequestParam(defaultValue = "") String categoria,
             @RequestParam(required = false) LocalDate inicio, @RequestParam(required = false) LocalDate fim,
             @RequestParam(defaultValue = "") String cidade, @RequestParam(defaultValue = "") String destino,
-            @RequestParam(defaultValue = "0") int pagina, @RequestParam(defaultValue = "0") int resumoPagina) {
+            @RequestParam(defaultValue = "0") int pagina, @RequestParam(defaultValue = "0") int resumoPagina,
+            @RequestParam(defaultValue = "0") int cidadePagina) {
         validar(inicio, fim);
         nome = nome.strip();
         categoria = categoria.strip();
@@ -95,11 +97,14 @@ public class InvestigacaoController {
         var resumo = repositorio.resumoGeral(nome, motorista, categoria, inicio, fim, cidade, destino);
         var motoristas = repositorio.resumoMotoristas(nome, motorista, categoria, inicio, fim, cidade, destino, pagina(resumoPagina));
         var veiculos = repositorio.veiculos(nome, motorista, categoria, inicio, fim, cidade, destino, pagina(pagina));
+        var cidades = motorista == null ? null : Pagina.de(
+                repositorio.cidadesMotorista(nome, motorista, categoria, inicio, fim, cidade, destino, pagina(cidadePagina)),
+                c -> new Cidade(c.getId(), c.getNome(), c.getEstado().name(), c.getVeiculos()));
         var ids = veiculos.getContent().stream().map(InvestigacaoRepository.Veiculo::getId).toList();
         Map<UUID, List<InvestigacaoRepository.Passageiro>> passageiros = ids.isEmpty() ? Map.of()
                 : repositorio.passageiros(ids).stream().collect(Collectors.groupingBy(InvestigacaoRepository.Passageiro::getVeiculoId));
-        return semCache(new Motoristas(new Resumo(resumo.getMotoristas(), resumo.getVeiculos(), resumo.getPassageiros()),
-                Pagina.de(motoristas, m -> new Motorista(m.getId(), m.getNome(), m.getCategoria(), m.getVeiculos(), m.getPassageiros())),
+        return semCache(new Motoristas(new Resumo(resumo.getMotoristas(), resumo.getVeiculos(), resumo.getPassageiros(), resumo.getCidades()),
+                Pagina.de(motoristas, m -> new Motorista(m.getId(), m.getNome(), m.getCategoria(), m.getVeiculos(), m.getPassageiros(), m.getCidades())),
                 Pagina.de(veiculos, v -> {
                     var ocupantes = passageiros.getOrDefault(v.getId(), List.of());
                     var saida = v.getSaidaCalculada()
@@ -111,7 +116,7 @@ public class InvestigacaoController {
                             v.getIdentificacao(), saida, v.getSaidaCalculada(), ocupantes.stream()
                                     .map(p -> new Passageiro(p.getNome(), p.getCidade(), p.getDestino(),
                                             p.getChegada(), p.getAcompanhantes())).toList());
-                })));
+                }), cidades));
     }
 
     private static Pessoa pessoa(InvestigacaoRepository.Pessoa p) {

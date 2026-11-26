@@ -103,6 +103,12 @@ class RelatorioJpaIntegrationTest {
         mvc.perform(get(base + "/motoristas").contextPath("/api").param("motorista", motorista)
                         .param("cidade", "Cidade A").param("categoria", "Plantão"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.resumo.veiculos").value(1))
+                .andExpect(jsonPath("$.resumo.cidades").value(2))
+                .andExpect(jsonPath("$.porMotorista.content[0].cidades").value(2))
+                .andExpect(jsonPath("$.cidades.content[0].nome").value("Cidade A"))
+                .andExpect(jsonPath("$.cidades.content[0].veiculos").value(1))
+                .andExpect(jsonPath("$.cidades.content[1].nome").value("Cidade B"))
+                .andExpect(jsonPath("$.cidades.content[1].veiculos").value(1))
                 .andExpect(jsonPath("$.resumo.passageiros").value(2))
                 .andExpect(jsonPath("$.veiculos.content[0].saida").value("07:00:00"))
                 .andExpect(jsonPath("$.veiculos.content[0].passageiros.length()").value(2));
@@ -111,6 +117,17 @@ class RelatorioJpaIntegrationTest {
                 .andExpect(status().isOk()).andExpect(jsonPath("$.resumo.veiculos").value(1))
                 .andExpect(jsonPath("$.veiculos.content[0].saida").value("06:30:00"))
                 .andExpect(jsonPath("$.veiculos.content[0].passageiros.length()").value(0));
+        jdbc.update("INSERT INTO pessoas (id,nome,telefone,especificacao_id) VALUES "
+                + "(UNHEX('00000000000000000000000000000026'),'Pessoa Carla','11987654323',UNHEX('00000000000000000000000000000001'))");
+        jdbc.update("INSERT INTO agendamentos (id,data,pessoa_id,lista_id,regra_cadastro_id,tipo_veiculo_id,destino_id,"
+                + "tempo_viagem_segundos,tempo_viagem_nanos,tolerancia_segundos,tolerancia_nanos,hora_chegada,buscar_na_residencia,acompanhantes,veiculo_agendamento_id) "
+                + "SELECT UNHEX('00000000000000000000000000000044'),data,UNHEX('00000000000000000000000000000026'),lista_id,regra_cadastro_id,tipo_veiculo_id,destino_id,"
+                + "tempo_viagem_segundos,tempo_viagem_nanos,tolerancia_segundos,tolerancia_nanos,hora_chegada,buscar_na_residencia,acompanhantes,veiculo_agendamento_id "
+                + "FROM agendamentos WHERE id=UNHEX('00000000000000000000000000000041')");
+        mvc.perform(get(base + "/motoristas").contextPath("/api").param("motorista", motorista))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.resumo.cidades").value(2))
+                .andExpect(jsonPath("$.cidades.content[0].veiculos").value(1))
+                .andExpect(jsonPath("$.cidades.content[1].veiculos").value(1));
     }
 
     @Test

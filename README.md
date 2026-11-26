@@ -9,19 +9,19 @@ O repositório contém dois módulos Java/Spring Boot:
 
 ## Funcionalidades
 
-- **Pessoas:** cadastro, consulta, edição, arquivamento e reativação; a listagem permite filtrar por especificação e navegar por páginas.
+- **Pessoas:** cadastro, consulta, edição, arquivamento e reativação; a listagem mostra a verificação e permite filtrar por especificação e situação de verificação.
 - **Prioridades e especificações:** a prioridade define a busca na residência e a quantidade exata de acompanhantes. Uma especificação associa a pessoa à prioridade; as regras de listas selecionam as prioridades aceitas por veículo.
 - **Cidades e destinos:** manutenção de cidades, estado e tempo de viagem (de 00:01 a 23:59), além dos destinos associados; consulta e gerenciamento de registros arquivados. Durações antigas de 24 horas ou mais são preservadas, mas precisam ser ajustadas para editar a cidade.
 - **Tipos de veículo:** cadastro, consulta, edição, histórico e arquivamento de tipos de veículo.
 - **Listas e regras:** criação de listas, configuração de regras de cadastro e de separação, consulta e arquivamento.
 - **Agendamento:** abertura de uma agenda por dia, inclusão de passageiros e veículos, consulta do histórico do passageiro, verificação de veículos permitidos e separação automática. Ao abrir um veículo, é possível selecionar um passageiro pendente ou iniciar um novo agendamento.
-- **Motoristas:** cadastro e edição de categorias e motoristas, com telefone único e uma categoria por motorista. Veículos abertos podem receber um motorista; a seleção permite combinar filtros de nome e categoria, e o mesmo motorista pode ser vinculado a vários veículos no dia.
+- **Motoristas:** cadastro e edição de categorias e motoristas, com telefone único e uma categoria por motorista. Motoristas e categorias podem ser arquivados ou reativados; a exclusão definitiva é bloqueada enquanto houver vínculos. Veículos abertos podem receber um motorista ativo; a seleção permite combinar filtros de nome e categoria, e o mesmo motorista pode ser vinculado a vários veículos no dia.
 - **Passageiros do dia:** filtros por texto, cidade, status, tipo de veículo e busca na residência; ordenação por nome, cidade, chegada, saída ou tipo de veículo. O botão de PDF exporta os resultados visíveis na ordem escolhida. O PDF fica disponível para visualização e download na mesma sessão por até uma hora; são mantidos os 10 relatórios mais recentes.
 - **Tabelas paginadas:** navegação numerada com acesso à primeira e à última página, preservando os filtros de busca.
-- **Investigações nos relatórios:** consulta individual de pessoas por nome ou CPF, incluindo arquivadas, com filtros de período, cidade, destino e atribuição de veículo. A análise de motoristas apresenta totais por motorista e veículos atribuídos, com passageiros, destinos e horários previstos; filtros de cidade e destino selecionam veículos que têm ao menos um passageiro correspondente.
+- **Investigações nos relatórios:** consulta individual de pessoas por nome ou CPF, incluindo arquivadas, com filtros de período, cidade, destino e atribuição de veículo. A análise de motoristas apresenta totais e cidades distintas por motorista, contando cada veículo uma vez por cidade, com passageiros, destinos e horários previstos; filtros de cidade e destino selecionam veículos que têm ao menos um passageiro correspondente.
 - **Acesso:** autenticação, perfis cumulativos e gestão de usuários; cada usuário pode alterar seu nome de acesso e senha.
 
-Os formulários de motoristas, categorias e usuários são abertos em modais. Na página de carros de quatro lugares, a abertura não solicita identificação.
+Os formulários de motoristas, categorias e usuários são abertos em modais. Na página de carros de quatro lugares, a abertura é direta e em seguida oferece a inserção de passageiro, sem solicitar identificação.
 
 As operações disponíveis dependem das regras de negócio e das validações implementadas no backend.
 
@@ -181,11 +181,13 @@ Consulte os controllers e DTOs do backend para os parâmetros, corpos de requisi
 
 ### Perfis de acesso
 
-Os perfis são cumulativos: **Agendamento**, **Motoristas**, **Gestão operacional** e **Administração**. A gestão operacional inclui validação de pessoas, cadastros operacionais e relatórios; somente administradores podem cadastrar usuários e alterar perfis. Consultas de dados operacionais necessárias ao agendamento continuam disponíveis aos perfis de agendamento. O último administrador não pode perder esse perfil.
+Os perfis são cumulativos: **Agendamento**, **Motoristas**, **Gestão operacional** e **Administração**. Somente gestão e administração podem confirmar ou retirar a validação de pessoas. Uma pessoa validada não pode ser editada, arquivada, restaurada ou excluída até que sua validação seja retirada. Somente administradores gerenciam usuários; o último administrador ativo não pode perder o perfil, ser arquivado ou excluído.
 
 A migração V24 converte o perfil antigo `USUARIO` em `AGENDAMENTO` e mantém os administradores. Sessões anteriores à atualização precisam entrar novamente. A alteração de senha invalida as demais sessões; nomes e senhas são alterados em **Minha conta** mediante confirmação da senha atual.
 
 A migração V25 vincula novos cadastros de pessoas e agendamentos ao usuário autenticado. O autor permanece o mesmo após edições e é exibido pelo nome atual; registros anteriores aparecem como **Autor desconhecido**.
+
+A migração V26 permite arquivar motoristas, categorias e usuários. Registros vinculados não podem ser excluídos; usuários arquivados perdem acesso e sessões anteriores não voltam a valer após a reativação. O administrador não pode arquivar ou excluir a própria conta.
 
 ## Testes e build
 

@@ -100,4 +100,25 @@ class MotoristaPaginaTest {
                 .andExpect(content().string(containsString("data-bs-target=\"#novoMotoristaModal\" disabled=\"disabled\"")))
                 .andExpect(content().string(containsString("data-bs-target=\"#categoriasModal\"")));
     }
+
+    @Test
+    void exibeArquivadosEEncaminhaOperacoes() throws Exception {
+        var id = UUID.randomUUID();
+        var categoria = UUID.randomUUID();
+        when(api.categorias()).thenReturn(List.of());
+        when(api.categoriasArquivadas()).thenReturn(List.of(new MotoristaApi.Categoria(categoria, "Noturno")));
+        when(api.buscar("", null, true, 0)).thenReturn(new MotoristaApi.Pagina(
+                List.of(new MotoristaApi.Motorista(id, "Ana", "11987654321", categoria, "Noturno")), 1, 0));
+        mvc.perform(get("/motoristas").param("arquivados", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Motoristas arquivados")))
+                .andExpect(content().string(containsString("Reativar")))
+                .andExpect(content().string(containsString("/motoristas/" + id + "/situacao/excluir")));
+        mvc.perform(post("/motoristas/{id}/situacao/reativar", id).param("arquivados", "true"))
+                .andExpect(redirectedUrl("/motoristas?arquivados=true"));
+        verify(api).alterarSituacao(id, false, "reativar");
+        mvc.perform(post("/motoristas/categorias/{id}/situacao/excluir", categoria))
+                .andExpect(redirectedUrl("/motoristas"));
+        verify(api).alterarSituacao(categoria, true, "excluir");
+    }
 }

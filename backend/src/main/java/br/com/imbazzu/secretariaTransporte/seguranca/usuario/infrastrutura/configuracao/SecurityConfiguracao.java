@@ -78,7 +78,7 @@ public class SecurityConfiguracao {
                         .requestMatchers("/usuarios/eu").authenticated()
                         .requestMatchers("/usuarios/**").hasRole("ADMIN")
                         .requestMatchers("/relatorios/**").hasRole("GESTAO")
-                        .requestMatchers(HttpMethod.PATCH, "/pessoa/*/validar").hasRole("GESTAO")
+                        .requestMatchers(HttpMethod.PATCH, "/pessoa/*/validar", "/pessoa/*/retirar-validacao").hasRole("GESTAO")
                         .requestMatchers(HttpMethod.GET, "/motoristas/atribuicoes").hasRole("AGENDAMENTO")
                         .requestMatchers("/motoristas/**").hasRole("MOTORISTA")
                         .requestMatchers(HttpMethod.GET, "/cidade/**", "/destino/**", "/lista/**",

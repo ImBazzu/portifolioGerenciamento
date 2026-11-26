@@ -32,21 +32,23 @@ public class PessoaApi implements PessoaApiPorta {
 
     @Override
     public ResultadoPaginado<PessoaResponseDto> listar(String nome, boolean arquivadas, int pagina, int tamanho) {
-        return listarComFiltro(nome, null, arquivadas, pagina, tamanho);
+        return listarComFiltros(nome, null, null, arquivadas, pagina, tamanho);
     }
 
     @Override
     public ResultadoPaginado<PessoaResponseDto> listarPorEspecificacao(
             String nome, UUID especificacaoId, boolean arquivadas, int pagina, int tamanho) {
-        return listarComFiltro(nome, especificacaoId, arquivadas, pagina, tamanho);
+        return listarComFiltros(nome, especificacaoId, null, arquivadas, pagina, tamanho);
     }
 
-    private ResultadoPaginado<PessoaResponseDto> listarComFiltro(
-            String nome, UUID especificacaoId, boolean arquivadas, int pagina, int tamanho) {
+    @Override
+    public ResultadoPaginado<PessoaResponseDto> listarComFiltros(
+            String nome, UUID especificacaoId, Boolean validada, boolean arquivadas, int pagina, int tamanho) {
         return executarComRefresh(() -> api.get()
                 .uri(uri -> uri.path(PATH_API + (arquivadas ? "/listar/arquivado" : "/listar"))
                         .queryParam("nome", nome)
                         .queryParamIfPresent("especificacaoId", java.util.Optional.ofNullable(especificacaoId))
+                        .queryParamIfPresent("validada", java.util.Optional.ofNullable(validada))
                         .queryParam("pagina", pagina)
                         .queryParam("tamanho", tamanho)
                         .build())
@@ -135,6 +137,14 @@ public class PessoaApi implements PessoaApiPorta {
                         (request, response) -> {
                             throw new PessoaNaoEncontradaException(id);
                         })
+                .toBodilessEntity();
+    }
+
+    @Override
+    public void retirarValidacao(UUID id) {
+        api.patch().uri(PATH_API + "/{id}/retirar-validacao", id).retrieve()
+                .onStatus(status -> status.isSameCodeAs(HttpStatus.NOT_FOUND),
+                        (request, response) -> { throw new PessoaNaoEncontradaException(id); })
                 .toBodilessEntity();
     }
 

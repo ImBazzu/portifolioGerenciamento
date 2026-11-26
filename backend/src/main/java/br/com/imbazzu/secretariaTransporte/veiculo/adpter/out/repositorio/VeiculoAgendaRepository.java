@@ -17,6 +17,7 @@ public interface VeiculoAgendaRepository extends JpaRepository<VeiculoAgendaJpa,
 
     
     boolean existsByIdTipoVeiculo(UUID idTipoVeiculo);
+    boolean existsByIdMotorista(UUID idMotorista);
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE VeiculoAgendaJpa v SET v.idMotorista = :motorista WHERE v.id = :veiculo")

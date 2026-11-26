@@ -2,5 +2,5 @@ package br.com.imbazzu.secretariaTransporte.pessoa.application.query.listarArqui
 
 import java.util.UUID;
 
-public record PessoaQueryListarArquivado(String nome, UUID especificacaoId, int pagina, int tamanho) {
+public record PessoaQueryListarArquivado(String nome, UUID especificacaoId, Boolean validada, int pagina, int tamanho) {
 }

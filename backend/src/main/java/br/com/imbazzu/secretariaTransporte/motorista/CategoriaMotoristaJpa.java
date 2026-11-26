@@ -1,6 +1,7 @@
 package br.com.imbazzu.secretariaTransporte.motorista;
 
 import java.util.UUID;
+import java.time.LocalDateTime;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -19,4 +20,6 @@ public class CategoriaMotoristaJpa {
     private UUID id;
     @Column(nullable = false, length = 100)
     private String nome;
+    @Column(name = "data_arquivado")
+    private LocalDateTime dataArquivado;
 }

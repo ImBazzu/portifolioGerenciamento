@@ -16,12 +16,12 @@ public class UsuarioRepositorioAdapter implements UsuarioRepositorioPorta {
 
     @Override
     public Optional<Usuario> buscarPorNome(String nome) {
-        return jpaRepository.findByNome(nome).map(entity -> entity.toDomain());
+        return jpaRepository.findByNomeAndDataArquivadoIsNull(nome).map(entity -> entity.toDomain());
     }
 
     @Override
     public Optional<Usuario> buscarPorId(UUID id) {
-        return jpaRepository.findById(id).map(entity -> entity.toDomain());
+        return jpaRepository.findByIdAndDataArquivadoIsNull(id).map(entity -> entity.toDomain());
     }
 
     @Override

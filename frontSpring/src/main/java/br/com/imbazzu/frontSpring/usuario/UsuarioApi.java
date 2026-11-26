@@ -32,8 +32,22 @@ public class UsuarioApi {
     }
 
     public Pagina listar(String nome, int pagina) {
+        return listar(nome, false, pagina);
+    }
+
+    public Pagina listar(String nome, boolean arquivados, int pagina) {
         return executar(() -> api.get().uri(uri -> uri.path("/usuarios").queryParam("nome", nome)
-                .queryParam("pagina", pagina).build()).retrieve().body(Pagina.class));
+                .queryParam("arquivados", arquivados).queryParam("pagina", pagina).build()).retrieve().body(Pagina.class));
+    }
+
+    public void alterarSituacao(UUID id, String acao) {
+        if ("excluir".equals(acao)) {
+            executar(() -> api.delete().uri("/usuarios/{id}", id).retrieve().toBodilessEntity());
+        } else if ("arquivar".equals(acao) || "reativar".equals(acao)) {
+            executar(() -> api.patch().uri("/usuarios/{id}/" + acao, id).retrieve().toBodilessEntity());
+        } else {
+            throw new IllegalArgumentException("Ação inválida.");
+        }
     }
 
     public void criar(String nome, String senha, String perfil) {

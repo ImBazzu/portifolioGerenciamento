@@ -2,6 +2,7 @@ package br.com.imbazzu.secretariaTransporte.seguranca;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -81,6 +82,12 @@ class SegurancaIntegrationTest {
                 .andExpect(status().isForbidden());
         mvc.perform(patch("/pessoa/{id}/validar", UUID.randomUUID()).header("Authorization", "Bearer " + g))
                 .andExpect(status().isNotFound());
+        mvc.perform(patch("/pessoa/{id}/retirar-validacao", UUID.randomUUID()).header("Authorization", "Bearer " + a))
+                .andExpect(status().isForbidden());
+        mvc.perform(patch("/pessoa/{id}/retirar-validacao", UUID.randomUUID()).header("Authorization", "Bearer " + m))
+                .andExpect(status().isForbidden());
+        mvc.perform(patch("/pessoa/{id}/retirar-validacao", UUID.randomUUID()).header("Authorization", "Bearer " + g))
+                .andExpect(status().isNotFound());
         mvc.perform(get("/usuarios").header("Authorization", "Bearer " + g)).andExpect(status().isForbidden());
         mvc.perform(get("/usuarios").header("Authorization", "Bearer " + adm)).andExpect(status().isOk());
         mvc.perform(post("/usuarios").header("Authorization", "Bearer " + a).contentType(MediaType.APPLICATION_JSON)
@@ -93,6 +100,43 @@ class SegurancaIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON).content("{\"perfil\":\"AGENDAMENTO\"}"))
                 .andExpect(status().isOk());
         mvc.perform(get("/motoristas").header("Authorization", "Bearer " + m)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Transactional
+    void protegeDadosValidadosEFiltraPorVerificacao() throws Exception {
+        var operador = service.criar("operador validacao", "senha123", "MOTORISTA");
+        var gestao = service.criar("gestor validacao", "senha123", "GESTAO");
+        String m = token(operador.id());
+        String g = token(gestao.id());
+        String pessoaJson = """
+                {"nome":"Pessoa verificada","especificacaoId":"00000000-0000-0000-0000-000000000001",
+                 "telefone":"11987654321","buscarNaResidencia":false}
+                """;
+        var location = mvc.perform(post("/pessoa").header("Authorization", "Bearer " + m)
+                .contentType(MediaType.APPLICATION_JSON).content(pessoaJson))
+                .andExpect(status().isCreated()).andReturn().getResponse().getHeader("Location");
+        UUID id = UUID.fromString(location.substring(location.lastIndexOf('/') + 1));
+        mvc.perform(patch("/pessoa/{id}/validar", id).header("Authorization", "Bearer " + g))
+                .andExpect(status().isNoContent());
+        mvc.perform(get("/pessoa/listar").param("validada", "true").param("nome", "Pessoa verificada")
+                .header("Authorization", "Bearer " + m)).andExpect(status().isOk())
+                .andExpect(content().string(containsString("\"validada\":true")));
+        mvc.perform(get("/pessoa/listar").param("validada", "false").param("nome", "Pessoa verificada")
+                .header("Authorization", "Bearer " + m)).andExpect(status().isOk())
+                .andExpect(content().string(containsString("\"totalElementos\":0")));
+        mvc.perform(put("/pessoa/{id}", id).header("Authorization", "Bearer " + m)
+                .contentType(MediaType.APPLICATION_JSON).content(pessoaJson))
+                .andExpect(status().isUnprocessableEntity());
+        mvc.perform(put("/pessoa/{id}", id).header("Authorization", "Bearer " + g)
+                .contentType(MediaType.APPLICATION_JSON).content(pessoaJson))
+                .andExpect(status().isUnprocessableEntity());
+        mvc.perform(patch("/pessoa/{id}/retirar-validacao", id).header("Authorization", "Bearer " + m))
+                .andExpect(status().isForbidden());
+        mvc.perform(patch("/pessoa/{id}/retirar-validacao", id).header("Authorization", "Bearer " + g))
+                .andExpect(status().isNoContent());
+        mvc.perform(put("/pessoa/{id}", id).header("Authorization", "Bearer " + m)
+                .contentType(MediaType.APPLICATION_JSON).content(pessoaJson)).andExpect(status().isNoContent());
     }
 
     @Test
@@ -118,6 +162,42 @@ class SegurancaIntegrationTest {
     void preservaUltimoAdministrador() {
         var admin = usuarios.buscarPorNome("admin").orElseThrow();
         assertThrows(RegraDeNegocioException.class, () -> service.alterarPerfil(admin.getId(), "GESTAO"));
+    }
+
+    @Test
+    @Transactional
+    void arquivamentoRevogaTokensPreservaVinculosEProtegeAdmin() throws Exception {
+        var admin = usuarios.buscarPorNome("admin").orElseThrow();
+        var criado = service.criar("usuario arquivavel", "senha123", "AGENDAMENTO");
+        var usuario = usuarios.buscarPorId(criado.id()).orElseThrow();
+        String acesso = tokens.gerarTokenAcesso(usuario);
+        String refresh = tokens.gerarTokenAtualizacao(usuario);
+        jdbc.update("INSERT INTO pessoas (id,nome,telefone,especificacao_id,autor_id) "
+                + "VALUES (UNHEX('000000000000000000000000000000c1'),'Pessoa com autor','11987654321',"
+                + "UNHEX('00000000000000000000000000000001'),UUID_TO_BIN(?))", criado.id().toString());
+        assertThrows(RegraDeNegocioException.class, () -> service.excluir(criado.id(), admin.getId()));
+        assertThrows(RegraDeNegocioException.class, () -> service.alterarArquivamento(admin.getId(), criado.id(), true));
+        service.alterarArquivamento(criado.id(), admin.getId(), true);
+        assertEquals(1, service.listar("usuario arquivavel", true, 0).getTotalElements());
+        mvc.perform(get("/usuarios/eu").header("Authorization", "Bearer " + acesso)).andExpect(status().isUnauthorized());
+        mvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"login\":\"usuario arquivavel\",\"senha\":\"senha123\"}"))
+                .andExpect(status().isUnauthorized());
+        service.alterarArquivamento(criado.id(), admin.getId(), false);
+        mvc.perform(get("/usuarios/eu").header("Authorization", "Bearer " + acesso)).andExpect(status().isUnauthorized());
+        mvc.perform(post("/auth/atualizarToken").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"refreshToken\":\"" + refresh + "\"}")).andExpect(status().isUnauthorized());
+        mvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"login\":\"usuario arquivavel\",\"senha\":\"senha123\"}")).andExpect(status().isOk());
+    }
+
+    @Test
+    @Transactional
+    void permiteExcluirUsuarioSemVinculos() {
+        var admin = usuarios.buscarPorNome("admin").orElseThrow();
+        var criado = service.criar("usuario sem vinculo", "senha123", "AGENDAMENTO");
+        service.excluir(criado.id(), admin.getId());
+        assertTrue(usuarios.buscarPorId(criado.id()).isEmpty());
     }
 
     @Test

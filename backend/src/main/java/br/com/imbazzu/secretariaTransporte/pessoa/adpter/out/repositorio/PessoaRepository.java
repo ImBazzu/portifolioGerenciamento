@@ -8,11 +8,17 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
 
 import br.com.imbazzu.secretariaTransporte.pessoa.adpter.out.entidadeJpa.PessoaJpa;
 
 public interface PessoaRepository extends JpaRepository<PessoaJpa, UUID> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM PessoaJpa p WHERE p.id = :id")
+    Optional<PessoaJpa> buscarParaAlteracao(@Param("id") UUID id);
 
     @EntityGraph(attributePaths = {"autor", "especificacao"})
     Optional<PessoaJpa> findByIdAndDataArquivadoIsNull(UUID id);
@@ -33,6 +39,7 @@ public interface PessoaRepository extends JpaRepository<PessoaJpa, UUID> {
             SELECT p FROM PessoaJpa p
             WHERE p.dataArquivado IS NULL
               AND (:especificacaoId IS NULL OR p.especificacao.id = :especificacaoId)
+              AND (:validada IS NULL OR p.validada = :validada)
               AND (
                     LOWER(p.nome) LIKE LOWER(CONCAT('%', :nome, '%'))
                     OR (:numero <> '' AND (p.cpf LIKE CONCAT('%', :numero, '%')
@@ -42,13 +49,14 @@ public interface PessoaRepository extends JpaRepository<PessoaJpa, UUID> {
             """)
     Page<PessoaJpa> listarAtivas(
             @Param("nome") String nome, @Param("numero") String numero,
-            @Param("especificacaoId") UUID especificacaoId, Pageable pageable);
+            @Param("especificacaoId") UUID especificacaoId, @Param("validada") Boolean validada, Pageable pageable);
 
     @EntityGraph(attributePaths = {"autor", "especificacao"})
     @Query("""
             SELECT p FROM PessoaJpa p
             WHERE p.dataArquivado IS NOT NULL
               AND (:especificacaoId IS NULL OR p.especificacao.id = :especificacaoId)
+              AND (:validada IS NULL OR p.validada = :validada)
               AND (
                     LOWER(p.nome) LIKE LOWER(CONCAT('%', :nome, '%'))
                     OR (:numero <> '' AND (p.cpf LIKE CONCAT('%', :numero, '%')
@@ -58,5 +66,5 @@ public interface PessoaRepository extends JpaRepository<PessoaJpa, UUID> {
             """)
     Page<PessoaJpa> listarArquivadas(
             @Param("nome") String nome, @Param("numero") String numero,
-            @Param("especificacaoId") UUID especificacaoId, Pageable pageable);
+            @Param("especificacaoId") UUID especificacaoId, @Param("validada") Boolean validada, Pageable pageable);
 }

@@ -35,20 +35,31 @@
                 <section class="card shadow-sm mb-3"><div class="card-body">
                     <h2 class="h5">Resumo do filtro</h2>
                     <div class="row g-2">
-                        <div class="col-sm-4"><div class="border rounded p-3"><strong th:text="${resultado.resumo().motoristas()}"></strong> motoristas com veículos</div></div>
-                        <div class="col-sm-4"><div class="border rounded p-3"><strong th:text="${resultado.resumo().veiculos()}"></strong> veículos atribuídos</div></div>
-                        <div class="col-sm-4"><div class="border rounded p-3"><strong th:text="${resultado.resumo().passageiros()}"></strong> passageiros agendados, sem acompanhantes</div></div>
+                        <div class="col-sm-6 col-lg-3"><div class="border rounded p-3"><strong th:text="${resultado.resumo().motoristas()}"></strong> motoristas com veículos</div></div>
+                        <div class="col-sm-6 col-lg-3"><div class="border rounded p-3"><strong th:text="${resultado.resumo().veiculos()}"></strong> veículos atribuídos</div></div>
+                        <div class="col-sm-6 col-lg-3"><div class="border rounded p-3"><strong th:text="${resultado.resumo().passageiros()}"></strong> passageiros agendados, sem acompanhantes</div></div>
+                        <div class="col-sm-6 col-lg-3"><div class="border rounded p-3"><strong th:text="${resultado.resumo().cidades()}"></strong> cidades distintas</div></div>
                     </div>
                     <h3 class="h6 mt-4">Por motorista</h3>
                     <p th:if="${#lists.isEmpty(resultado.porMotorista().content())}">Nenhum veículo com motorista encontrado para os filtros.</p>
                     <div class="table-responsive" th:unless="${#lists.isEmpty(resultado.porMotorista().content())}"><table class="table table-striped align-middle">
-                        <thead><tr><th>Motorista</th><th>Categoria atual</th><th>Veículos atribuídos</th><th>Passageiros</th><th><span class="visually-hidden">Ação</span></th></tr></thead>
+                        <thead><tr><th>Motorista</th><th>Categoria atual</th><th>Veículos atribuídos</th><th>Passageiros</th><th>Cidades distintas</th><th><span class="visually-hidden">Ação</span></th></tr></thead>
                         <tbody><tr th:each="m : ${resultado.porMotorista().content()}">
-                            <td th:text="${m.nome()}"></td><td th:text="${m.categoria()}"></td><td th:text="${m.veiculos()}"></td><td th:text="${m.passageiros()}"></td>
+                            <td th:text="${m.nome()}"></td><td th:text="${m.categoria()}"></td><td th:text="${m.veiculos()}"></td><td th:text="${m.passageiros()}"></td><td th:text="${m.cidades()}"></td>
                             <td><a class="btn btn-sm btn-outline-primary" th:href="@{/relatorios/investigacao/motoristas(motorista=${m.id()},inicio=${inicio},fim=${fim},cidade=${cidade},destino=${destino})}">Investigar</a></td>
                         </tr></tbody>
                     </table></div>
-                    <th:block th:replace="~{relatorio/fragmentos/paginacao-investigacao :: paginacao(${resultado.porMotorista()}, @{/relatorios/investigacao/motoristas(nome=${nome},motorista=${motoristaId},categoria=${categoria},inicio=${inicio},fim=${fim},cidade=${cidade},destino=${destino},pagina=${resultado.veiculos().number()},resumoPagina='')}, 'Páginas do resumo de motoristas')}"></th:block>
+                    <th:block th:replace="~{relatorio/fragmentos/paginacao-investigacao :: paginacao(${resultado.porMotorista()}, @{/relatorios/investigacao/motoristas(nome=${nome},motorista=${motoristaId},categoria=${categoria},inicio=${inicio},fim=${fim},cidade=${cidade},destino=${destino},pagina=${resultado.veiculos().number()},cidadePagina=${resultado.cidades() != null ? resultado.cidades().number() : 0},resumoPagina='')}, 'Páginas do resumo de motoristas')}"></th:block>
+                </div></section>
+                <section th:if="${resultado.cidades() != null}" class="card shadow-sm mb-3"><div class="card-body">
+                    <h2 class="h5">Cidades do motorista</h2>
+                    <p class="text-muted small">Cada veículo é contado uma vez em cada cidade com passageiro atribuído, mesmo que haja vários passageiros para a mesma cidade.</p>
+                    <p th:if="${#lists.isEmpty(resultado.cidades().content())}">Nenhuma cidade encontrada para os filtros.</p>
+                    <div class="table-responsive" th:unless="${#lists.isEmpty(resultado.cidades().content())}"><table class="table table-striped">
+                        <thead><tr><th>Cidade</th><th>Veículos atribuídos</th></tr></thead>
+                        <tbody><tr th:each="c : ${resultado.cidades().content()}"><td th:text="${c.nome() + ' / ' + c.estado()}"></td><td th:text="${c.veiculos()}"></td></tr></tbody>
+                    </table></div>
+                    <th:block th:replace="~{relatorio/fragmentos/paginacao-investigacao :: paginacao(${resultado.cidades()}, @{/relatorios/investigacao/motoristas(nome=${nome},motorista=${motoristaId},categoria=${categoria},inicio=${inicio},fim=${fim},cidade=${cidade},destino=${destino},pagina=${resultado.veiculos().number()},resumoPagina=${resultado.porMotorista().number()},cidadePagina='')}, 'Páginas de cidades')}"></th:block>
                 </div></section>
                 <section class="card shadow-sm"><div class="card-body">
                     <h2 class="h5">Veículos e passageiros</h2>
@@ -71,7 +82,7 @@
                             <tbody><tr th:each="p : ${v.passageiros()}"><td th:text="${p.nome()}"></td><td th:text="${p.cidade()}"></td><td th:text="${p.destino()}"></td><td th:text="${#temporals.format(p.chegada(), 'HH:mm')}"></td><td th:text="${p.acompanhantes()}"></td></tr></tbody>
                         </table></div>
                     </article>
-                    <th:block th:replace="~{relatorio/fragmentos/paginacao-investigacao :: paginacao(${resultado.veiculos()}, @{/relatorios/investigacao/motoristas(nome=${nome},motorista=${motoristaId},categoria=${categoria},inicio=${inicio},fim=${fim},cidade=${cidade},destino=${destino},resumoPagina=${resultado.porMotorista().number()},pagina='')}, 'Páginas de veículos')}"></th:block>
+                    <th:block th:replace="~{relatorio/fragmentos/paginacao-investigacao :: paginacao(${resultado.veiculos()}, @{/relatorios/investigacao/motoristas(nome=${nome},motorista=${motoristaId},categoria=${categoria},inicio=${inicio},fim=${fim},cidade=${cidade},destino=${destino},resumoPagina=${resultado.porMotorista().number()},cidadePagina=${resultado.cidades() != null ? resultado.cidades().number() : 0},pagina='')}, 'Páginas de veículos')}"></th:block>
                 </div></section>
             </th:block>
         </div>

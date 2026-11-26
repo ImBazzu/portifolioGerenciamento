@@ -11,17 +11,25 @@
                        placeholder="Buscar por nome..."
                        hx:get="@{/pessoas/listar(arquivadas=true)}"
                        hx-trigger="keyup changed delay:300ms, atualizar-pessoas from:body"
-                       hx-include="#filtroEspecificacaoPessoaArquivada"
+                       hx-include="#filtroEspecificacaoPessoaArquivada, #filtroValidacaoPessoaArquivada"
                        hx-target="#modal" hx-swap="innerHTML" hx-preserve="true">
             </div>
             <select id="filtroEspecificacaoPessoaArquivada" name="especificacaoId" class="form-select mt-2"
                     aria-label="Filtrar por especificação"
                     hx:get="@{/pessoas/listar(arquivadas=true)}" hx-trigger="change"
-                    hx-include="#buscaPessoaArquivada" hx-target="#modal" hx-swap="innerHTML">
+                    hx-include="#buscaPessoaArquivada, #filtroValidacaoPessoaArquivada" hx-target="#modal" hx-swap="innerHTML">
                 <option value="">Todas as especificações</option>
                 <option th:each="especificacao : ${especificacoesFiltro}" th:value="${especificacao.id()}"
                         th:selected="${especificacao.id() == especificacaoId}"
                         th:text="${especificacao.nome() + (especificacao.dataArquivado() == null ? '' : ' (arquivada)')}"></option>
+            </select>
+            <select id="filtroValidacaoPessoaArquivada" name="validada" class="form-select mt-2"
+                    aria-label="Filtrar por verificação"
+                    hx:get="@{/pessoas/listar(arquivadas=true)}" hx-trigger="change"
+                    hx-include="#buscaPessoaArquivada, #filtroEspecificacaoPessoaArquivada" hx-target="#modal" hx-swap="innerHTML">
+                <option value="">Todas as pessoas</option>
+                <option value="true" th:selected="${validada != null and validada}">Verificadas</option>
+                <option value="false" th:selected="${validada != null and !validada}">Não verificadas</option>
             </select>
         </div>
         <div class="modal-body p-0">
@@ -33,19 +41,22 @@
                     <th>CPF</th>
                     <th>Telefone</th>
                     <th>Especificação</th>
+                    <th>Verificação</th>
                     <th>Arquivada em</th>
                     <th class="text-end pe-3">Ações</th>
                 </tr>
                 </thead>
                 <tbody>
                 <tr th:if="${#lists.isEmpty(pessoas)}">
-                    <td colspan="6" class="text-center text-muted py-4">Nenhuma pessoa arquivada encontrada.</td>
+                    <td colspan="7" class="text-center text-muted py-4">Nenhuma pessoa arquivada encontrada.</td>
                 </tr>
                 <tr th:each="pessoa : ${pessoas}">
                     <td class="ps-3 fw-medium">
                         <span th:text="${pessoa.nome()}">Nome</span>
                         <div class="text-muted small" th:text="${pessoa.endereco()}">Endereço</div>
                     </td>
+                    <td><span class="badge" th:classappend="${pessoa.validada() ? 'text-bg-success' : 'text-bg-warning'}"
+                              th:text="${pessoa.validada() ? 'Verificada' : 'Não verificada'}"></span></td>
                     <td th:text="${pessoa.cpf()}">00000000000</td>
                     <td th:text="${pessoa.telefone()}">(00) 00000-0000</td>
                     <td>
@@ -54,14 +65,14 @@
                     </td>
                     <td th:text="${#temporals.format(pessoa.dataArquivado(), 'dd/MM/yyyy')}">01/01/2024</td>
                     <td class="text-end pe-3">
-                        <button class="btn btn-sm btn-outline-success" title="Restaurar"
+                        <button th:unless="${pessoa.validada()}" class="btn btn-sm btn-outline-success" title="Restaurar"
                                 hx:patch="@{/pessoas/{id}/desarquivar(id=${pessoa.id()})}"
                                 hx-confirm="Deseja restaurar esta pessoa?"
                                 hx-target="this" hx-swap="none">
                             <i class="bi bi-arrow-counterclockwise"></i> Restaurar
                         </button>
                         <button class="btn btn-sm btn-outline-primary" title="Detalhes"
-                                th:attr="hx-get=${especificacaoId == null} ? @{/pessoas/{id}/detalhes/arquivado(id=${pessoa.id()},nome=${nome},pagina=${paginaAtual})} : @{/pessoas/{id}/detalhes/arquivado(id=${pessoa.id()},nome=${nome},pagina=${paginaAtual},especificacaoId=${especificacaoId})}"
+                                th:attr="hx-get=@{/pessoas/{id}/detalhes/arquivado(id=${pessoa.id()},nome=${nome},pagina=${paginaAtual},especificacaoId=${especificacaoId},validada=${validada})}"
                                 hx-target="#modal" hx-swap="innerHTML">
                             <i class="bi bi-info-circle me-1"></i> Detalhes
                         </button>
@@ -77,22 +88,22 @@
                   th:text="'Página ' + (${paginaAtual} + 1) + ' de ' + ${totalPaginas}">Página</span>
             <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="Páginas de pessoas arquivadas">
                 <button class="btn btn-outline-secondary" th:disabled="${paginaAtual == 0}"
-                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=true,especificacaoId=${especificacaoId},pagina=${paginaAtual - 1})}"
+                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=true,especificacaoId=${especificacaoId},validada=${validada},pagina=${paginaAtual - 1})}"
                         hx-target="#modal" hx-swap="innerHTML">Anterior</button>
                 <button th:if="${paginaAtual > 2}" class="btn btn-outline-secondary"
-                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=true,especificacaoId=${especificacaoId},pagina=0)}"
+                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=true,especificacaoId=${especificacaoId},validada=${validada},pagina=0)}"
                         hx-target="#modal" hx-swap="innerHTML">1</button>
                 <span th:if="${paginaAtual > 3}" class="btn btn-outline-secondary disabled">…</span>
                 <button th:each="i : ${#numbers.sequence(paginaAtual > 2 ? paginaAtual - 2 : 0, paginaAtual + 2 < totalPaginas ? paginaAtual + 2 : totalPaginas - 1)}"
                         class="btn btn-outline-secondary" th:classappend="${i == paginaAtual} ? 'active'"
-                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=true,especificacaoId=${especificacaoId},pagina=${i})}, aria-current=${i == paginaAtual ? 'page' : null}"
+                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=true,especificacaoId=${especificacaoId},validada=${validada},pagina=${i})}, aria-current=${i == paginaAtual ? 'page' : null}"
                         hx-target="#modal" hx-swap="innerHTML" th:text="${i + 1}"></button>
                 <span th:if="${paginaAtual + 3 < totalPaginas - 1}" class="btn btn-outline-secondary disabled">…</span>
                 <button th:if="${paginaAtual + 3 < totalPaginas}" class="btn btn-outline-secondary"
-                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=true,especificacaoId=${especificacaoId},pagina=${totalPaginas - 1})}"
+                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=true,especificacaoId=${especificacaoId},validada=${validada},pagina=${totalPaginas - 1})}"
                         hx-target="#modal" hx-swap="innerHTML" th:text="${totalPaginas}"></button>
                 <button class="btn btn-outline-secondary" th:disabled="${paginaAtual + 1 >= totalPaginas}"
-                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=true,especificacaoId=${especificacaoId},pagina=${paginaAtual + 1})}"
+                        th:attr="hx-get=@{/pessoas/listar(nome=${nome},arquivadas=true,especificacaoId=${especificacaoId},validada=${validada},pagina=${paginaAtual + 1})}"
                         hx-target="#modal" hx-swap="innerHTML">Próxima</button>
             </div>
         </div>

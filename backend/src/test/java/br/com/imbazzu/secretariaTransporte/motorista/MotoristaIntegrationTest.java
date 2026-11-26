@@ -25,6 +25,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mysql.MySQLContainer;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.EntidadeDuplicadaException;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.EntidadeNaoEncontradoException;
+import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.RegraDeNegocioException;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.jpaAdapter.AgendamentoCommandJpaAdapter;
 import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 
@@ -106,5 +107,40 @@ class MotoristaIntegrationTest {
                 .content("{\"nome\":\"Ana\",\"telefone\":\"123\",\"categoriaId\":\"" + categoria.id() + "\"}"))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(content().string(containsString("telefone")));
+    }
+
+    @Test
+    @Transactional
+    void arquivaSemPerderVinculosEBloqueiaExclusaoEReutilizacaoIndevida() {
+        var categoria = service.salvarCategoria(null, "Plantão arquivo");
+        var motorista = service.salvar(null, "Motorista arquivo", "11987654321", categoria.id());
+        jdbc.update("INSERT INTO dias_agendamento (data, aberto_em) VALUES ('2032-01-01', NOW())");
+        jdbc.update("INSERT INTO tipo_veiculos (id,nome,capacidade) VALUES (UNHEX('00000000000000000000000000000099'),'Tipo arquivo',4)");
+        jdbc.update("INSERT INTO veiculos_agendamento (id,data,tipo_veiculo_id,nome_tipo_veiculo,capacidade,hora_saida_calculada) VALUES "
+                + "(UNHEX('00000000000000000000000000000091'),'2032-01-01',UNHEX('00000000000000000000000000000099'),'Carro',4,0)");
+        var veiculo = UUID.fromString("00000000-0000-0000-0000-000000000091");
+        service.atribuir(veiculo, motorista.id());
+        service.arquivarCategoria(categoria.id(), true);
+        assertTrue(service.categorias().isEmpty());
+        assertEquals(1, service.categorias(true).size());
+        assertThrows(RegraDeNegocioException.class,
+                () -> service.salvar(null, "Outro", "11987654322", categoria.id()));
+        service.salvar(motorista.id(), "Motorista atualizado", "11987654321", categoria.id());
+        assertThrows(RegraDeNegocioException.class, () -> service.excluirCategoria(categoria.id()));
+
+        service.arquivarMotorista(motorista.id(), true);
+        assertEquals(0, service.buscar("", null, 0).getTotalElements());
+        assertEquals(1, service.buscar("", null, true, 0).getTotalElements());
+        var outra = service.salvarCategoria(null, "Plantão ativo");
+        assertThrows(EntidadeDuplicadaException.class,
+                () -> service.salvar(null, "Duplicado", "11987654321", outra.id()));
+        assertEquals("Motorista atualizado", service.atribuicoes(LocalDate.of(2032, 1, 1)).getFirst().nome());
+        assertThrows(RegraDeNegocioException.class, () -> service.atribuir(veiculo, motorista.id()));
+        assertThrows(RegraDeNegocioException.class, () -> service.excluirMotorista(motorista.id()));
+        service.arquivarMotorista(motorista.id(), false);
+        service.atribuir(veiculo, null);
+        service.excluirMotorista(motorista.id());
+        service.excluirCategoria(categoria.id());
+        assertTrue(service.categorias(true).isEmpty());
     }
 }

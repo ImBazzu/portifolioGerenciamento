@@ -21,4 +21,11 @@ public class PessoaCommandValidarHandler {
         pessoa.validar();
         porta.salvar(pessoa);
     }
+
+    @Transactional
+    public void retirar(UUID id) {
+        var pessoa = porta.buscarPorId(id).orElseThrow(() -> new PessoaNaoEncontradoException(id));
+        pessoa.retirarValidacao();
+        porta.salvar(pessoa);
+    }
 }

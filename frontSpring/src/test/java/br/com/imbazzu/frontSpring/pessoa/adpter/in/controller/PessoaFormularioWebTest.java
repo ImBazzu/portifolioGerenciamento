@@ -111,7 +111,7 @@ class PessoaFormularioWebTest {
                 false, 0, null, List.of());
         var linhas = java.util.stream.IntStream.range(0, 40).mapToObj(numero -> new PassageiroRelatorioView(
                 agendamento, new PassageiroDetalheView("Pessoa " + numero, "123", "456", "", "",
-                        "Cidade", "Destino", 0, "Padrão"), "Lista", null)).toList();
+                        "Cidade", "Destino", 0, "Padrão", false), "Lista", null)).toList();
         var reader = new PdfReader(AgendamentoPdfService.gerarPassageiros(data, linhas));
         assertTrue(reader.getNumberOfPages() > 1);
         var texto = new StringBuilder();
@@ -602,6 +602,10 @@ class PessoaFormularioWebTest {
                 .andExpect(content().string(containsString("Carro 01")))
                 .andExpect(content().string(not(containsString("Sem identificação"))))
                 .andExpect(content().string(not(containsString("id=\"identificacaoCarro\""))))
+                .andExpect(content().string(not(containsString("id=\"abrirCarroModal\""))))
+                .andExpect(content().string(containsString("action=\"/agendamentos/carros/veiculos\"")))
+                .andExpect(content().string(containsString("name=\"idTipoVeiculo\"")))
+                .andExpect(content().string(containsString("value=\"" + idTipo + "\"")))
                 .andExpect(content().string(containsString("/motoristas/selecionar/" + idVeiculo)));
 
         when(motoristas.atribuicoes(data)).thenReturn(List.of(
@@ -756,5 +760,37 @@ class PessoaFormularioWebTest {
                 .andExpect(content().string(not(containsString("Confirmar validação"))));
 
         verify(pessoas).validar(PESSOA_ID);
+    }
+
+    @Test
+    @WithMockUser(roles = "GESTAO")
+    void naoOfereceEdicaoParaPessoaValidadaEApenasGestaoPodeRetirar() throws Exception {
+        var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
+                "Alta", PRIORIDADE_ID, 2, true, 2, true, null, "", "52998224725", "11987654321");
+        when(pessoas.buscar(PESSOA_ID)).thenReturn(pessoa);
+        mvc.perform(get("/pessoas/abrirFormulario/{id}", PESSOA_ID).header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Retirar validação")))
+                .andExpect(content().string(not(containsString("Editar Pessoa"))));
+        mvc.perform(patch("/pessoas/{id}/retirar-validacao", PESSOA_ID).header("HX-Request", "true"))
+                .andExpect(status().isOk());
+        verify(pessoas).retirarValidacao(PESSOA_ID);
+    }
+
+    @Test
+    void listaPessoasMostraEConservaFiltroDeVerificacao() throws Exception {
+        var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
+                "Alta", PRIORIDADE_ID, 2, true, 2, true, null, "", "52998224725", "11987654321");
+        when(pessoas.listarComFiltros("Ana", ESPECIFICACAO_ID, true, false, 1))
+                .thenReturn(new ResultadoPaginado<>(List.of(pessoa), 1, 10, 21, 3));
+        when(especificacoes.listar("", false, 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(especificacoes.listar("", true, 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        mvc.perform(get("/pessoas/listar").header("HX-Request", "true")
+                        .param("nome", "Ana").param("validada", "true")
+                        .param("especificacaoId", ESPECIFICACAO_ID.toString()).param("pagina", "1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Verificada")))
+                .andExpect(content().string(containsString("id=\"filtroValidacaoPessoa\"")))
+                .andExpect(content().string(containsString("validada=true")));
     }
 }

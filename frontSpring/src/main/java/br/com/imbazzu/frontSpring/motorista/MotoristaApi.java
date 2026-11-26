@@ -32,12 +32,33 @@ public class MotoristaApi {
                 .body(new ParameterizedTypeReference<List<Categoria>>() {}));
     }
 
+    public List<Categoria> categoriasArquivadas() {
+        return executar(() -> api.get().uri("/motoristas/categorias?arquivadas=true").retrieve()
+                .body(new ParameterizedTypeReference<List<Categoria>>() {}));
+    }
+
     public Pagina buscar(String nome, UUID categoria, int pagina) {
+        return buscar(nome, categoria, false, pagina);
+    }
+
+    public Pagina buscar(String nome, UUID categoria, boolean arquivados, int pagina) {
         return executar(() -> api.get().uri(uri -> {
-            var builder = uri.path("/motoristas").queryParam("nome", nome).queryParam("pagina", pagina);
+            var builder = uri.path("/motoristas").queryParam("nome", nome).queryParam("pagina", pagina)
+                    .queryParam("arquivados", arquivados);
             if (categoria != null) builder.queryParam("categoria", categoria);
             return builder.build();
         }).retrieve().body(Pagina.class));
+    }
+
+    public void alterarSituacao(UUID id, boolean categoria, String acao) {
+        String path = categoria ? "/motoristas/categorias/{id}" : "/motoristas/{id}";
+        if ("excluir".equals(acao)) {
+            executar(() -> api.delete().uri(path, id).retrieve().toBodilessEntity());
+        } else if ("arquivar".equals(acao) || "reativar".equals(acao)) {
+            executar(() -> api.patch().uri(path + "/" + acao, id).retrieve().toBodilessEntity());
+        } else {
+            throw new IllegalArgumentException("Ação inválida.");
+        }
     }
 
     public List<Atribuicao> atribuicoes(LocalDate data) {

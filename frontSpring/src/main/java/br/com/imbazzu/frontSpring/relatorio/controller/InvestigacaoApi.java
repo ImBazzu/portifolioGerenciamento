@@ -24,12 +24,13 @@ public class InvestigacaoApi {
             String lista, String tipoVeiculo, String identificacao, String motorista, UUID veiculoId,
             int acompanhantes, boolean buscarNaResidencia, String autor) {}
     public record PessoaDetalhe(Pessoa pessoa, Pagina<Agendamento> agendamentos) {}
-    public record Motorista(UUID id, String nome, String categoria, long veiculos, long passageiros) {}
-    public record Resumo(long motoristas, long veiculos, long passageiros) {}
+    public record Motorista(UUID id, String nome, String categoria, long veiculos, long passageiros, long cidades) {}
+    public record Resumo(long motoristas, long veiculos, long passageiros, long cidades) {}
+    public record Cidade(UUID id, String nome, String estado, long veiculos) {}
     public record Passageiro(String nome, String cidade, String destino, LocalTime chegada, int acompanhantes) {}
     public record Veiculo(UUID id, LocalDate data, String motorista, String categoria, String tipo,
             String identificacao, LocalTime saida, boolean saidaCalculada, List<Passageiro> passageiros) {}
-    public record Motoristas(Resumo resumo, Pagina<Motorista> porMotorista, Pagina<Veiculo> veiculos) {}
+    public record Motoristas(Resumo resumo, Pagina<Motorista> porMotorista, Pagina<Veiculo> veiculos, Pagina<Cidade> cidades) {}
     public record Filtros(LocalDate inicio, LocalDate fim, String cidade, String destino) {}
 
     private final RestClient api;
@@ -55,13 +56,13 @@ public class InvestigacaoApi {
         return exigir(resultado);
     }
 
-    public Motoristas motoristas(String nome, UUID motorista, String categoria, Filtros filtros, int pagina, int resumoPagina) {
+    public Motoristas motoristas(String nome, UUID motorista, String categoria, Filtros filtros, int pagina, int resumoPagina, int cidadePagina) {
         var resultado = retry.executar(() -> api.get().uri(uri -> {
             var builder = filtros(uri.path("/relatorios/investigacao/motoristas"), filtros);
             if (motorista != null) builder.queryParam("motorista", motorista);
             return builder
                 .queryParam("nome", "{nome}").queryParam("categoria", "{categoria}")
-                .queryParam("pagina", pagina).queryParam("resumoPagina", resumoPagina)
+                .queryParam("pagina", pagina).queryParam("resumoPagina", resumoPagina).queryParam("cidadePagina", cidadePagina)
                 .build(Map.of("nome", nome, "categoria", categoria, "cidade", filtros.cidade(), "destino", filtros.destino()));
         })
                 .retrieve().body(Motoristas.class));

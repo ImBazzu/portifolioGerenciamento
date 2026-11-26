@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.entidadeJpa.AgendamentoJpa;
+import br.com.imbazzu.secretariaTransporte.localidades.core.domain.CidadeEstadoEnum;
 
 public interface InvestigacaoRepository extends JpaRepository<AgendamentoJpa, UUID> {
     interface Pessoa {
@@ -45,12 +46,21 @@ public interface InvestigacaoRepository extends JpaRepository<AgendamentoJpa, UU
         String getCategoria();
         long getVeiculos();
         long getPassageiros();
+        long getCidades();
     }
 
     interface ResumoGeral {
         long getMotoristas();
         long getVeiculos();
         long getPassageiros();
+        long getCidades();
+    }
+
+    interface CidadeResumo {
+        UUID getId();
+        String getNome();
+        CidadeEstadoEnum getEstado();
+        long getVeiculos();
     }
 
     interface Veiculo {
@@ -151,9 +161,11 @@ public interface InvestigacaoRepository extends JpaRepository<AgendamentoJpa, UU
 
     @Query("""
             SELECT COUNT(DISTINCT m.id) AS motoristas, COUNT(DISTINCT v.id) AS veiculos,
-                   COUNT(a.id) AS passageiros
+                   COUNT(a.id) AS passageiros, COUNT(DISTINCT cidade.id) AS cidades
             FROM VeiculoAgendaJpa v JOIN MotoristaJpa m ON m.id = v.idMotorista
             JOIN m.categoria cat LEFT JOIN AgendamentoJpa a ON a.idVeiculoAberto = v.id
+            LEFT JOIN DestinoJpa destino ON destino.id = a.idDestino
+            LEFT JOIN CidadeJpa cidade ON cidade.id = destino.cidadeId
             """ + MOTORISTA_WHERE)
     ResumoGeral resumoGeral(@Param("nome") String nome, @Param("motorista") UUID motorista, @Param("categoria") String categoria,
             @Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim,
@@ -161,9 +173,12 @@ public interface InvestigacaoRepository extends JpaRepository<AgendamentoJpa, UU
 
     @Query(value = """
             SELECT m.id AS id, m.nome AS nome, cat.nome AS categoria,
-                   COUNT(DISTINCT v.id) AS veiculos, COUNT(a.id) AS passageiros
+                   COUNT(DISTINCT v.id) AS veiculos, COUNT(a.id) AS passageiros,
+                   COUNT(DISTINCT cidade.id) AS cidades
             FROM VeiculoAgendaJpa v JOIN MotoristaJpa m ON m.id = v.idMotorista
             JOIN m.categoria cat LEFT JOIN AgendamentoJpa a ON a.idVeiculoAberto = v.id
+            LEFT JOIN DestinoJpa destino ON destino.id = a.idDestino
+            LEFT JOIN CidadeJpa cidade ON cidade.id = destino.cidadeId
             """ + MOTORISTA_WHERE +
             " GROUP BY m.id, m.nome, cat.nome ORDER BY COUNT(DISTINCT v.id) DESC, m.nome, m.id",
             countQuery = "SELECT COUNT(DISTINCT m.id) " + MOTORISTA_FROM)
@@ -179,6 +194,24 @@ public interface InvestigacaoRepository extends JpaRepository<AgendamentoJpa, UU
             countQuery = "SELECT COUNT(v) " + MOTORISTA_FROM)
     Page<Veiculo> veiculos(@Param("nome") String nome, @Param("motorista") UUID motorista, @Param("categoria") String categoria,
             @Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim,
+            @Param("cidade") String cidade, @Param("destino") String destino, Pageable pageable);
+
+    @Query(value = """
+            SELECT cidade.id AS id, cidade.nome AS nome, cidade.estado AS estado, COUNT(DISTINCT v.id) AS veiculos
+            FROM VeiculoAgendaJpa v JOIN MotoristaJpa m ON m.id = v.idMotorista
+            JOIN m.categoria cat JOIN AgendamentoJpa a ON a.idVeiculoAberto = v.id
+            JOIN DestinoJpa destino ON destino.id = a.idDestino
+            JOIN CidadeJpa cidade ON cidade.id = destino.cidadeId
+            """ + MOTORISTA_WHERE + " GROUP BY cidade.id, cidade.nome, cidade.estado ORDER BY cidade.nome, cidade.id",
+            countQuery = """
+            SELECT COUNT(DISTINCT cidade.id)
+            FROM VeiculoAgendaJpa v JOIN MotoristaJpa m ON m.id = v.idMotorista
+            JOIN m.categoria cat JOIN AgendamentoJpa a ON a.idVeiculoAberto = v.id
+            JOIN DestinoJpa destino ON destino.id = a.idDestino
+            JOIN CidadeJpa cidade ON cidade.id = destino.cidadeId
+            """ + MOTORISTA_WHERE)
+    Page<CidadeResumo> cidadesMotorista(@Param("nome") String nome, @Param("motorista") UUID motorista,
+            @Param("categoria") String categoria, @Param("inicio") LocalDate inicio, @Param("fim") LocalDate fim,
             @Param("cidade") String cidade, @Param("destino") String destino, Pageable pageable);
 
     @Query("""

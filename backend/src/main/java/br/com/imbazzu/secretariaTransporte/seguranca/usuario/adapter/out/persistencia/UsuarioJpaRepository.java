@@ -13,9 +13,13 @@ import java.util.UUID;
 
 public interface UsuarioJpaRepository extends JpaRepository<UsuarioJpaEntity, UUID> {
     Optional<UsuarioJpaEntity> findByNome(String nome);
+    Optional<UsuarioJpaEntity> findByNomeAndDataArquivadoIsNull(String nome);
+    Optional<UsuarioJpaEntity> findByIdAndDataArquivadoIsNull(UUID id);
     boolean existsByNome(String nome);
     boolean existsByNomeIgnoreCaseAndIdNot(String nome, UUID id);
     Page<UsuarioJpaEntity> findByNomeContainingIgnoreCaseOrderByNomeAsc(String nome, Pageable pageable);
+    Page<UsuarioJpaEntity> findByNomeContainingIgnoreCaseAndDataArquivadoIsNullOrderByNomeAsc(String nome, Pageable pageable);
+    Page<UsuarioJpaEntity> findByNomeContainingIgnoreCaseAndDataArquivadoIsNotNullOrderByNomeAsc(String nome, Pageable pageable);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT u FROM UsuarioJpaEntity u WHERE u.id = :id")
     Optional<UsuarioJpaEntity> buscarParaAtualizacao(@Param("id") UUID id);

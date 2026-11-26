@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.AgendamentoRedirect;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.MensagemErroApi;
@@ -28,8 +30,10 @@ public class MotoristaPaginaController {
     @GetMapping
     public String inicio(@RequestParam(defaultValue = "") String nome,
             @RequestParam(required = false) UUID categoria,
-            @RequestParam(defaultValue = "0") int pagina, Model model) {
-        preencher(model, nome, categoria, pagina);
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "false") boolean arquivados, Model model) {
+        preencher(model, nome, categoria, pagina, arquivados);
+        model.addAttribute("categoriasArquivadas", api.categoriasArquivadas());
         return "motorista/inicio";
     }
 
@@ -39,19 +43,37 @@ public class MotoristaPaginaController {
             @RequestParam(defaultValue = "") String nome,
             @RequestParam(required = false) UUID categoria,
             @RequestParam(defaultValue = "0") int pagina, Model model) {
-        preencher(model, nome, categoria, pagina);
+        preencher(model, nome, categoria, pagina, false);
         model.addAttribute("veiculo", veiculo);
         model.addAttribute("data", data);
         model.addAttribute("carros", carros);
         return "motorista/selecionar";
     }
 
-    private void preencher(Model model, String nome, UUID categoria, int pagina) {
+    private void preencher(Model model, String nome, UUID categoria, int pagina, boolean arquivados) {
         model.addAttribute("pagina", "motoristas");
         model.addAttribute("nome", nome);
         model.addAttribute("categoriaSelecionada", categoria);
         model.addAttribute("categorias", api.categorias());
-        model.addAttribute("resultado", api.buscar(nome, categoria, pagina));
+        model.addAttribute("arquivados", arquivados);
+        model.addAttribute("resultado", arquivados ? api.buscar(nome, categoria, true, pagina) : api.buscar(nome, categoria, pagina));
+    }
+
+    @PostMapping({"/{id}/situacao/{acao}", "/categorias/{id}/situacao/{acao}"})
+    public String situacao(@PathVariable UUID id, @PathVariable String acao,
+            @RequestParam(defaultValue = "false") boolean arquivados,
+            jakarta.servlet.http.HttpServletRequest request, RedirectAttributes redirect) {
+        if (!java.util.List.of("arquivar", "reativar", "excluir").contains(acao)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ação inválida.");
+        }
+        boolean categoria = request.getRequestURI().contains("/categorias/");
+        try {
+            api.alterarSituacao(id, categoria, acao);
+            redirect.addFlashAttribute("sucesso", "Operação realizada.");
+        } catch (RestClientResponseException e) {
+            redirect.addFlashAttribute("erro", erro.de(e));
+        }
+        return "redirect:/motoristas" + (arquivados ? "?arquivados=true" : "");
     }
 
     @PostMapping("/categorias")

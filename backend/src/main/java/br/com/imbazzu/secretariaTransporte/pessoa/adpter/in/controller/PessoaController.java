@@ -91,9 +91,10 @@ public class PessoaController {
     public ResponseEntity<ResultadoPaginado<PessoaResponseDto>> listarAtivos(
             @RequestParam(defaultValue = "") String nome,
             @RequestParam(required = false) UUID especificacaoId,
+            @RequestParam(required = false) Boolean validada,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamanho) {
-        var resultado = listarHandler.handler(new PessoaQueryListar(nome, especificacaoId, pagina, tamanho));
+        var resultado = listarHandler.handler(new PessoaQueryListar(nome, especificacaoId, validada, pagina, tamanho));
         return ResponseEntity.ok(resultado.map(this::toResponse));
     }
 
@@ -101,9 +102,10 @@ public class PessoaController {
     public ResponseEntity<ResultadoPaginado<PessoaResponseDto>> listarArquivados(
             @RequestParam(defaultValue = "") String nome,
             @RequestParam(required = false) UUID especificacaoId,
+            @RequestParam(required = false) Boolean validada,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int tamanho) {
-        var resultado = listarArquivadoHandler.handler(new PessoaQueryListarArquivado(nome, especificacaoId, pagina, tamanho));
+        var resultado = listarArquivadoHandler.handler(new PessoaQueryListarArquivado(nome, especificacaoId, validada, pagina, tamanho));
         return ResponseEntity.ok(resultado.map(this::toResponse));
     }
 
@@ -129,6 +131,12 @@ public class PessoaController {
     @PatchMapping("/{id}/validar")
     public ResponseEntity<Void> validar(@PathVariable UUID id) {
         validarHandler.handler(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/retirar-validacao")
+    public ResponseEntity<Void> retirarValidacao(@PathVariable UUID id) {
+        validarHandler.retirar(id);
         return ResponseEntity.noContent().build();
     }
 

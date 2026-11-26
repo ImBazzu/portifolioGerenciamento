@@ -19,13 +19,13 @@ public class PessoaApplication {
 
 
     @Transactional(readOnly = true)
-    public ResultadoPaginado<Pessoa> listar(String nome, UUID especificacaoId, boolean arquivado, int pagina, int tamanho) {
+    public ResultadoPaginado<Pessoa> listar(String nome, UUID especificacaoId, Boolean validada, boolean arquivado, int pagina, int tamanho) {
         if (pagina < 0) {
             throw new DadosInvalidosException("A página não pode ser negativa");
         }
         if (tamanho < 1 || tamanho > 100) {
             throw new DadosInvalidosException("O tamanho da página deve estar entre 1 e 100");
         }
-        return pessoaPorta.listar(nome == null ? "" : nome.trim(), especificacaoId, arquivado, pagina, tamanho);
+        return pessoaPorta.listar(nome == null ? "" : nome.trim(), especificacaoId, validada, arquivado, pagina, tamanho);
     }
 }

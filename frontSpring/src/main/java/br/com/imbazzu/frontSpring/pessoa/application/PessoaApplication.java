@@ -32,6 +32,12 @@ public class PessoaApplication implements PessoaApplicationPorta {
     }
 
     @Override
+    public ResultadoPaginado<PessoaResponseDto> listarComFiltros(
+            String nome, UUID especificacaoId, Boolean validada, boolean arquivadas, int pagina) {
+        return api.listarComFiltros(nome, especificacaoId, validada, arquivadas, pagina, TAMANHO_PAGINA);
+    }
+
+    @Override
     public PessoaResponseDto buscar(UUID id) {
         return api.buscar(id);
     }
@@ -59,6 +65,11 @@ public class PessoaApplication implements PessoaApplicationPorta {
     @Override
     public void validar(UUID id) {
         api.validar(id);
+    }
+
+    @Override
+    public void retirarValidacao(UUID id) {
+        api.retirarValidacao(id);
     }
 
     @Override

@@ -37,9 +37,9 @@ public class PessoaJpaAdapterCommand implements PessoaCommandPorta {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public Optional<Pessoa> buscarPorId(UUID id) {
-        return repository.findById(id).map(PessoaBancoMapper::paraDomain);
+        return repository.buscarParaAlteracao(id).map(PessoaBancoMapper::paraDomain);
     }
 
 

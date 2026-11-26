@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.RestClientResponseException;
 
 import br.com.imbazzu.frontSpring.especificacao.core.porta.in.EspecificacaoApplicationPorta;
 import br.com.imbazzu.frontSpring.especificacao.core.dto.EspecificacaoResponseDto;
@@ -26,6 +27,7 @@ import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaRequestDto;
 import br.com.imbazzu.frontSpring.pessoa.core.excecoes.PessoaDuplicadaException;
 import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
+import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.MensagemErroApi;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxRequest;
 import io.github.wimdeblauwe.htmx.spring.boot.mvc.HxTriggerAfterSettle;
 import jakarta.validation.Valid;
@@ -58,14 +60,17 @@ public class PessoaController {
             @RequestParam(defaultValue = "") String nome,
             @RequestParam(defaultValue = "false") boolean arquivadas,
             @RequestParam(required = false) UUID especificacaoId,
+            @RequestParam(required = false) Boolean validada,
             @RequestParam(defaultValue = "0") int pagina,
             Model model) {
-        var resultado = especificacaoId == null
-                ? application.listar(nome, arquivadas, pagina)
+        var resultado = validada != null
+                ? application.listarComFiltros(nome, especificacaoId, validada, arquivadas, pagina)
+                : especificacaoId == null ? application.listar(nome, arquivadas, pagina)
                 : application.listarPorEspecificacao(nome, especificacaoId, arquivadas, pagina);
         model.addAttribute("pessoas", resultado.conteudo());
         model.addAttribute("especificacoesFiltro", especificacoesParaFiltro());
         model.addAttribute("especificacaoId", especificacaoId);
+        model.addAttribute("validada", validada);
         model.addAttribute("nome", nome);
         model.addAttribute("arquivadas", arquivadas);
         model.addAttribute("paginaAtual", resultado.paginaAtual());
@@ -105,6 +110,10 @@ public class PessoaController {
     @GetMapping("/abrirFormulario/{id}")
     public String formularioEdicao(@PathVariable UUID id, Model model, @RequestParam(defaultValue  = "false") boolean contextoAgendamento) {
         var pessoa = application.buscar(id);
+        if (pessoa.validada()) {
+            model.addAttribute("pessoa", pessoa);
+            return "paginas/pessoa/detalhesPessoa :: detalhesPessoa";
+        }
         model.addAttribute("id", id);
         model.addAttribute("contextoAgendamento", contextoAgendamento);
         model.addAttribute("especificacaoSelecionadaLabel",
@@ -127,10 +136,12 @@ public class PessoaController {
     public String detalhesArquivado(@PathVariable UUID id,
                                     @RequestParam(defaultValue = "") String nome,
                                     @RequestParam(required = false) UUID especificacaoId,
+                                    @RequestParam(required = false) Boolean validada,
                                     @RequestParam(defaultValue = "0") int pagina, Model model) {
         model.addAttribute("arquivado", true);
         model.addAttribute("nome", nome);
         model.addAttribute("especificacaoId", especificacaoId);
+        model.addAttribute("validada", validada);
         model.addAttribute("paginaAtual", pagina);
         model.addAttribute("pessoa", application.buscarArquivado(id));
         return "paginas/pessoa/detalhesPessoa :: detalhesPessoa";
@@ -201,6 +212,8 @@ public class PessoaController {
             return "layout/vazio :: vazio";
         } catch (PessoaDuplicadaException e) {
             result.rejectValue("cpf", "duplicado", e.getMessage());
+        } catch (RestClientResponseException e) {
+            model.addAttribute("erroGlobal", new MensagemErroApi(objectMapper).de(e));
         } catch (Exception e) {
             model.addAttribute("erroGlobal", e.getMessage() != null ? e.getMessage() : "Ocorreu um erro inesperado.");
         }
@@ -229,6 +242,25 @@ public class PessoaController {
     public String validar(@PathVariable UUID id, Model model) {
         application.validar(id);
         model.addAttribute("pessoa", application.buscar(id));
+        return "paginas/pessoa/detalhesPessoa :: detalhesPessoa";
+    }
+
+    @HxRequest
+    @PatchMapping("/{id}/retirar-validacao")
+    @HxTriggerAfterSettle("atualizar-pessoas")
+    public String retirarValidacao(@PathVariable UUID id,
+            @RequestParam(defaultValue = "false") boolean arquivado,
+            @RequestParam(defaultValue = "") String nome,
+            @RequestParam(required = false) UUID especificacaoId,
+            @RequestParam(required = false) Boolean validada,
+            @RequestParam(defaultValue = "0") int pagina, Model model) {
+        application.retirarValidacao(id);
+        model.addAttribute("arquivado", arquivado);
+        model.addAttribute("nome", nome);
+        model.addAttribute("especificacaoId", especificacaoId);
+        model.addAttribute("validada", validada);
+        model.addAttribute("paginaAtual", pagina);
+        model.addAttribute("pessoa", arquivado ? application.buscarArquivado(id) : application.buscar(id));
         return "paginas/pessoa/detalhesPessoa :: detalhesPessoa";
     }
 

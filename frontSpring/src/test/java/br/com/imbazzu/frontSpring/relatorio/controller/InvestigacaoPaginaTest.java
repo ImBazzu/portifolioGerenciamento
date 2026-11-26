@@ -54,14 +54,14 @@ class InvestigacaoPaginaTest {
     void mostraMotoristasVeiculosEPassageirosComFiltrosPreservados() throws Exception {
         var id = UUID.randomUUID();
         var filtro = new InvestigacaoApi.Filtros(LocalDate.of(2030, 1, 1), null, "Cidade", "");
-        var motorista = new InvestigacaoApi.Motorista(id, "Ana", "Noturno", 21, 2);
+        var motorista = new InvestigacaoApi.Motorista(id, "Ana", "Noturno", 21, 2, 1);
         var passageiro = new InvestigacaoApi.Passageiro("Beatriz", "Cidade", "Hospital", LocalTime.of(9, 0), 1);
         var veiculo = new InvestigacaoApi.Veiculo(UUID.randomUUID(), LocalDate.of(2030, 1, 3), "Ana", "Noturno",
                 "Van", null, LocalTime.of(7, 0), true, List.of(passageiro));
-        var resultado = new InvestigacaoApi.Motoristas(new InvestigacaoApi.Resumo(1, 21, 2),
+        var resultado = new InvestigacaoApi.Motoristas(new InvestigacaoApi.Resumo(1, 21, 2, 1),
                 new InvestigacaoApi.Pagina<>(List.of(motorista), 1, 1, 0),
-                new InvestigacaoApi.Pagina<>(List.of(veiculo), 21, 2, 0));
-        when(api.motoristas("Ana", null, "Noturno", filtro, 0, 0)).thenReturn(resultado);
+                new InvestigacaoApi.Pagina<>(List.of(veiculo), 21, 2, 0), null);
+        when(api.motoristas("Ana", null, "Noturno", filtro, 0, 0, 0)).thenReturn(resultado);
         mvc.perform(get("/relatorios/investigacao/motoristas").param("nome", "Ana").param("categoria", "Noturno")
                         .param("inicio", "2030-01-01").param("cidade", "Cidade"))
                 .andExpect(status().isOk())
@@ -72,6 +72,24 @@ class InvestigacaoPaginaTest {
                 .andExpect(content().string(containsString("motorista=" + id)))
                 .andExpect(content().string(containsString("categoria=Noturno")))
                 .andExpect(content().string(containsString("pagina=1")));
+    }
+
+    @Test
+    void mostraContagemPorCidadeDoMotoristaSelecionado() throws Exception {
+        var id = UUID.randomUUID();
+        var filtro = new InvestigacaoApi.Filtros(null, null, "", "");
+        var cidades = new InvestigacaoApi.Pagina<>(List.of(
+                new InvestigacaoApi.Cidade(UUID.randomUUID(), "Aracaju", "SE", 1),
+                new InvestigacaoApi.Cidade(UUID.randomUUID(), "Itabaiana", "SE", 1)), 2, 1, 0);
+        var resultado = new InvestigacaoApi.Motoristas(new InvestigacaoApi.Resumo(1, 1, 3, 2),
+                new InvestigacaoApi.Pagina<>(List.of(), 0, 0, 0),
+                new InvestigacaoApi.Pagina<>(List.of(), 0, 0, 0), cidades);
+        when(api.motoristas("", id, "", filtro, 0, 0, 0)).thenReturn(resultado);
+        mvc.perform(get("/relatorios/investigacao/motoristas").param("motorista", id.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("<strong>2</strong> cidades distintas")))
+                .andExpect(content().string(containsString("Aracaju / SE")))
+                .andExpect(content().string(containsString("Itabaiana / SE")));
     }
 
     @Test

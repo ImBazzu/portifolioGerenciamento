@@ -16,6 +16,6 @@ public class PessoaQueryListarArquivadoHandler {
 
     @Transactional(readOnly = true)
     public ResultadoPaginado<Pessoa> handler(PessoaQueryListarArquivado query) {
-        return application.listar(query.nome(), query.especificacaoId(), true, query.pagina(), query.tamanho());
+        return application.listar(query.nome(), query.especificacaoId(), query.validada(), true, query.pagina(), query.tamanho());
     }
 }

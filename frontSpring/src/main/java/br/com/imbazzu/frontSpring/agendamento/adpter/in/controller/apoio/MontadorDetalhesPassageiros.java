@@ -83,6 +83,7 @@ public class MontadorDetalhesPassageiros {
                 destino == null ? "Cidade não encontrada (%s)".formatted(idDestino) : destino.cidade(),
                 destino == null ? "Destino não encontrado (%s)".formatted(idDestino) : destino.nome(),
                 pessoa.prioridadeAcompanhantes(),
-                pessoa.especificacaoNome());
+                pessoa.especificacaoNome(),
+                pessoa.validada());
     }
 }

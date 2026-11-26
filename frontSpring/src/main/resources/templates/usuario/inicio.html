@@ -17,8 +17,13 @@
                 </div>
             </div></section>
             <section class="card shadow-sm"><div class="card-body">
-                <h2 class="h5">Consultar usuários</h2>
+                <div class="d-flex justify-content-between flex-wrap gap-2">
+                    <h2 class="h5" th:text="${arquivados ? 'Usuários arquivados' : 'Consultar usuários'}"></h2>
+                    <a class="btn btn-sm btn-outline-secondary" th:href="@{/usuarios(arquivados=${!arquivados})}"
+                       th:text="${arquivados ? 'Ver ativos' : 'Ver arquivados'}"></a>
+                </div>
                 <form method="get" th:action="@{/usuarios}" class="d-flex gap-2 mb-3">
+                    <input type="hidden" name="arquivados" th:value="${arquivados}">
                     <label class="visually-hidden" for="filtroNome">Nome</label>
                     <input id="filtroNome" name="nome" th:value="${nome}" class="form-control" placeholder="Buscar por nome">
                     <button class="btn btn-outline-primary">Buscar</button>
@@ -34,8 +39,18 @@
                             <span th:case="*" th:text="${u.perfil()}"></span>
                         </span>
                     </div>
-                    <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" th:attr="data-bs-target='#editarPerfil-' + ${u.id()}">Editar perfil</button>
-                    <div class="modal fade" th:id="${'editarPerfil-' + u.id()}" tabindex="-1" th:attr="aria-labelledby='tituloPerfil-' + ${u.id()}" aria-hidden="true">
+                    <div class="d-flex flex-wrap gap-1">
+                        <button th:unless="${arquivados}" class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" th:attr="data-bs-target='#editarPerfil-' + ${u.id()}">Editar perfil</button>
+                        <form method="post" th:action="@{/usuarios/{id}/situacao/{acao}(id=${u.id()},acao=${arquivados ? 'reativar' : 'arquivar'})}" onsubmit="return confirm('Confirma esta operação?')">
+                            <input type="hidden" name="arquivados" th:value="${arquivados}">
+                            <button class="btn btn-outline-warning btn-sm" th:text="${arquivados ? 'Reativar' : 'Arquivar'}"></button>
+                        </form>
+                        <form method="post" th:action="@{/usuarios/{id}/situacao/excluir(id=${u.id()})}" onsubmit="return confirm('Excluir definitivamente este usuário?')">
+                            <input type="hidden" name="arquivados" th:value="${arquivados}">
+                            <button class="btn btn-outline-danger btn-sm">Excluir</button>
+                        </form>
+                    </div>
+                    <div th:unless="${arquivados}" class="modal fade" th:id="${'editarPerfil-' + u.id()}" tabindex="-1" th:attr="aria-labelledby='tituloPerfil-' + ${u.id()}" aria-hidden="true">
                         <div class="modal-dialog"><div class="modal-content">
                             <form method="post" th:action="@{/usuarios/{id}/perfil(id=${u.id()})}">
                                 <div class="modal-header"><h2 class="modal-title fs-5" th:id="${'tituloPerfil-' + u.id()}">Editar perfil</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
@@ -57,7 +72,7 @@
                 <nav th:if="${resultado.totalPages() > 1}" aria-label="Páginas de usuários" class="d-flex flex-wrap gap-1">
                     <a th:each="p : ${#numbers.sequence(0, resultado.totalPages() - 1)}"
                        class="btn btn-sm" th:classappend="${p == resultado.number() ? 'btn-primary' : 'btn-outline-primary'}"
-                       th:href="@{/usuarios(nome=${nome},pagina=${p})}" th:text="${p + 1}"></a>
+                       th:href="@{/usuarios(nome=${nome},arquivados=${arquivados},pagina=${p})}" th:text="${p + 1}"></a>
                 </nav>
             </div></section>
             <div class="modal fade" id="novoUsuarioModal" tabindex="-1" aria-labelledby="novoUsuarioTitulo" aria-hidden="true">

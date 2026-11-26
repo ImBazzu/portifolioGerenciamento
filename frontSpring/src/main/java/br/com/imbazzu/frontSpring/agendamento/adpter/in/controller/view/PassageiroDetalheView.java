@@ -9,5 +9,6 @@ public record PassageiroDetalheView(
         String cidade,
         String destino,
         int maxAcompanhantes,
-        String especificacao) {
+        String especificacao,
+        boolean validada) {
 }

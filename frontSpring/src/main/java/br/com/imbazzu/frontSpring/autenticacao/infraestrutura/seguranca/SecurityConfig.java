@@ -29,7 +29,7 @@ public class SecurityConfig {
                         .requestMatchers("/login","/error","/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers("/usuarios/**").hasRole("ADMIN")
                         .requestMatchers("/motoristas/**").hasRole("MOTORISTA")
-                        .requestMatchers(HttpMethod.PATCH, "/pessoas/*/validar").hasRole("GESTAO")
+                        .requestMatchers(HttpMethod.PATCH, "/pessoas/*/validar", "/pessoas/*/retirar-validacao").hasRole("GESTAO")
                         .requestMatchers("/relatorios/**", "/api/relatorios/**", "/prioridades/**",
                                 "/localidade/**", "/cidade/**", "/listas/**", "/veiculo/**").hasRole("GESTAO")
                         .anyRequest().authenticated())

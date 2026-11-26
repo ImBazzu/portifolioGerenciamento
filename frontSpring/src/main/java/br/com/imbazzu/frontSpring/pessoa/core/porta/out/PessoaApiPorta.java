@@ -9,6 +9,7 @@ import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 public interface PessoaApiPorta {
     ResultadoPaginado<PessoaResponseDto> listar(String nome, boolean arquivadas, int pagina, int tamanho);
     ResultadoPaginado<PessoaResponseDto> listarPorEspecificacao(String nome, UUID especificacaoId, boolean arquivadas, int pagina, int tamanho);
+    ResultadoPaginado<PessoaResponseDto> listarComFiltros(String nome, UUID especificacaoId, Boolean validada, boolean arquivadas, int pagina, int tamanho);
 
     PessoaResponseDto buscar(UUID id);
 
@@ -21,6 +22,7 @@ public interface PessoaApiPorta {
     void desarquivar(UUID id);
 
     void validar(UUID id);
+    void retirarValidacao(UUID id);
 
     PessoaResponseDto buscarArquivado(UUID id);
 }

@@ -33,8 +33,13 @@
 
             <section class="card shadow-sm">
                 <div class="card-body">
-                    <h2 class="h5">Consultar motoristas</h2>
+                    <div class="d-flex justify-content-between flex-wrap gap-2">
+                        <h2 class="h5" th:text="${arquivados ? 'Motoristas arquivados' : 'Consultar motoristas'}"></h2>
+                        <a class="btn btn-sm btn-outline-secondary" th:href="@{/motoristas(arquivados=${!arquivados})}"
+                           th:text="${arquivados ? 'Ver ativos' : 'Ver arquivados'}"></a>
+                    </div>
                     <form method="get" th:action="@{/motoristas}" class="row g-2 mb-3">
+                        <input type="hidden" name="arquivados" th:value="${arquivados}">
                         <div class="col-md-5"><label for="filtroNome" class="form-label">Nome</label>
                             <input id="filtroNome" name="nome" th:value="${nome}" class="form-control"></div>
                         <div class="col-md-5"><label for="filtroCategoria" class="form-label">Categoria</label>
@@ -47,8 +52,19 @@
                     <p th:if="${#lists.isEmpty(resultado.content())}" class="text-muted">Nenhum motorista encontrado.</p>
                     <div th:each="m : ${resultado.content()}" class="border rounded p-3 mb-2 d-flex flex-wrap justify-content-between align-items-center gap-2">
                         <div><strong th:text="${m.nome()}"></strong> — <span th:text="${m.categoriaNome()}"></span> · <span th:text="${m.telefone()}"></span></div>
-                        <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" th:attr="data-bs-target='#editarMotorista-' + ${m.id()}">Editar</button>
-                        <div class="modal fade" th:id="${'editarMotorista-' + m.id()}" tabindex="-1" th:attr="aria-labelledby='tituloMotorista-' + ${m.id()}" aria-hidden="true">
+                        <div class="d-flex flex-wrap gap-1">
+                        <button th:unless="${arquivados}" class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" th:attr="data-bs-target='#editarMotorista-' + ${m.id()}">Editar</button>
+                        <form method="post" th:action="@{/motoristas/{id}/situacao/{acao}(id=${m.id()},acao=${arquivados ? 'reativar' : 'arquivar'})}"
+                              onsubmit="return confirm('Confirma esta operação?')">
+                            <input type="hidden" name="arquivados" th:value="${arquivados}">
+                            <button class="btn btn-outline-warning btn-sm" th:text="${arquivados ? 'Reativar' : 'Arquivar'}"></button>
+                        </form>
+                        <form method="post" th:action="@{/motoristas/{id}/situacao/excluir(id=${m.id()})}" onsubmit="return confirm('Excluir definitivamente este motorista?')">
+                            <input type="hidden" name="arquivados" th:value="${arquivados}">
+                            <button class="btn btn-outline-danger btn-sm">Excluir</button>
+                        </form>
+                        </div>
+                        <div th:unless="${arquivados}" class="modal fade" th:id="${'editarMotorista-' + m.id()}" tabindex="-1" th:attr="aria-labelledby='tituloMotorista-' + ${m.id()}" aria-hidden="true">
                             <div class="modal-dialog"><div class="modal-content">
                                 <form method="post" th:action="@{/motoristas}">
                                     <input type="hidden" name="id" th:value="${m.id()}">
@@ -60,6 +76,8 @@
                                             <input class="form-control" th:id="${'tel-' + m.id()}" name="telefone" th:value="${m.telefone()}" maxlength="16" required></div>
                                         <div><label class="form-label" th:for="${'cat-' + m.id()}">Categoria</label>
                                             <select class="form-select" th:id="${'cat-' + m.id()}" name="categoriaId" required>
+                                                <option th:each="c : ${categoriasArquivadas}" th:if="${c.id() == m.categoriaId()}"
+                                                        th:value="${c.id()}" th:text="${c.nome() + ' (arquivada)'}" selected></option>
                                                 <option th:each="c : ${categorias}" th:value="${c.id()}" th:text="${c.nome()}" th:selected="${c.id() == m.categoriaId()}"></option>
                                             </select></div>
                                     </div>
@@ -71,7 +89,7 @@
                     <nav th:if="${resultado.totalPages() > 1}" aria-label="Páginas de motoristas" class="d-flex flex-wrap gap-1">
                         <a th:each="p : ${#numbers.sequence(0, resultado.totalPages() - 1)}"
                            class="btn btn-sm" th:classappend="${p == resultado.number() ? 'btn-primary' : 'btn-outline-primary'}"
-                           th:href="@{/motoristas(nome=${nome},categoria=${categoriaSelecionada},pagina=${p})}" th:text="${p + 1}"></a>
+                           th:href="@{/motoristas(nome=${nome},categoria=${categoriaSelecionada},arquivados=${arquivados},pagina=${p})}" th:text="${p + 1}"></a>
                     </nav>
                 </div>
             </section>
@@ -89,12 +107,31 @@
                         </form>
                         <h3 class="h6">Categorias cadastradas</h3>
                         <p th:if="${#lists.isEmpty(categorias)}" class="text-muted">Nenhuma categoria cadastrada.</p>
-                        <form th:each="c : ${categorias}" method="post" th:action="@{/motoristas/categorias}" class="d-flex gap-2 mt-2">
+                        <div th:each="c : ${categorias}" class="d-flex flex-wrap gap-2 mt-2">
+                        <form method="post" th:action="@{/motoristas/categorias}" class="d-flex gap-2 flex-grow-1">
                             <input type="hidden" name="id" th:value="${c.id()}">
                             <label class="visually-hidden" th:for="${'categoria-' + c.id()}">Nome da categoria</label>
                             <input class="form-control" th:id="${'categoria-' + c.id()}" name="nome" th:value="${c.nome()}" maxlength="100" required>
                             <button class="btn btn-outline-primary" type="submit">Salvar</button>
                         </form>
+                        <form method="post" th:action="@{/motoristas/categorias/{id}/situacao/arquivar(id=${c.id()})}" onsubmit="return confirm('Arquivar esta categoria?')">
+                            <button class="btn btn-outline-warning" type="submit">Arquivar</button>
+                        </form>
+                        <form method="post" th:action="@{/motoristas/categorias/{id}/situacao/excluir(id=${c.id()})}" onsubmit="return confirm('Excluir definitivamente esta categoria?')">
+                            <button class="btn btn-outline-danger" type="submit">Excluir</button>
+                        </form>
+                        </div>
+                        <h3 class="h6 mt-3">Categorias arquivadas</h3>
+                        <p th:if="${#lists.isEmpty(categoriasArquivadas)}" class="text-muted">Nenhuma categoria arquivada.</p>
+                        <div th:each="c : ${categoriasArquivadas}" class="d-flex flex-wrap gap-2 align-items-center mt-2">
+                            <span class="flex-grow-1" th:text="${c.nome()}"></span>
+                            <form method="post" th:action="@{/motoristas/categorias/{id}/situacao/reativar(id=${c.id()})}">
+                                <button class="btn btn-outline-success" type="submit">Reativar</button>
+                            </form>
+                            <form method="post" th:action="@{/motoristas/categorias/{id}/situacao/excluir(id=${c.id()})}" onsubmit="return confirm('Excluir definitivamente esta categoria?')">
+                                <button class="btn btn-outline-danger" type="submit">Excluir</button>
+                            </form>
+                        </div>
                     </div>
                     <div class="modal-footer"><button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Fechar</button></div>
                 </div></div>

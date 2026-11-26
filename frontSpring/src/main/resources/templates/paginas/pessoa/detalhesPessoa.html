@@ -19,7 +19,7 @@
                 
                 <div class="d-flex gap-2 align-items-center">
                     <!-- Botão Editar (ajustando para passar o parâmetro arquivado se necessário) -->
-                    <button th:unless="${arquivado}" class="btn btn-sm btn-light border"
+                    <button th:if="${arquivado != true and !pessoa.validada()}" class="btn btn-sm btn-light border"
                             hx:get="@{/pessoas/abrirFormulario/{id}(id=${pessoa.id()}, arquivado=${arquivado})}"
                             hx-target="#modal" hx-swap="innerHTML"
                             title="Editar Pessoa">
@@ -29,7 +29,7 @@
                     <!-- Botão Voltar (aparece se estiver arquivado) -->
                     <button th:if="${arquivado}"
                             class="btn btn-sm btn-outline-secondary"
-                            th:attr="hx-get=${especificacaoId == null} ? @{/pessoas/listar(arquivadas=true,nome=${nome},pagina=${paginaAtual})} : @{/pessoas/listar(arquivadas=true,nome=${nome},pagina=${paginaAtual},especificacaoId=${especificacaoId})}"
+                            th:attr="hx-get=@{/pessoas/listar(arquivadas=true,nome=${nome},pagina=${paginaAtual},especificacaoId=${especificacaoId},validada=${validada})}"
                             hx-target="#modal"
                             hx-swap="innerHTML">
                         <i class="bi bi-arrow-left me-1"></i> Voltar
@@ -43,6 +43,9 @@
             </header>
 
             <!-- Body / Dados -->
+            <p th:if="${pessoa.validada()}" class="alert alert-info">
+                Para alterar, arquivar, restaurar ou excluir esta pessoa, a gestão deve retirar a validação.
+            </p>
             <dl class="row g-3 mb-0">
                 <div class="col-12">
                     <dt class="small text-secondary">Cadastrado por</dt>
@@ -84,7 +87,7 @@
                             hx-target="#modal" hx-swap="innerHTML">
                         <i class="bi bi-patch-check me-1"></i>Confirmar validação
                     </button>
-                    <button class="btn btn-sm btn-outline-warning"
+                    <button th:unless="${pessoa.validada()}" class="btn btn-sm btn-outline-warning"
                             hx:patch="@{/pessoas/{id}/arquivar(id=${pessoa.id()})}"
                             hx-confirm="Deseja arquivar esta pessoa?"
                             hx-target="#modal" hx-swap="innerHTML">
@@ -100,13 +103,19 @@
 
                 <!-- Se ESTIVER arquivado, pode mostrar opção de desarquivar ou excluir definitivo (igual veículo) -->
                 <th:block th:if="${arquivado}">
-                    <button class="btn btn-sm btn-outline-success"
+                    <button th:unless="${pessoa.validada()}" class="btn btn-sm btn-outline-success"
                             hx:patch="@{/pessoas/{id}/desarquivar(id=${pessoa.id()})}"
                             hx-confirm="Deseja desarquivar esta pessoa?"
                             hx-target="#modal" hx-swap="innerHTML">
                         <i class="bi bi-unarchive me-1"></i>Desarquivar
                     </button>
                 </th:block>
+                <button th:if="${podeGerenciarOperacao and pessoa.validada()}" class="btn btn-sm btn-outline-warning"
+                        hx:patch="@{/pessoas/{id}/retirar-validacao(id=${pessoa.id()},arquivado=${arquivado},nome=${nome},especificacaoId=${especificacaoId},validada=${validada},pagina=${paginaAtual})}"
+                        hx-confirm="Retirar a validação para permitir alterações nos dados?"
+                        hx-target="#modal" hx-swap="innerHTML">
+                    <i class="bi bi-patch-minus me-1"></i>Retirar validação
+                </button>
 
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-sm btn-light border"

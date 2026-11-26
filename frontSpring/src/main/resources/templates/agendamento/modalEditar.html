@@ -54,7 +54,7 @@
                                             <span class="small text-muted">Passageiro</span>
                                         </div>
                                     </div>
-                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 flex-shrink-0"
+                                    <button th:unless="${pessoa.validada()}" type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 flex-shrink-0"
                                             hx:get="@{/pessoas/abrirFormulario/{id}(id=${passageiro.idPessoa()}, contextoAgendamento=true)}"
                                             hx-target="#modal" hx-swap="innerHTML"
                                                     data-bs-dismiss="modal">

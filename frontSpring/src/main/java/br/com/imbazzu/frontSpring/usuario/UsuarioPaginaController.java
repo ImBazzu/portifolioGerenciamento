@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.MensagemErroApi;
 
@@ -23,11 +25,28 @@ public class UsuarioPaginaController {
 
     @GetMapping("/usuarios")
     public String listar(@RequestParam(defaultValue = "") String nome,
-            @RequestParam(defaultValue = "0") int pagina, Model model) {
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "false") boolean arquivados, Model model) {
         model.addAttribute("pagina", "usuarios");
         model.addAttribute("nome", nome);
-        model.addAttribute("resultado", usuarios.listar(nome, pagina));
+        model.addAttribute("arquivados", arquivados);
+        model.addAttribute("resultado", arquivados ? usuarios.listar(nome, true, pagina) : usuarios.listar(nome, pagina));
         return "usuario/inicio";
+    }
+
+    @PostMapping("/usuarios/{id}/situacao/{acao}")
+    public String situacao(@PathVariable UUID id, @PathVariable String acao,
+            @RequestParam(defaultValue = "false") boolean arquivados, RedirectAttributes redirect) {
+        if (!java.util.List.of("arquivar", "reativar", "excluir").contains(acao)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ação inválida.");
+        }
+        try {
+            usuarios.alterarSituacao(id, acao);
+            redirect.addFlashAttribute("sucesso", "Operação realizada.");
+        } catch (RestClientResponseException e) {
+            redirect.addFlashAttribute("erro", erro.de(e));
+        }
+        return "redirect:/usuarios" + (arquivados ? "?arquivados=true" : "");
     }
 
     @PostMapping("/usuarios")

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -28,8 +30,9 @@ public class GerenciarUsuariosController {
     }
 
     @GetMapping
-    public Pagina listar(@RequestParam(defaultValue = "") String nome, @RequestParam(defaultValue = "0") int pagina) {
-        var resultado = service.listar(nome, pagina);
+    public Pagina listar(@RequestParam(defaultValue = "") String nome,
+            @RequestParam(defaultValue = "false") boolean arquivados, @RequestParam(defaultValue = "0") int pagina) {
+        var resultado = service.listar(nome, arquivados, pagina);
         return new Pagina(resultado.getContent(), resultado.getTotalPages(), resultado.getNumber());
     }
 
@@ -41,6 +44,21 @@ public class GerenciarUsuariosController {
     @PutMapping("/{id}/perfil")
     public void alterarPerfil(@PathVariable UUID id, @RequestBody PerfilRequest dados) {
         service.alterarPerfil(id, dados.perfil());
+    }
+
+    @PatchMapping("/{id}/arquivar")
+    public void arquivar(@PathVariable UUID id, Authentication auth) {
+        service.alterarArquivamento(id, (UUID) auth.getPrincipal(), true);
+    }
+
+    @PatchMapping("/{id}/reativar")
+    public void reativar(@PathVariable UUID id, Authentication auth) {
+        service.alterarArquivamento(id, (UUID) auth.getPrincipal(), false);
+    }
+
+    @DeleteMapping("/{id}")
+    public void excluir(@PathVariable UUID id, Authentication auth) {
+        service.excluir(id, (UUID) auth.getPrincipal());
     }
 
     @GetMapping("/eu")

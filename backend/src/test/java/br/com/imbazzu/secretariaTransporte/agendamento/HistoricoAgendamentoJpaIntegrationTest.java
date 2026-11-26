@@ -69,14 +69,14 @@ class HistoricoAgendamentoJpaIntegrationTest {
 
         var a = UUID.fromString("00000000-0000-0000-0000-000000000071");
         var b = UUID.fromString("00000000-0000-0000-0000-000000000072");
-        assertEquals(3, pessoas.listarAtivas("Filtro", "", null, PageRequest.of(0, 1)).getTotalElements());
-        var pagina = pessoas.listarAtivas("Filtro", "", a, PageRequest.of(1, 1));
+        assertEquals(3, pessoas.listarAtivas("Filtro", "", null, null, PageRequest.of(0, 1)).getTotalElements());
+        var pagina = pessoas.listarAtivas("Filtro", "", a, null, PageRequest.of(1, 1));
         assertEquals(2, pagina.getTotalElements());
         assertEquals("Filtro Bruno", pagina.getContent().getFirst().getNome());
-        assertEquals("Filtro Carla", pessoas.listarAtivas("Filtro", "", b, PageRequest.of(0, 10))
+        assertEquals("Filtro Carla", pessoas.listarAtivas("Filtro", "", b, null, PageRequest.of(0, 10))
                 .getContent().getFirst().getNome());
-        assertEquals(1, pessoas.listarArquivadas("Filtro", "", b, PageRequest.of(0, 10)).getTotalElements());
-        assertEquals(0, pessoas.listarArquivadas("Filtro", "", a, PageRequest.of(0, 10)).getTotalElements());
+        assertEquals(1, pessoas.listarArquivadas("Filtro", "", b, null, PageRequest.of(0, 10)).getTotalElements());
+        assertEquals(0, pessoas.listarArquivadas("Filtro", "", a, null, PageRequest.of(0, 10)).getTotalElements());
     }
 
     @Test
