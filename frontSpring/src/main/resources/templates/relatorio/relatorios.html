@@ -71,6 +71,42 @@
                         </fieldset>
                     </form>
                 </section>
+                <section class="filter-panel" aria-labelledby="tituloEstudoListas">
+                    <h2 id="tituloEstudoListas" class="filter-title">Estudo de viagens por lista</h2>
+                    <p class="text-muted small">Selecione uma ou várias listas. O resumo mostra viagens por lista e por data, com os horários de saída e chegada; cancelamentos ficam separados.</p>
+                    <div class="filter-group mb-3">
+                        <label for="relatorioListas">Listas</label>
+                        <select id="relatorioListas" multiple size="4"></select>
+                        <small>Sem seleção, inclui todas as listas. Use Ctrl para escolher várias.</small>
+                    </div>
+                    <button class="btn-filtrar" type="button" id="carregarEstudoListas">Gerar estudo das listas</button>
+                    <p id="statusEstudoListas" class="text-muted small mt-2" role="status"></p>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-sm table-striped align-middle">
+                            <caption>Quantidade de viagens por lista</caption>
+                            <thead><tr><th>Lista</th><th>Viagens</th><th>Cancelamentos</th></tr></thead>
+                            <tbody id="tabelaEstudoListas"></tbody>
+                        </table>
+                    </div>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-sm table-striped align-middle">
+                            <caption>Quantidade de viagens e horários por data</caption>
+                            <thead><tr><th>Data</th><th>Dia da semana</th><th>Viagens</th><th>Horários</th></tr></thead>
+                            <tbody id="tabelaEstudoSemanal"></tbody>
+                        </table>
+                    </div>
+                </section>
+                <section class="filter-panel" aria-labelledby="tituloEstudoCidadesDestinos">
+                    <h2 id="tituloEstudoCidadesDestinos" class="filter-title">Estudo de cidades e destinos</h2>
+                    <p class="text-muted small">Analise as viagens por cidade e destino no período informado. A seleção de listas do estudo acima também é aplicada.</p>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped align-middle">
+                            <caption>Viagens por cidade e destino</caption>
+                            <thead><tr><th>Cidade</th><th>Destino</th><th>Viagens</th></tr></thead>
+                            <tbody id="tabelaEstudoCidadesDestinos"></tbody>
+                        </table>
+                    </div>
+                </section>
                 <th:block th:replace="~{relatorio/fragmentos/filtros :: filtros}"></th:block>
                 <th:block th:replace="~{relatorio/fragmentos/navegacao :: navegacao}"></th:block>
                 <th:block th:replace="~{relatorio/fragmentos/agendamentos :: agendamentos}"></th:block>

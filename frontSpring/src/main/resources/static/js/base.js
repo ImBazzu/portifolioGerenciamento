@@ -33,6 +33,34 @@ if (document.readyState === 'loading') {
     initMobileMenu();
 }
 
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+            .catch(error => console.error('Não foi possível registrar o service worker:', error));
+    });
+}
+
+let instalacaoPwa;
+const botaoInstalacaoPwa = document.getElementById('installPwaButton');
+window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    instalacaoPwa = event;
+    if (botaoInstalacaoPwa) botaoInstalacaoPwa.hidden = false;
+});
+
+botaoInstalacaoPwa?.addEventListener('click', async () => {
+    if (!instalacaoPwa) return;
+    instalacaoPwa.prompt();
+    await instalacaoPwa.userChoice;
+    instalacaoPwa = null;
+    botaoInstalacaoPwa.hidden = true;
+});
+
+window.addEventListener('appinstalled', () => {
+    instalacaoPwa = null;
+    if (botaoInstalacaoPwa) botaoInstalacaoPwa.hidden = true;
+});
+
 // Fechamento automático de modais em requisições HTMX
 document.body.addEventListener('htmx:afterSwap', function (evt) {
     if (evt.detail.target.id === 'especificacaoResultados') {
@@ -113,6 +141,43 @@ document.addEventListener('click', function (event) {
 
 document.addEventListener('change', function (event) {
     const input = event.target;
+    if (input instanceof HTMLInputElement && input.matches('[data-filtrar-residencia]')) {
+        const filtrar = input.checked;
+        const itens = Array.from(document.querySelectorAll('[data-residencia-item]'));
+        itens.forEach(item => {
+            item.hidden = filtrar && item.dataset.residencia !== 'true';
+        });
+        const visiveis = itens.filter(item => !item.hidden).length;
+        const status = input.closest('section')?.querySelector('[data-residencia-status]')
+            || document.querySelector('[data-residencia-status]');
+        if (status) {
+            status.textContent = filtrar
+                ? `${visiveis} passageiro(s) para buscar na residência.`
+                : 'Filtro de residência desativado.';
+        }
+        return;
+    }
+
+    if (input instanceof HTMLInputElement && input.id === 'informarHorarioSaidaCheckbox') {
+        const hidden = document.getElementById('informarHorarioSaida');
+        const label = document.getElementById('horarioAgendamentoLabel');
+        if (hidden) hidden.value = String(input.checked);
+        if (label) label.textContent = input.checked
+            ? 'Horário de saída do veículo'
+            : 'Chegada desejada';
+        return;
+    }
+
+    if (input instanceof HTMLSelectElement && input.matches('[data-finalidade-abertura]')) {
+        atualizarCamposAberturaCarro(input);
+        return;
+    }
+
+    if (input instanceof HTMLSelectElement && input.id === 'listaAgendamento') {
+        atualizarOpcaoHorarioSaida();
+        return;
+    }
+
     if (!(input instanceof HTMLInputElement) || !input.matches('[data-campo]')) return;
 
     if (input.checked && input.matches('[data-selecao-unica]')) {
@@ -125,6 +190,63 @@ document.addEventListener('change', function (event) {
     const grupo = input.closest('[data-grupo-obrigatorio]');
     if (grupo) validarGrupoRegra(grupo);
 });
+
+function atualizarOpcaoHorarioSaida() {
+    const lista = document.getElementById('listaAgendamento');
+    const opcao = lista?.selectedOptions[0];
+    const container = document.getElementById('opcaoHorarioSaidaEmergencia');
+    const checkbox = document.getElementById('informarHorarioSaidaCheckbox');
+    const hidden = document.getElementById('informarHorarioSaida');
+    const label = document.getElementById('horarioAgendamentoLabel');
+    if (!lista || !opcao || !container || !checkbox || !hidden || !label) return;
+
+    const nomeLista = (opcao.dataset.listName || opcao.textContent || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+    const permiteSaida = container.dataset.origemEspecial === 'true'
+        || nomeLista.includes('emergencia') || nomeLista.includes('alta');
+    container.hidden = !permiteSaida;
+    if (!permiteSaida) checkbox.checked = false;
+    hidden.value = String(permiteSaida && checkbox.checked);
+    label.textContent = checkbox.checked
+        ? 'Horário de saída do veículo'
+        : 'Chegada desejada';
+}
+
+function atualizarCamposAberturaCarro(finalidade) {
+    const form = finalidade.form;
+    const horarioContainer = form?.querySelector('[data-finalidade-horario]');
+    const lista = form?.querySelector('[name="idListaAbertura"]');
+    const horario = form?.querySelector('[name="horarioSaida"]');
+    const status = form?.querySelector('[data-finalidade-lista-status]');
+    const botao = form?.querySelector('[data-abrir-carro]');
+    if (!form || !horarioContainer || !lista || !horario || !status || !botao) return;
+
+    const especial = finalidade.value === 'EMERGENCIA' || finalidade.value === 'ALTA';
+    horarioContainer.hidden = !especial;
+    horario.required = especial;
+    const correspondente = Array.from(form.querySelectorAll('[data-lista-finalidade]'))
+        .find(opcao => opcao.dataset.listaFinalidade === finalidade.value);
+    lista.value = especial && correspondente ? correspondente.dataset.listaId : '';
+    if (!especial) horario.value = '';
+    const indisponivel = especial && !correspondente;
+    botao.disabled = form.dataset.carroDisponivel !== 'true' || indisponivel;
+    status.hidden = !indisponivel;
+    status.textContent = indisponivel
+        ? 'Lista do atendimento indisponível. Solicite a liberação ou reativação da lista correspondente.'
+        : '';
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        atualizarOpcaoHorarioSaida();
+        document.querySelectorAll('[data-finalidade-abertura]').forEach(atualizarCamposAberturaCarro);
+    });
+} else {
+    atualizarOpcaoHorarioSaida();
+    document.querySelectorAll('[data-finalidade-abertura]').forEach(atualizarCamposAberturaCarro);
+}
 
 document.addEventListener('input', function (event) {
     const campoBusca = event.target;

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -100,6 +101,137 @@ class SegurancaIntegrationTest {
                 .contentType(MediaType.APPLICATION_JSON).content("{\"perfil\":\"AGENDAMENTO\"}"))
                 .andExpect(status().isOk());
         mvc.perform(get("/motoristas").header("Authorization", "Bearer " + m)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Transactional
+    void gestaoConfiguraEConsultaListasDoUsuario() throws Exception {
+        var operador = service.criar("operador listas", "senha123", "AGENDAMENTO");
+        var gestor = service.criar("gestor listas", "senha123", "GESTAO");
+        var lista = UUID.randomUUID();
+        jdbc.update("INSERT INTO listas (id,nome) VALUES (UUID_TO_BIN(?),?)", lista.toString(), "Emergência teste");
+        String g = token(gestor.id());
+        String a = token(operador.id());
+
+        mvc.perform(get("/usuarios/listas-agendamento").header("Authorization", "Bearer " + g))
+                .andExpect(status().isOk()).andExpect(content().string(containsString(operador.id().toString())));
+        mvc.perform(put("/usuarios/{id}/listas-agendamento", operador.id())
+                        .header("Authorization", "Bearer " + a).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"restrita\":true,\"idsListas\":[\"" + lista + "\"]}"))
+                .andExpect(status().isForbidden());
+        mvc.perform(put("/usuarios/{id}/listas-agendamento", operador.id())
+                        .header("Authorization", "Bearer " + g).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"restrita\":true,\"idsListas\":[\"" + lista + "\"]}"))
+                .andExpect(status().isOk());
+        mvc.perform(get("/usuarios/eu/listas-agendamento").header("Authorization", "Bearer " + a))
+                .andExpect(status().isOk()).andExpect(content().string(containsString("\"restrita\":true")))
+                .andExpect(content().string(containsString(lista.toString())));
+    }
+
+    @Test
+    @Transactional
+    void abreCarrosDeEmergenciaEAltaComSaidaFixa() throws Exception {
+        var operador = service.criar("operador carros especiais", "senha123", "AGENDAMENTO");
+        String acesso = token(operador.id());
+        var lista = UUID.randomUUID();
+        jdbc.update("INSERT INTO listas (id,nome) VALUES (UUID_TO_BIN(?),?)", lista.toString(), "Emergência teste");
+        jdbc.update("INSERT INTO dias_agendamento (data,aberto_em) VALUES ('2032-01-03',NOW())");
+        var tipo = jdbc.queryForObject("SELECT BIN_TO_UUID(id) FROM tipo_veiculos WHERE nome='Carro' LIMIT 1", String.class);
+        for (String finalidade : new String[] {"EMERGENCIA", "ALTA"}) {
+            mvc.perform(post("/agendamentos/dias/2032-01-03/veiculos")
+                            .header("Authorization", "Bearer " + acesso).contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"idTipoVeiculo\":\"" + tipo + "\",\"horarioSaida\":\"20:00\","
+                                    + "\"finalidadeAbertura\":\"" + finalidade + "\",\"idListaAbertura\":\"" + lista + "\"}"))
+                    .andExpect(status().isCreated())
+                    .andExpect(content().string(containsString("\"finalidadeAbertura\":\"" + finalidade + "\"")))
+                    .andExpect(content().string(containsString("\"horarioSaida\":\"20:00:00\"")));
+        }
+
+        mvc.perform(get("/agendamentos/dias/2032-01-03").header("Authorization", "Bearer " + acesso))
+                .andExpect(status().isOk()).andExpect(content().string(containsString("\"finalidadeAbertura\":\"ALTA\"")))
+                .andExpect(content().string(containsString("\"finalidadeAbertura\":\"EMERGENCIA\"")));
+    }
+
+    @Test
+    @Transactional
+    void confirmaDesmarcaEConfirmaNovamenteSaidaDoVeiculo() throws Exception {
+        var operador = service.criar("operador saida", "senha123", "AGENDAMENTO");
+        var acesso = token(operador.id());
+        var id = UUID.randomUUID().toString();
+        jdbc.update("INSERT INTO dias_agendamento (data,aberto_em) VALUES ('2032-01-05',NOW())");
+        jdbc.update("""
+                INSERT INTO veiculos_agendamento
+                (id,data,tipo_veiculo_id,nome_tipo_veiculo,capacidade,hora_saida,hora_saida_calculada)
+                SELECT UUID_TO_BIN(?),'2032-01-05',id,nome,capacidade,'08:00',0
+                FROM tipo_veiculos WHERE nome='Carro'
+                """, id);
+
+        mvc.perform(post("/agendamentos/veiculos/{id}/confirmar-saida", id)
+                .header("Authorization", "Bearer " + acesso)).andExpect(status().isNoContent());
+        assertEquals(1, jdbc.queryForObject("""
+                SELECT COUNT(*) FROM veiculos_agendamento WHERE id=UUID_TO_BIN(?)
+                AND saida_confirmada_em IS NOT NULL AND saida_confirmada_por_id=UUID_TO_BIN(?)
+                """, Integer.class, id, operador.id().toString()));
+        mvc.perform(delete("/agendamentos/veiculos/{id}/confirmar-saida", id)
+                .header("Authorization", "Bearer " + acesso)).andExpect(status().isNoContent());
+        assertEquals(1, jdbc.queryForObject("""
+                SELECT COUNT(*) FROM veiculos_agendamento WHERE id=UUID_TO_BIN(?)
+                AND saida_confirmada_em IS NULL AND saida_confirmada_por_id IS NULL
+                """, Integer.class, id));
+        mvc.perform(delete("/agendamentos/veiculos/{id}/confirmar-saida", id)
+                .header("Authorization", "Bearer " + acesso)).andExpect(status().isConflict());
+        mvc.perform(post("/agendamentos/veiculos/{id}/confirmar-saida", id)
+                .header("Authorization", "Bearer " + acesso)).andExpect(status().isNoContent());
+    }
+
+    @Test
+    @Transactional
+    void migracaoCriaListasEspeciaisComRegrasIniciais() throws Exception {
+        var operador = service.criar("operador listas especiais", "senha123", "AGENDAMENTO");
+        var acesso = token(operador.id());
+        var tipo = jdbc.queryForObject("SELECT BIN_TO_UUID(id) FROM tipo_veiculos WHERE nome='Carro'", String.class);
+        jdbc.update("INSERT INTO cidades (id,nome,estado,tempo_viagem) VALUES (UNHEX('000000000000000000000000000000b1'),'Cidade especial','SP',0)");
+        jdbc.update("INSERT INTO destinos (id,nome,cidade_id) VALUES (UNHEX('000000000000000000000000000000b2'),'Destino especial',UNHEX('000000000000000000000000000000b1'))");
+        jdbc.update("INSERT INTO dias_agendamento (data,aberto_em) VALUES ('2032-01-04',NOW())");
+        for (String finalidade : new String[] {"ALTA", "EMERGENCIA"}) {
+            var id = jdbc.queryForObject("SELECT BIN_TO_UUID(id) FROM listas WHERE finalidade_especial = ?",
+                    String.class, finalidade);
+            assertEquals(1, jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM regras_cadastro WHERE lista_id=UUID_TO_BIN(?)", Integer.class, id));
+            assertTrue(jdbc.queryForObject("""
+                    SELECT COUNT(*) FROM regra_cadastro_prioridades p
+                    JOIN regras_cadastro r ON r.id=p.regra_cadastro_id WHERE r.lista_id=UUID_TO_BIN(?)
+                    """, Integer.class, id) > 0);
+            assertTrue(jdbc.queryForObject("""
+                    SELECT COUNT(*) FROM regra_cadastro_veiculos v
+                    JOIN regras_cadastro r ON r.id=v.regra_cadastro_id
+                    JOIN tipo_veiculos t ON t.id=v.veiculo_id
+                    WHERE r.lista_id=UUID_TO_BIN(?) AND t.nome='Carro'
+                    """, Integer.class, id) > 0);
+            assertEquals(1, jdbc.queryForObject(
+                    "SELECT COUNT(*) FROM regras_separacao WHERE lista_id=UUID_TO_BIN(?)", Integer.class, id));
+            mvc.perform(get("/lista/{id}", id).header("Authorization", "Bearer " + acesso))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("\"finalidadeEspecial\":\"" + finalidade + "\"")));
+            var pessoa = UUID.randomUUID().toString();
+            jdbc.update("INSERT INTO pessoas (id,nome,telefone,especificacao_id) VALUES (UUID_TO_BIN(?),?,?,UNHEX('00000000000000000000000000000001'))",
+                    pessoa, "Pessoa " + finalidade, "11987654321");
+            mvc.perform(post("/agendamentos/dias/2032-01-04/verificar-veiculos")
+                            .header("Authorization", "Bearer " + acesso).contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"idPessoa":"%s","idLista":"%s","idDestino":"00000000-0000-0000-0000-0000000000b2",
+                                     "horarioChegada":"20:00","informarHorarioSaida":true,"acompanhantes":0}
+                                    """.formatted(pessoa, id)))
+                    .andExpect(status().isOk()).andExpect(content().string(containsString(tipo)));
+            mvc.perform(post("/agendamentos/dias/2032-01-04/passageiros")
+                            .header("Authorization", "Bearer " + acesso).contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"idPessoa":"%s","idLista":"%s","idTipoVeiculo":"%s",
+                                     "idDestino":"00000000-0000-0000-0000-0000000000b2",
+                                     "horarioChegada":"20:00","informarHorarioSaida":true,"buscarNaResidencia":false,"acompanhantes":0}
+                                    """.formatted(pessoa, id, tipo)))
+                    .andExpect(status().isCreated());
+        }
     }
 
     @Test

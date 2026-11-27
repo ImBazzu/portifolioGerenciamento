@@ -191,6 +191,7 @@ public class TipoListaController {
                 resultado.descricao(),
                 resultado.dataArquivado(),
                 regrasCadastro,
-                regrasSeparacao);
+                regrasSeparacao,
+                resultado.finalidadeEspecial());
     }
 }

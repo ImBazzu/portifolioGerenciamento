@@ -8,5 +8,11 @@ public record VerificarVeiculosRequestDto(
         UUID idLista,
         UUID idDestino,
         LocalTime horarioChegada,
-        int acompanhantes) {
+        int acompanhantes,
+        boolean informarHorarioSaida) {
+
+    public VerificarVeiculosRequestDto(
+            UUID idPessoa, UUID idLista, UUID idDestino, LocalTime horarioChegada, int acompanhantes) {
+        this(idPessoa, idLista, idDestino, horarioChegada, acompanhantes, false);
+    }
 }

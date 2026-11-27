@@ -11,6 +11,7 @@ import org.springframework.core.ParameterizedTypeReference;
 
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AbrirVeiculoRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoRequestDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoCancelarRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoAtualizarRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendaDiaResponseDto;
@@ -65,6 +66,20 @@ public class AgendamentoApi {
                 .uri(PATH + "/veiculos/{id}", id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(request)
+                .retrieve()
+                .toBodilessEntity());
+    }
+
+    public void confirmarSaida(UUID id) {
+        executar(() -> api.post()
+                .uri(PATH + "/veiculos/{id}/confirmar-saida", id)
+                .retrieve()
+                .toBodilessEntity());
+    }
+
+    public void desfazerConfirmacaoSaida(UUID id) {
+        executar(() -> api.delete()
+                .uri(PATH + "/veiculos/{id}/confirmar-saida", id)
                 .retrieve()
                 .toBodilessEntity());
     }
@@ -135,6 +150,15 @@ public class AgendamentoApi {
     public void remover(UUID idAgendamento) {
         executar(() -> api.delete()
                 .uri(PATH + "/{id}", idAgendamento)
+                .retrieve()
+                .toBodilessEntity());
+    }
+
+    public void cancelar(UUID idAgendamento, String motivo) {
+        executar(() -> api.post()
+                .uri(PATH + "/{id}/cancelar", idAgendamento)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new AgendamentoCancelarRequestDto(motivo))
                 .retrieve()
                 .toBodilessEntity());
     }

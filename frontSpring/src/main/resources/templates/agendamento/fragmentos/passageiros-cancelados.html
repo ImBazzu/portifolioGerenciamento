@@ -1,0 +1,57 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="passageirosCancelados">
+    <section th:if="${!#lists.isEmpty(agenda.passageirosCancelados())}" class="card border-0 shadow-sm mt-4">
+        <div class="card-header bg-danger-subtle">
+            <h2 class="h5 mb-0 text-danger-emphasis">Viagens canceladas</h2>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                <tr>
+                    <th>Passageiro</th>
+                    <th>Cidade / destino</th>
+                    <th>Lista</th>
+                    <th>Horário</th>
+                    <th>Cancelamento</th>
+                    <th class="text-end">Ação</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="passageiro : ${agenda.passageirosCancelados()}">
+                    <td>
+                        <strong th:text="${detalhesCancelados.get(passageiro.id()).nome()}"></strong>
+                        <div class="small text-muted" th:text="${detalhesCancelados.get(passageiro.id()).telefone()}"></div>
+                        <div th:if="${passageiro.buscarNaResidencia()}" class="small text-warning-emphasis">
+                            Buscar na residência:
+                            <span th:text="${#strings.isEmpty(detalhesCancelados.get(passageiro.id()).endereco())
+                                    ? 'Endereço não informado' : detalhesCancelados.get(passageiro.id()).endereco()}"></span>
+                        </div>
+                    </td>
+                    <td>
+                        <span th:text="${detalhesCancelados.get(passageiro.id()).cidade()}"></span>
+                        <div class="small text-muted" th:text="${detalhesCancelados.get(passageiro.id()).destino()}"></div>
+                    </td>
+                    <td th:text="${nomesListasCanceladas.get(passageiro.idLista())}"></td>
+                    <td th:text="${passageiro.horarioChegada()}"></td>
+                    <td>
+                        <span class="badge text-bg-danger">Passageiro cancelou a viagem</span>
+                        <div th:if="${passageiro.motivoCancelamento() != null and !#strings.isEmpty(passageiro.motivoCancelamento())}"
+                             class="small text-muted mt-1" th:text="${passageiro.motivoCancelamento()}"></div>
+                        <div class="small text-muted"
+                             th:text="${#temporals.format(passageiro.canceladoEm(), 'dd/MM/yyyy HH:mm')}"></div>
+                    </td>
+                    <td class="text-end">
+                        <form method="post" th:action="@{/agendamentos/{id}/excluir(id=${passageiro.id()})}"
+                              onsubmit="return confirm('Excluir definitivamente este agendamento cancelado?')">
+                            <input type="hidden" name="data" th:value="${data}">
+                            <input th:if="${paginaCarros == true}" type="hidden" name="paginaCarros" value="true">
+                            <button class="btn btn-sm btn-outline-danger" type="submit">
+                                <i class="bi bi-trash me-1"></i>Excluir passageiro
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+</th:block>

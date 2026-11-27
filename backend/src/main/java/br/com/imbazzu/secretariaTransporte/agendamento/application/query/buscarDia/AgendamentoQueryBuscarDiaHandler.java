@@ -17,6 +17,7 @@ import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.Agendament
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.AgendamentoValidacao;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.CompatibilidadeVeiculoAgendamento;
 import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.OrdenacaoHorarioSaida;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -40,6 +41,7 @@ public class AgendamentoQueryBuscarDiaHandler {
         var veiculosAgenda = veiculos.stream()
                 .map(veiculo -> paraAgenda(veiculo,
                         passageirosPorVeiculo.getOrDefault(veiculo.id(), List.of())))
+                .sorted(Comparator.comparingInt(veiculo -> OrdenacaoHorarioSaida.chave(veiculo.horarioSaida())))
                 .toList();
         var pendentes = agendamentos.stream()
                 .filter(agendamento -> agendamento.getIdVeiculoAberto() == null)
@@ -47,7 +49,8 @@ public class AgendamentoQueryBuscarDiaHandler {
                 .map(agendamento -> paraAgenda(
                         agendamento, compativeis.getOrDefault(agendamento.getId(), List.of())))
                 .toList();
-        return new AgendaDia(query.data(), veiculosAgenda, pendentes);
+        return new AgendaDia(query.data(), veiculosAgenda, pendentes,
+                consultas.listarAgendamentosCancelados(query.data()));
     }
 
     private static VeiculoAgenda paraAgenda(VeiculoAberto veiculo, List<Agendamento> passageiros) {
@@ -64,6 +67,9 @@ public class AgendamentoQueryBuscarDiaHandler {
                 veiculo.capacidade(),
                 veiculo.identificacao(),
                 horarioSaida,
+                veiculo.saidaConfirmadaEm(),
+                veiculo.finalidadeAbertura(),
+                veiculo.idListaAbertura(),
                 assentosOcupados,
                 ocupantes);
     }

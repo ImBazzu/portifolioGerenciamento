@@ -9,6 +9,7 @@ import br.com.imbazzu.frontSpring.lista.core.porta.in.ListaApplicationPorta;
 import br.com.imbazzu.frontSpring.localidade.core.porta.in.LocalidadeApplicationPorta;
 import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
+import br.com.imbazzu.frontSpring.usuario.UsuarioApi;
 
 @Configuration
 public class AgendamentoUiConfig {
@@ -27,8 +28,9 @@ public class AgendamentoUiConfig {
     CarregadorOpcoesAgendamento carregadorOpcoesAgendamento(
             ListaApplicationPorta listas,
             VeiculoApplicationPorta tiposVeiculo,
-            LocalidadeApplicationPorta localidades) {
-        return new CarregadorOpcoesAgendamento(listas, tiposVeiculo, localidades);
+            LocalidadeApplicationPorta localidades,
+            UsuarioApi usuarios) {
+        return new CarregadorOpcoesAgendamento(listas, tiposVeiculo, localidades, usuarios);
     }
 
     @Bean

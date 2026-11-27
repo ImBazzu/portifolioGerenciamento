@@ -1,6 +1,7 @@
 package br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.entidadeJpa;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.Duration;
 import java.util.UUID;
@@ -69,6 +70,15 @@ public class AgendamentoJpa {
 
     @Column(name = "veiculo_agendamento_id")
     private UUID idVeiculoAberto;
+
+    @Column(name = "cancelado_em")
+    private LocalDateTime canceladoEm;
+
+    @Column(name = "motivo_cancelamento", length = 500)
+    private String motivoCancelamento;
+
+    @Column(name = "cancelado_por_id")
+    private UUID canceladoPorId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "autor_id", updatable = false)

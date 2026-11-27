@@ -41,14 +41,25 @@ public class RelatorioJpaRepository implements RelatorioQueryRepository {
     public EstatisticasAgendamentosDTO obterEstatisticasAgendamentos(FiltroRelatorio filtro) {
         var dto = new EstatisticasAgendamentosDTO();
         dto.setTotalAgendamentos(numero(consulta("SELECT COUNT(*) FROM agendamentos a /*filtro*/", filtro, "a.data").getSingleResult()));
+        dto.setAgendamentosCancelados(numero(consulta(
+                "SELECT COUNT(*) FROM agendamentos a /*filtro*/ AND a.cancelado_em IS NOT NULL",
+                filtro, "a.data").getSingleResult()));
         List<EstatisticasAgendamentosDTO.AgendamentoPorDataDTO> porData = new ArrayList<>();
-        for (Object value : consulta("SELECT a.data, COUNT(*) FROM agendamentos a /*filtro*/ GROUP BY a.data ORDER BY a.data", filtro, "a.data").getResultList()) {
+        for (Object value : consulta(
+                "SELECT a.data, COUNT(*), SUM(CASE WHEN a.cancelado_em IS NOT NULL THEN 1 ELSE 0 END) "
+                        + "FROM agendamentos a /*filtro*/ GROUP BY a.data ORDER BY a.data",
+                filtro, "a.data").getResultList()) {
             Object[] row = (Object[]) value;
-            porData.add(new EstatisticasAgendamentosDTO.AgendamentoPorDataDTO(LocalDate.parse(row[0].toString()), numero(row[1]), null, null));
+            porData.add(new EstatisticasAgendamentosDTO.AgendamentoPorDataDTO(
+                    LocalDate.parse(row[0].toString()), numero(row[1]), null, numero(row[2])));
         }
         dto.setAgendamentosPorData(porData);
         List<EstatisticasAgendamentosDTO.AgendamentoPorDestinoDTO> porDestino = new ArrayList<>();
-        for (Object value : consulta("SELECT d.nome, COUNT(*) FROM agendamentos a JOIN destinos d ON d.id = a.destino_id /*filtro*/ GROUP BY d.id, d.nome ORDER BY COUNT(*) DESC, d.nome", filtro, "a.data").getResultList()) {
+        for (Object value : consulta(
+                "SELECT d.nome, COUNT(*) FROM agendamentos a JOIN destinos d ON d.id = a.destino_id "
+                        + "/*filtro*/ AND a.cancelado_em IS NULL GROUP BY d.id, d.nome "
+                        + "ORDER BY COUNT(*) DESC, d.nome",
+                filtro, "a.data").getResultList()) {
             Object[] row = (Object[]) value;
             porDestino.add(new EstatisticasAgendamentosDTO.AgendamentoPorDestinoDTO((String) row[0], numero(row[1])));
         }
@@ -72,7 +83,13 @@ public class RelatorioJpaRepository implements RelatorioQueryRepository {
         }
         dto.setPessoasPorEspecificacao(porEspecificacao);
         List<EstatisticasPessoasDTO.PessoaMaisFrequenteDTO> frequentes = new ArrayList<>();
-        for (Object value : consulta("SELECT p.nome, COUNT(*), e.nome FROM agendamentos a JOIN pessoas p ON p.id = a.pessoa_id JOIN especificacoes e ON e.id = p.especificacao_id /*filtro*/ GROUP BY p.id, p.nome, e.nome ORDER BY COUNT(*) DESC, p.nome LIMIT 10", filtro, "a.data").getResultList()) {
+        for (Object value : consulta(
+                "SELECT p.nome, COUNT(*), e.nome FROM agendamentos a "
+                        + "JOIN pessoas p ON p.id = a.pessoa_id "
+                        + "JOIN especificacoes e ON e.id = p.especificacao_id "
+                        + "/*filtro*/ AND a.cancelado_em IS NULL "
+                        + "GROUP BY p.id, p.nome, e.nome ORDER BY COUNT(*) DESC, p.nome LIMIT 10",
+                filtro, "a.data").getResultList()) {
             Object[] row = (Object[]) value;
             frequentes.add(new EstatisticasPessoasDTO.PessoaMaisFrequenteDTO((String) row[0], numero(row[1]), (String) row[2]));
         }
@@ -95,12 +112,22 @@ public class RelatorioJpaRepository implements RelatorioQueryRepository {
     @Override
     public EstatisticasOperacionaisDTO obterEstatisticasOperacionais(FiltroRelatorio filtro) {
         var dto = new EstatisticasOperacionaisDTO();
-        Object[] totals = (Object[]) consulta("SELECT COUNT(*), COUNT(a.veiculo_agendamento_id) FROM agendamentos a /*filtro*/", filtro, "a.data").getSingleResult();
+        Object[] totals = (Object[]) consulta(
+                "SELECT COUNT(*), "
+                        + "SUM(CASE WHEN a.cancelado_em IS NULL AND a.veiculo_agendamento_id IS NOT NULL THEN 1 ELSE 0 END), "
+                        + "SUM(CASE WHEN a.cancelado_em IS NULL AND a.veiculo_agendamento_id IS NULL THEN 1 ELSE 0 END), "
+                        + "SUM(CASE WHEN a.cancelado_em IS NOT NULL THEN 1 ELSE 0 END) "
+                        + "FROM agendamentos a /*filtro*/",
+                filtro, "a.data").getSingleResult();
         long total = numero(totals[0]);
         long alocados = numero(totals[1]);
+        long pendentes = numero(totals[2]);
+        long cancelados = numero(totals[3]);
         dto.setTotalAgendamentos(total);
         dto.setAgendamentosAlocados(alocados);
-        dto.setAgendamentosSemVeiculo(total - alocados);
+        dto.setAgendamentosSemVeiculo(pendentes);
+        dto.setAgendamentosPendentes(pendentes);
+        dto.setAgendamentosCancelados(cancelados);
         return dto;
     }
 }

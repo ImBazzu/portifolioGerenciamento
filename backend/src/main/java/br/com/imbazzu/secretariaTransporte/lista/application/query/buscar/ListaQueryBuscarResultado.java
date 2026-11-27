@@ -16,7 +16,8 @@ public record ListaQueryBuscarResultado(
         String descricao,
         LocalDate dataArquivado,
         List<RegraCadastroResultado> regrasCadastro,
-        List<RegraSeparacaoResultado> regrasSeparacao) {
+        List<RegraSeparacaoResultado> regrasSeparacao,
+        String finalidadeEspecial) {
 
     public record RegraCadastroResultado(
             UUID id,

@@ -207,7 +207,8 @@ public class ListaApi implements ListaApiPorta {
                 regras,
                 cidades,
                 lista.regrasCadastro(),
-                lista.regrasSeparacao());
+                lista.regrasSeparacao(),
+                lista.finalidadeEspecial());
     }
 
     private static String formatarRegraCadastro(ListaDetalheApiDto.RegraCadastro regra, Map<String, String> nomes) {

@@ -27,6 +27,9 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login","/error","/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/usuarios/listas-agendamento", "/usuarios/listas-agendamento/**")
+                                .hasRole("GESTAO")
+                        .requestMatchers(HttpMethod.GET, "/usuarios").hasRole("GESTAO")
                         .requestMatchers("/usuarios/**").hasRole("ADMIN")
                         .requestMatchers("/motoristas/**").hasRole("MOTORISTA")
                         .requestMatchers(HttpMethod.PATCH, "/pessoas/*/validar", "/pessoas/*/retirar-validacao").hasRole("GESTAO")

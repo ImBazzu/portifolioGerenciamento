@@ -17,7 +17,8 @@ public record TipoListaDetalhe(
         String descricao,
         LocalDate dataArquivado,
         List<RegraCadastroDetalhe> regrasCadastro,
-        List<RegraSeparacaoDetalhe> regrasSeparacao) {
+        List<RegraSeparacaoDetalhe> regrasSeparacao,
+        String finalidadeEspecial) {
 
     public record RegraCadastroDetalhe(
             UUID id,

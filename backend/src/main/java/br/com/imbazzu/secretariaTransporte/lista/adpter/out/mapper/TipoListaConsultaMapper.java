@@ -34,7 +34,7 @@ public final class TipoListaConsultaMapper {
                 .map(TipoListaConsultaMapper::paraRegraSeparacao)
                 .toList();
         return new TipoListaDetalhe(projecao.getId(), projecao.getNome(), projecao.getDescricao(),
-                projecao.getDataArquivado(), regrasCadastro, regrasSeparacao);
+                projecao.getDataArquivado(), regrasCadastro, regrasSeparacao, projecao.getFinalidadeEspecial());
     }
 
     private static RegraCadastroDetalhe paraRegraCadastro(RegraCadastroProjecao regra) {

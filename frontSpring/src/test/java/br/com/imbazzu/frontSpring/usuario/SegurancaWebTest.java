@@ -21,6 +21,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpServerErrorException;
 import br.com.imbazzu.frontSpring.autenticacao.core.exception.RefreshTokenInvalidoException;
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.SessionAuthPorta;
 import br.com.imbazzu.frontSpring.prioridade.PrioridadeApi;
@@ -57,12 +59,18 @@ class SegurancaWebTest {
         mvc.perform(get("/relatorios/investigacao/pessoas")).andExpect(status().isForbidden());
         mvc.perform(get("/relatorios/investigacao/motoristas")).andExpect(status().isForbidden());
         mvc.perform(get("/usuarios")).andExpect(status().isForbidden());
+        mvc.perform(get("/usuarios/listas-agendamento/{id}", id).header("HX-Request", "true"))
+                .andExpect(status().isForbidden());
 
         when(usuarios.proprio()).thenReturn(new UsuarioApi.Usuario(id, "Ana", "GESTAO"));
         when(investigacao.pessoas("", 0)).thenReturn(new InvestigacaoApi.Pagina<>(List.of(), 0, 0, 0));
+        when(usuarios.listarParaVisibilidadeListas())
+                .thenReturn(List.of(new UsuarioApi.Usuario(id, "Ana", "GESTAO")));
         mvc.perform(get("/prioridades")).andExpect(status().isOk());
         mvc.perform(get("/relatorios/investigacao/pessoas")).andExpect(status().isOk());
-        mvc.perform(get("/usuarios")).andExpect(status().isForbidden());
+        mvc.perform(get("/usuarios")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("Usuários do agendamento")))
+                .andExpect(content().string(containsString("Listas visíveis")));
 
         when(usuarios.proprio()).thenReturn(new UsuarioApi.Usuario(id, "Ana", "ADMIN"));
         when(usuarios.listar("", 0)).thenReturn(new UsuarioApi.Pagina(
@@ -90,6 +98,51 @@ class SegurancaWebTest {
         mvc.perform(get("/minha-conta")).andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login"));
         verify(sessao).clear();
+    }
+
+    @Test
+    void gestaoConfiguraListasDeUmUsuario() throws Exception {
+        var operador = new UsuarioApi.Usuario(UUID.randomUUID(), "Operador", "AGENDAMENTO");
+        var lista = UUID.randomUUID();
+        when(usuarios.proprio()).thenReturn(new UsuarioApi.Usuario(id, "Gestor", "GESTAO"));
+        when(usuarios.listarParaVisibilidadeListas()).thenReturn(List.of(operador));
+        when(usuarios.listasAgendamento(operador.id())).thenReturn(new UsuarioApi.VisibilidadeListas(
+                true, List.of(lista), List.of(new UsuarioApi.ListaAgendamento(lista, "Emergência"))));
+
+        mvc.perform(get("/usuarios"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("hx-get=\"/usuarios/listas-agendamento/" + operador.id() + "\"")));
+        mvc.perform(get("/usuarios/listas-agendamento/{id}", operador.id()).header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("role=\"dialog\"")))
+                .andExpect(content().string(containsString("Configurando:")))
+                .andExpect(content().string(containsString("Operador")))
+                .andExpect(content().string(containsString("Emergência")))
+                .andExpect(content().string(containsString("checked=\"checked\"")));
+        mvc.perform(get("/usuarios").param("usuarioListas", operador.id().toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Configurando:")))
+                .andExpect(content().string(not(containsString("hx-get=\"/usuarios/listas-agendamento/fechar\""))));
+        mvc.perform(get("/usuarios/listas-agendamento/fechar").header("HX-Request", "true"))
+                .andExpect(status().isOk()).andExpect(content().string(""));
+        mvc.perform(post("/usuarios/listas-agendamento/{id}", operador.id()).with(csrf())
+                        .param("restrita", "true").param("idsListas", lista.toString()))
+                .andExpect(redirectedUrl("/usuarios"));
+        verify(usuarios).atualizarListasAgendamento(operador.id(), true, List.of(lista));
+    }
+
+    @Test
+    void erroAoCarregarListasApareceNoModal() throws Exception {
+        var operador = new UsuarioApi.Usuario(UUID.randomUUID(), "Operador", "AGENDAMENTO");
+        when(usuarios.proprio()).thenReturn(new UsuarioApi.Usuario(id, "Gestor", "GESTAO"));
+        when(usuarios.listarParaVisibilidadeListas()).thenReturn(List.of(operador));
+        when(usuarios.listasAgendamento(operador.id()))
+                .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+        mvc.perform(get("/usuarios/listas-agendamento/{id}", operador.id()).header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("role=\"dialog\"")))
+                .andExpect(content().string(containsString("alert-danger")))
+                .andExpect(content().string(not(containsString("Salvar configuração"))));
     }
 
     @Test

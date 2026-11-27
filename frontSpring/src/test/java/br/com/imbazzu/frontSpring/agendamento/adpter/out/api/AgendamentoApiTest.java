@@ -162,6 +162,28 @@ class AgendamentoApiTest {
     }
 
     @Test
+    void confirmarSaidaDoVeiculoUsaContratoPostDoBackend() {
+        var id = UUID.fromString("6b0d3800-2ca7-4e1f-bfb3-36f849104d83");
+        server.expect(requestTo("http://localhost:8080/api/agendamentos/veiculos/" + id + "/confirmar-saida"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess());
+
+        api.confirmarSaida(id);
+
+        server.verify();
+    }
+
+    @Test
+    void desfazerConfirmacaoUsaDeleteDoBackend() {
+        var id = UUID.randomUUID();
+        server.expect(requestTo("http://localhost:8080/api/agendamentos/veiculos/" + id + "/confirmar-saida"))
+                .andExpect(method(HttpMethod.DELETE))
+                .andRespond(withSuccess());
+        api.desfazerConfirmacaoSaida(id);
+        server.verify();
+    }
+
+    @Test
     void excluirVeiculoAbertoUsaContratoDeleteDoBackend() {
         var id = UUID.fromString("6b0d3800-2ca7-4e1f-bfb3-36f849104d83");
         server.expect(requestTo("http://localhost:8080/api/agendamentos/veiculos/" + id))
@@ -169,6 +191,21 @@ class AgendamentoApiTest {
                 .andRespond(withSuccess());
 
         api.removerVeiculo(id);
+
+        server.verify();
+    }
+
+    @Test
+    void cancelarAgendamentoEnviaMotivoAoBackend() {
+        var id = UUID.fromString("6b0d3800-2ca7-4e1f-bfb3-36f849104d83");
+        server.expect(requestTo("http://localhost:8080/api/agendamentos/" + id + "/cancelar"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().json("""
+                        {"motivo":"Passageiro solicitou"}
+                        """))
+                .andRespond(withSuccess());
+
+        api.cancelar(id, "Passageiro solicitou");
 
         server.verify();
     }

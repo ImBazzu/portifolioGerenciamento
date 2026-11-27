@@ -12,6 +12,8 @@ public interface TipoListaDetalheProjecao {
 
     String getDescricao();
 
+    String getFinalidadeEspecial();
+
     LocalDate getDataArquivado();
 
     List<RegraCadastroProjecao> getRegrasCadastro();

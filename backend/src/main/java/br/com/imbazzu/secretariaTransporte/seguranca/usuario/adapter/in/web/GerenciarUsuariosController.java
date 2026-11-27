@@ -3,6 +3,7 @@ package br.com.imbazzu.secretariaTransporte.seguranca.usuario.adapter.in.web;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -65,6 +66,30 @@ public class GerenciarUsuariosController {
     public GerenciarUsuariosService.UsuarioResumo proprio(Authentication auth) {
         return service.buscar((UUID) auth.getPrincipal());
     }
+
+    @GetMapping("/listas-agendamento")
+    public List<GerenciarUsuariosService.UsuarioResumo> usuariosParaListas() {
+        return service.listarParaVisibilidadeListas();
+    }
+
+    @GetMapping("/eu/listas-agendamento")
+    public GerenciarUsuariosService.VisibilidadeListas minhasListas(@AuthenticationPrincipal UUID usuarioId) {
+        return service.buscarVisibilidadeListas(usuarioId);
+    }
+
+    @GetMapping("/{id}/listas-agendamento")
+    public GerenciarUsuariosService.VisibilidadeListas listasDoUsuario(@PathVariable UUID id) {
+        return service.buscarVisibilidadeListas(id);
+    }
+
+    @PutMapping("/{id}/listas-agendamento")
+    public void atualizarListasDoUsuario(
+            @PathVariable UUID id,
+            @RequestBody ListasAgendamentoRequest dados) {
+        service.atualizarVisibilidadeListas(id, dados.restrita(), dados.idsListas());
+    }
+
+    public record ListasAgendamentoRequest(boolean restrita, List<UUID> idsListas) {}
 
     @PutMapping("/eu")
     public TokenResponseDto atualizarProprio(Authentication auth, @RequestBody ProprioRequest dados) {

@@ -17,6 +17,9 @@ public class UsuarioApi {
     public record CriarRequest(String nome, String senha, String perfil) {}
     public record PerfilRequest(String perfil) {}
     public record ProprioRequest(String nome, String senhaAtual, String novaSenha) {}
+    public record ListaAgendamento(UUID id, String nome) {}
+    public record VisibilidadeListas(boolean restrita, List<UUID> idsListas, List<ListaAgendamento> listas) {}
+    public record VisibilidadeRequest(boolean restrita, List<UUID> idsListas) {}
     private final RestClient api;
     private final RetryComRefreshPorta retry;
     private final SessionAuthPorta sessao;
@@ -29,6 +32,27 @@ public class UsuarioApi {
 
     public Usuario proprio() {
         return executar(() -> api.get().uri("/usuarios/eu").retrieve().body(Usuario.class));
+    }
+
+    public List<Usuario> listarParaVisibilidadeListas() {
+        return executar(() -> api.get().uri("/usuarios/listas-agendamento")
+                .retrieve().body(new org.springframework.core.ParameterizedTypeReference<>() {}));
+    }
+
+    public VisibilidadeListas minhasListasAgendamento() {
+        return executar(() -> api.get().uri("/usuarios/eu/listas-agendamento")
+                .retrieve().body(VisibilidadeListas.class));
+    }
+
+    public VisibilidadeListas listasAgendamento(UUID id) {
+        return executar(() -> api.get().uri("/usuarios/{id}/listas-agendamento", id)
+                .retrieve().body(VisibilidadeListas.class));
+    }
+
+    public void atualizarListasAgendamento(UUID id, boolean restrita, List<UUID> idsListas) {
+        executar(() -> api.put().uri("/usuarios/{id}/listas-agendamento", id)
+                .body(new VisibilidadeRequest(restrita, idsListas))
+                .retrieve().toBodilessEntity());
     }
 
     public Pagina listar(String nome, int pagina) {

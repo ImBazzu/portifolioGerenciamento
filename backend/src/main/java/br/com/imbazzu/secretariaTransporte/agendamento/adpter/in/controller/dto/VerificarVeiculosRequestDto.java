@@ -11,5 +11,15 @@ public record VerificarVeiculosRequestDto(
         @NotNull UUID idLista,
         @NotNull UUID idDestino,
         @NotNull LocalTime horarioChegada,
-        @Min(0) int acompanhantes) {
+        @Min(0) int acompanhantes,
+        Boolean informarHorarioSaida) {
+
+    public VerificarVeiculosRequestDto {
+        informarHorarioSaida = Boolean.TRUE.equals(informarHorarioSaida);
+    }
+
+    public VerificarVeiculosRequestDto(
+            UUID idPessoa, UUID idLista, UUID idDestino, LocalTime horarioChegada, int acompanhantes) {
+        this(idPessoa, idLista, idDestino, horarioChegada, acompanhantes, false);
+    }
 }

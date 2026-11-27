@@ -72,6 +72,24 @@ public class AgendamentoCommandJpaAdapter implements AgendamentoCommandPorta {
 
     @Override
     @Transactional
+    public boolean cancelar(UUID id, LocalDateTime canceladoEm, String motivo, UUID autorId) {
+        return agendamentoRepository.cancelar(id, canceladoEm, motivo, autorId) == 1;
+    }
+
+    @Override
+    @Transactional
+    public boolean confirmarSaidaVeiculo(UUID id, LocalDateTime confirmadaEm, UUID autorId) {
+        return veiculoRepository.confirmarSaida(id, confirmadaEm, autorId) == 1;
+    }
+
+    @Override
+    @Transactional
+    public boolean desfazerConfirmacaoSaidaVeiculo(UUID id) {
+        return veiculoRepository.desfazerConfirmacaoSaida(id) == 1;
+    }
+
+    @Override
+    @Transactional
     public VeiculoAberto salvar(VeiculoAberto veiculo) {
         var entidade = veiculoRepository.findById(veiculo.id()).orElseGet(VeiculoAgendaJpa::new);
         entidade.setId(veiculo.id());
@@ -82,6 +100,8 @@ public class AgendamentoCommandJpaAdapter implements AgendamentoCommandPorta {
         entidade.setIdentificacao(veiculo.identificacao());
         entidade.setHorarioSaida(veiculo.horarioSaida());
         entidade.setHorarioSaidaCalculado(veiculo.horarioSaidaCalculado());
+        entidade.setFinalidadeAbertura(veiculo.finalidadeAbertura());
+        entidade.setIdListaAbertura(veiculo.idListaAbertura());
         veiculoRepository.saveAndFlush(entidade);
         return veiculo;
     }

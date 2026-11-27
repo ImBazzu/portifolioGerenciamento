@@ -1,6 +1,7 @@
 package br.com.imbazzu.secretariaTransporte.veiculo.core.domain;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Objects;
 import java.util.UUID;
@@ -15,13 +16,32 @@ public record VeiculoAberto(
         int capacidade,
         String identificacao,
         LocalTime horarioSaida,
-        boolean horarioSaidaCalculado) {
+        boolean horarioSaidaCalculado,
+        LocalDateTime saidaConfirmadaEm,
+        FinalidadeAberturaVeiculo finalidadeAbertura,
+        UUID idListaAbertura) {
+
+    public VeiculoAberto(
+            UUID id, LocalDate data, UUID idTipoVeiculo, String nomeTipoVeiculo,
+            int capacidade, String identificacao, LocalTime horarioSaida, boolean horarioSaidaCalculado) {
+        this(id, data, idTipoVeiculo, nomeTipoVeiculo, capacidade, identificacao,
+                horarioSaida, horarioSaidaCalculado, null, FinalidadeAberturaVeiculo.AJUSTE, null);
+    }
+
+    public VeiculoAberto(
+            UUID id, LocalDate data, UUID idTipoVeiculo, String nomeTipoVeiculo,
+            int capacidade, String identificacao, LocalTime horarioSaida, boolean horarioSaidaCalculado,
+            LocalDateTime saidaConfirmadaEm) {
+        this(id, data, idTipoVeiculo, nomeTipoVeiculo, capacidade, identificacao, horarioSaida,
+                horarioSaidaCalculado, saidaConfirmadaEm, FinalidadeAberturaVeiculo.AJUSTE, null);
+    }
 
     public VeiculoAberto {
         Objects.requireNonNull(id, "ID do veículo é obrigatório");
         Objects.requireNonNull(data, "Data é obrigatória");
         Objects.requireNonNull(idTipoVeiculo, "Tipo de veículo é obrigatório");
         Objects.requireNonNull(nomeTipoVeiculo, "Nome do tipo de veículo é obrigatório");
+        Objects.requireNonNull(finalidadeAbertura, "Finalidade da abertura é obrigatória");
         if (capacidade < 1) {
             throw new DadosInvalidosException("A capacidade do veículo deve ser positiva");
         }

@@ -9,23 +9,29 @@
             <h1 class="h3 mb-3">Usuários e permissões</h1>
             <div th:if="${sucesso != null}" class="alert alert-success" th:text="${sucesso}"></div>
             <div th:if="${erro != null}" class="alert alert-danger" th:text="${erro}"></div>
-            <div class="alert alert-info">Os perfis são cumulativos: agendamento, motoristas, gestão operacional e administração.</div>
+            <div th:if="${podeGerenciarUsuarios}" class="alert alert-info">Os perfis são cumulativos: agendamento, motoristas, gestão operacional e administração.</div>
             <section class="card shadow-sm mb-3"><div class="card-body">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                    <h2 class="h5 mb-0">Usuários</h2>
-                    <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#novoUsuarioModal">Cadastrar usuário</button>
+                    <h2 class="h5 mb-0" th:text="${podeGerenciarUsuarios ? 'Usuários' : 'Usuários do agendamento'}"></h2>
+                    <button th:if="${podeGerenciarUsuarios}" class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#novoUsuarioModal">Cadastrar usuário</button>
                 </div>
             </div></section>
             <section class="card shadow-sm"><div class="card-body">
-                <div class="d-flex justify-content-between flex-wrap gap-2">
+                <div th:if="${podeGerenciarUsuarios}" class="d-flex justify-content-between flex-wrap gap-2">
                     <h2 class="h5" th:text="${arquivados ? 'Usuários arquivados' : 'Consultar usuários'}"></h2>
                     <a class="btn btn-sm btn-outline-secondary" th:href="@{/usuarios(arquivados=${!arquivados})}"
                        th:text="${arquivados ? 'Ver ativos' : 'Ver arquivados'}"></a>
                 </div>
-                <form method="get" th:action="@{/usuarios}" class="d-flex gap-2 mb-3">
+                <h2 th:unless="${podeGerenciarUsuarios}" class="h5">Selecione um usuário para configurar suas listas</h2>
+                <form th:if="${podeGerenciarUsuarios}" method="get" th:action="@{/usuarios}" class="d-flex gap-2 mb-3">
                     <input type="hidden" name="arquivados" th:value="${arquivados}">
                     <label class="visually-hidden" for="filtroNome">Nome</label>
                     <input id="filtroNome" name="nome" th:value="${nome}" class="form-control" placeholder="Buscar por nome">
+                    <button class="btn btn-outline-primary">Buscar</button>
+                </form>
+                <form th:unless="${podeGerenciarUsuarios}" method="get" th:action="@{/usuarios}" class="d-flex gap-2 mb-3">
+                    <label class="visually-hidden" for="filtroNomeGestao">Nome</label>
+                    <input id="filtroNomeGestao" name="nome" th:value="${nome}" class="form-control" placeholder="Buscar usuário">
                     <button class="btn btn-outline-primary">Buscar</button>
                 </form>
                 <p th:if="${#lists.isEmpty(resultado.content())}" class="text-muted">Nenhum usuário encontrado.</p>
@@ -40,17 +46,21 @@
                         </span>
                     </div>
                     <div class="d-flex flex-wrap gap-1">
-                        <button th:unless="${arquivados}" class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" th:attr="data-bs-target='#editarPerfil-' + ${u.id()}">Editar perfil</button>
-                        <form method="post" th:action="@{/usuarios/{id}/situacao/{acao}(id=${u.id()},acao=${arquivados ? 'reativar' : 'arquivar'})}" onsubmit="return confirm('Confirma esta operação?')">
+                        <a th:if="${podeGerenciarOperacao and !arquivados}" class="btn btn-outline-primary btn-sm"
+                           th:href="@{/usuarios(usuarioListas=${u.id()})}"
+                           th:attr="hx-get=@{/usuarios/listas-agendamento/{id}(id=${u.id()})}"
+                           hx-target="#modal" hx-swap="innerHTML">Listas visíveis</a>
+                        <button th:if="${podeGerenciarUsuarios and !arquivados}" class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" th:attr="data-bs-target='#editarPerfil-' + ${u.id()}">Editar perfil</button>
+                        <form th:if="${podeGerenciarUsuarios}" method="post" th:action="@{/usuarios/{id}/situacao/{acao}(id=${u.id()},acao=${arquivados ? 'reativar' : 'arquivar'})}" onsubmit="return confirm('Confirma esta operação?')">
                             <input type="hidden" name="arquivados" th:value="${arquivados}">
                             <button class="btn btn-outline-warning btn-sm" th:text="${arquivados ? 'Reativar' : 'Arquivar'}"></button>
                         </form>
-                        <form method="post" th:action="@{/usuarios/{id}/situacao/excluir(id=${u.id()})}" onsubmit="return confirm('Excluir definitivamente este usuário?')">
+                        <form th:if="${podeGerenciarUsuarios}" method="post" th:action="@{/usuarios/{id}/situacao/excluir(id=${u.id()})}" onsubmit="return confirm('Excluir definitivamente este usuário?')">
                             <input type="hidden" name="arquivados" th:value="${arquivados}">
                             <button class="btn btn-outline-danger btn-sm">Excluir</button>
                         </form>
                     </div>
-                    <div th:unless="${arquivados}" class="modal fade" th:id="${'editarPerfil-' + u.id()}" tabindex="-1" th:attr="aria-labelledby='tituloPerfil-' + ${u.id()}" aria-hidden="true">
+                    <div th:if="${podeGerenciarUsuarios and !arquivados}" class="modal fade" th:id="${'editarPerfil-' + u.id()}" tabindex="-1" th:attr="aria-labelledby='tituloPerfil-' + ${u.id()}" aria-hidden="true">
                         <div class="modal-dialog"><div class="modal-content">
                             <form method="post" th:action="@{/usuarios/{id}/perfil(id=${u.id()})}">
                                 <div class="modal-header"><h2 class="modal-title fs-5" th:id="${'tituloPerfil-' + u.id()}">Editar perfil</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>
@@ -75,7 +85,10 @@
                        th:href="@{/usuarios(nome=${nome},arquivados=${arquivados},pagina=${p})}" th:text="${p + 1}"></a>
                 </nav>
             </div></section>
-            <div class="modal fade" id="novoUsuarioModal" tabindex="-1" aria-labelledby="novoUsuarioTitulo" aria-hidden="true">
+            <th:block th:if="${usuarioListasSelecionado != null}">
+                <th:block th:replace="~{usuario/fragmentos/listas-agendamento :: configuracao}"></th:block>
+            </th:block>
+            <div th:if="${podeGerenciarUsuarios}" class="modal fade" id="novoUsuarioModal" tabindex="-1" aria-labelledby="novoUsuarioTitulo" aria-hidden="true">
                 <div class="modal-dialog"><div class="modal-content">
                     <form method="post" th:action="@{/usuarios}">
                         <div class="modal-header"><h2 class="modal-title fs-5" id="novoUsuarioTitulo">Cadastrar usuário</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button></div>

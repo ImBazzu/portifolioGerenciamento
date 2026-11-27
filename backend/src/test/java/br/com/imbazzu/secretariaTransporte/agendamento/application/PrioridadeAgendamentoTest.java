@@ -92,6 +92,22 @@ class PrioridadeAgendamentoTest {
     }
 
     @Test
+    void converteHorarioDeSaidaEmChegadaUsandoTempoDeViagem() {
+        preparar(4, prioridade);
+        when(consultas.buscarDestino(destino))
+                .thenReturn(new DestinoAgendaDados(UUID.randomUUID(), Duration.ofMinutes(45), true));
+
+        new AgendamentoCommandCriarHandler(comandos, consultas).handler(
+                new AgendamentoCommandCriar(
+                        data, pessoa, lista, null, tipo, destino, LocalTime.of(9, 0),
+                        true, 0, null, autor, true));
+
+        var captor = ArgumentCaptor.forClass(Agendamento.class);
+        verify(comandos).salvar(captor.capture());
+        assertEquals(LocalTime.of(9, 45), captor.getValue().getHorarioChegada());
+    }
+
+    @Test
     void verificacaoRespeitaDiasDaSemanaDaRegra() {
         var quinta = LocalDate.of(2026, 11, 19);
         var sabado = LocalDate.of(2026, 11, 21);

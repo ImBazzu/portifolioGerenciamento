@@ -38,7 +38,7 @@ public interface PassageiroPeriodoRepository extends JpaRepository<AgendamentoJp
                 p.id, p.nome, p.cpf, p.telefone, e.nome, a.data, l.id, l.nome,
                 c.id, c.nome, d.id, d.nome, tv.id, tv.nome, a.horarioChegada,
                 a.tempoViagemSegundos, a.tempoViagemNanos, a.acompanhantes,
-                v.id, v.horarioSaida, v.horarioSaidaCalculado)
+                v.id, v.horarioSaida, v.horarioSaidaCalculado, (a.canceladoEm IS NOT NULL))
             FROM AgendamentoJpa a
             JOIN PessoaJpa p ON p.id = a.idPessoa
             JOIN p.especificacao e

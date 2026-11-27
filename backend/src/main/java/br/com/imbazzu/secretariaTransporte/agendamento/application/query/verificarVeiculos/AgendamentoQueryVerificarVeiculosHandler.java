@@ -36,6 +36,9 @@ public class AgendamentoQueryVerificarVeiculosHandler {
         }
         long lugaresNecessarios = (long) query.acompanhantes() + 1;
         var destino = AgendamentoValidacao.validarDestino(consultas, query.idDestino());
+        var horarioChegada = query.informarHorarioSaida()
+                ? query.horarioChegada().plus(destino.tempoViagem())
+                : query.horarioChegada();
         AgendamentoValidacao.validarLista(consultas, query.idLista());
         var idsPorTipo = new HashMap<java.util.UUID, List<java.util.UUID>>();
         var motivos = new LinkedHashSet<String>();
@@ -45,7 +48,7 @@ public class AgendamentoQueryVerificarVeiculosHandler {
         }
         for (var regra : regras) {
             var motivosRegra = RegraCadastroAgendamento.motivosNaoAplicacao(
-                    regra, pessoa, destino, query.data(), query.horarioChegada());
+                    regra, pessoa, destino, query.data(), horarioChegada);
             if (!motivosRegra.isEmpty()) {
                 motivos.add("Regra %s: %s".formatted(regra.id(), String.join("; ", motivosRegra)));
                 continue;

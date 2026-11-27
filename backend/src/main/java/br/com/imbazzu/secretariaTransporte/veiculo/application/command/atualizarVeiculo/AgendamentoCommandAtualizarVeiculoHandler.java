@@ -9,6 +9,7 @@ import br.com.imbazzu.secretariaTransporte.agendamento.core.service.AgendamentoV
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.DadosInvalidosException;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.EntidadeNaoEncontradoException;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.OperacaoNaoPermitidaException;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.FinalidadeAberturaVeiculo;
 import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 import lombok.RequiredArgsConstructor;
 
@@ -34,7 +35,8 @@ public class AgendamentoCommandAtualizarVeiculoHandler {
             }
         }
 
-        var horarioCalculado = VeiculoAberto.tipoCalculaHorarioSaida(atual.nomeTipoVeiculo());
+        var horarioCalculado = VeiculoAberto.tipoCalculaHorarioSaida(atual.nomeTipoVeiculo())
+                && atual.finalidadeAbertura() == FinalidadeAberturaVeiculo.AJUSTE;
         if (horarioCalculado && command.horarioSaida() != null) {
             throw new DadosInvalidosException("O horário de saída de veículos do tipo Carro é calculado");
         }
@@ -50,7 +52,10 @@ public class AgendamentoCommandAtualizarVeiculoHandler {
                 atual.capacidade(),
                 identificacao,
                 command.horarioSaida(),
-                horarioCalculado);
+                horarioCalculado,
+                atual.saidaConfirmadaEm(),
+                atual.finalidadeAbertura(),
+                atual.idListaAbertura());
         if (!horarioCalculado) {
             var passageiros = consultas.listarAgendamentos(atual.data()).stream()
                     .filter(agendamento -> atual.id().equals(agendamento.getIdVeiculoAberto()))

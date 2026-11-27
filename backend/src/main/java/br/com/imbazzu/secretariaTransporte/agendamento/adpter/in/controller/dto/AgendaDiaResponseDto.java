@@ -6,5 +6,13 @@ import java.util.List;
 public record AgendaDiaResponseDto(
         LocalDate data,
         List<VeiculoAbertoResponseDto> veiculos,
-        List<AgendamentoResponseDto> passageirosPendentes) {
+        List<AgendamentoResponseDto> passageirosPendentes,
+        List<AgendamentoCanceladoResponseDto> passageirosCancelados) {
+
+    public AgendaDiaResponseDto(
+            LocalDate data,
+            List<VeiculoAbertoResponseDto> veiculos,
+            List<AgendamentoResponseDto> passageirosPendentes) {
+        this(data, veiculos, passageirosPendentes, List.of());
+    }
 }

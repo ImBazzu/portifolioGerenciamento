@@ -51,7 +51,8 @@ public class ListaQueryBuscarHandler {
                 detalhe.descricao(),
                 detalhe.dataArquivado(),
                 regrasCadastro,
-                regrasSeparacao);
+                regrasSeparacao,
+                detalhe.finalidadeEspecial());
     }
 
     private RegraCadastroResultado paraResultado(RegraCadastroDetalhe regra,

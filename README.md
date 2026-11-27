@@ -23,6 +23,12 @@ O repositório contém dois módulos Java/Spring Boot:
 
 Os formulários de motoristas, categorias e usuários são abertos em modais. Na página de carros de quatro lugares, a abertura é direta e em seguida oferece a inserção de passageiro, sem solicitar identificação.
 
+Nos cartões de carros, o menu de três pontos reúne motorista, PDF, confirmação de saída e exclusão; a inserção de passageiros continua disponível no cartão.
+
+Na abertura de carros para alta ou emergência, a lista correspondente é selecionada automaticamente e não aparece no formulário de agendamento normal. A migração V31 aproveita listas ativas com esses nomes e preserva suas regras; quando não existem, cria as listas com regras iniciais para os tipos de veículo ativos e prioridades existentes, com tolerância de separação de zero para carros. Revise as regras ao adicionar prioridades ou tipos de veículo. Usuários com acesso restrito precisam ter essas listas liberadas na página de usuários. Faça backup do banco antes da atualização.
+
+Na agenda, a saída confirmada destaca o veículo e pode ser desmarcada quando necessário. Desmarcar remove a confirmação e seu registro de horário e usuário; não apaga o veículo nem os passageiros.
+
 As operações disponíveis dependem das regras de negócio e das validações implementadas no backend.
 
 Os relatórios mostram agendamentos e atribuições atuais, não comprovam viagens realizadas. Reatribuições ou exclusões não ficam registradas como histórico de auditoria; nomes, categorias e demais cadastros associados refletem seus valores atuais. Os totais de passageiros não incluem acompanhantes.

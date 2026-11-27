@@ -74,6 +74,7 @@ public class AgendamentoPassageiroController {
             @RequestParam LocalTime horarioChegada,
             @RequestParam(required = false) Integer acompanhantes,
             @RequestParam(defaultValue = "false") boolean buscarNaResidencia,
+            @RequestParam(defaultValue = "false") boolean informarHorarioSaida,
             @RequestParam(required = false) UUID veiculoOrigem,
             @RequestParam(defaultValue = "false") boolean origemCarros,
             @RequestHeader(value = "HX-Request", required = false) String hxRequest,
@@ -88,7 +89,7 @@ public class AgendamentoPassageiroController {
             acompanhantes = acompanhantes == null ? pessoa.prioridadeAcompanhantes() : acompanhantes;
             buscarNaResidencia = pessoa.buscarNaResidencia();
             resposta = agendamentoApi.verificarVeiculos(data, new VerificarVeiculosRequestDto(
-                    idPessoa, idLista, idDestino, horarioChegada, acompanhantes));
+                    idPessoa, idLista, idDestino, horarioChegada, acompanhantes, informarHorarioSaida));
         } catch (RestClientResponseException e) {
             erro = mensagemErro.de(e);
         }
@@ -104,6 +105,7 @@ public class AgendamentoPassageiroController {
             model.addAttribute("idListaSelecionada", idLista);
             model.addAttribute("idDestinoSelecionado", idDestino);
             model.addAttribute("horarioChegadaSelecionado", horarioChegada);
+            model.addAttribute("informarHorarioSaida", informarHorarioSaida);
             model.addAttribute("acompanhantesSelecionados", acompanhantes);
             model.addAttribute("buscarNaResidenciaSelecionado", buscarNaResidencia);
             model.addAttribute("maxAcompanhantes", pessoa == null ? null : pessoa.prioridadeAcompanhantes());
@@ -112,7 +114,7 @@ public class AgendamentoPassageiroController {
             model.addAttribute("veiculosDisponiveis",
                     VeiculoDisponivelView.disponiveis(resposta, null, acompanhantes));
 
-            var opcoes = carregadorOpcoes.carregar();
+            var opcoes = carregadorOpcoes.carregarParaUsuario();
             carregadorOpcoes.adicionarAoModel(model, opcoes);
             try {
                 var agenda = agendamentoApi.buscarDia(data);
@@ -136,6 +138,7 @@ public class AgendamentoPassageiroController {
         // Fallback sem htmx: guarda o estado e volta para a página.
         manterDadosAgendamento(
                 redirect, idPessoa, idLista, idDestino, horarioChegada, acompanhantes, buscarNaResidencia);
+        redirect.addFlashAttribute("informarHorarioSaida", informarHorarioSaida);
         redirect.addFlashAttribute("veiculoOrigem", veiculoOrigem);
         redirect.addFlashAttribute("origemCarros", origemCarros);
         if (resposta != null) {
@@ -156,6 +159,7 @@ public class AgendamentoPassageiroController {
             @RequestParam UUID idDestino,
             @RequestParam LocalTime horarioChegada,
             @RequestParam(defaultValue = "false") boolean buscarNaResidencia,
+            @RequestParam(defaultValue = "false") boolean informarHorarioSaida,
             @RequestParam(defaultValue = "0") int acompanhantes,
             @RequestParam(required = false) UUID idVeiculo,
             @RequestParam(required = false) UUID veiculoOrigem,
@@ -164,7 +168,7 @@ public class AgendamentoPassageiroController {
         try {
             agendamentoApi.criar(data, new AgendamentoRequestDto(
                     idPessoa, idLista, idTipoVeiculo, idDestino,
-                    horarioChegada, buscarNaResidencia, acompanhantes, idVeiculo));
+                    horarioChegada, buscarNaResidencia, acompanhantes, idVeiculo, informarHorarioSaida));
             redirect.addFlashAttribute("sucesso", idVeiculo == null
                     ? "Passageiro de carro agendado para separação."
                     : "Passageiro agendado e atribuído ao veículo físico.");
@@ -177,12 +181,14 @@ public class AgendamentoPassageiroController {
             redirect.addFlashAttribute("erro", mensagemErro.de(e));
             manterDadosAgendamento(
                     redirect, idPessoa, idLista, idDestino, horarioChegada, acompanhantes, buscarNaResidencia);
+            redirect.addFlashAttribute("informarHorarioSaida", informarHorarioSaida);
             redirect.addFlashAttribute("veiculoOrigem", veiculoOrigem);
             redirect.addFlashAttribute("origemCarros", origemCarros);
             try {
                 redirect.addFlashAttribute("verificacao", agendamentoApi.verificarVeiculos(
                         data, new VerificarVeiculosRequestDto(
-                                idPessoa, idLista, idDestino, horarioChegada, acompanhantes)));
+                                idPessoa, idLista, idDestino, horarioChegada, acompanhantes,
+                                informarHorarioSaida)));
             } catch (RestClientResponseException erroVerificacao) {
                 redirect.addFlashAttribute("erroVerificacao",
                         "Não foi possível atualizar os tipos permitidos: %s"
@@ -272,9 +278,23 @@ public class AgendamentoPassageiroController {
             RedirectAttributes redirect) {
         return respostaFlash.executar(
                 redirect,
-                "Agendamento excluído.",
+                "Agendamento cancelado excluído.",
                 AgendamentoRedirect.retorno(paginaCarros, data),
                 () -> agendamentoApi.remover(idAgendamento));
+    }
+
+    @PostMapping("/{idAgendamento}/cancelar")
+    public String cancelar(
+            @PathVariable UUID idAgendamento,
+            @RequestParam LocalDate data,
+            @RequestParam(defaultValue = "false") boolean paginaCarros,
+            @RequestParam(required = false) String motivo,
+            RedirectAttributes redirect) {
+        return respostaFlash.executar(
+                redirect,
+                "Viagem cancelada. O registro foi mantido no histórico.",
+                AgendamentoRedirect.retorno(paginaCarros, data),
+                () -> agendamentoApi.cancelar(idAgendamento, motivo));
     }
 
     private void manterDadosAgendamento(

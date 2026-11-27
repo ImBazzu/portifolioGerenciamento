@@ -19,6 +19,7 @@ import br.com.imbazzu.frontSpring.agendamento.adpter.out.api.AgendamentoApi;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AbrirVeiculoRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoAbertoAtualizarRequestDto;
 import br.com.imbazzu.frontSpring.veiculo.core.TipoVeiculoUtil;
+import br.com.imbazzu.frontSpring.veiculo.core.FinalidadeAberturaVeiculo;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
 
 /** Veículos físicos abertos para o dia: abrir, editar e excluir. */
@@ -49,7 +50,8 @@ public class AgendamentoVeiculoController {
             @RequestParam(required = false) String identificacao,
             @RequestParam(required = false) LocalTime horarioSaida,
             RedirectAttributes redirect) {
-        return abrir(data, idTipoVeiculo, identificacao, horarioSaida, false, redirect);
+        return abrir(data, idTipoVeiculo, identificacao, horarioSaida,
+                FinalidadeAberturaVeiculo.AJUSTE, null, false, redirect);
     }
 
     @PostMapping("/carros/veiculos")
@@ -57,8 +59,12 @@ public class AgendamentoVeiculoController {
             @RequestParam LocalDate data,
             @RequestParam UUID idTipoVeiculo,
             @RequestParam(required = false) String identificacao,
+            @RequestParam(defaultValue = "AJUSTE") FinalidadeAberturaVeiculo finalidadeAbertura,
+            @RequestParam(required = false) UUID idListaAbertura,
+            @RequestParam(required = false) LocalTime horarioSaida,
             RedirectAttributes redirect) {
-        return abrir(data, idTipoVeiculo, identificacao, null, true, redirect);
+        return abrir(data, idTipoVeiculo, identificacao, horarioSaida,
+                finalidadeAbertura, idListaAbertura, true, redirect);
     }
 
     @PostMapping("/veiculos/{idVeiculo}/editar")
@@ -75,6 +81,32 @@ public class AgendamentoVeiculoController {
                 AgendamentoRedirect.retorno(paginaCarros, data),
                 () -> agendamentoApi.atualizarVeiculo(
                         idVeiculo, new VeiculoAbertoAtualizarRequestDto(identificacao, horarioSaida)));
+    }
+
+    @PostMapping("/veiculos/{idVeiculo}/confirmar-saida")
+    public String confirmarSaida(
+            @PathVariable UUID idVeiculo,
+            @RequestParam LocalDate data,
+            @RequestParam(defaultValue = "false") boolean paginaCarros,
+            RedirectAttributes redirect) {
+        return respostaFlash.executar(
+                redirect,
+                "Saída do veículo confirmada.",
+                AgendamentoRedirect.retorno(paginaCarros, data),
+                () -> agendamentoApi.confirmarSaida(idVeiculo));
+    }
+
+    @PostMapping("/veiculos/{idVeiculo}/desfazer-confirmacao-saida")
+    public String desfazerConfirmacaoSaida(
+            @PathVariable UUID idVeiculo,
+            @RequestParam LocalDate data,
+            @RequestParam(defaultValue = "false") boolean paginaCarros,
+            RedirectAttributes redirect) {
+        return respostaFlash.executar(
+                redirect,
+                "Confirmação de saída desfeita.",
+                AgendamentoRedirect.retorno(paginaCarros, data),
+                () -> agendamentoApi.desfazerConfirmacaoSaida(idVeiculo));
     }
 
     @PostMapping("/veiculos/{idVeiculo}/excluir")
@@ -95,6 +127,8 @@ public class AgendamentoVeiculoController {
             UUID idTipoVeiculo,
             String identificacao,
             LocalTime horarioSaida,
+            FinalidadeAberturaVeiculo finalidadeAbertura,
+            UUID idListaAbertura,
             boolean carro,
             RedirectAttributes redirect) {
         String destino = AgendamentoRedirect.retorno(carro, data);
@@ -107,7 +141,8 @@ public class AgendamentoVeiculoController {
                 return destino;
             }
             var veiculo = agendamentoApi.abrirVeiculo(
-                    data, new AbrirVeiculoRequestDto(idTipoVeiculo, identificacao, horarioSaida));
+                    data, new AbrirVeiculoRequestDto(
+                            idTipoVeiculo, identificacao, horarioSaida, finalidadeAbertura, idListaAbertura));
             if (veiculo == null || veiculo.id() == null) {
                 redirect.addFlashAttribute("erro",
                         "Veículo aberto, mas não foi possível identificar o veículo para inserir passageiros.");

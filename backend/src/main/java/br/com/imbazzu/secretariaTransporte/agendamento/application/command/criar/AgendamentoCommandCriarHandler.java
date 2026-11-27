@@ -45,6 +45,9 @@ public class AgendamentoCommandCriarHandler {
         }
         long lugaresNecessarios = (long) command.acompanhantes() + 1;
         var destino = AgendamentoValidacao.validarDestino(consultas, command.idDestino());
+        var horarioChegada = command.informarHorarioSaida()
+                ? command.horarioChegada().plus(destino.tempoViagem())
+                : command.horarioChegada();
         AgendamentoValidacao.validarLista(consultas, command.idLista());
         var tipo = consultas.buscarTipoVeiculo(command.idTipoVeiculo());
         if (!tipo.ativo()) {
@@ -66,7 +69,7 @@ public class AgendamentoCommandCriarHandler {
                         .filter(item -> !item.obrigacaoAnexo())
                         .filter(item -> item.idsVeiculos().contains(command.idTipoVeiculo()))
                         .filter(item -> RegraCadastroAgendamento.motivosNaoAplicacao(
-                                item, pessoa, destino, command.data(), command.horarioChegada()).isEmpty())
+                                item, pessoa, destino, command.data(), horarioChegada).isEmpty())
                         .filter(item -> !tipoCarro || consultas.buscarToleranciaSeparacao(
                                 command.idLista(), command.idTipoVeiculo()).isPresent())
                         .findFirst()
@@ -78,7 +81,7 @@ public class AgendamentoCommandCriarHandler {
                         .orElseThrow(() -> new EntidadeNaoEncontradoException(
                                 "A regra de cadastro não pertence à lista informada"));
         RegraCadastroAgendamento.validar(
-                regra, pessoa, destino, command.data(), command.horarioChegada(), command.idTipoVeiculo());
+                regra, pessoa, destino, command.data(), horarioChegada, command.idTipoVeiculo());
 
         var tolerancia = tipoCarro
                 ? consultas.buscarToleranciaSeparacao(command.idLista(), command.idTipoVeiculo())
@@ -94,7 +97,7 @@ public class AgendamentoCommandCriarHandler {
                 command.idDestino(),
                 destino.tempoViagem(),
                 tolerancia,
-                command.horarioChegada(),
+                horarioChegada,
                 pessoa.buscarNaResidencia(),
                 command.acompanhantes(),
                 java.util.Objects.requireNonNull(command.autorId(), "Autor é obrigatório"));

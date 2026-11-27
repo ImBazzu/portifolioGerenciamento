@@ -14,5 +14,17 @@ public record AgendamentoRequestDto(
         @NotNull LocalTime horarioChegada,
         boolean buscarNaResidencia,
         @Min(0) int acompanhantes,
-        UUID idVeiculo) {
+        UUID idVeiculo,
+        Boolean informarHorarioSaida) {
+
+    public AgendamentoRequestDto {
+        informarHorarioSaida = Boolean.TRUE.equals(informarHorarioSaida);
+    }
+
+    public AgendamentoRequestDto(
+            UUID idPessoa, UUID idLista, UUID idTipoVeiculo, UUID idDestino,
+            LocalTime horarioChegada, boolean buscarNaResidencia, int acompanhantes, UUID idVeiculo) {
+        this(idPessoa, idLista, idTipoVeiculo, idDestino, horarioChegada,
+                buscarNaResidencia, acompanhantes, idVeiculo, false);
+    }
 }

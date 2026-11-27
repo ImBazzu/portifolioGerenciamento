@@ -1,0 +1,50 @@
+<th:block xmlns:th="http://www.thymeleaf.org" th:fragment="configuracao">
+    <div class="custom-modal-backdrop">
+        <section class="custom-modal-card custom-modal-form bg-white rounded shadow-lg p-4"
+                 role="dialog" aria-modal="true" aria-labelledby="listasUsuarioTitulo">
+            <header class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                <h2 class="h5 fw-bold m-0" id="listasUsuarioTitulo">Listas visíveis no agendamento</h2>
+                <a class="btn-close" aria-label="Fechar" th:href="@{/usuarios}"
+                   th:attr="hx-get=${modalHtmx == true} ? @{/usuarios/listas-agendamento/fechar} : null" hx-target="#modal" hx-swap="innerHTML"></a>
+            </header>
+            <p th:if="${usuarioListasSelecionado != null}" class="text-muted">Configurando:
+                <strong th:text="${usuarioListasSelecionado.usuario().nome()}"></strong></p>
+            <div th:if="${erro != null}" class="alert alert-danger" th:text="${erro}"></div>
+            <form th:if="${usuarioListasSelecionado != null}" method="post"
+                  th:action="@{/usuarios/listas-agendamento/{id}(id=${idUsuarioLista})}">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" th:for="${'restrita-' + idUsuarioLista}">Visibilidade</label>
+                    <select class="form-select" th:id="${'restrita-' + idUsuarioLista}" name="restrita">
+                        <option value="false" th:selected="${!usuarioListasSelecionado.visibilidade().restrita()}">
+                            Todas as listas ativas
+                        </option>
+                        <option value="true" th:selected="${usuarioListasSelecionado.visibilidade().restrita()}">
+                            Somente as listas selecionadas
+                        </option>
+                    </select>
+                </div>
+                <fieldset class="mb-3">
+                    <legend class="form-label fw-semibold">Listas disponíveis</legend>
+                    <p class="form-text">No modo restrito, nenhuma lista marcada significa que nenhuma lista aparece no agendamento.</p>
+                    <div th:if="${#lists.isEmpty(usuarioListasSelecionado.visibilidade().listas())}" class="text-muted">
+                        Nenhuma lista ativa disponível.
+                    </div>
+                    <div th:each="lista : ${usuarioListasSelecionado.visibilidade().listas()}" class="form-check">
+                        <input class="form-check-input" type="checkbox" name="idsListas"
+                               th:id="${'lista-' + idUsuarioLista + '-' + lista.id()}" th:value="${lista.id()}"
+                               th:checked="${usuarioListasSelecionado.visibilidade().idsListas().contains(lista.id())}">
+                        <label class="form-check-label" th:for="${'lista-' + idUsuarioLista + '-' + lista.id()}"
+                               th:text="${lista.nome()}"></label>
+                    </div>
+                </fieldset>
+                <footer class="border-top pt-3 d-flex justify-content-end gap-2">
+                    <a class="btn btn-light border" th:href="@{/usuarios}"
+                       th:attr="hx-get=${modalHtmx == true} ? @{/usuarios/listas-agendamento/fechar} : null" hx-target="#modal" hx-swap="innerHTML">Cancelar</a>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-check-lg me-1"></i>Salvar configuração
+                    </button>
+                </footer>
+            </form>
+        </section>
+    </div>
+</th:block>

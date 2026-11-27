@@ -9,7 +9,8 @@ public record ListaDetalheApiDto(
         String descricao,
         String dataArquivado,
         List<RegraCadastro> regrasCadastro,
-        List<RegraSeparacao> regrasSeparacao) {
+        List<RegraSeparacao> regrasSeparacao,
+        String finalidadeEspecial) {
 
     public record RegraCadastro(
             UUID id,

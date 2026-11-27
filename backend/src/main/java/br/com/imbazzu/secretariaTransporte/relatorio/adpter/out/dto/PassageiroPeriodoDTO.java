@@ -9,11 +9,12 @@ public record PassageiroPeriodoDTO(
         LocalDate data, UUID idLista, String lista, UUID idCidade, String cidade,
         UUID idDestino, String destino, UUID idTipoVeiculo, String tipoVeiculo,
         LocalTime horarioChegada, long tempoViagemSegundos, int tempoViagemNanos, int acompanhantes,
-        UUID idVeiculo, LocalTime horarioSaida, Boolean horarioSaidaCalculado) {
+        UUID idVeiculo, LocalTime horarioSaida, Boolean horarioSaidaCalculado, boolean cancelado) {
 
     public PassageiroPeriodoDTO comHorarioSaida(LocalTime saida) {
         return new PassageiroPeriodoDTO(idPessoa, nome, cpf, telefone, especificacao, data, idLista, lista,
                 idCidade, cidade, idDestino, destino, idTipoVeiculo, tipoVeiculo, horarioChegada,
-                tempoViagemSegundos, tempoViagemNanos, acompanhantes, idVeiculo, saida, horarioSaidaCalculado);
+                tempoViagemSegundos, tempoViagemNanos, acompanhantes, idVeiculo, saida,
+                horarioSaidaCalculado, cancelado);
     }
 }

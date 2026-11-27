@@ -18,7 +18,9 @@ public interface VeiculoAgendaQueryRepository extends Repository<VeiculoAgendaJp
             SELECT v.id AS id, v.data AS data, v.idTipoVeiculo AS idTipoVeiculo,
                    v.nomeTipoVeiculo AS nomeTipoVeiculo, v.capacidade AS capacidade,
                    v.identificacao AS identificacao, v.horarioSaida AS horarioSaida,
-                   v.horarioSaidaCalculado AS horarioSaidaCalculado
+                   v.horarioSaidaCalculado AS horarioSaidaCalculado,
+                   v.saidaConfirmadaEm AS saidaConfirmadaEm,
+                   v.finalidadeAbertura AS finalidadeAbertura, v.idListaAbertura AS idListaAbertura
             FROM VeiculoAgendaJpa v
             WHERE v.id = :id
             """)
@@ -28,7 +30,9 @@ public interface VeiculoAgendaQueryRepository extends Repository<VeiculoAgendaJp
             SELECT v.id AS id, v.data AS data, v.idTipoVeiculo AS idTipoVeiculo,
                    v.nomeTipoVeiculo AS nomeTipoVeiculo, v.capacidade AS capacidade,
                    v.identificacao AS identificacao, v.horarioSaida AS horarioSaida,
-                   v.horarioSaidaCalculado AS horarioSaidaCalculado
+                   v.horarioSaidaCalculado AS horarioSaidaCalculado,
+                   v.saidaConfirmadaEm AS saidaConfirmadaEm,
+                   v.finalidadeAbertura AS finalidadeAbertura, v.idListaAbertura AS idListaAbertura
             FROM VeiculoAgendaJpa v
             WHERE v.data = :data
             ORDER BY v.id ASC

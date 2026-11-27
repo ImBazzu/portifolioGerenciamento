@@ -10,5 +10,12 @@ public record AgendamentoQueryVerificarVeiculos(
         UUID idLista,
         UUID idDestino,
         LocalTime horarioChegada,
-        int acompanhantes) {
+        int acompanhantes,
+        boolean informarHorarioSaida) {
+
+    public AgendamentoQueryVerificarVeiculos(
+            LocalDate data, UUID idPessoa, UUID idLista, UUID idDestino,
+            LocalTime horarioChegada, int acompanhantes) {
+        this(data, idPessoa, idLista, idDestino, horarioChegada, acompanhantes, false);
+    }
 }

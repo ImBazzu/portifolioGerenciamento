@@ -24,12 +24,18 @@ public class MontadorAgendaDia {
         var nomesPorTipo = opcoes.nomesTipoVeiculo();
 
         model.addAttribute("nomesTipoVeiculo", nomesPorTipo);
-        model.addAttribute("veiculosNaoCarro", agenda.veiculos().stream()
+        var veiculosNaoCarro = agenda.veiculos().stream()
                 .filter(v -> !TipoVeiculoUtil.ehCarro(v.nomeTipoVeiculo()))
-                .toList());
-        model.addAttribute("veiculosCarro", agenda.veiculos().stream()
+                .toList();
+        var veiculosCarro = agenda.veiculos().stream()
                 .filter(v -> TipoVeiculoUtil.ehCarro(v.nomeTipoVeiculo()))
-                .toList());
+                .toList();
+        model.addAttribute("veiculosNaoCarro", veiculosNaoCarro);
+        model.addAttribute("veiculosCarro", veiculosCarro);
+        model.addAttribute("veiculosNaoCarroAntes0530", veiculosNaoCarro.stream()
+                .filter(v -> "ANTES_0530".equals(v.faixaHorarioSaida())).toList());
+        model.addAttribute("veiculosCarroAntes0530", veiculosCarro.stream()
+                .filter(v -> "ANTES_0530".equals(v.faixaHorarioSaida())).toList());
         model.addAttribute("passageirosPendentesNaoCarro", agenda.passageirosPendentes().stream()
                 .filter(p -> !TipoVeiculoUtil.ehCarro(nomesPorTipo.get(p.idTipoVeiculo())))
                 .toList());

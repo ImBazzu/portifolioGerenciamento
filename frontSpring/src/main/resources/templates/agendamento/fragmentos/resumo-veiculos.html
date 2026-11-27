@@ -81,7 +81,16 @@
                         </div>
 
                         <!-- CARD VEÍCULOS NORMAIS (ÔNIBUS, VANS, ETC.) -->
-                        <div class="col-12 col-sm-6 col-md-4 col-xl-3" th:each="veiculo : ${veiculosNaoCarro}">
+                        <th:block th:each="veiculo, veiculoStat : ${veiculosNaoCarro}">
+                        <div class="col-12 py-2" th:if="${veiculo.faixaHorarioSaida() == 'DEPOIS_0530'
+                                and !#lists.isEmpty(veiculosNaoCarroAntes0530)
+                                and (veiculoStat.index == 0 or veiculosNaoCarro[veiculoStat.index - 1].faixaHorarioSaida() != 'DEPOIS_0530')}">
+                            <div class="d-flex align-items-center gap-3 text-primary fw-semibold">
+                                <span>Veículos a partir das 05:30</span>
+                                <hr class="flex-grow-1 border-primary border-2 opacity-50">
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-md-4 col-xl-3">
 
                             <th:block th:replace="~{
                                     agendamento/controlesVeiculo ::
@@ -89,7 +98,7 @@
                                 }"></th:block>
 
                             <div class="card shadow-sm h-100 rounded-4"
-                                 th:classappend="${motoristasPorVeiculo == null ? 'border-secondary' : (motoristasPorVeiculo.containsKey(veiculo.id()) ? 'border-success border-2' : 'border-warning border-2')}">
+                                 th:classappend="${(motoristasPorVeiculo == null ? 'border-secondary' : (motoristasPorVeiculo.containsKey(veiculo.id()) ? 'border-success border-2' : 'border-warning border-2')) + (veiculo.saidaConfirmadaEm() != null ? ' bg-success-subtle' : '')}">
                                 <div class="card-body d-flex flex-column justify-content-between p-4">
                                     <div>
                                         <div class="d-flex justify-content-between align-items-start mb-2">
@@ -97,7 +106,6 @@
                                             <span class="badge bg-light text-dark border"
                                                   th:text="${veiculo.identificacao() != null ? veiculo.identificacao() : 'S/ ID'}"></span>
                                         </div>
-
                                         <div class="mt-3">
                                             <div class="d-flex justify-content-between align-items-center mb-1">
                                                 <small class="text-muted">Ocupação:</small>
@@ -114,6 +122,25 @@
                                             <span>Saída:</span>
                                             <strong th:text="${veiculo.horarioSaida() != null ? veiculo.horarioSaida() : 'A definir'}"></strong>
                                         </div>
+                                        <span th:if="${veiculo.faixaHorarioSaida() == 'ANTES_0530'}"
+                                              class="badge text-bg-info mt-2">Antes das 05:30 · noturno</span>
+                                        <span th:if="${veiculo.faixaHorarioSaida() == 'DEPOIS_0530'}"
+                                              class="badge text-bg-light border mt-2">A partir das 05:30</span>
+                                        <form th:if="${veiculo.saidaConfirmadaEm() == null}" method="post" class="mt-2"
+                                              th:action="@{/agendamentos/veiculos/{id}/confirmar-saida(id=${veiculo.id()})}">
+                                            <input type="hidden" name="data" th:value="${data}">
+                                            <button class="btn btn-sm btn-success" type="submit">
+                                                <i class="bi bi-check2-circle me-1"></i>Confirmar saída
+                                            </button>
+                                        </form>
+                                        <form th:if="${veiculo.saidaConfirmadaEm() != null}" method="post" class="mt-2"
+                                              th:action="@{/agendamentos/veiculos/{id}/desfazer-confirmacao-saida(id=${veiculo.id()})}">
+                                            <input type="hidden" name="data" th:value="${data}">
+                                            <div class="text-success fw-bold mb-1">Saída confirmada
+                                                <span th:text="${#temporals.format(veiculo.saidaConfirmadaEm(), 'HH:mm')}"></span>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-success" type="submit">Desmarcar saída</button>
+                                        </form>
                                         <div class="mt-2 fw-semibold"
                                              th:text="${motoristasPorVeiculo == null ? 'Motorista indisponível' : (motoristasPorVeiculo.containsKey(veiculo.id()) ? 'Motorista: ' + motoristasPorVeiculo.get(veiculo.id()) : 'Sem motorista')}"></div>
                                     </div>
@@ -140,6 +167,7 @@
                                 </div>
                             </div>
                         </div>
+                        </th:block>
 
                     </div>
                 </section>

@@ -33,6 +33,9 @@ public class TipoListaJpa {
     @Column(name = "descricao", length = 249)
     private String descricao;
 
+    @Column(name = "finalidade_especial", length = 20)
+    private String finalidadeEspecial;
+
     @Column(name = "data_arquivado")
     private LocalDate dataArquivado;
 

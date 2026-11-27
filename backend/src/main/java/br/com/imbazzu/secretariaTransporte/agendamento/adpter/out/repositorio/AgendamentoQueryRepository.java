@@ -14,13 +14,14 @@ import org.springframework.data.repository.query.Param;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.entidadeJpa.AgendamentoJpa;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.AgendamentoProjecao;
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.AgendamentoCanceladoProjecao;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.CidadesCompativeisProjecao;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.DestinoPorCidadeProjecao;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.HistoricoViagemProjecao;
 
 public interface AgendamentoQueryRepository extends JpaRepository<AgendamentoJpa, UUID> {
 
-    boolean existsByDataAndIdPessoa(LocalDate data, UUID idPessoa);
+    boolean existsByDataAndIdPessoaAndCanceladoEmIsNull(LocalDate data, UUID idPessoa);
 
     @Query("""
             SELECT a.id AS id, a.data AS data, a.idPessoa AS idPessoa,
@@ -37,7 +38,7 @@ public interface AgendamentoQueryRepository extends JpaRepository<AgendamentoJpa
                    autor.id AS autorId, autor.nome AS autorNome
             FROM AgendamentoJpa a
             LEFT JOIN a.autor autor
-            WHERE a.id = :id
+            WHERE a.id = :id AND a.canceladoEm IS NULL
             """)
     Optional<AgendamentoProjecao> buscarProjecaoPorId(@Param("id") UUID id);
 
@@ -56,10 +57,24 @@ public interface AgendamentoQueryRepository extends JpaRepository<AgendamentoJpa
                    autor.id AS autorId, autor.nome AS autorNome
             FROM AgendamentoJpa a
             LEFT JOIN a.autor autor
-            WHERE a.data = :data
+            WHERE a.data = :data AND a.canceladoEm IS NULL
             ORDER BY a.horarioChegada ASC
             """)
     List<AgendamentoProjecao> listarProjecoesPorData(@Param("data") LocalDate data);
+
+    @Query("""
+            SELECT a.id AS id, a.data AS data, a.idPessoa AS idPessoa,
+                   a.idLista AS idLista, a.idTipoVeiculo AS idTipoVeiculo,
+                   a.idDestino AS idDestino, a.horarioChegada AS horarioChegada,
+                   a.buscarNaResidencia AS buscarNaResidencia,
+                   a.acompanhantes AS acompanhantes, autor.nome AS autorNome,
+                   a.canceladoEm AS canceladoEm, a.motivoCancelamento AS motivoCancelamento
+            FROM AgendamentoJpa a
+            LEFT JOIN a.autor autor
+            WHERE a.data = :data AND a.canceladoEm IS NOT NULL
+            ORDER BY a.canceladoEm DESC
+            """)
+    List<AgendamentoCanceladoProjecao> listarCanceladosPorData(@Param("data") LocalDate data);
 
         @Query("""
                 SELECT DISTINCT
@@ -67,7 +82,7 @@ public interface AgendamentoQueryRepository extends JpaRepository<AgendamentoJpa
                         a.idDestino AS destinoId
                 FROM AgendamentoJpa a
                 JOIN DestinoJpa d ON d.id = a.idDestino
-                WHERE a.data = :data""")
+                WHERE a.data = :data AND a.canceladoEm IS NULL""")
      List<DestinoPorCidadeProjecao> buscarDestinosPorCidadeId(@Param("data") LocalDate data);
 
     @Query("""
@@ -77,6 +92,7 @@ public interface AgendamentoQueryRepository extends JpaRepository<AgendamentoJpa
             JOIN DestinoJpa d1 ON d1.id = a1.idDestino
             JOIN DestinoJpa d2 ON d2.id = a2.idDestino
             WHERE a1.data < :data AND d1.cidadeId <> d2.cidadeId
+              AND a1.canceladoEm IS NULL AND a2.canceladoEm IS NULL
             """)
     List<CidadesCompativeisProjecao> buscarCidadesCompativeisAnteriores(@Param("data") LocalDate data);
 

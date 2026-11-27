@@ -11,6 +11,7 @@ import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.OpcoesAg
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.PassageiroDetalheView;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendaDiaResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoResponseDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoCanceladoResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.excecoes.PessoaNaoEncontradaException;
 import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
@@ -71,6 +72,25 @@ public class MontadorDetalhesPassageiros {
             detalhes.put(agendamento.id(), detalhe(pessoa, destinos.get(agendamento.idDestino()), agendamento.idDestino()));
         }
         return detalhes;
+    }
+
+    public Map<UUID, PassageiroDetalheView> montarCancelados(
+            List<AgendamentoCanceladoResponseDto> passageiros, OpcoesAgendamento opcoes) {
+        var destinos = opcoes.destinosPorId();
+        Map<UUID, PassageiroDetalheView> detalhes = new HashMap<>();
+        for (var agendamento : passageiros) {
+            var pessoa = buscarPessoa(agendamento.idPessoa());
+            detalhes.put(agendamento.id(), detalhe(pessoa, destinos.get(agendamento.idDestino()), agendamento.idDestino()));
+        }
+        return detalhes;
+    }
+
+    private PessoaResponseDto buscarPessoa(UUID idPessoa) {
+        try {
+            return pessoas.buscar(idPessoa);
+        } catch (PessoaNaoEncontradaException e) {
+            return pessoas.buscarArquivado(idPessoa);
+        }
     }
 
     private static PassageiroDetalheView detalhe(PessoaResponseDto pessoa, DestinoView destino, UUID idDestino) {

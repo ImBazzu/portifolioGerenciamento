@@ -4,21 +4,24 @@
                     <div class="modal fade" th:id="'excluirPassageiroCarroModal-' + ${passageiro.id()}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog">
                             <div class="modal-content border-0 shadow">
-                                <form method="post" th:action="@{/agendamentos/{id}/excluir(id=${passageiro.id()})}">
+                                <form method="post" th:action="@{/agendamentos/{id}/cancelar(id=${passageiro.id()})}">
                                     <input type="hidden" name="data" th:value="${data}">
                                     <input type="hidden" name="paginaCarros" value="true">
                                     <div class="modal-header bg-danger text-white">
-                                        <h2 class="modal-title fs-5">Excluir agendamento</h2>
+                                        <h2 class="modal-title fs-5">Cancelar viagem</h2>
                                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
                                     </div>
                                     <div class="modal-body">
-                                        Deseja excluir o agendamento pendente de
+                                        Deseja cancelar a viagem de
                                         <strong th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></strong>?
-                                        Esta ação não pode ser desfeita.
+                                        O registro será mantido no histórico.
+                                        <label class="form-label mt-3" th:for="'motivoCancelamento-' + ${passageiro.id()}">Motivo (opcional)</label>
+                                        <textarea class="form-control" name="motivo" maxlength="500" rows="2"
+                                                  th:id="'motivoCancelamento-' + ${passageiro.id()}"></textarea>
                                     </div>
                                     <div class="modal-footer bg-light">
                                         <button class="btn btn-secondary btn-sm" type="button" data-bs-dismiss="modal">Cancelar</button>
-                                        <button class="btn btn-danger btn-sm" type="submit">Excluir agendamento</button>
+                                        <button class="btn btn-danger btn-sm" type="submit">Cancelar viagem</button>
                                     </div>
                                 </form>
                             </div>

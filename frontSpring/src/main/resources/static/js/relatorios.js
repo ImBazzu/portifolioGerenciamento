@@ -17,7 +17,135 @@ class RelatorioManager {
             event.preventDefault();
             this.carregar();
         });
+        this.configurarEstudoListas();
         this.carregar();
+    }
+
+    configurarEstudoListas() {
+        const select = document.getElementById('relatorioListas');
+        const button = document.getElementById('carregarEstudoListas');
+        const status = document.getElementById('statusEstudoListas');
+        const opcoesUrl = document.getElementById('formPdfPassageiros').dataset.opcoesUrl;
+        fetch(opcoesUrl, { headers: { Accept: 'application/json' } })
+            .then(response => {
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return response.json();
+            })
+            .then(dados => {
+                dados.listas.forEach(lista => select.add(new Option(lista.nome, lista.id)));
+                status.textContent = 'Opções de listas carregadas.';
+            })
+            .catch(error => {
+                console.error('Erro ao carregar listas do estudo:', error);
+                status.textContent = 'Não foi possível carregar as listas.';
+            });
+        button.addEventListener('click', () => this.carregarEstudoListas());
+    }
+
+    async carregarEstudoListas() {
+        const inicio = document.getElementById('dataInicio').value;
+        const fim = document.getElementById('dataFim').value;
+        const status = document.getElementById('statusEstudoListas');
+        if (!inicio || !fim || inicio > fim) {
+            status.textContent = 'Informe um período válido nos filtros gerais.';
+            return;
+        }
+        status.textContent = 'Carregando estudo...';
+        const params = new URLSearchParams({ dataInicio: inicio, dataFim: fim });
+        try {
+            const response = await fetch(`${this.baseUrl}/passageiros-periodo?${params}`, {
+                headers: { Accept: 'application/json' }
+            });
+            if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            const viagens = await response.json();
+            const selecionadas = new Set(Array.from(
+                document.getElementById('relatorioListas').selectedOptions,
+                option => option.value));
+            const filtradas = viagens.filter(item => selecionadas.size === 0 || selecionadas.has(item.idLista));
+            this.renderizarEstudoListas(filtradas);
+            status.textContent = `${filtradas.length} agendamento(s) analisado(s) no período.`;
+        } catch (error) {
+            console.error('Erro ao carregar estudo das listas:', error);
+            status.textContent = 'Não foi possível carregar o estudo das listas.';
+        }
+    }
+
+    renderizarEstudoListas(viagens) {
+        const porLista = new Map();
+        const porData = new Map();
+        const porDestino = new Map();
+        viagens.forEach(item => {
+            const lista = porLista.get(item.idLista) || { nome: item.lista, viagens: 0, cancelamentos: 0 };
+            if (item.cancelado) lista.cancelamentos++;
+            else lista.viagens++;
+            porLista.set(item.idLista, lista);
+
+            if (item.cancelado) return;
+            const dia = porData.get(item.data) || { quantidade: 0, horarios: [] };
+            dia.quantidade++;
+            dia.horarios.push(`${item.horarioSaida || 'A definir'} → ${item.horarioChegada || 'A definir'} (${item.destino})`);
+            porData.set(item.data, dia);
+
+            const destinoKey = `${item.idCidade}:${item.idDestino}`;
+            const destino = porDestino.get(destinoKey) || {
+                cidade: item.cidade,
+                destino: item.destino,
+                quantidade: 0
+            };
+            destino.quantidade++;
+            porDestino.set(destinoKey, destino);
+        });
+
+        const tabelaListas = document.getElementById('tabelaEstudoListas');
+        tabelaListas.replaceChildren();
+        const linhasLista = Array.from(porLista.values()).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+        if (linhasLista.length === 0) {
+            this.adicionarLinhaVazia(tabelaListas, 3);
+        } else {
+            linhasLista.forEach(item => {
+                const row = tabelaListas.insertRow();
+                [item.nome, item.viagens, item.cancelamentos].forEach(value => row.insertCell().textContent = value);
+            });
+        }
+
+        const tabelaSemanal = document.getElementById('tabelaEstudoSemanal');
+        tabelaSemanal.replaceChildren();
+        const linhasData = Array.from(porData.entries()).sort(([a], [b]) => a.localeCompare(b));
+        if (linhasData.length === 0) {
+            this.adicionarLinhaVazia(tabelaSemanal, 4);
+        } else {
+            linhasData.forEach(([data, resumo]) => {
+                const diaSemana = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', timeZone: 'UTC' })
+                    .format(new Date(`${data}T12:00:00Z`));
+                const row = tabelaSemanal.insertRow();
+                [data, diaSemana, resumo.quantidade, resumo.horarios.sort().join('; ')]
+                    .forEach(value => row.insertCell().textContent = value);
+            });
+        }
+
+        const tabelaDestinos = document.getElementById('tabelaEstudoCidadesDestinos');
+        tabelaDestinos.replaceChildren();
+        const linhasDestino = Array.from(porDestino.values())
+            .sort((a, b) => a.cidade.localeCompare(b.cidade, 'pt-BR')
+                || a.destino.localeCompare(b.destino, 'pt-BR'));
+        if (linhasDestino.length === 0) {
+            this.adicionarLinhaVazia(tabelaDestinos, 3);
+            return;
+        }
+        linhasDestino.forEach(item => {
+            const row = tabelaDestinos.insertRow();
+            [item.cidade, item.destino, item.quantidade]
+                .forEach(value => row.insertCell().textContent = value);
+        });
+    }
+
+    adicionarLinhaVazia(tabela, colunas) {
+        const row = tabela.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = colunas;
+        cell.textContent = 'Sem dados para os filtros selecionados.';
     }
 
     trocarAba(button) {
@@ -77,7 +205,7 @@ class RelatorioManager {
 
     renderizarMetricas(tipo, dados) {
         const itens = {
-            agendamentos: [['Total de agendamentos', dados.totalAgendamentos], ['Realizados', null], ['Cancelados', null]],
+            agendamentos: [['Total de agendamentos', dados.totalAgendamentos], ['Cancelados', dados.agendamentosCancelados]],
             pessoas: [['Pessoas cadastradas', dados.totalPessoas], ['Ativas', dados.pessoasAtivas], ['Arquivadas', dados.pessoasArquivadas]],
             veiculos: [['Tipos cadastrados', dados.totalVeiculos], ['Tipos ativos', dados.veiculosAtivos], ['Tipos arquivados', dados.veiculosArquivados]],
             operacional: [['Agendamentos', dados.totalAgendamentos], ['Com veículo atribuído', dados.agendamentosAlocados], ['Sem veículo atribuído', dados.agendamentosSemVeiculo]]

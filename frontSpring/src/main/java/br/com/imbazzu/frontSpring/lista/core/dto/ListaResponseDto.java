@@ -13,6 +13,14 @@ public record ListaResponseDto(
         List<String> regras,
         List<String> cidades,
         List<ListaDetalheApiDto.RegraCadastro> regrasCadastroDados,
-        List<ListaDetalheApiDto.RegraSeparacao> regrasSeparacaoDados
+        List<ListaDetalheApiDto.RegraSeparacao> regrasSeparacaoDados,
+        String finalidadeEspecial
 ) {
+    public ListaResponseDto(UUID id, String nome, String descricao, long totalRegras, long totalCidades,
+            boolean arquivado, List<String> regras, List<String> cidades,
+            List<ListaDetalheApiDto.RegraCadastro> regrasCadastroDados,
+            List<ListaDetalheApiDto.RegraSeparacao> regrasSeparacaoDados) {
+        this(id, nome, descricao, totalRegras, totalCidades, arquivado, regras, cidades,
+                regrasCadastroDados, regrasSeparacaoDados, null);
+    }
 }

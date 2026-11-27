@@ -22,4 +22,24 @@ public interface VeiculoAgendaRepository extends JpaRepository<VeiculoAgendaJpa,
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE VeiculoAgendaJpa v SET v.idMotorista = :motorista WHERE v.id = :veiculo")
     int atribuirMotorista(@Param("veiculo") UUID veiculo, @Param("motorista") UUID motorista);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            UPDATE VeiculoAgendaJpa v
+            SET v.saidaConfirmadaEm = :confirmadaEm,
+                v.saidaConfirmadaPorId = :autorId
+            WHERE v.id = :veiculo AND v.saidaConfirmadaEm IS NULL
+            """)
+    int confirmarSaida(
+            @Param("veiculo") UUID veiculo,
+            @Param("confirmadaEm") java.time.LocalDateTime confirmadaEm,
+            @Param("autorId") UUID autorId);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            UPDATE VeiculoAgendaJpa v
+            SET v.saidaConfirmadaEm = NULL, v.saidaConfirmadaPorId = NULL
+            WHERE v.id = :veiculo AND v.saidaConfirmadaEm IS NOT NULL
+            """)
+    int desfazerConfirmacaoSaida(@Param("veiculo") UUID veiculo);
 }

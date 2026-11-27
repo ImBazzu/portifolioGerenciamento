@@ -35,6 +35,14 @@ public class PassageirosPeriodoController {
                 .body(consultarOpcoes());
     }
 
+    @GetMapping("/api/relatorios/passageiros-periodo")
+    public ResponseEntity<List<PassageiroPeriodo>> passageirosPeriodoApi(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
+        return ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore())
+                .body(consultar(dataInicio, dataFim));
+    }
+
     @GetMapping(value = "/relatorios/passageiros/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<byte[]> pdf(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,

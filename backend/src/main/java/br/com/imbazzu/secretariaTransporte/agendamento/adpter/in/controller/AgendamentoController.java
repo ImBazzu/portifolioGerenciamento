@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AgendaDiaResponseDto;
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AgendamentoCancelarRequestDto;
+import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AgendamentoCanceladoResponseDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AgendamentoRequestDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AgendamentoResponseDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.ResultadoSeparacaoResponseDto;
@@ -29,6 +31,8 @@ import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.PageResponseDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.abrirDia.AgendamentoCommandAbrirDia;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.abrirDia.AgendamentoCommandAbrirDiaHandler;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.cancelar.AgendamentoCommandCancelar;
+import br.com.imbazzu.secretariaTransporte.agendamento.application.command.cancelar.AgendamentoCommandCancelarHandler;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.criar.AgendamentoCommandCriar;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.criar.AgendamentoCommandCriarHandler;
 import br.com.imbazzu.secretariaTransporte.agendamento.application.command.model.ResultadoSeparacaoAutomatica;
@@ -70,6 +74,7 @@ public class AgendamentoController {
     private final AgendamentoQueryBuscarHandler buscarHandler;
 
     private final AgendamentoCommandRemoverHandler removerHandler;
+    private final AgendamentoCommandCancelarHandler cancelarHandler;
     private final AgendamentoQueryRepository queryRepository;
 
     @PostMapping("/dias/{data}/abrir")
@@ -88,7 +93,8 @@ public class AgendamentoController {
                 request.idLista(),
                 request.idDestino(),
                 request.horarioChegada(),
-                request.acompanhantes()));
+                request.acompanhantes(),
+                request.informarHorarioSaida()));
         var permitidos = resultado.veiculosPermitidos().stream()
                 .map(AgendamentoController::toResponse)
                 .toList();
@@ -111,7 +117,8 @@ public class AgendamentoController {
                 request.buscarNaResidencia(),
                 request.acompanhantes(),
                 request.idVeiculo(),
-                autorId));
+                autorId,
+                request.informarHorarioSaida()));
         return ResponseEntity.created(URI.create("/api/agendamentos/%s".formatted(id))).build();
     }
 
@@ -144,6 +151,18 @@ public class AgendamentoController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> remover(@PathVariable UUID id) {
         removerHandler.handler(new AgendamentoCommandRemover(id));
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/cancelar")
+    public ResponseEntity<Void> cancelar(
+            @PathVariable UUID id,
+            @RequestBody(required = false) @Valid AgendamentoCancelarRequestDto request,
+            @AuthenticationPrincipal UUID autorId) {
+        cancelarHandler.handler(new AgendamentoCommandCancelar(
+                id,
+                request == null ? null : request.motivo(),
+                autorId));
         return ResponseEntity.noContent().build();
     }
 
@@ -215,7 +234,21 @@ public class AgendamentoController {
         return new AgendaDiaResponseDto(
                 agenda.data(),
                 agenda.veiculos().stream().map(this::toResponse).toList(),
-                agenda.passageirosPendentes().stream().map(this::toResponse).toList());
+                agenda.passageirosPendentes().stream().map(this::toResponse).toList(),
+                agenda.passageirosCancelados().stream().map(passageiro -> new AgendamentoCanceladoResponseDto(
+                        passageiro.id(),
+                        passageiro.data(),
+                        passageiro.idPessoa(),
+                        passageiro.idLista(),
+                        passageiro.idTipoVeiculo(),
+                        passageiro.idDestino(),
+                        passageiro.horarioChegada(),
+                        passageiro.buscarNaResidencia(),
+                        passageiro.acompanhantes(),
+                        passageiro.autorNome(),
+                        passageiro.canceladoEm(),
+                        passageiro.motivoCancelamento()))
+                        .toList());
     }
 
     private VeiculoAbertoResponseDto toResponse(VeiculoAgenda veiculo) {
@@ -227,6 +260,9 @@ public class AgendamentoController {
                 veiculo.capacidade(),
                 veiculo.identificacao(),
                 veiculo.horarioSaida(),
+                veiculo.saidaConfirmadaEm(),
+                veiculo.finalidadeAbertura(),
+                veiculo.idListaAbertura(),
                 veiculo.assentosOcupados(),
                 veiculo.passageiros().stream().map(this::toResponse).toList());
     }

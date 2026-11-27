@@ -21,16 +21,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -47,6 +50,7 @@ import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificarVeiculosRequestD
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoAtualizarRequestDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoResponseDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoCanceladoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.porta.in.HistoricoViagemApplicationPorta;
 import br.com.imbazzu.frontSpring.agendamento.adpter.out.api.AgendamentoApi;
 import br.com.imbazzu.frontSpring.agendamento.adpter.out.pdf.AgendamentoPdfService;
@@ -65,7 +69,9 @@ import br.com.imbazzu.frontSpring.localidade.core.dto.CidadeResponseDto;
 import br.com.imbazzu.frontSpring.localidade.core.dto.DestinoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
+import br.com.imbazzu.frontSpring.veiculo.core.FinalidadeAberturaVeiculo;
 import br.com.imbazzu.frontSpring.motorista.MotoristaApi;
+import br.com.imbazzu.frontSpring.usuario.UsuarioApi;
 import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.parser.PdfTextExtractor;
 
@@ -102,6 +108,15 @@ class PessoaFormularioWebTest {
 
     @MockitoBean
     private VeiculoApplicationPorta tiposVeiculo;
+
+    @MockitoBean
+    private UsuarioApi usuarios;
+
+    @BeforeEach
+    void configurarVisibilidadePadraoDeListas() {
+        when(usuarios.minhasListasAgendamento())
+                .thenReturn(new UsuarioApi.VisibilidadeListas(false, List.of(), List.of()));
+    }
 
     @Test
     void pdfPassageirosPaginaSemPerderPassageiros() throws Exception {
@@ -155,6 +170,7 @@ class PessoaFormularioWebTest {
                 ESPECIFICACAO_ID, "Padrão", "Alta", PRIORIDADE_ID, 2, false, 0, false,
                 null, "", "123", "456"));
         when(listas.listarAtivas("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(listas.buscarAtiva(listaId)).thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
         when(listas.buscarArquivada(listaId)).thenReturn(new ListaResponseDto(
                 listaId, "Lista histórica", "", 0, 0, true, List.of(), List.of(), List.of(), List.of()));
         when(tiposVeiculo.listar("", 0)).thenReturn(new ResultadoPaginado<>(
@@ -165,11 +181,22 @@ class PessoaFormularioWebTest {
         when(localidades.listarDestinosArquivados(cidadeId, "", 0)).thenReturn(new ResultadoPaginado<>(
                 List.of(new DestinoResponseDto(destinoId, "Hospital Central", 1)), 0, 10, 1, 1));
 
+        var cancelado = new AgendamentoCanceladoResponseDto(
+                UUID.randomUUID(), data, idExcluido, listaId, tipoId, destinoId, LocalTime.of(11, 0),
+                false, 0, "Operador", LocalDateTime.of(2026, 11, 22, 18, 30), "Passageiro solicitou");
+        when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(
+                data, List.of(veiculo), List.of(pendente, excluido), List.of(cancelado)));
         mvc.perform(get("/agendamentos").param("data", data.toString()))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("data-tipo-nome=\"Van\"")))
                 .andExpect(content().string(containsString("data-cidade=\"Salvador\"")))
                 .andExpect(content().string(containsString("data-especificacao=\"Gestante\"")))
+                .andExpect(content().string(containsString("Mostrar buscas na residência")))
+                .andExpect(content().string(containsString("data-residencia-item=\"true\"")))
+                .andExpect(content().string(containsString("Buscar na residência:")))
+                .andExpect(content().string(containsString("Rua Principal 12")))
+                .andExpect(content().string(containsString("Passageiro cancelou a viagem")))
+                .andExpect(content().string(containsString("Excluir passageiro")))
                 .andExpect(content().string(containsString("action=\"/agendamentos/pdf/passageiros\"")));
 
         var geracao = mvc.perform(post("/agendamentos/pdf/passageiros").param("data", data.toString())
@@ -351,6 +378,7 @@ class PessoaFormularioWebTest {
                 List.of(new TipoVeiculoResponseDto(idTipo, "Carro", 4)), 0, 10, 1, 1));
         when(localidades.listarCidades("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
         when(localidades.listarCidadesArquivadas("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(listas.buscarAtiva(passageiro.idLista())).thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
         when(listas.buscarArquivada(passageiro.idLista())).thenReturn(new ListaResponseDto(
                 passageiro.idLista(), "Lista antiga", "", 0, 0, true, List.of(), List.of(), List.of(), List.of()));
 
@@ -580,8 +608,15 @@ class PessoaFormularioWebTest {
         var data = LocalDate.of(2026, 11, 23);
         var idTipo = UUID.randomUUID();
         var idVeiculo = UUID.randomUUID();
+        var idAgendamento = UUID.randomUUID();
+        var passageiro = new AgendamentoResponseDto(idAgendamento, data, PESSOA_ID, UUID.randomUUID(),
+                UUID.randomUUID(), idTipo, UUID.randomUUID(), LocalTime.of(9, 0), LocalTime.of(8, 0),
+                false, 0, idVeiculo, List.of());
+        when(pessoas.buscar(PESSOA_ID)).thenReturn(new PessoaResponseDto(PESSOA_ID, "Ana Souza", "",
+                ESPECIFICACAO_ID, "Padrão", "Alta", PRIORIDADE_ID, 2, true, 2, false, null,
+                "", "52998224725", "11987654321"));
         var veiculo = new VeiculoAbertoResponseDto(idVeiculo, data, idTipo, "Carro", 4,
-                "Carro 01", null, 0, List.of());
+                "Carro 01", null, 1, List.of(passageiro));
         var semIdentificacao = new VeiculoAbertoResponseDto(UUID.randomUUID(), data, idTipo, "Carro", 4,
                 null, null, 0, List.of());
         when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(veiculo, semIdentificacao), List.of()));
@@ -604,10 +639,25 @@ class PessoaFormularioWebTest {
                 .andExpect(content().string(not(containsString("id=\"identificacaoCarro\""))))
                 .andExpect(content().string(not(containsString("id=\"abrirCarroModal\""))))
                 .andExpect(content().string(containsString("action=\"/agendamentos/carros/veiculos\"")))
+                .andExpect(content().string(containsString("Emergência do postão")))
+                .andExpect(content().string(containsString("Alta hospitalar")))
                 .andExpect(content().string(containsString("name=\"idTipoVeiculo\"")))
                 .andExpect(content().string(containsString("value=\"" + idTipo + "\"")))
-                .andExpect(content().string(containsString("/motoristas/selecionar/" + idVeiculo)));
+                .andExpect(content().string(containsString("/motoristas/selecionar/" + idVeiculo)))
+                .andExpect(content().string(containsString("aria-label=\"Opções do carro\"")))
+                .andExpect(content().string(containsString("data-bs-toggle=\"dropdown\"")))
+                .andExpect(content().string(containsString("dropdown-menu dropdown-menu-end")))
+                .andExpect(content().string(containsString("/agendamentos/pdf/veiculos/" + idVeiculo)))
+                .andExpect(content().string(containsString("/agendamentos/veiculos/" + idVeiculo + "/confirmar-saida")))
+                .andExpect(content().string(containsString("data-bs-target=\"#excluirVeiculoModal-" + idVeiculo + "\"")))
+                .andExpect(content().string(containsString("data-bs-target=\"#atribuirPassageiroCarroModal-" + idVeiculo + "\"")))
+                .andExpect(content().string(containsString("data-bs-target=\"#editarAgendamentoModal-" + idAgendamento + "\"")))
+                .andExpect(content().string(not(containsString("Retirar este passageiro do carro?"))))
+                .andExpect(content().string(not(containsString(">Retirar</button>"))));
 
+        when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(
+                new VeiculoAbertoResponseDto(idVeiculo, data, idTipo, "Carro", 4,
+                        "Carro 01", null, 0, List.of()), semIdentificacao), List.of()));
         when(motoristas.atribuicoes(data)).thenReturn(List.of(
                 new MotoristaApi.Atribuicao(idVeiculo, UUID.randomUUID(), "Motorista Ana")));
         mvc.perform(get("/agendamentos/carros").param("data", data.toString()))
@@ -622,6 +672,139 @@ class PessoaFormularioWebTest {
                 .andExpect(content().string(containsString("data-abrir-ao-carregar=\"true\"")))
                 .andExpect(content().string(containsString("name=\"veiculoOrigem\" value=\"" + idVeiculo + "\"")))
                 .andExpect(content().string(containsString("Buscar histórico do passageiro")));
+
+        var idListaEmergencia = UUID.randomUUID();
+        when(listas.listarAtivas("", 0)).thenReturn(new ResultadoPaginado<>(List.of(
+                new ListaResponseDto(idListaEmergencia, "Emergência", "", 0, 0,
+                        false, List.of(), List.of(), List.of(), List.of())), 0, 10, 1, 1));
+        when(listas.buscarAtiva(idListaEmergencia)).thenReturn(new ListaResponseDto(
+                idListaEmergencia, "Emergência", "", 0, 0, false, List.of(), List.of(), List.of(), List.of()));
+        mvc.perform(get("/agendamentos").param("data", data.toString())
+                        .param("novoPassageiro", "true").param("idLista", idListaEmergencia.toString())
+                        .param("horarioSaidaVeiculo", "07:30").param("informarHorarioSaida", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(matchesPattern("(?s).*<option value=\"" + idListaEmergencia
+                        + "\"\\s+data-list-name=\"[^\"]*\" selected=\"selected\">.*")))
+                .andExpect(content().string(containsString("id=\"informarHorarioSaidaCheckbox\"")))
+                .andExpect(content().string(containsString("Informar o horário de saída do veículo")));
+    }
+
+    @Test
+    void abreCarroEspecialInformandoListaEHorario() throws Exception {
+        var data = LocalDate.of(2026, 11, 23);
+        var tipo = UUID.randomUUID();
+        var lista = UUID.randomUUID();
+        var id = UUID.randomUUID();
+        when(tiposVeiculo.buscar(tipo)).thenReturn(new TipoVeiculoResponseDto(tipo, "Carro", 4));
+        when(agendamentos.abrirVeiculo(eq(data), any())).thenReturn(
+                new VeiculoAbertoResponseDto(id, data, tipo, "Carro", 4, null,
+                        LocalTime.of(20, 0), 0, List.of(), null, FinalidadeAberturaVeiculo.ALTA, lista));
+        for (var finalidade : List.of(FinalidadeAberturaVeiculo.ALTA, FinalidadeAberturaVeiculo.EMERGENCIA)) {
+            mvc.perform(post("/agendamentos/carros/veiculos").param("data", data.toString())
+                            .param("idTipoVeiculo", tipo.toString()).param("finalidadeAbertura", finalidade.name())
+                            .param("idListaAbertura", lista.toString()).param("horarioSaida", "20:00"))
+                    .andExpect(redirectedUrl("/agendamentos/carros?data=" + data))
+                    .andExpect(flash().attribute("veiculoParaInsercao", id));
+            verify(agendamentos).abrirVeiculo(data,
+                    new AbrirVeiculoRequestDto(tipo, null, LocalTime.of(20, 0), finalidade, lista));
+        }
+    }
+
+    @Test
+    @WithMockUser(roles = {"AGENDAMENTO", "MOTORISTA"})
+    void carroEspecialEncaminhaListaEHorarioParaCadastro() throws Exception {
+        var data = LocalDate.of(2026, 11, 23);
+        var tipo = UUID.randomUUID();
+        var lista = UUID.randomUUID();
+        var id = UUID.randomUUID();
+        var listaDto = new ListaResponseDto(lista, "Atendimento", "", 0, 0,
+                false, List.of(), List.of(), List.of(), List.of(), "ALTA");
+        var veiculo = new VeiculoAbertoResponseDto(id, data, tipo, "Carro", 4, null,
+                LocalTime.of(20, 0), 0, List.of(), null, FinalidadeAberturaVeiculo.ALTA, lista);
+        when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(veiculo), List.of()));
+        when(listas.listarAtivas("", 0)).thenReturn(new ResultadoPaginado<>(List.of(listaDto), 0, 10, 1, 1));
+        when(listas.buscarAtiva(lista)).thenReturn(listaDto);
+        when(tiposVeiculo.listar("", 0)).thenReturn(new ResultadoPaginado<>(
+                List.of(new TipoVeiculoResponseDto(tipo, "Carro", 4)), 0, 10, 1, 1));
+        when(localidades.listarCidades("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+
+        mvc.perform(get("/agendamentos/carros").param("data", data.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("idLista=" + lista)))
+                .andExpect(content().string(containsString("horarioSaidaVeiculo=20:00")))
+                .andExpect(content().string(containsString("informarHorarioSaida=true")));
+        mvc.perform(get("/agendamentos").param("data", data.toString())
+                        .param("novoPassageiro", "true").param("veiculoOrigem", id.toString())
+                        .param("origemCarros", "true").param("idLista", lista.toString())
+                        .param("horarioSaidaVeiculo", "20:00").param("informarHorarioSaida", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("data-origem-especial=\"true\"")))
+                .andExpect(content().string(containsString("value=\"20:00\"")))
+                .andExpect(content().string(matchesPattern("(?s).*<option value=\"" + lista
+                        + "\"\\s+data-list-name=\"Atendimento\" selected=\"selected\">.*")));
+    }
+
+    @Test
+    @WithMockUser(roles = {"AGENDAMENTO", "MOTORISTA"})
+    void listasEspeciaisNaoAparecemNoAgendamentoNormal() throws Exception {
+        var data = LocalDate.of(2026, 11, 23);
+        var alta = new ListaResponseDto(UUID.randomUUID(), "Alta", "", 0, 0,
+                false, List.of(), List.of(), List.of(), List.of(), "ALTA");
+        var emergencia = new ListaResponseDto(UUID.randomUUID(), "Emergência", "", 0, 0,
+                false, List.of(), List.of(), List.of(), List.of(), "EMERGENCIA");
+        var normal = new ListaResponseDto(UUID.randomUUID(), "Consultas", "", 0, 0,
+                false, List.of(), List.of(), List.of(), List.of());
+        when(listas.listarAtivas("", 0)).thenReturn(new ResultadoPaginado<>(
+                List.of(alta, emergencia, normal), 0, 10, 3, 1));
+        for (var lista : List.of(alta, emergencia, normal)) {
+            when(listas.buscarAtiva(lista.id())).thenReturn(lista);
+        }
+        when(localidades.listarCidades("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(tiposVeiculo.listar("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(), List.of()));
+
+        mvc.perform(get("/agendamentos").param("data", data.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("data-list-name=\"Consultas\"")))
+                .andExpect(content().string(not(containsString("data-list-name=\"Alta\""))))
+                .andExpect(content().string(not(containsString("data-list-name=\"Emergência\""))));
+        mvc.perform(get("/agendamentos/carros").param("data", data.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("data-lista-finalidade=\"ALTA\"")))
+                .andExpect(content().string(containsString("data-lista-finalidade=\"EMERGENCIA\"")))
+                .andExpect(content().string(not(containsString("Lista do passageiro"))))
+                .andExpect(content().string(not(containsString("Mostrar buscas na residência"))));
+    }
+
+    @Test
+    void confirmaEPermiteDesmarcarSaidaNasDuasPaginas() throws Exception {
+        var data = LocalDate.of(2026, 11, 23);
+        var carro = UUID.randomUUID();
+        var van = UUID.randomUUID();
+        var idCarro = UUID.randomUUID();
+        var idVan = UUID.randomUUID();
+        var confirmada = LocalDateTime.of(2026, 11, 23, 8, 15);
+        when(listas.listarAtivas("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(localidades.listarCidades("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(tiposVeiculo.listar("", 0)).thenReturn(new ResultadoPaginado<>(
+                List.of(new TipoVeiculoResponseDto(carro, "Carro", 4), new TipoVeiculoResponseDto(van, "Van", 8)),
+                0, 10, 2, 1));
+        when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(
+                new VeiculoAbertoResponseDto(idCarro, data, carro, "Carro", 4, null,
+                        LocalTime.of(8, 0), 0, List.of(), confirmada),
+                new VeiculoAbertoResponseDto(idVan, data, van, "Van", 8, null,
+                        LocalTime.of(8, 0), 0, List.of(), confirmada)), List.of()));
+        for (String pagina : List.of("/agendamentos/carros", "/agendamentos")) {
+            mvc.perform(get(pagina).param("data", data.toString()))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("bg-success-subtle")))
+                    .andExpect(content().string(containsString("Saída confirmada")))
+                    .andExpect(content().string(containsString("Desmarcar saída")));
+        }
+        mvc.perform(post("/agendamentos/veiculos/{id}/desfazer-confirmacao-saida", idCarro)
+                        .param("data", data.toString()).param("paginaCarros", "true"))
+                .andExpect(redirectedUrl("/agendamentos/carros?data=" + data));
+        verify(agendamentos).desfazerConfirmacaoSaida(idCarro);
     }
 
     @Test
@@ -631,8 +814,10 @@ class PessoaFormularioWebTest {
         var tipo = UUID.randomUUID();
         var primeiro = UUID.randomUUID();
         var segundo = UUID.randomUUID();
-        var van1 = new VeiculoAbertoResponseDto(primeiro, data, tipo, "Van", 8, "VAN-01", null, 0, List.of());
-        var van2 = new VeiculoAbertoResponseDto(segundo, data, tipo, "Van", 8, "VAN-02", null, 0, List.of());
+        var van1 = new VeiculoAbertoResponseDto(
+                primeiro, data, tipo, "Van", 8, "VAN-01", LocalTime.of(20, 0), 0, List.of());
+        var van2 = new VeiculoAbertoResponseDto(
+                segundo, data, tipo, "Van", 8, "VAN-02", LocalTime.of(6, 0), 0, List.of());
         when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(van1, van2), List.of()));
         when(listas.listarAtivas("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
         when(tiposVeiculo.listar("", 0)).thenReturn(new ResultadoPaginado<>(
@@ -646,6 +831,8 @@ class PessoaFormularioWebTest {
                 .andExpect(content().string(containsString("Sem motorista")))
                 .andExpect(content().string(containsString("border-warning border-2")))
                 .andExpect(content().string(containsString("border-success border-2")))
+                .andExpect(content().string(containsString("Veículos a partir das 05:30")))
+                .andExpect(content().string(containsString("Antes das 05:30 · noturno")))
                 .andExpect(content().string(containsString("/motoristas/selecionar/" + segundo)));
         when(motoristas.atribuicoes(data)).thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
         mvc.perform(get("/agendamentos").param("data", data.toString()))

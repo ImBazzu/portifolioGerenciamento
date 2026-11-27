@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AbrirVeiculoRequestDto;
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.in.controller.dto.AgendamentoAtualizarRequestDto;
@@ -25,6 +26,8 @@ import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.Agendament
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.CompatibilidadeVeiculoAgendamento;
 import br.com.imbazzu.secretariaTransporte.veiculo.application.command.abrirVeiculo.AgendamentoCommandAbrirVeiculo;
 import br.com.imbazzu.secretariaTransporte.veiculo.application.command.abrirVeiculo.AgendamentoCommandAbrirVeiculoHandler;
+import br.com.imbazzu.secretariaTransporte.veiculo.application.command.confirmarSaida.AgendamentoCommandConfirmarSaida;
+import br.com.imbazzu.secretariaTransporte.veiculo.application.command.confirmarSaida.AgendamentoCommandConfirmarSaidaHandler;
 import br.com.imbazzu.secretariaTransporte.veiculo.application.command.atribuirVeiculo.AgendamentoCommandAtribuirVeiculo;
 import br.com.imbazzu.secretariaTransporte.veiculo.application.command.atribuirVeiculo.AgendamentoCommandAtribuirVeiculoHandler;
 import br.com.imbazzu.secretariaTransporte.veiculo.application.command.atualizar.AgendamentoCommandAtualizar;
@@ -47,6 +50,7 @@ import lombok.RequiredArgsConstructor;
 public class VeiculoController {
 
     private final AgendamentoCommandAbrirVeiculoHandler abrirVeiculoHandler;
+    private final AgendamentoCommandConfirmarSaidaHandler confirmarSaidaHandler;
     private final AgendamentoCommandAtualizarVeiculoHandler atualizarVeiculoHandler;
     private final AgendamentoCommandRemoverVeiculoAbertoHandler removerVeiculoAbertoHandler;
     private final AgendamentoCommandAtualizarHandler atualizarHandler;
@@ -66,7 +70,8 @@ public class VeiculoController {
             @PathVariable LocalDate data,
             @RequestBody @Valid AbrirVeiculoRequestDto request) {
         var veiculo = abrirVeiculoHandler.handler(new AgendamentoCommandAbrirVeiculo(
-                data, request.idTipoVeiculo(), request.identificacao(), request.horarioSaida()));
+                data, request.idTipoVeiculo(), request.identificacao(), request.horarioSaida(),
+                request.finalidadeAbertura(), request.idListaAbertura()));
         return ResponseEntity.created(URI.create("/api/agendamentos/dias/%s/veiculos/%s"
                 .formatted(data, veiculo.id()))).body(toResponse(veiculo, List.of()));
     }
@@ -88,6 +93,20 @@ public class VeiculoController {
         var veiculo = atualizarVeiculoHandler.handler(new AgendamentoCommandAtualizarVeiculo(
                 id, request.identificacao(), request.horarioSaida()));
         return ResponseEntity.ok(toResponse(veiculo, consultas.listarAgendamentos(veiculo.data())));
+    }
+
+    @PostMapping("/veiculos/{id}/confirmar-saida")
+    public ResponseEntity<Void> confirmarSaida(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UUID autorId) {
+        confirmarSaidaHandler.handler(new AgendamentoCommandConfirmarSaida(id, autorId));
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/veiculos/{id}/confirmar-saida")
+    public ResponseEntity<Void> desfazerConfirmacaoSaida(@PathVariable UUID id) {
+        confirmarSaidaHandler.desfazer(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}")
@@ -131,6 +150,9 @@ public class VeiculoController {
                 veiculo.capacidade(),
                 veiculo.identificacao(),
                 CompatibilidadeVeiculoAgendamento.horarioSaidaDoVeiculo(veiculo, passageiros),
+                veiculo.saidaConfirmadaEm(),
+                veiculo.finalidadeAbertura(),
+                veiculo.idListaAbertura(),
                 passageiros.stream().mapToInt(Agendamento::quantidadePessoas).sum(),
                 passageiros.stream().map(this::toResponse).toList());
     }

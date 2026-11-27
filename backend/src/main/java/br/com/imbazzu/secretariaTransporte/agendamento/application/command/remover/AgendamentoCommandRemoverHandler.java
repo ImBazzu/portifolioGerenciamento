@@ -5,7 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.AgendamentoCommandPorta;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.AgendamentoQueryPorta;
-import br.com.imbazzu.secretariaTransporte.agendamento.core.service.AgendamentoValidacao;
+import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.EntidadeNaoEncontradoException;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.OperacaoNaoPermitidaException;
 import lombok.RequiredArgsConstructor;
 
@@ -18,8 +18,13 @@ public class AgendamentoCommandRemoverHandler {
 
     @Transactional
     public void handler(AgendamentoCommandRemover command) {
-        var agendamento = AgendamentoValidacao.buscarAgendamento(consultas, command.id());
-        if (agendamento.getIdVeiculoAberto() != null) {
+        var agendamento = consultas.buscarDadosRemocao(command.id())
+                .orElseThrow(() -> new EntidadeNaoEncontradoException(
+                        "Agendamento não encontrado: " + command.id()));
+        if (!agendamento.cancelado()) {
+            throw new OperacaoNaoPermitidaException("Cancele a viagem antes de excluir o agendamento");
+        }
+        if (agendamento.idVeiculoAberto() != null) {
             throw new OperacaoNaoPermitidaException(
                     "Remova o passageiro do veículo antes de excluir o agendamento");
         }

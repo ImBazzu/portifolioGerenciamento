@@ -13,7 +13,8 @@ public record TipoListaResponseDto(
         String descricao,
         LocalDate dataArquivado,
         List<RegraCadastroResponseDto> regrasCadastro,
-        List<RegraSeparacaoResponseDto> regrasSeparacao) {
+        List<RegraSeparacaoResponseDto> regrasSeparacao,
+        String finalidadeEspecial) {
 
     public record RegraCadastroResponseDto(
             UUID id,

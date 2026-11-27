@@ -2,15 +2,27 @@
                 <!-- SEÇÃO DE CARROS ABERTOS E ATRIBUÍDOS -->
                 <section>
                     <div th:if="${erroMotoristas != null}" class="alert alert-danger" th:text="${'Não foi possível carregar motoristas: ' + erroMotoristas}"></div>
-                    <h2 class="h5 mb-3 fw-bold text-dark">Carros e passageiros atribuídos</h2>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <h2 class="h5 mb-0 fw-bold text-dark">Carros e passageiros atribuídos</h2>
+                    </div>
                     <div th:if="${#lists.isEmpty(veiculosCarro)}" class="alert alert-info shadow-sm">
                         Nenhum carro físico foi aberto para esta data.
                     </div>
                     <div class="row g-3">
-                        <div class="col-12 col-xl-6" th:each="veiculo : ${veiculosCarro}">
+                        <th:block th:each="veiculo, veiculoStat : ${veiculosCarro}">
+                        <div class="col-12 py-2" th:if="${veiculo.faixaHorarioSaida() == 'DEPOIS_0530'
+                                and !#lists.isEmpty(veiculosCarroAntes0530)
+                                and (veiculoStat.index == 0 or veiculosCarro[veiculoStat.index - 1].faixaHorarioSaida() != 'DEPOIS_0530')}">
+                            <div class="d-flex align-items-center gap-3 text-primary fw-semibold">
+                                <span>Veículos a partir das 05:30</span>
+                                <hr class="flex-grow-1 border-primary border-2 opacity-50">
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
                             <article class="card border shadow h-100 rounded-4"
-                                     th:classappend="${motoristasPorVeiculo == null ? 'border-secondary' : (motoristasPorVeiculo.containsKey(veiculo.id()) ? 'border-success border-2' : 'border-warning border-2')}">
-                                <div class="card-header bg-primary-subtle d-flex justify-content-between align-items-start py-3 border-bottom border-primary">
+                                     th:classappend="${(motoristasPorVeiculo == null ? 'border-secondary' : (motoristasPorVeiculo.containsKey(veiculo.id()) ? 'border-success border-2' : 'border-warning border-2')) + (veiculo.saidaConfirmadaEm() != null ? ' bg-success-subtle' : '')}">
+                                <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-start py-3 border-bottom border-primary"
+                                     th:classappend="${veiculo.saidaConfirmadaEm() != null ? 'bg-success-subtle' : 'bg-primary-subtle'}">
                                     <div>
                                         <h3 class="h6 mb-1 fw-bold text-primary" th:text="${veiculo.nomeTipoVeiculo()}"></h3>
                                         <div class="small text-muted">
@@ -21,47 +33,96 @@
                                             <span th:text="${veiculo.assentosOcupados() + ' / ' + veiculo.capacidade() + ' lugares'}"></span>
                                             <span> · </span>
                                             <span th:text="${veiculo.horarioSaida() == null ? 'Saída a definir' : 'Saída ' + veiculo.horarioSaida()}"></span>
+                                            <span th:if="${veiculo.faixaHorarioSaida() == 'ANTES_0530'}"
+                                                  class="badge text-bg-info ms-1">Antes das 05:30 · noturno</span>
+                                            <span th:if="${veiculo.faixaHorarioSaida() == 'DEPOIS_0530'}"
+                                                  class="badge text-bg-light border ms-1">A partir das 05:30</span>
+                                            <span th:if="${veiculo.finalidadeAbertura().name() == 'EMERGENCIA'}"
+                                                  class="badge text-bg-danger ms-1">Emergência</span>
+                                            <span th:if="${veiculo.finalidadeAbertura().name() == 'ALTA'}"
+                                                  class="badge text-bg-warning ms-1">Alta hospitalar</span>
                                         </div>
                                         <div class="fw-semibold mt-2"
                                              th:text="${motoristasPorVeiculo == null ? 'Motorista indisponível' : (motoristasPorVeiculo.containsKey(veiculo.id()) ? 'Motorista: ' + motoristasPorVeiculo.get(veiculo.id()) : 'Sem motorista')}"></div>
-                                    </div>
-                                    <div class="d-flex flex-column align-items-end gap-2">
-                                        <div class="d-flex gap-2">
-                                            <a th:if="${podeGerenciarMotoristas}" class="btn btn-sm btn-outline-dark"
-                                               th:href="@{/motoristas/selecionar/{id}(id=${veiculo.id()},data=${data},carros=true)}">Motorista</a>
-                                            <button class="btn btn-sm btn-outline-primary" type="button"
-                                                    data-bs-toggle="modal"
-                                                    th:attr="data-bs-target='#atribuirPassageiroCarroModal-' + ${veiculo.id()}">
-                                                <i class="bi bi-person-plus me-1"></i>Inserir
-                                            </button>
-                                            <a class="btn btn-sm btn-outline-secondary"
-                                               th:href="@{/agendamentos/pdf/veiculos/{id}(id=${veiculo.id()}, data=${data})}"
-                                               target="_blank">
-                                                <i class="bi bi-file-earmark-pdf me-1"></i>PDF
-                                            </a>
+                                        <div th:if="${veiculo.saidaConfirmadaEm() != null}" class="text-success fw-bold mt-2">
+                                            Saída confirmada
+                                            <span th:text="${#temporals.format(veiculo.saidaConfirmadaEm(), 'HH:mm')}"></span>
                                         </div>
-                                        <button class="btn btn-sm btn-outline-danger" type="button"
+                                    </div>
+                                    <div class="d-flex align-items-start gap-2 flex-shrink-0 ms-auto">
+                                        <button class="btn btn-outline-primary px-2 py-2" type="button"
                                                 data-bs-toggle="modal"
-                                                th:attr="data-bs-target='#excluirVeiculoModal-' + ${veiculo.id()}">
-                                            <i class="bi bi-trash me-1"></i>Excluir
+                                                th:attr="data-bs-target='#atribuirPassageiroCarroModal-' + ${veiculo.id()}">
+                                            <i class="bi bi-person-plus me-1"></i>Inserir
                                         </button>
-                                        <div th:replace="~{agendamento/controlesVeiculo :: modalExcluir(${veiculo}, ${data}, true)}"></div>
+                                        <div class="dropdown">
+                                            <button class="btn btn-outline-secondary px-3 py-2" type="button"
+                                                    data-bs-toggle="dropdown" aria-expanded="false"
+                                                    aria-label="Opções do carro">
+                                                <i class="bi bi-three-dots-vertical" aria-hidden="true"></i>
+                                            </button>
+                                            <div class="dropdown-menu dropdown-menu-end shadow">
+                                                <a th:if="${podeGerenciarMotoristas}" class="dropdown-item py-2"
+                                                   th:href="@{/motoristas/selecionar/{id}(id=${veiculo.id()},data=${data},carros=true)}">
+                                                    <i class="bi bi-person-badge me-2"></i>Motorista
+                                                </a>
+                                                <a class="dropdown-item py-2"
+                                                   th:href="@{/agendamentos/pdf/veiculos/{id}(id=${veiculo.id()}, data=${data})}"
+                                                   target="_blank" rel="noopener">
+                                                    <i class="bi bi-file-earmark-pdf me-2"></i>PDF
+                                                </a>
+                                                <form th:if="${veiculo.saidaConfirmadaEm() == null}" method="post"
+                                                      th:action="@{/agendamentos/veiculos/{id}/confirmar-saida(id=${veiculo.id()})}">
+                                                    <input type="hidden" name="data" th:value="${data}">
+                                                    <input type="hidden" name="paginaCarros" value="true">
+                                                    <button class="dropdown-item py-2" type="submit">
+                                                        <i class="bi bi-check2-circle me-2"></i>Confirmar saída
+                                                    </button>
+                                                </form>
+                                                <form th:if="${veiculo.saidaConfirmadaEm() != null}" method="post"
+                                                      th:action="@{/agendamentos/veiculos/{id}/desfazer-confirmacao-saida(id=${veiculo.id()})}">
+                                                    <input type="hidden" name="data" th:value="${data}">
+                                                    <input type="hidden" name="paginaCarros" value="true">
+                                                    <button class="dropdown-item py-2" type="submit">
+                                                        <i class="bi bi-arrow-counterclockwise me-2"></i>Desmarcar saída
+                                                    </button>
+                                                </form>
+                                                <div class="dropdown-divider"></div>
+                                                <button class="dropdown-item py-2 text-danger" type="button"
+                                                        data-bs-toggle="modal"
+                                                        th:attr="data-bs-target='#excluirVeiculoModal-' + ${veiculo.id()}">
+                                                    <i class="bi bi-trash me-2"></i>Excluir
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
+                                <div th:replace="~{agendamento/controlesVeiculo :: modalExcluir(${veiculo}, ${data}, true)}"></div>
                                 <div class="card-body border-top">
                                     <div th:if="${#lists.isEmpty(veiculo.passageiros())}" class="text-muted small py-2">
                                         Nenhum passageiro atribuído.
                                     </div>
                                     <div th:each="passageiro : ${veiculo.passageiros()}"
-                                         class="border-bottom py-3 d-flex justify-content-between align-items-center gap-2">
+                                         class="passageiro-carro-item border-bottom py-3 d-flex justify-content-between align-items-center gap-2"
+                                         data-residencia-item="true"
+                                         th:classappend="${passageiro.buscarNaResidencia() ? 'bg-warning-subtle rounded px-2' : ''}"
+                                         th:data-residencia="${passageiro.buscarNaResidencia()}">
                                         <div class="small">
                                             <strong class="text-dark" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></strong>
                                             <div class="text-muted" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).telefone()}"></div>
                                             <div class="text-muted" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).cidade() + ' · ' + detalhesPassageiros.get(passageiro.idPessoa()).destino()}"></div>
+                                            <div th:if="${passageiro.buscarNaResidencia()}" class="small text-warning-emphasis fw-semibold">
+                                                <i class="bi bi-house-door-fill me-1"></i>Local de busca:
+                                                <span th:text="${#strings.isEmpty(detalhesPassageiros.get(passageiro.idPessoa()).endereco())
+                                                        ? 'Endereço não informado' : detalhesPassageiros.get(passageiro.idPessoa()).endereco()}"></span>
+                                            </div>
                                             <div class="text-muted mt-1">
                                                 <span th:text="${'Chegada ' + passageiro.horarioChegada()}"></span>
                                                 <span> · </span>
-                                                <span th:text="${passageiro.buscarNaResidencia() ? 'Buscar na residência' : 'Sem busca'}"></span>
+                                                <span th:if="${passageiro.buscarNaResidencia()}" class="badge text-bg-warning">
+                                                    <i class="bi bi-house-door-fill me-1"></i>Buscar na residência
+                                                </span>
+                                                <span th:unless="${passageiro.buscarNaResidencia()}">Sem busca na residência</span>
                                                 <span> · </span>
                                                 <span th:text="${passageiro.acompanhantes() + ' acomp.'}"></span>
                                             </div>
@@ -79,19 +140,13 @@
                                                              data-tipo-veiculo-id=${passageiro.idTipoVeiculo()}">
                                                 <i class="bi bi-pencil-square me-1"></i>Detalhes
                                             </button>
-                                            <form method="post"
-                                                  th:action="@{/agendamentos/{id}/remover-veiculo(id=${passageiro.id()})}"
-                                                  onsubmit="return confirm('Retirar este passageiro do carro?')">
-                                                <input type="hidden" name="data" th:value="${data}">
-                                                <input type="hidden" name="paginaCarros" value="true">
-                                                <button class="btn btn-sm btn-outline-secondary w-100" type="submit">Retirar</button>
-                                            </form>
                                         </div>
                                         <div th:replace="~{agendamento/modalEditar :: modal(${passageiro}, ${data}, ${tiposVeiculo}, ${agenda.veiculos()}, true)}"></div>
                                     </div>
                                 </div>
                             </article>
                         </div>
+                        </th:block>
                     </div>
                 </section>
 </th:block>

@@ -9,10 +9,12 @@ import java.util.UUID;
 import java.util.function.IntFunction;
 
 import org.springframework.ui.Model;
+import org.springframework.web.client.RestClientResponseException;
 
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.DestinoView;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.OpcoesAgendamento;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoResponseDto;
+import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoCanceladoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendaDiaResponseDto;
 import br.com.imbazzu.frontSpring.controller.dto.ResultadoPaginado;
 import br.com.imbazzu.frontSpring.lista.core.dto.ListaResponseDto;
@@ -21,25 +23,42 @@ import br.com.imbazzu.frontSpring.localidade.core.dto.CidadeResponseDto;
 import br.com.imbazzu.frontSpring.localidade.core.porta.in.LocalidadeApplicationPorta;
 import br.com.imbazzu.frontSpring.veiculo.core.dto.TipoVeiculoResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
+import br.com.imbazzu.frontSpring.usuario.UsuarioApi;
 
 public class CarregadorOpcoesAgendamento {
 
     private final ListaApplicationPorta listas;
     private final VeiculoApplicationPorta tiposVeiculo;
     private final LocalidadeApplicationPorta localidades;
+    private final UsuarioApi usuarios;
 
     public CarregadorOpcoesAgendamento(
             ListaApplicationPorta listas,
             VeiculoApplicationPorta tiposVeiculo,
-            LocalidadeApplicationPorta localidades) {
+            LocalidadeApplicationPorta localidades,
+            UsuarioApi usuarios) {
         this.listas = listas;
         this.tiposVeiculo = tiposVeiculo;
         this.localidades = localidades;
+        this.usuarios = usuarios;
     }
 
     public OpcoesAgendamento carregar() {
         var cidades = listarCidades();
         return new OpcoesAgendamento(listarListasAtivas(), listarTipos(), cidades, listarDestinos(cidades));
+    }
+
+    public OpcoesAgendamento carregarParaUsuario() {
+        var opcoes = carregar();
+        var visibilidade = usuarios.minhasListasAgendamento();
+        if (!visibilidade.restrita()) {
+            return opcoes;
+        }
+        var permitidas = Set.copyOf(visibilidade.idsListas());
+        var listasVisiveis = opcoes.listas().stream()
+                .filter(lista -> permitidas.contains(lista.id()))
+                .toList();
+        return new OpcoesAgendamento(listasVisiveis, opcoes.tiposVeiculo(), opcoes.cidades(), opcoes.destinos());
     }
 
     /** Mantém os mesmos nomes de atributo que os templates já usam. */
@@ -56,9 +75,30 @@ public class CarregadorOpcoesAgendamento {
     public Map<UUID, String> nomesListas(OpcoesAgendamento opcoes, List<AgendamentoResponseDto> passageiros) {
         Map<UUID, String> nomes = new HashMap<>();
         opcoes.listas().forEach(lista -> nomes.put(lista.id(), lista.nome()));
-        passageiros.forEach(passageiro -> nomes.computeIfAbsent(passageiro.idLista(),
-                id -> listas.buscarArquivada(id).nome()));
+        passageiros.forEach(passageiro -> {
+            UUID id = passageiro.idLista();
+            nomes.computeIfAbsent(id, this::buscarNomeLista);
+        });
         return nomes;
+    }
+
+    public Map<UUID, String> nomesListasCanceladas(
+            OpcoesAgendamento opcoes, List<AgendamentoCanceladoResponseDto> passageiros) {
+        Map<UUID, String> nomes = new HashMap<>();
+        opcoes.listas().forEach(lista -> nomes.put(lista.id(), lista.nome()));
+        passageiros.forEach(passageiro -> nomes.computeIfAbsent(passageiro.idLista(), this::buscarNomeLista));
+        return nomes;
+    }
+
+    private String buscarNomeLista(UUID id) {
+        try {
+            return listas.buscarAtiva(id).nome();
+        } catch (RestClientResponseException erroAtiva) {
+            if (erroAtiva.getStatusCode().value() != 404) {
+                throw erroAtiva;
+            }
+            return listas.buscarArquivada(id).nome();
+        }
     }
 
     public Map<UUID, String> nomesTipos(OpcoesAgendamento opcoes, AgendaDiaResponseDto agenda) {
@@ -71,8 +111,21 @@ public class CarregadorOpcoesAgendamento {
 
     public OpcoesAgendamento incluirDestinosHistoricos(
             OpcoesAgendamento opcoes, List<AgendamentoResponseDto> passageiros) {
-        Set<UUID> faltantes = passageiros.stream().map(AgendamentoResponseDto::idDestino)
-                .filter(id -> opcoes.destino(id).isEmpty()).collect(java.util.stream.Collectors.toSet());
+        return incluirDestinosHistoricos(opcoes,
+                passageiros.stream().map(AgendamentoResponseDto::idDestino).collect(java.util.stream.Collectors.toSet()));
+    }
+
+    public OpcoesAgendamento incluirDestinosHistoricosCancelados(
+            OpcoesAgendamento opcoes, List<AgendamentoCanceladoResponseDto> passageiros) {
+        return incluirDestinosHistoricos(opcoes,
+                passageiros.stream().map(AgendamentoCanceladoResponseDto::idDestino)
+                        .collect(java.util.stream.Collectors.toSet()));
+    }
+
+    private OpcoesAgendamento incluirDestinosHistoricos(OpcoesAgendamento opcoes, Set<UUID> destinosSolicitados) {
+        Set<UUID> faltantes = destinosSolicitados.stream()
+                .filter(id -> opcoes.destino(id).isEmpty())
+                .collect(java.util.stream.Collectors.toSet());
         if (faltantes.isEmpty()) return opcoes;
 
         var destinos = new ArrayList<>(opcoes.destinos());

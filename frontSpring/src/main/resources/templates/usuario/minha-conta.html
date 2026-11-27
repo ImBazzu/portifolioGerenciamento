@@ -11,7 +11,14 @@
             <div th:if="${erro != null}" class="alert alert-danger" th:text="${erro}"></div>
             <div class="card shadow-sm"><div class="card-body">
                 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                    <div>Altere seu nome de acesso ou sua senha.</div>
+                    <div>
+                        <h2 class="h5 mb-1" th:text="${usuarioConta.nome()}"></h2>
+                        <div class="text-muted">
+                            Perfil:
+                            <span class="fw-semibold" th:text="${usuarioConta.perfil()}"></span>
+                        </div>
+                        <div class="form-text">Altere seu nome de acesso ou sua senha quando necessário.</div>
+                    </div>
                     <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#editarContaModal">Editar conta</button>
                 </div>
             </div></div>

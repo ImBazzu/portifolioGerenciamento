@@ -21,8 +21,17 @@
                             </tr>
                             </thead>
                             <tbody>
-                            <tr th:each="passageiro : ${passageirosPendentesCarro}">
-                                <td class="fw-semibold text-dark" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></td>
+                            <tr th:each="passageiro : ${passageirosPendentesCarro}" data-residencia-item="true"
+                                th:data-residencia="${passageiro.buscarNaResidencia()}">
+                                <td>
+                                    <strong class="fw-semibold text-dark"
+                                            th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></strong>
+                                    <div th:if="${passageiro.buscarNaResidencia()}" class="small text-warning-emphasis fw-semibold">
+                                        <i class="bi bi-house-door-fill me-1"></i>Local de busca:
+                                        <span th:text="${#strings.isEmpty(detalhesPassageiros.get(passageiro.idPessoa()).endereco())
+                                                ? 'Endereço não informado' : detalhesPassageiros.get(passageiro.idPessoa()).endereco()}"></span>
+                                    </div>
+                                </td>
                                 <td class="text-muted" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).telefone()}"></td>
                                 <td>
                                     <span th:text="${detalhesPassageiros.get(passageiro.idPessoa()).cidade()}"></span>

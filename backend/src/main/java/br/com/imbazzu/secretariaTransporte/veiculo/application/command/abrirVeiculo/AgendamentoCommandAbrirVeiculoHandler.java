@@ -11,6 +11,7 @@ import br.com.imbazzu.secretariaTransporte.agendamento.core.service.AgendamentoV
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.DadosInvalidosException;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.OperacaoNaoPermitidaException;
 import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.FinalidadeAberturaVeiculo;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -27,13 +28,30 @@ public class AgendamentoCommandAbrirVeiculoHandler {
         if (!tipo.ativo()) {
             throw new OperacaoNaoPermitidaException("Não é possível abrir um tipo de veículo arquivado");
         }
-        boolean calculaSaida = VeiculoAberto.tipoCalculaHorarioSaida(tipo.nome());
-        if (calculaSaida && command.horarioSaida() != null) {
-            throw new DadosInvalidosException("O horário de saída de veículos do tipo Carro é calculado");
+        var finalidade = command.finalidadeAbertura() == null
+                ? FinalidadeAberturaVeiculo.AJUSTE
+                : command.finalidadeAbertura();
+        boolean carro = VeiculoAberto.tipoCalculaHorarioSaida(tipo.nome());
+        boolean atendimentoEspecial = finalidade != FinalidadeAberturaVeiculo.AJUSTE;
+        if (atendimentoEspecial && !carro) {
+            throw new DadosInvalidosException("Emergência e alta devem ser abertas como carro de quatro lugares");
         }
-        if (!calculaSaida && command.horarioSaida() == null) {
+        if (!atendimentoEspecial && command.idListaAbertura() != null) {
+            throw new DadosInvalidosException("Informe uma lista somente para emergência ou alta");
+        }
+        if (atendimentoEspecial && (command.horarioSaida() == null || command.idListaAbertura() == null)) {
+            throw new DadosInvalidosException("Informe a lista e o horário de saída para emergência ou alta");
+        }
+        if (command.idListaAbertura() != null && !consultas.listaAtiva(command.idListaAbertura())) {
+            throw new DadosInvalidosException("Selecione uma lista ativa para o atendimento");
+        }
+        if (!carro && command.horarioSaida() == null) {
             throw new DadosInvalidosException("Informe o horário de saída para este tipo de veículo");
         }
+        if (carro && !atendimentoEspecial && command.horarioSaida() != null) {
+            throw new DadosInvalidosException("Horário de saída manual disponível somente para emergência ou alta");
+        }
+        boolean calculaSaida = carro && !atendimentoEspecial;
         var identificacao = command.identificacao();
         var veiculo = new VeiculoAberto(
                 UUID.randomUUID(),
@@ -43,7 +61,10 @@ public class AgendamentoCommandAbrirVeiculoHandler {
                 tipo.capacidade(),
                 identificacao == null || identificacao.isBlank() ? null : identificacao.trim(),
                 command.horarioSaida(),
-                calculaSaida);
+                calculaSaida,
+                null,
+                finalidade,
+                command.idListaAbertura());
         return comandos.salvar(veiculo);
     }
 }

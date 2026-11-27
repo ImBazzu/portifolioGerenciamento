@@ -3,6 +3,7 @@ package br.com.imbazzu.secretariaTransporte.seguranca.usuario.application;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -26,6 +27,8 @@ import br.com.imbazzu.secretariaTransporte.seguranca.usuario.dto.TokenResponseDt
 @Service
 public class GerenciarUsuariosService {
     public record UsuarioResumo(UUID id, String nome, String perfil) {}
+    public record ListaAgendamento(UUID id, String nome) {}
+    public record VisibilidadeListas(boolean restrita, List<UUID> idsListas, List<ListaAgendamento> listas) {}
     private final UsuarioJpaRepository usuarios;
     private final PasswordEncoder senhas;
     private final TokenPorta tokens;
@@ -57,6 +60,81 @@ public class GerenciarUsuariosService {
     @Transactional(readOnly = true)
     public UsuarioResumo buscar(UUID id) {
         return resumo(encontrar(id));
+    }
+
+    @Transactional(readOnly = true)
+    public List<UsuarioResumo> listarParaVisibilidadeListas() {
+        return jdbc.query("""
+                SELECT BIN_TO_UUID(u.id) AS id, u.nome,
+                       COALESCE(MAX(CASE p.permissao
+                           WHEN 'ADMIN' THEN 3 WHEN 'GESTAO' THEN 2
+                           WHEN 'MOTORISTA' THEN 1 ELSE 0 END), 0) AS nivel
+                FROM usuarios u
+                LEFT JOIN usuario_permissoes p ON p.usuario_id = u.id
+                WHERE u.data_arquivado IS NULL
+                GROUP BY u.id, u.nome
+                ORDER BY u.nome
+                """, (rs, row) -> new UsuarioResumo(
+                UUID.fromString(rs.getString("id")),
+                rs.getString("nome"),
+                switch (rs.getInt("nivel")) {
+                    case 3 -> "ADMIN";
+                    case 2 -> "GESTAO";
+                    case 1 -> "MOTORISTA";
+                    default -> "AGENDAMENTO";
+                }));
+    }
+
+    @Transactional(readOnly = true)
+    public VisibilidadeListas buscarVisibilidadeListas(UUID usuarioId) {
+        if (!usuarios.existsById(usuarioId)) {
+            throw new EntidadeNaoEncontradoException("Usuário não encontrado.");
+        }
+        boolean restrita = Boolean.TRUE.equals(jdbc.queryForObject(
+                "SELECT restricao_listas_agendamento FROM usuarios WHERE id = UUID_TO_BIN(?)",
+                Boolean.class, usuarioId.toString()));
+        var idsSelecionados = jdbc.query(
+                "SELECT BIN_TO_UUID(lista_id) AS id FROM usuario_listas_agendamento WHERE usuario_id = UUID_TO_BIN(?)",
+                (rs, row) -> UUID.fromString(rs.getString("id")), usuarioId.toString());
+        var listas = jdbc.query("""
+                SELECT id, nome FROM (
+                    SELECT BIN_TO_UUID(id) AS id, nome FROM listas WHERE data_arquivado IS NULL
+                ) ativas ORDER BY nome
+                """, (rs, row) -> new ListaAgendamento(UUID.fromString(rs.getString("id")), rs.getString("nome")));
+        return new VisibilidadeListas(restrita, idsSelecionados, listas);
+    }
+
+    @Transactional
+    public void atualizarVisibilidadeListas(UUID usuarioId, boolean restrita, List<UUID> idsListas) {
+        if (!usuarios.existsById(usuarioId)) {
+            throw new EntidadeNaoEncontradoException("Usuário não encontrado.");
+        }
+        var idsUnicos = idsListas == null ? List.<UUID>of() : idsListas.stream().distinct().toList();
+        if (restrita && !idsUnicos.isEmpty()) {
+            int listasValidas = jdbc.queryForObject("""
+                    SELECT COUNT(*) FROM listas
+                    WHERE data_arquivado IS NULL
+                      AND id IN (%s)
+                    """.formatted(String.join(",", java.util.Collections.nCopies(idsUnicos.size(), "UUID_TO_BIN(?)"))),
+                    Integer.class, idsUnicos.stream().map(UUID::toString).toArray());
+            if (listasValidas != idsUnicos.size()) {
+                throw new DadosInvalidosException("Uma ou mais listas selecionadas não estão ativas.");
+            }
+        }
+        jdbc.update("DELETE FROM usuario_listas_agendamento WHERE usuario_id = UUID_TO_BIN(?)",
+                usuarioId.toString());
+        if (restrita) {
+            jdbc.batchUpdate(
+                    "INSERT INTO usuario_listas_agendamento (usuario_id, lista_id) VALUES (UUID_TO_BIN(?), UUID_TO_BIN(?))",
+                    idsUnicos,
+                    idsUnicos.size(),
+                    (statement, idLista) -> {
+                        statement.setString(1, usuarioId.toString());
+                        statement.setString(2, idLista.toString());
+                    });
+        }
+        jdbc.update("UPDATE usuarios SET restricao_listas_agendamento = ? WHERE id = UUID_TO_BIN(?)",
+                restrita, usuarioId.toString());
     }
 
     @Transactional

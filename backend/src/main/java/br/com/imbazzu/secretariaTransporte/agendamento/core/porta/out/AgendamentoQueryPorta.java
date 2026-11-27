@@ -13,6 +13,8 @@ import br.com.imbazzu.secretariaTransporte.agendamento.core.model.DestinoAgendaD
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.PessoaAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.RegraCadastroAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.TipoVeiculoAgendaDados;
+import br.com.imbazzu.secretariaTransporte.agendamento.core.model.AgendamentoRemocaoDados;
+import br.com.imbazzu.secretariaTransporte.agendamento.core.model.AgendamentoCanceladoDados;
 import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 
 public interface AgendamentoQueryPorta {
@@ -24,6 +26,10 @@ public interface AgendamentoQueryPorta {
     Optional<Agendamento> buscarAgendamento(UUID id);
 
     List<Agendamento> listarAgendamentos(LocalDate data);
+
+    List<AgendamentoCanceladoDados> listarAgendamentosCancelados(LocalDate data);
+
+    Optional<AgendamentoRemocaoDados> buscarDadosRemocao(UUID id);
 
     PessoaAgendaDados buscarPessoa(UUID id);
 

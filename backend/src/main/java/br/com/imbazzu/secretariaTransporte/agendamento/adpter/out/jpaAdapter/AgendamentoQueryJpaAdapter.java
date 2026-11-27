@@ -24,6 +24,8 @@ import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.pr
 import br.com.imbazzu.secretariaTransporte.agendamento.adpter.out.repositorio.projecoes.DestinoPorCidadeProjecao;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.DestinoAgendaDados;
+import br.com.imbazzu.secretariaTransporte.agendamento.core.model.AgendamentoCanceladoDados;
+import br.com.imbazzu.secretariaTransporte.agendamento.core.model.AgendamentoRemocaoDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.PessoaAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.RegraCadastroAgendaDados;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.TipoVeiculoAgendaDados;
@@ -55,7 +57,7 @@ public class AgendamentoQueryJpaAdapter implements AgendamentoQueryPorta {
     @Override
     @Transactional(readOnly = true)
     public boolean existeAgendamento(LocalDate data, UUID idPessoa) {
-        return agendamentoRepository.existsByDataAndIdPessoa(data, idPessoa);
+        return agendamentoRepository.existsByDataAndIdPessoaAndCanceladoEmIsNull(data, idPessoa);
     }
 
     @Override
@@ -70,6 +72,35 @@ public class AgendamentoQueryJpaAdapter implements AgendamentoQueryPorta {
         return agendamentoRepository.listarProjecoesPorData(data).stream()
                 .map(AgendamentoQueryJpaAdapter::paraDomain)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AgendamentoCanceladoDados> listarAgendamentosCancelados(LocalDate data) {
+        return agendamentoRepository.listarCanceladosPorData(data).stream()
+                .map(item -> new AgendamentoCanceladoDados(
+                        item.getId(),
+                        item.getData(),
+                        item.getIdPessoa(),
+                        item.getIdLista(),
+                        item.getIdTipoVeiculo(),
+                        item.getIdDestino(),
+                        item.getHorarioChegada(),
+                        item.isBuscarNaResidencia(),
+                        item.getAcompanhantes(),
+                        item.getAutorNome(),
+                        item.getCanceladoEm(),
+                        item.getMotivoCancelamento()))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<AgendamentoRemocaoDados> buscarDadosRemocao(UUID id) {
+        return agendamentoRepository.findById(id)
+                .map(agendamento -> new AgendamentoRemocaoDados(
+                        agendamento.getIdVeiculoAberto(),
+                        agendamento.getCanceladoEm() != null));
     }
 
     @Override
@@ -192,7 +223,10 @@ public class AgendamentoQueryJpaAdapter implements AgendamentoQueryPorta {
                 projeccao.getCapacidade(),
                 projeccao.getIdentificacao(),
                 projeccao.getHorarioSaida(),
-                projeccao.isHorarioSaidaCalculado());
+                projeccao.isHorarioSaidaCalculado(),
+                projeccao.getSaidaConfirmadaEm(),
+                projeccao.getFinalidadeAbertura(),
+                projeccao.getIdListaAbertura());
     }
 
     @Override 
