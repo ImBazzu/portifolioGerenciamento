@@ -2,6 +2,7 @@ package br.com.imbazzu.secretariaTransporte.veiculo.application.command.atualiza
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -144,6 +145,65 @@ class AgendamentoCommandAtualizarHandlerTest {
         assertEquals(novoDestino, captor.getValue().getIdDestino());
         assertEquals(1, captor.getValue().getAcompanhantes());
         assertEquals(LocalTime.of(11, 0), captor.getValue().getHorarioChegada());
+    }
+
+    @Test
+    void editaPassageiroPendenteDeOnibusSemExigirVeiculoFisico() {
+        prepararConsultas(40);
+        when(consultas.buscarTipoVeiculo(tipoId))
+                .thenReturn(new TipoVeiculoAgendaDados(tipoId, "Ônibus", 40, true));
+        var novoDestino = UUID.randomUUID();
+        when(consultas.buscarDestino(novoDestino))
+                .thenReturn(new DestinoAgendaDados(UUID.randomUUID(), Duration.ofMinutes(30), true));
+
+        handler.handler(new AgendamentoCommandAtualizar(atual.getId(), tipoId, novoDestino,
+                LocalTime.of(11, 0), false, 1, null));
+
+        var captor = ArgumentCaptor.forClass(Agendamento.class);
+        verify(comandos).salvar(captor.capture());
+        var salvo = captor.getValue();
+        assertNull(salvo.getIdVeiculoAberto());
+        assertEquals(tipoId, salvo.getIdTipoVeiculo());
+        assertEquals(novoDestino, salvo.getIdDestino());
+        assertEquals(LocalTime.of(11, 0), salvo.getHorarioChegada());
+        assertFalse(salvo.isBuscarNaResidencia());
+        assertEquals(1, salvo.getAcompanhantes());
+        assertEquals(atual.getIdRegraCadastro(), salvo.getIdRegraCadastro());
+    }
+
+    @Test
+    void apiAceitaEdicaoDeOnibusPendenteSemVeiculoFisico() throws Exception {
+        prepararConsultas(40);
+        when(consultas.buscarTipoVeiculo(tipoId))
+                .thenReturn(new TipoVeiculoAgendaDados(tipoId, "Ônibus", 40, true));
+        var controller = new VeiculoController(null, null, null, null, handler, null, null, null, consultas);
+        var mvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new GlobalExceptionHandler()).build();
+
+        mvc.perform(put("/agendamentos/{id}", atual.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"idTipoVeiculo":"%s","idDestino":"%s","horarioChegada":"11:00",
+                                 "buscarNaResidencia":false,"acompanhantes":1,"idVeiculo":null}
+                                """.formatted(tipoId, destinoId)))
+                .andExpect(status().is2xxSuccessful());
+        var captor = ArgumentCaptor.forClass(Agendamento.class);
+        verify(comandos).salvar(captor.capture());
+        assertNull(captor.getValue().getIdVeiculoAberto());
+        assertEquals(LocalTime.of(11, 0), captor.getValue().getHorarioChegada());
+    }
+
+    @Test
+    void naoRemoveVeiculoDeOnibusAtribuidoAoEditar() {
+        prepararConsultas(40);
+        when(consultas.buscarTipoVeiculo(tipoId))
+                .thenReturn(new TipoVeiculoAgendaDados(tipoId, "Ônibus", 40, true));
+        atual.atribuirVeiculo(UUID.randomUUID());
+
+        var erro = assertThrows(OperacaoNaoPermitidaException.class, () -> handler.handler(comando(true, 2)));
+
+        assertTrue(erro.getMessage().contains("Selecione o veículo físico"));
+        verify(comandos, never()).salvar(any(Agendamento.class));
     }
 
     @Test

@@ -58,6 +58,34 @@ class VeiculoDisponivelViewTest {
         assertEquals(List.of(), VeiculoDisponivelView.disponiveis(aprovado, null, 0, especial.id()));
     }
 
+    @Test
+    void insercaoManualEmVanOfereceSomenteVeiculoDeOrigemComVagas() {
+        var tipo = UUID.randomUUID();
+        var origem = veiculo(tipo, "Van", 8, "VAN-01", 6);
+        var outra = veiculo(tipo, "Van", 8, "VAN-02", 0);
+        var agenda = new AgendaDiaResponseDto(origem.data(), List.of(origem, outra), List.of());
+        var aprovado = new VerificacaoVeiculosResponseDto(
+                List.of(new VeiculoPermitidoDto(tipo, "Van", 8, List.of())), List.of());
+
+        assertEquals(origem.id(), VeiculoDisponivelView.disponiveis(aprovado, agenda, 1, origem.id()).get(0).idVeiculo());
+        assertEquals(List.of(), VeiculoDisponivelView.disponiveis(aprovado, agenda, 2, origem.id()));
+    }
+
+    @Test
+    void insercaoEmCarroDeAjusteMantemFluxoDePendenteParaOTipoDaOrigem() {
+        var tipo = UUID.randomUUID();
+        var origem = veiculo(tipo, "Carro", 4, "CARRO", 0);
+        var agenda = new AgendaDiaResponseDto(origem.data(), List.of(origem), List.of());
+        var aprovado = new VerificacaoVeiculosResponseDto(List.of(
+                new VeiculoPermitidoDto(tipo, "Carro", 4, List.of()),
+                new VeiculoPermitidoDto(UUID.randomUUID(), "Van", 8, List.of())), List.of());
+
+        var resultado = VeiculoDisponivelView.disponiveis(aprovado, agenda, 0, origem.id());
+        assertEquals(1, resultado.size());
+        assertEquals(tipo, resultado.get(0).idTipoVeiculo());
+        assertNull(resultado.get(0).idVeiculo());
+    }
+
     private static VeiculoAbertoResponseDto veiculo(
             UUID idTipo, String nomeTipo, int capacidade, String identificacao, int ocupados) {
         return new VeiculoAbertoResponseDto(

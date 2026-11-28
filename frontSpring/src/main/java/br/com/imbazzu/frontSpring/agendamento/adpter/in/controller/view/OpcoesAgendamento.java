@@ -33,6 +33,10 @@ public record OpcoesAgendamento(
                 .findFirst();
     }
 
+    public Optional<ListaResponseDto> listaEncaixe() {
+        return listas.stream().filter(lista -> "ENCAIXE".equals(lista.finalidadeEspecial())).findFirst();
+    }
+
     public Map<UUID, String> nomesTipoVeiculo() {
         return tiposVeiculo.stream()
                 .collect(Collectors.toMap(TipoVeiculoResponseDto::id, TipoVeiculoResponseDto::nome));

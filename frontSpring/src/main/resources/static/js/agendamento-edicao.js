@@ -76,7 +76,7 @@
 
         input.value = formatarDataLocalISO(offset);
         if (form) {
-            form.submit();
+            form.requestSubmit();
         }
     }
 

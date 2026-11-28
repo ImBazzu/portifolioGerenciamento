@@ -49,13 +49,18 @@ public record VeiculoDisponivelView(
             return List.of();
         }
         var veiculo = origem.get();
-        if (veiculo.finalidadeAbertura() == FinalidadeAberturaVeiculo.AJUSTE) {
-            return disponiveis(verificacao, agenda, acompanhantes);
+        if ((long) acompanhantes + 1 > veiculo.capacidade() - veiculo.assentosOcupados()) {
+            return List.of();
+        }
+        if (veiculo.finalidadeAbertura() == FinalidadeAberturaVeiculo.AJUSTE
+                && TipoVeiculoUtil.ehCarro(veiculo.nomeTipoVeiculo())) {
+            return disponiveis(verificacao, agenda, acompanhantes).stream()
+                    .filter(item -> item.idTipoVeiculo().equals(veiculo.idTipoVeiculo()))
+                    .toList();
         }
         if (verificacao == null || verificacao.veiculosPermitidos() == null
                 || verificacao.veiculosPermitidos().stream()
-                        .noneMatch(tipo -> tipo.idTipoVeiculo().equals(veiculo.idTipoVeiculo()))
-                || (long) acompanhantes + 1 > veiculo.capacidade() - veiculo.assentosOcupados()) {
+                        .noneMatch(tipo -> tipo.idTipoVeiculo().equals(veiculo.idTipoVeiculo()))) {
             return List.of();
         }
         return List.of(de(veiculo));

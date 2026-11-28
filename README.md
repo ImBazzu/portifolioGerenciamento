@@ -25,7 +25,9 @@ O repositório contém dois módulos Java/Spring Boot:
 
 Os formulários de motoristas, categorias e usuários são abertos em modais. Na página de carros de quatro lugares, a abertura também usa um modal, ao lado da separação automática, e em seguida oferece a inserção de passageiro, sem solicitar identificação.
 
-Nos cartões de carros, o menu de três pontos reúne motorista, PDF, confirmação de saída e exclusão; a inserção de passageiros continua disponível no cartão.
+Nos cartões de veículos, o menu de três pontos reúne motorista, PDF, confirmação de saída e exclusão; a inserção de passageiros continua disponível no cartão.
+
+Ao cadastrar um novo passageiro pelo botão **Inserir** de um veículo comum, a lista **Encaixe** é selecionada e não pode ser alterada. Passageiros já pendentes mantêm sua lista original; carros abertos para emergência ou alta mantêm a lista da abertura. A migração V32 aproveita uma lista Encaixe ativa existente e suas regras ou cria uma lista com regras iniciais para os tipos e prioridades existentes. Revise e ajuste essas regras em Listas; usuários com acesso restrito precisam ter a lista liberada. Faça backup do banco antes de atualizar.
 
 Na abertura de carros para alta ou emergência, a lista correspondente é selecionada automaticamente, fica bloqueada no agendamento iniciado pelo carro e não aparece no formulário de agendamento normal. O carro deve ter quatro lugares e sua saída fixa precisa atender ao horário do passageiro atribuído. A separação automática e a atribuição manual aceitam nesses carros somente passageiros da lista vinculada à abertura. A migração V31 aproveita listas ativas com esses nomes e preserva suas regras; quando não existem, cria as listas com regras iniciais para os tipos de veículo ativos e prioridades existentes, com tolerância de separação de zero para carros. Revise as regras ao adicionar prioridades ou tipos de veículo. Usuários com acesso restrito precisam ter essas listas liberadas na página de usuários. Faça backup do banco antes da atualização.
 

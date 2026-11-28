@@ -250,6 +250,15 @@ public class AgendamentoPassageiroController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "A lista deve corresponder à finalidade do veículo de origem.");
         }
+        if (veiculo.idListaAbertura() == null) {
+            var encaixe = carregadorOpcoes.carregarParaUsuario().listaEncaixe()
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,
+                            "A lista Encaixe está indisponível. Verifique se está ativa e liberada para o usuário."));
+            if (!encaixe.id().equals(idLista)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "A inserção manual deve utilizar a lista Encaixe.");
+            }
+        }
     }
 
  @PostMapping("/{idAgendamento}/editar")

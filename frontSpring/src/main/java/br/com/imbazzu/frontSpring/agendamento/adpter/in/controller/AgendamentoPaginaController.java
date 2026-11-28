@@ -102,6 +102,12 @@ public class AgendamentoPaginaController {
 
         try {
             var agenda = agendamentoApi.buscarDia(dia);
+            if (model.getAttribute("veiculoOrigem") instanceof UUID origem) {
+                var veiculo = agenda.veiculos().stream().filter(item -> item.id().equals(origem))
+                        .findFirst().orElseThrow(() -> new ResponseStatusException(
+                                HttpStatus.NOT_FOUND, "Veículo de origem não encontrado nesta data."));
+                selecionarListaInsercao(model, opcoes, veiculo.idListaAbertura());
+            }
             var passageiros = Stream.concat(
                     agenda.veiculos().stream().flatMap(veiculo -> veiculo.passageiros().stream()),
                     agenda.passageirosPendentes().stream()).toList();
@@ -156,12 +162,25 @@ public class AgendamentoPaginaController {
         model.addAttribute("veiculoOrigem", id);
         model.addAttribute("origemCarros", true);
         model.addAttribute("novoPassageiro", true);
+        selecionarListaInsercao(model, opcoes, veiculo.idListaAbertura());
         if (veiculo.idListaAbertura() != null) {
-            model.addAttribute("idListaSelecionada", veiculo.idListaAbertura());
             model.addAttribute("horarioChegadaSelecionado", veiculo.horarioSaida());
             model.addAttribute("informarHorarioSaida", true);
         }
         return "agendamento/fragmentos/modal-agendamento :: modalAgendamento";
+    }
+
+    private void selecionarListaInsercao(Model model, OpcoesAgendamento opcoes, UUID listaAbertura) {
+        var lista = listaAbertura != null ? listaAbertura : opcoes.listaEncaixe()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT,
+                        "A lista Encaixe está indisponível. Verifique se está ativa e liberada para o usuário."))
+                .id();
+        if (opcoes.listas().stream().noneMatch(item -> item.id().equals(lista))) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "A lista do veículo está indisponível. Verifique se está ativa e liberada para o usuário.");
+        }
+        model.addAttribute("idListaSelecionada", lista);
+        model.addAttribute("listaFixaInsercao", true);
     }
 
     @GetMapping("/carros/veiculos/{id}/cartao")

@@ -141,8 +141,8 @@
 
                             <select class="form-select"
                                     id="listaAgendamento"
-                                    th:attr="name=${veiculoOrigem != null and informarHorarioSaida == true ? null : 'idLista'}"
-                                    th:disabled="${veiculoOrigem != null and informarHorarioSaida == true}"
+                                    th:attr="name=${listaFixaInsercao == true ? null : 'idLista'}"
+                                    th:disabled="${listaFixaInsercao == true}"
                                     required>
 
                                 <option value="">
@@ -150,7 +150,7 @@
                                 </option>
 
                                 <option th:each="lista : ${listas}"
-                                        th:if="${lista.finalidadeEspecial() == null or (veiculoOrigem != null and informarHorarioSaida == true and lista.id() == idListaSelecionada)}"
+                                        th:if="${lista.finalidadeEspecial() == null or (listaFixaInsercao == true and lista.id() == idListaSelecionada)}"
                                         th:value="${lista.id()}"
                                         th:text="${lista.nome()}"
                                         th:attr="data-list-name=${lista.nome()}"
@@ -158,10 +158,10 @@
                                 </option>
 
                             </select>
-                            <input th:if="${veiculoOrigem != null and informarHorarioSaida == true}"
+                            <input th:if="${listaFixaInsercao == true}"
                                    type="hidden" name="idLista" th:value="${idListaSelecionada}">
-                            <div th:if="${veiculoOrigem != null and informarHorarioSaida == true}"
-                                 class="form-text">Lista definida pela finalidade do carro.</div>
+                            <div th:if="${listaFixaInsercao == true}"
+                                 class="form-text">Lista definida para a inserção neste veículo.</div>
 
                         </div>
 

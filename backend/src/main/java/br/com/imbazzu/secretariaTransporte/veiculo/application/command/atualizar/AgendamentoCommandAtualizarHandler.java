@@ -101,17 +101,21 @@ public class AgendamentoCommandAtualizarHandler {
                 atualizado.atribuirVeiculo(veiculo.id(), veiculo.idTipoVeiculo(), tolerancia);
             }
         } else {
-            if (command.idVeiculo() == null) {
+            if (command.idVeiculo() == null
+                    && (atual.getIdVeiculoAberto() != null
+                        || !command.idTipoVeiculo().equals(atual.getIdTipoVeiculo()))) {
                 throw new OperacaoNaoPermitidaException(
                         "Selecione o veículo físico para ônibus, van ou outro tipo não carro");
             }
-            var veiculo = buscarVeiculo(command.idVeiculo(), veiculos);
-            if (VeiculoAberto.tipoCalculaHorarioSaida(veiculo.nomeTipoVeiculo())
-                    || !veiculo.idTipoVeiculo().equals(tipo.id())) {
-                throw new DadosInvalidosException("O veículo físico selecionado não corresponde ao tipo aprovado");
+            if (command.idVeiculo() != null) {
+                var veiculo = buscarVeiculo(command.idVeiculo(), veiculos);
+                if (VeiculoAberto.tipoCalculaHorarioSaida(veiculo.nomeTipoVeiculo())
+                        || !veiculo.idTipoVeiculo().equals(tipo.id())) {
+                    throw new DadosInvalidosException("O veículo físico selecionado não corresponde ao tipo aprovado");
+                }
+                validarCompatibilidade(atual, atualizado, veiculo, tolerancia);
+                atualizado.atribuirVeiculo(veiculo.id(), veiculo.idTipoVeiculo(), tolerancia);
             }
-            validarCompatibilidade(atual, atualizado, veiculo, tolerancia);
-            atualizado.atribuirVeiculo(veiculo.id(), veiculo.idTipoVeiculo(), tolerancia);
         }
         comandos.salvar(atualizado);
     }

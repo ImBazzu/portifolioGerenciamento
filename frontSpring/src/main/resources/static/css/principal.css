@@ -287,6 +287,12 @@ html, body {
     overflow-wrap: anywhere;
 }
 
+#tabelaPassageiros .endereco-busca {
+    width: 0;
+    min-width: 100%;
+    max-width: none;
+}
+
 .table th {
     font-size: 0.75rem;
     text-transform: uppercase;
@@ -341,10 +347,9 @@ html, body {
     font-size: 0.95rem;
 }
 /* =========================================================
-   GLOBAL HTMX LOADER & BLOCKER (PREVINE DUPLO CLIQUE)
+   GLOBAL PAGE LOADER
    ========================================================= */
 
-/* Por padrão, o HTMX esconde o elemento com .htmx-indicator */
 #global-loader {
     display: none;
     position: fixed;
@@ -361,10 +366,7 @@ html, body {
     pointer-events: all; /* Bloqueia todos os cliques na tela enquanto visível */
 }
 
-/* Quando qualquer requisição HTMX estiver ativa no body, exibe o loader */
-body.htmx-request #global-loader,
-.htmx-request#global-loader,
-.htmx-request #global-loader {
+body.page-loading #global-loader {
     display: flex !important;
 }
 

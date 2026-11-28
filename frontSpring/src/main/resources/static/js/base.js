@@ -435,3 +435,107 @@ function atualizarTitulosRegras(container, tipo) {
         card.querySelector('[data-titulo-regra]').textContent = `Regra de ${nome} ${index + 1}`;
     });
 }
+
+const formulariosEmEnvio = new WeakSet();
+const requisicoesComBotoes = new WeakMap();
+const botoesEmRequisicao = new WeakMap();
+let agendamentoEmEnvio = false;
+let agendamentoConcluido = false;
+let botoesAgendamentoConcluido = [];
+
+function mostrarCarregamentoPagina() {
+    document.body.classList.add('page-loading');
+}
+
+window.addEventListener('beforeunload', mostrarCarregamentoPagina);
+window.addEventListener('pageshow', () => {
+    document.body.classList.remove('page-loading');
+    document.querySelectorAll('form').forEach(form => formulariosEmEnvio.delete(form));
+    agendamentoEmEnvio = false;
+    agendamentoConcluido = false;
+    botoesAgendamentoConcluido = [];
+});
+
+document.addEventListener('submit', event => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement) || event.defaultPrevented
+            || (form.target && form.target.toLowerCase() !== '_self')) return;
+
+    const confirmacao = form.querySelector('.js-confirmar-agendamento');
+    if (formulariosEmEnvio.has(form) || (confirmacao && agendamentoEmEnvio)) {
+        event.preventDefault();
+        return;
+    }
+
+    formulariosEmEnvio.add(form);
+    if (confirmacao) agendamentoEmEnvio = true;
+    setTimeout(() => {
+        if (event.defaultPrevented) {
+            formulariosEmEnvio.delete(form);
+            if (confirmacao) agendamentoEmEnvio = false;
+        } else {
+            mostrarCarregamentoPagina();
+        }
+    }, 0);
+});
+
+document.body.addEventListener('htmx:beforeRequest', event => {
+    const elemento = event.detail.elt;
+    const form = elemento instanceof HTMLFormElement ? elemento : null;
+    const confirmacao = form?.querySelector('.js-confirmar-agendamento');
+    if (confirmacao && agendamentoEmEnvio) {
+        event.preventDefault();
+        return;
+    }
+
+    const botoes = confirmacao
+        ? Array.from(document.querySelectorAll('#resultadoVerificacao .js-confirmar-agendamento'))
+        : form
+            ? Array.from(form.querySelectorAll('button[type="submit"], input[type="submit"]'))
+            : elemento instanceof HTMLButtonElement ? [elemento] : [];
+    if (confirmacao) agendamentoEmEnvio = true;
+    botoes.forEach(botao => {
+        const estado = botoesEmRequisicao.get(botao) || { quantidade: 0, disabled: botao.disabled };
+        estado.quantidade++;
+        botoesEmRequisicao.set(botao, estado);
+        botao.disabled = true;
+    });
+    requisicoesComBotoes.set(event.detail.xhr, { botoes, confirmacao: Boolean(confirmacao) });
+});
+
+document.body.addEventListener('htmx:afterRequest', event => {
+    const requisicao = requisicoesComBotoes.get(event.detail.xhr);
+    if (!requisicao) return;
+    requisicoesComBotoes.delete(event.detail.xhr);
+    requisicao.botoes.forEach(botao => {
+        const estado = botoesEmRequisicao.get(botao);
+        if (--estado.quantidade === 0) {
+            if (requisicao.confirmacao && event.detail.successful) {
+                botoesAgendamentoConcluido.push({ botao, disabled: estado.disabled });
+            } else {
+                botao.disabled = estado.disabled;
+            }
+            botoesEmRequisicao.delete(botao);
+        }
+    });
+    if (requisicao.confirmacao) {
+        agendamentoConcluido = event.detail.successful;
+        const modal = document.getElementById('agendamentoModal');
+        if (!agendamentoConcluido || !modal || modal.getAttribute('aria-hidden') === 'true') {
+            liberarAgendamento();
+        }
+    }
+});
+
+function liberarAgendamento() {
+    agendamentoEmEnvio = false;
+    agendamentoConcluido = false;
+    botoesAgendamentoConcluido.forEach(({ botao, disabled }) => {
+        botao.disabled = disabled;
+    });
+    botoesAgendamentoConcluido = [];
+}
+
+document.addEventListener('hidden.bs.modal', event => {
+    if (event.target.id === 'agendamentoModal' && agendamentoConcluido) liberarAgendamento();
+});
