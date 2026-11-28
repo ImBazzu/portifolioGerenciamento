@@ -150,6 +150,13 @@ public class AgendamentoPaginaController {
     private void adicionarAgenda(Model model, AgendaDiaResponseDto agenda, OpcoesAgendamento opcoes,
             Map<UUID, PassageiroDetalheView> detalhes) {
         model.addAttribute("agenda", agenda);
+        if (model.getAttribute("pessoaComprovante") instanceof UUID idPessoa) {
+            Stream.concat(agenda.veiculos().stream().flatMap(veiculo -> veiculo.passageiros().stream()),
+                    agenda.passageirosPendentes().stream())
+                    .filter(passageiro -> passageiro.idPessoa().equals(idPessoa))
+                    .findFirst()
+                    .ifPresent(passageiro -> model.addAttribute("agendamentoComprovante", passageiro.id()));
+        }
         model.addAttribute("detalhesPassageiros", detalhes);
         model.addAttribute("detalhesCancelados",
                 montadorDetalhes.montarCancelados(agenda.passageirosCancelados(), opcoes));

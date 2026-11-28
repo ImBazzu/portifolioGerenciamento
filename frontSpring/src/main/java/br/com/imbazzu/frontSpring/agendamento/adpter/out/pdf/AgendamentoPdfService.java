@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -29,8 +29,8 @@ import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.Passagei
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.view.PassageiroRelatorioView;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoAbertoResponseDto;
+import br.com.imbazzu.frontSpring.veiculo.core.TipoVeiculoUtil;
 public final class AgendamentoPdfService {
-    private static final LocalTime CORTE_MANHA = LocalTime.of(5, 30);
     private static final DateTimeFormatter HORA_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
     private static final DateTimeFormatter DATA_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final String ORIGEM_PADRAO = "CORONEL JOÃO SÁ";
@@ -45,8 +45,8 @@ public final class AgendamentoPdfService {
         FaixaHorario(String rotulo) {
             this.rotulo = rotulo;
         }
-        public static FaixaHorario de(LocalTime saida) {
-            if (saida != null && saida.isBefore(CORTE_MANHA)) {
+        public static FaixaHorario de(VeiculoAbertoResponseDto veiculo) {
+            if ("ANTES_0530".equals(veiculo.faixaHorarioSaida())) {
                 return ANTES_0530;
             }
             return A_PARTIR_0530;
@@ -57,6 +57,89 @@ public final class AgendamentoPdfService {
     }
     private AgendamentoPdfService() {
         throw new UnsupportedOperationException("Classe utilitária não deve ser instanciada");
+    }
+
+    public static byte[] gerarComprovante(
+            AgendamentoResponseDto agendamento, PassageiroDetalheView pessoa, VeiculoAbertoResponseDto veiculo) {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        Document documento = new Document(PageSize.A4, 42, 42, 40, 40);
+        try {
+            var estilos = new EstilosPdf();
+            PdfWriter.getInstance(documento, buffer);
+            documento.open();
+            adicionarCabecalho(documento, "Comprovante de agendamento",
+                    "SECRETARIA MUNICIPAL  |  TRANSPORTE DE PASSAGEIROS", estilos);
+            documento.add(criarEspacamento(12));
+
+            var tabela = new PdfPTable(1);
+            tabela.setWidthPercentage(100);
+            PdfPCell passageiroDestaque = new PdfPCell();
+            passageiroDestaque.setBackgroundColor(new java.awt.Color(229, 244, 235));
+            passageiroDestaque.setBorderColor(new java.awt.Color(192, 220, 202));
+            passageiroDestaque.setPadding(16);
+            passageiroDestaque.addElement(new Paragraph("PASSAGEIRO", estilos.getTituloBloco()));
+            passageiroDestaque.addElement(new Paragraph(valorRelatorio(pessoa.nome()),
+                    new Font(estilos.getBaseFont(), 18, Font.BOLD, new java.awt.Color(31, 92, 63))));
+            tabela.addCell(passageiroDestaque);
+            adicionarTituloBloco(tabela, "INFORMAÇÕES DA VIAGEM", estilos);
+            adicionarCampoComprovante(tabela, "Data da viagem", agendamento.data().format(DATA_FORMATTER), estilos);
+            adicionarCampoComprovante(tabela, "Cidade", pessoa.cidade(), estilos);
+            adicionarCampoComprovante(tabela, "Destino", pessoa.destino(), estilos);
+            adicionarCampoComprovante(tabela, "Chegada prevista",
+                    formatarHoraRelatorio(agendamento.horarioChegada()), estilos);
+            adicionarCampoComprovante(tabela, "Acompanhantes", Integer.toString(agendamento.acompanhantes()), estilos);
+            adicionarCampoComprovante(tabela, "Busca na residência",
+                    agendamento.buscarNaResidencia() ? "Sim" : "Não", estilos);
+            if (agendamento.buscarNaResidencia()) {
+                adicionarCampoComprovante(tabela, "Endereço de busca", pessoa.endereco(), estilos);
+            }
+            if (veiculo != null) {
+                adicionarCampoComprovante(tabela, "Veículo", veiculo.nomeTipoVeiculo()
+                        + (veiculo.identificacao() == null || veiculo.identificacao().isBlank()
+                                ? "" : " — " + veiculo.identificacao()), estilos);
+                if (veiculo.horarioSaida() != null) {
+                    adicionarCampoComprovante(tabela, "Saída do veículo",
+                            formatarHoraRelatorio(veiculo.horarioSaida()), estilos);
+                }
+            }
+            documento.add(tabela);
+            documento.add(criarEspacamento(12));
+            var aviso = new Paragraph(
+                    "Guarde este comprovante. Os dados do transporte podem ser atualizados pela secretaria.",
+                    new Font(estilos.getBaseFont(), 10f, Font.NORMAL, new java.awt.Color(55, 70, 78)));
+            aviso.setLeading(15);
+            PdfPTable quadroAviso = new PdfPTable(1);
+            quadroAviso.setWidthPercentage(100);
+            PdfPCell celulaAviso = new PdfPCell(aviso);
+            celulaAviso.setBackgroundColor(new java.awt.Color(242, 246, 244));
+            celulaAviso.setBorderColor(new java.awt.Color(218, 226, 232));
+            celulaAviso.setPadding(12);
+            quadroAviso.addCell(celulaAviso);
+            documento.add(quadroAviso);
+            documento.add(criarEspacamento(10));
+            documento.add(new Paragraph("Código do agendamento: " + agendamento.id(), estilos.getTextoNormal()));
+            documento.close();
+            return buffer.toByteArray();
+        } catch (DocumentException | IOException e) {
+            fecharDocumentoSeguro(documento);
+            throw new IllegalStateException("Não foi possível gerar o comprovante de agendamento.", e);
+        } catch (RuntimeException e) {
+            fecharDocumentoSeguro(documento);
+            throw e;
+        }
+    }
+
+    private static void adicionarCampoComprovante(PdfPTable tabela, String rotulo, String valor, EstilosPdf estilos) {
+        var campo = new Paragraph();
+        campo.setLeading(16);
+        campo.add(new Phrase(rotulo + ": ",
+                new Font(estilos.getBaseFont(), 10, Font.BOLD, new java.awt.Color(91, 112, 101))));
+        campo.add(new Phrase(valorRelatorio(valor),
+                new Font(estilos.getBaseFont(), 11, Font.NORMAL, new java.awt.Color(33, 48, 41))));
+        var celula = new PdfPCell(campo);
+        celula.setBorderColor(new java.awt.Color(218, 226, 232));
+        celula.setPadding(9);
+        tabela.addCell(celula);
     }
 
     public static byte[] gerarPassageiros(LocalDate data, List<PassageiroRelatorioView> passageiros) {
@@ -252,12 +335,13 @@ public final class AgendamentoPdfService {
             PdfWriter writer = PdfWriter.getInstance(documento, buffer);
             writer.setPageEvent(new RodapePaginas(estilos.getBaseFont(), "Relatório geral de carros"));
             documento.open();
+            Map<UUID, Integer> numerosVeiculos = new HashMap<>();
+            for (int i = 0; i < veiculos.size(); i++) {
+                numerosVeiculos.put(veiculos.get(i).id(), i + 1);
+            }
             Map<FaixaHorario, List<VeiculoAbertoResponseDto>> veiculosPorFaixa = veiculos.stream()
-                    .sorted(Comparator.comparing(
-                            VeiculoAbertoResponseDto::horarioSaida,
-                            Comparator.nullsLast(Comparator.naturalOrder())))
                     .collect(Collectors.groupingBy(
-                            v -> FaixaHorario.de(v.horarioSaida()),
+                            FaixaHorario::de,
                             () -> new EnumMap<>(FaixaHorario.class),
                             Collectors.toList()));
             int paginaAtual = 0;
@@ -286,7 +370,8 @@ public final class AgendamentoPdfService {
                     for (int i = 0; i < MAX_CARROS_POR_PAGINA && indiceVeiculo < totalVeiculosNestaFaixa; i += 2) {
                         VeiculoAbertoResponseDto veiculoEsq = veiculosDaFaixa.get(indiceVeiculo++);
                         int linhasEsq = calcularLinhasNecessarias(veiculoEsq);
-                        PdfPTable tabelaEsq = construirTabelaVeiculoCard(veiculoEsq, detalhes, estilos, linhasEsq);
+                        PdfPTable tabelaEsq = construirCardRelatorio(veiculoEsq, detalhes, estilos, linhasEsq,
+                                numerosVeiculos.get(veiculoEsq.id()));
                         PdfPCell celulaEsq = new PdfPCell(tabelaEsq);
                         // Contorno externo do carro: escuro e mais espesso para impressão P&B.
                         celulaEsq.setBorder(PdfPCell.BOX);
@@ -299,7 +384,8 @@ public final class AgendamentoPdfService {
                         if (indiceVeiculo < totalVeiculosNestaFaixa && i + 1 < MAX_CARROS_POR_PAGINA) {
                             VeiculoAbertoResponseDto veiculoDir = veiculosDaFaixa.get(indiceVeiculo++);
                             int linhasDir = calcularLinhasNecessarias(veiculoDir);
-                            PdfPTable tabelaDir = construirTabelaVeiculoCard(veiculoDir, detalhes, estilos, linhasDir);
+                            PdfPTable tabelaDir = construirCardRelatorio(veiculoDir, detalhes, estilos, linhasDir,
+                                    numerosVeiculos.get(veiculoDir.id()));
                             PdfPCell celulaDir = new PdfPCell(tabelaDir);
                             // Mesmo contorno aplicado ao cartão da coluna esquerda.
                             celulaDir.setBorder(PdfPCell.BOX);
@@ -319,7 +405,8 @@ public final class AgendamentoPdfService {
                 }
 
                 // A folha de endereços vem imediatamente depois de todos os carros desta faixa.
-                PdfPTable tabelaBuscas = construirTabelaBuscasResidencia(veiculosDaFaixa, detalhes, estilos);
+                PdfPTable tabelaBuscas = construirTabelaBuscasResidencia(
+                        veiculosDaFaixa, detalhes, estilos, numerosVeiculos);
                 if (tabelaBuscas != null) {
                     documento.newPage();
 
@@ -356,6 +443,7 @@ public final class AgendamentoPdfService {
         if (qtdePassageiros == 0) {
             return VAGAS_PADRAO_CARRO;
         }
+
         int totalOcupantes = 0;
         for (AgendamentoResponseDto p : veiculo.passageiros()) {
             int acomp = Math.max(0, p.acompanhantes());
@@ -366,6 +454,64 @@ public final class AgendamentoPdfService {
         }
         int vagasRestantes = VAGAS_PADRAO_CARRO - totalOcupantes;
         return qtdePassageiros + vagasRestantes;
+    }
+
+    private static PdfPTable construirCardRelatorio(
+            VeiculoAbertoResponseDto veiculo, Map<UUID, PassageiroDetalheView> detalhes,
+            EstilosPdf estilos, int linhas, int numero) throws DocumentException {
+        if (TipoVeiculoUtil.ehCarro(veiculo.nomeTipoVeiculo())) {
+            return construirTabelaVeiculoCard(veiculo, detalhes, estilos, linhas, numero);
+        }
+        PdfPTable tabela = new PdfPTable(1);
+        tabela.setWidthPercentage(100);
+        tabela.setKeepTogether(true);
+        tabela.addCell(criarCelulaTitulo(nomeVeiculo(veiculo, numero).toUpperCase(), estilos, Element.ALIGN_LEFT));
+        adicionarCampoResumoVeiculo(tabela, "SAÍDA", formatarHoraRelatorio(veiculo.horarioSaida()), estilos);
+        adicionarCampoResumoVeiculo(tabela, "LUGARES", veiculo.assentosOcupados() + " ocupados de "
+                + veiculo.capacidade() + " — " + Math.max(0, veiculo.capacidade() - veiculo.assentosOcupados())
+                + " disponíveis", estilos);
+        var buscas = veiculo.passageiros() == null ? List.<AgendamentoResponseDto>of()
+                : veiculo.passageiros().stream().filter(AgendamentoResponseDto::buscarNaResidencia).toList();
+        int acompanhantes = buscas.stream().mapToInt(p -> Math.max(0, p.acompanhantes())).sum();
+        adicionarCampoResumoVeiculo(tabela, "BUSCA NA RESIDÊNCIA",
+                (buscas.size() + acompanhantes) + " pessoas (" + buscas.size()
+                        + (buscas.size() == 1 ? " passageiro e " : " passageiros e ")
+                        + acompanhantes + (acompanhantes == 1 ? " acompanhante)" : " acompanhantes)"), estilos);
+        String cidades = veiculo.passageiros() == null ? "" : veiculo.passageiros().stream()
+                .map(p -> detalheRelatorio(detalhes, p))
+                .map(PassageiroDetalheView::cidade)
+                .filter(c -> c != null && !c.isBlank())
+                .distinct()
+                .sorted(String.CASE_INSENSITIVE_ORDER)
+                .collect(Collectors.joining(", "));
+        adicionarCampoResumoVeiculo(tabela, "CIDADES", cidades.isBlank() ? "Não informado" : cidades, estilos);
+        return tabela;
+    }
+
+    private static void adicionarCampoResumoVeiculo(PdfPTable tabela, String rotulo, String valor, EstilosPdf estilos) {
+        Paragraph campo = new Paragraph();
+        campo.setLeading(12);
+        campo.add(new Phrase(rotulo + "\n", new Font(estilos.getBaseFont(), 8, Font.BOLD,
+                new java.awt.Color(0, 75, 50))));
+        campo.add(new Phrase(valor, new Font(estilos.getBaseFont(), 9, Font.NORMAL, new java.awt.Color(20, 32, 27))));
+        PdfPCell celula = new PdfPCell(campo);
+        celula.setBackgroundColor(new java.awt.Color(228, 238, 232));
+        celula.setBorderColor(new java.awt.Color(115, 145, 127));
+        celula.setPadding(5);
+        tabela.addCell(celula);
+    }
+
+    private static String nomeVeiculo(VeiculoAbertoResponseDto veiculo, int numero) {
+        return valorRelatorio(veiculo.nomeTipoVeiculo())
+                + " " + numero
+                + (veiculo.identificacao() == null || veiculo.identificacao().isBlank()
+                        ? "" : " — " + veiculo.identificacao());
+    }
+
+    private static PassageiroDetalheView detalheRelatorio(
+            Map<UUID, PassageiroDetalheView> detalhes, AgendamentoResponseDto passageiro) {
+        return java.util.Objects.requireNonNull(detalhes.get(passageiro.id()),
+                "Detalhes não encontrados para o agendamento " + passageiro.id());
     }
     // ------------------------------------------------------------------
     // RELATÓRIO INDIVIDUAL (Duas Vias)
@@ -432,12 +578,16 @@ public final class AgendamentoPdfService {
             VeiculoAbertoResponseDto veiculo,
             Map<UUID, PassageiroDetalheView> detalhes,
             EstilosPdf estilos,
-            int totalLinhasAlvo) throws DocumentException {
+            int totalLinhasAlvo,
+            int numero) throws DocumentException {
         PdfPTable tabela = new PdfPTable(COLUNAS_CARD_VEICULO);
         tabela.setWidthPercentage(100);
         tabela.setSpacingAfter(2);
-        tabela.setHeaderRows(1);
+        tabela.setHeaderRows(2);
         tabela.setKeepTogether(true);
+        PdfPCell tituloVeiculo = criarCelulaTitulo(nomeVeiculo(veiculo, numero), estilos, Element.ALIGN_LEFT);
+        tituloVeiculo.setColspan(4);
+        tabela.addCell(tituloVeiculo);
         // 1. Cabeçalhos das colunas de passageiros
         for (String cabecalho : List.of("PASSAGEIRO", "DESTINO", "BUSCA", "HORÁRIO")) {
             adicionarCelulaFormatada(tabela, cabecalho, estilos.getTextoCabecalho(), true, 3f);
@@ -536,16 +686,18 @@ public final class AgendamentoPdfService {
     private static PdfPTable construirTabelaBuscasResidencia(
             List<VeiculoAbertoResponseDto> veiculos,
             Map<UUID, PassageiroDetalheView> detalhes,
-            EstilosPdf estilos) throws DocumentException {
+            EstilosPdf estilos,
+            Map<UUID, Integer> numerosVeiculos) throws DocumentException {
 
-        PdfPTable tabela = new PdfPTable(new float[] {2f, 3f});
+        PdfPTable tabela = new PdfPTable(new float[] {2f, 3f, 1f, 1.7f});
         tabela.setWidthPercentage(100);
         tabela.setHeaderRows(1);
         tabela.setSplitRows(true);
-        tabela.setWidths(new float[] {2f, 3f});
 
         adicionarCelulaFormatada(tabela, "PACIENTE", estilos.getTextoCabecalho(), true, 7f);
         adicionarCelulaFormatada(tabela, "ENDEREÇO PARA BUSCAR", estilos.getTextoCabecalho(), true, 7f);
+        adicionarCelulaFormatada(tabela, "SAÍDA", estilos.getTextoCabecalho(), true, 7f);
+        adicionarCelulaFormatada(tabela, "VEÍCULO", estilos.getTextoCabecalho(), true, 7f);
 
         int quantidade = 0;
 
@@ -559,10 +711,7 @@ public final class AgendamentoPdfService {
                     continue;
                 }
 
-                PassageiroDetalheView detalhe = detalhes.get(passageiro.idPessoa());
-                if (detalhe == null) {
-                    continue;
-                }
+                PassageiroDetalheView detalhe = detalheRelatorio(detalhes, passageiro);
 
                 String nome = detalhe.nome() == null ? "" : detalhe.nome().toUpperCase();
                 String endereco = detalhe.endereco() == null || detalhe.endereco().isBlank()
@@ -571,6 +720,10 @@ public final class AgendamentoPdfService {
 
                 adicionarCelulaFormatada(tabela, nome, estilos.getPassageiroNomeDestaque(), false, 8f);
                 adicionarCelulaFormatada(tabela, endereco, estilos.getTextoNormal(), false, 8f);
+                adicionarCelulaFormatada(tabela, formatarHoraRelatorio(veiculo.horarioSaida()),
+                        estilos.getTextoNormal(), false, 8f);
+                adicionarCelulaFormatada(tabela, nomeVeiculo(veiculo, numerosVeiculos.get(veiculo.id())),
+                        estilos.getTextoNormal(), false, 8f);
                 quantidade++;
             }
         }
@@ -602,8 +755,7 @@ public final class AgendamentoPdfService {
         if (passageiros == null || passageiros.isEmpty()) return 0;
         int contador = 0;
         for (AgendamentoResponseDto p : passageiros) {
-            PassageiroDetalheView d = detalhes.get(p.idPessoa());
-            if (d == null) continue;
+            PassageiroDetalheView d = detalheRelatorio(detalhes, p);
             StringBuilder acompBuilder = new StringBuilder();
             int qtdAcomp = Math.max(0, p.acompanhantes());
             for (int i = 0; i < qtdAcomp; i++) {

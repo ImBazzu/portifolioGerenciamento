@@ -5,7 +5,6 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -165,6 +164,34 @@ public class AgendamentoPdfController {
     private record PdfArmazenado(byte[] conteudo, String nomeArquivo, Instant criadoEm) implements Serializable {
     }
 
+    @GetMapping("/comprovante/{id}")
+    public ResponseEntity<byte[]> comprovante(@PathVariable UUID id, @RequestParam LocalDate data) {
+        try {
+            var agenda = agendamentoApi.buscarDia(data);
+            var veiculo = agenda.veiculos().stream()
+                    .filter(item -> item.passageiros().stream().anyMatch(p -> p.id().equals(id)))
+                    .findFirst().orElse(null);
+            var passageiros = veiculo == null ? agenda.passageirosPendentes() : veiculo.passageiros();
+            var passageiro = passageiros.stream()
+                    .filter(item -> item.id().equals(id))
+                    .findFirst()
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, "Agendamento ativo não encontrado nesta agenda."));
+            var opcoes = carregadorOpcoes.incluirDestinosHistoricos(
+                    carregadorOpcoes.carregar(), List.of(passageiro));
+            var detalhes = montadorDetalhes.montarPorAgendamento(List.of(passageiro), opcoes).get(id);
+            var pdf = AgendamentoPdfService.gerarComprovante(passageiro, detalhes, veiculo);
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "inline; filename=\"comprovante-" + id + ".pdf\"")
+                    .body(pdf);
+        } catch (RestClientResponseException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, mensagemErro.de(e), e);
+        }
+    }
+
     @GetMapping("/carros")
     public ResponseEntity<byte[]> pdfGeralCarros(@RequestParam LocalDate data) {
         try {
@@ -173,17 +200,16 @@ public class AgendamentoPdfController {
             var nomesPorTipo = opcoes.nomesTipoVeiculo();
 
             var veiculos = agenda.veiculos().stream()
-                    .filter(v -> TipoVeiculoUtil.ehCarro(v.nomeTipoVeiculo()))
-                    .sorted(Comparator.comparing(
-                            VeiculoAbertoResponseDto::horarioSaida,
-                            Comparator.nullsLast(Comparator.naturalOrder())))
                     .toList();
             var semVeiculo = agenda.passageirosPendentes().stream()
                     .filter(p -> TipoVeiculoUtil.ehCarro(nomesPorTipo.get(p.idTipoVeiculo())))
                     .toList();
             var noVeiculo = veiculos.stream().flatMap(v -> v.passageiros().stream()).toList();
 
-            var detalhes = montadorDetalhes.montar(noVeiculo, semVeiculo, opcoes);
+            var opcoesComHistorico = carregadorOpcoes.incluirDestinosHistoricos(
+                    opcoes, Stream.concat(noVeiculo.stream(), semVeiculo.stream()).toList());
+            var detalhes = montadorDetalhes.montarPorAgendamento(
+                    Stream.concat(noVeiculo.stream(), semVeiculo.stream()).toList(), opcoesComHistorico);
             var pdf = AgendamentoPdfService.gerar(data, "Relatório geral de carros", veiculos, semVeiculo, detalhes);
             return pdfInline(pdf, "agenda-carros-" + data + ".pdf");
         } catch (RestClientResponseException e) {

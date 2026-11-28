@@ -1,6 +1,11 @@
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="alertas">
             <div th:if="${erro}" class="alert alert-danger shadow-sm" role="alert" th:text="${erro}"></div>
-            <div th:if="${sucesso}" class="alert alert-success shadow-sm" role="alert" th:text="${sucesso}"></div>
+            <div th:if="${sucesso}" class="alert alert-success shadow-sm" role="alert">
+                <span th:text="${sucesso}"></span>
+                <a th:if="${agendamentoComprovante != null}" class="btn btn-sm btn-success ms-2"
+                   th:href="@{/agendamentos/pdf/comprovante/{id}(id=${agendamentoComprovante},data=${data})}"
+                   target="_blank" rel="noopener">Imprimir comprovante</a>
+            </div>
 
             <section th:if="${agenda == null}" class="alert alert-info shadow-sm">
                 Não há agenda aberta para <span th:text="${#temporals.format(data, 'dd/MM/yyyy')}"></span>.

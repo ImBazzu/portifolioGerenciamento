@@ -29,7 +29,9 @@ public class SessionTokenAuthFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
         return path.equals("/login") || path.equals("/error") || path.equals("/logout")
-                || path.startsWith("/css/") || path.startsWith("/js/") || path.startsWith("/images/");
+                || path.equals("/manifest.webmanifest") || path.equals("/service-worker.js")
+                || path.startsWith("/css/") || path.startsWith("/js/") || path.startsWith("/images/")
+                || path.startsWith("/icons/");
     }
 
     @Override

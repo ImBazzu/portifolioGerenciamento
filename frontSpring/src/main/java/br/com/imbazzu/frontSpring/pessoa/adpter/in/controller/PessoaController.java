@@ -283,4 +283,18 @@ public class PessoaController {
         return "paginas/pessoa/resultados-especificacoes :: resultados";
     }
 
+    @HxRequest
+    @GetMapping("/catalogo-especificacoes")
+    public String catalogoEspecificacoes(
+            @RequestParam(name = "nomeCatalogo", defaultValue = "") String nome,
+            @RequestParam(defaultValue = "0") int pagina,
+            Model model) {
+        if (pagina < 0) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "Página inválida.");
+        }
+        model.addAttribute("resultado", especificacaoApplication.listar(nome.strip(), false, pagina));
+        return "paginas/pessoa/catalogo-especificacoes :: resultados";
+    }
+
 }

@@ -73,6 +73,10 @@ class SegurancaIntegrationTest {
                 .content("{\"login\":\"motorista teste\",\"senha\":\"senha123\"}"))
                 .andExpect(status().isOk()).andExpect(content().string(containsString("\"tokenAcesso\"")));
         mvc.perform(get("/cidade").header("Authorization", "Bearer " + a)).andExpect(status().is2xxSuccessful());
+        mvc.perform(post("/destino").header("Authorization", "Bearer " + a)
+                .contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(status().isBadRequest());
+        mvc.perform(put("/destino/{id}", UUID.randomUUID()).header("Authorization", "Bearer " + a)
+                .param("nome", "Destino")).andExpect(status().isForbidden());
         mvc.perform(get("/motoristas").header("Authorization", "Bearer " + a)).andExpect(status().isForbidden());
         mvc.perform(get("/motoristas").header("Authorization", "Bearer " + m)).andExpect(status().isOk());
         mvc.perform(get("/relatorios/investigacao/pessoas").header("Authorization", "Bearer " + a)).andExpect(status().isForbidden());

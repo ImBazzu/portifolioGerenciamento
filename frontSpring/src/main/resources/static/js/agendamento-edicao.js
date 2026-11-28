@@ -212,7 +212,7 @@
                 "input[id^='editarBusca-'][type='checkbox']"
             );
 
-        if (checkResidencia) {
+        if (checkResidencia && residencia !== undefined) {
             checkResidencia.checked = residencia === "true";
         }
 
@@ -799,6 +799,8 @@
             e.target.querySelectorAll("input[name='acompanhantes']").forEach((input) => {
                 input.checked = input.defaultChecked;
             });
+            const busca = e.target.querySelector("input[name='buscarNaResidencia'][type='checkbox']");
+            if (busca) busca.checked = busca.defaultChecked;
         }
     });
 

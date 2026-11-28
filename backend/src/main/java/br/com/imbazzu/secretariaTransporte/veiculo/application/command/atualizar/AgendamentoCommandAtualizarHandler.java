@@ -28,12 +28,12 @@ public class AgendamentoCommandAtualizarHandler {
     public void handler(AgendamentoCommandAtualizar command) {
         var atual = AgendamentoValidacao.buscarAgendamento(consultas, command.id());
         AgendamentoValidacao.exigirDiaAberto(consultas, atual.getData());
-        if (command.buscarNaResidencia() != atual.isBuscarNaResidencia()) {
+        var pessoa = AgendamentoValidacao.validarPessoa(consultas, atual.getIdPessoa());
+        if (command.buscarNaResidencia() && !atual.isBuscarNaResidencia() && !pessoa.buscarNaResidencia()) {
             throw new DadosInvalidosException(
-                    "Busca na residência não pode ser alterada em um agendamento existente");
+                    "Marque a opção de buscar na residência no cadastro da pessoa antes de atualizar o agendamento");
         }
 
-        var pessoa = AgendamentoValidacao.validarPessoa(consultas, atual.getIdPessoa());
         if (command.acompanhantes() < 0) {
             throw new DadosInvalidosException("A quantidade de acompanhantes não pode ser negativa");
         }
@@ -44,7 +44,6 @@ public class AgendamentoCommandAtualizarHandler {
             }
         }
         var destino = AgendamentoValidacao.validarDestino(consultas, command.idDestino());
-        AgendamentoValidacao.validarLista(consultas, atual.getIdLista());
         var tipo = consultas.buscarTipoVeiculo(command.idTipoVeiculo());
         if (!tipo.ativo()) {
             throw new OperacaoNaoPermitidaException("Não é possível agendar para um tipo de veículo arquivado");
@@ -53,33 +52,38 @@ public class AgendamentoCommandAtualizarHandler {
             throw new DadosInvalidosException("A quantidade de pessoas excede a capacidade do tipo de veículo");
         }
 
-        var regra = consultas.listarRegrasCadastro(atual.getIdLista()).stream()
-                .filter(item -> !item.obrigacaoAnexo())
-                .filter(item -> item.idsVeiculos().contains(command.idTipoVeiculo()))
-                .filter(item -> RegraCadastroAgendamento.motivosNaoAplicacao(
-                        item, pessoa, destino, atual.getData(), command.horarioChegada()).isEmpty())
-                .findFirst()
-                .orElseThrow(() -> new OperacaoNaoPermitidaException(
-                        "Nenhuma regra da lista aprova o tipo e os dados informados"));
-
         boolean tipoCarro = VeiculoAberto.tipoCalculaHorarioSaida(tipo.nome());
-        var tolerancia = tipoCarro
-                ? consultas.buscarToleranciaSeparacao(atual.getIdLista(), command.idTipoVeiculo())
-                        .orElseThrow(() -> new OperacaoNaoPermitidaException(
-                                "A lista não possui regra de tolerância para o tipo de veículo selecionado"))
-                : java.time.Duration.ZERO;
+        var idRegra = atual.getIdRegraCadastro();
+        var tolerancia = atual.getToleranciaSeparacao();
+        if (!command.idTipoVeiculo().equals(atual.getIdTipoVeiculo())) {
+            AgendamentoValidacao.validarLista(consultas, atual.getIdLista());
+            idRegra = consultas.listarRegrasCadastro(atual.getIdLista()).stream()
+                    .filter(item -> !item.obrigacaoAnexo())
+                    .filter(item -> item.idsVeiculos().contains(command.idTipoVeiculo()))
+                    .filter(item -> RegraCadastroAgendamento.motivosNaoAplicacao(
+                            item, pessoa, destino, atual.getData(), command.horarioChegada()).isEmpty())
+                    .findFirst()
+                    .orElseThrow(() -> new OperacaoNaoPermitidaException(
+                            "Nenhuma regra da lista aprova o tipo e os dados informados"))
+                    .id();
+            tolerancia = tipoCarro
+                    ? consultas.buscarToleranciaSeparacao(atual.getIdLista(), command.idTipoVeiculo())
+                            .orElseThrow(() -> new OperacaoNaoPermitidaException(
+                                    "A lista não possui regra de tolerância para o tipo de veículo selecionado"))
+                    : java.time.Duration.ZERO;
+        }
         var atualizado = Agendamento.recriar(
                 atual.getId(),
                 atual.getData(),
                 atual.getIdPessoa(),
                 atual.getIdLista(),
-                regra.id(),
+                idRegra,
                 tipo.id(),
                 command.idDestino(),
                 destino.tempoViagem(),
                 tolerancia,
                 command.horarioChegada(),
-                atual.isBuscarNaResidencia(),
+                command.buscarNaResidencia(),
                 command.acompanhantes(),
                 null,
                 atual.getAutorId(),

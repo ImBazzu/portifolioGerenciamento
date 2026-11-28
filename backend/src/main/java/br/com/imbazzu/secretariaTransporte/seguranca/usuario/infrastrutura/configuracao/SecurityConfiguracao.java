@@ -86,6 +86,7 @@ public class SecurityConfiguracao {
                         .requestMatchers("/motoristas/**").hasRole("MOTORISTA")
                         .requestMatchers(HttpMethod.GET, "/cidade/**", "/destino/**", "/lista/**",
                                 "/prioridades/**", "/veiculo/**").hasRole("AGENDAMENTO")
+                        .requestMatchers(HttpMethod.POST, "/destino").hasRole("AGENDAMENTO")
                         .requestMatchers("/cidade/**", "/destino/**", "/lista/**",
                                 "/prioridades/**", "/veiculo/**").hasRole("GESTAO")
                         .requestMatchers("/agendamentos/**", "/pessoa/**", "/especificacao/**").hasRole("AGENDAMENTO")

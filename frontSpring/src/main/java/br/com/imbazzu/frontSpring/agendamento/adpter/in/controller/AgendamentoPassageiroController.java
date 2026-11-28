@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.AgendamentoRedirect;
@@ -85,6 +87,7 @@ public class AgendamentoPassageiroController {
         PessoaResponseDto pessoa = null;
         String erro = null;
         try {
+            validarListaDoVeiculoOrigem(data, veiculoOrigem, idLista);
             pessoa = pessoas.buscar(idPessoa);
             acompanhantes = acompanhantes == null ? pessoa.prioridadeAcompanhantes() : acompanhantes;
             buscarNaResidencia = pessoa.buscarNaResidencia();
@@ -166,9 +169,11 @@ public class AgendamentoPassageiroController {
             @RequestParam(defaultValue = "false") boolean origemCarros,
             RedirectAttributes redirect) {
         try {
+            validarListaDoVeiculoOrigem(data, veiculoOrigem, idLista);
             agendamentoApi.criar(data, new AgendamentoRequestDto(
                     idPessoa, idLista, idTipoVeiculo, idDestino,
                     horarioChegada, buscarNaResidencia, acompanhantes, idVeiculo, informarHorarioSaida));
+            redirect.addFlashAttribute("pessoaComprovante", idPessoa);
             redirect.addFlashAttribute("sucesso", idVeiculo == null
                     ? "Passageiro de carro agendado para separação."
                     : "Passageiro agendado e atribuído ao veículo físico.");
@@ -196,6 +201,21 @@ public class AgendamentoPassageiroController {
             }
         }
         return AgendamentoRedirect.dia(data);
+    }
+
+    private void validarListaDoVeiculoOrigem(LocalDate data, UUID veiculoOrigem, UUID idLista) {
+        if (veiculoOrigem == null) {
+            return;
+        }
+        var veiculo = agendamentoApi.buscarDia(data).veiculos().stream()
+                .filter(item -> item.id().equals(veiculoOrigem))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.CONFLICT, "O veículo de origem não está mais aberto nesta data."));
+        if (veiculo.idListaAbertura() != null && !veiculo.idListaAbertura().equals(idLista)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "A lista deve corresponder à finalidade do veículo de origem.");
+        }
     }
 
  @PostMapping("/{idAgendamento}/editar")

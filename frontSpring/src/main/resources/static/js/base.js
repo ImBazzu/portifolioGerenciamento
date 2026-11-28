@@ -33,34 +33,6 @@ if (document.readyState === 'loading') {
     initMobileMenu();
 }
 
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-            .catch(error => console.error('Não foi possível registrar o service worker:', error));
-    });
-}
-
-let instalacaoPwa;
-const botaoInstalacaoPwa = document.getElementById('installPwaButton');
-window.addEventListener('beforeinstallprompt', event => {
-    event.preventDefault();
-    instalacaoPwa = event;
-    if (botaoInstalacaoPwa) botaoInstalacaoPwa.hidden = false;
-});
-
-botaoInstalacaoPwa?.addEventListener('click', async () => {
-    if (!instalacaoPwa) return;
-    instalacaoPwa.prompt();
-    await instalacaoPwa.userChoice;
-    instalacaoPwa = null;
-    botaoInstalacaoPwa.hidden = true;
-});
-
-window.addEventListener('appinstalled', () => {
-    instalacaoPwa = null;
-    if (botaoInstalacaoPwa) botaoInstalacaoPwa.hidden = true;
-});
-
 // Fechamento automático de modais em requisições HTMX
 document.body.addEventListener('htmx:afterSwap', function (evt) {
     if (evt.detail.target.id === 'especificacaoResultados') {
@@ -299,9 +271,26 @@ document.addEventListener('click', function (event) {
     const alvo = event.target;
     if (!(alvo instanceof Element)) return;
 
-    const opcao = alvo.closest('#especificacaoResultados button');
+    const abrirCatalogo = alvo.closest('[data-abrir-catalogo-especificacoes]');
+    if (abrirCatalogo) {
+        const catalogo = abrirCatalogo.closest('form')?.querySelector('#catalogoEspecificacao');
+        if (catalogo && !catalogo.open) {
+            catalogo.showModal();
+            catalogo.querySelector('#catalogoEspecificacaoFiltro')?.focus();
+        }
+        return;
+    }
+
+    const fecharCatalogo = alvo.closest('[data-fechar-catalogo-especificacoes]');
+    if (fecharCatalogo) {
+        fecharCatalogo.closest('dialog')?.close();
+        return;
+    }
+
+    const opcao = alvo.closest('#especificacaoResultados button, [data-selecionar-especificacao]');
     if (opcao) {
-        const grupo = opcao.closest('.js-especificacao-grupo');
+        const grupo = opcao.closest('.js-especificacao-grupo')
+            || opcao.closest('form')?.querySelector('.js-especificacao-grupo');
         const busca = grupo?.querySelector('.js-especificacao-busca');
         const idEspecificacao = grupo?.querySelector('#especificacaoId');
         if (!busca || !idEspecificacao) return;
@@ -313,6 +302,8 @@ document.addEventListener('click', function (event) {
 
         const mensagem = grupo.querySelector('#especificacaoBuscaMensagem');
         if (mensagem) mensagem.textContent = 'Especificação selecionada.';
+        opcao.closest('dialog')?.close();
+        busca.focus();
         return;
     }
 
@@ -320,6 +311,23 @@ document.addEventListener('click', function (event) {
         document.querySelectorAll('#especificacaoResultados').forEach(resultados => resultados.replaceChildren());
     }
 });
+
+document.addEventListener('keydown', function (event) {
+    if (event.key === 'Enter' && event.target instanceof HTMLInputElement
+            && event.target.id === 'catalogoEspecificacaoFiltro') {
+        event.preventDefault();
+        htmx.trigger(event.target, 'search');
+    }
+});
+
+for (const evento of ['htmx:responseError', 'htmx:sendError']) {
+    document.body.addEventListener(evento, function (event) {
+        const target = event.detail.target;
+        if (target?.id === 'catalogoEspecificacaoResultados') {
+            target.textContent = 'Não foi possível carregar as especificações. Tente novamente.';
+        }
+    });
+}
 
 document.addEventListener('submit', function (event) {
     const form = event.target;

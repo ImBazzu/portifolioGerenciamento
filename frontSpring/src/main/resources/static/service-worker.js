@@ -1,11 +1,12 @@
-const CACHE_NAME = 'secretaria-transporte-static-v4';
+const CACHE_NAME = 'secretaria-transporte-static-v5';
 const STATIC_PREFIXES = ['/css/', '/js/', '/icons/'];
 const STATIC_FILES = [
     '/css/principal.css',
     '/js/base.js',
+    '/js/pwa.js',
     '/manifest.webmanifest',
-    '/icons/icon-192.svg',
-    '/icons/icon-512.svg'
+    '/icons/icon-192.png',
+    '/icons/icon-512.png'
 ];
 
 self.addEventListener('install', event => {

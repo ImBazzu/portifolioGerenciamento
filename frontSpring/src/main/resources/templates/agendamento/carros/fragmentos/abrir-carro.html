@@ -1,22 +1,22 @@
 <th:block xmlns:th="http://www.thymeleaf.org" th:fragment="abrirCarro">
-                <section class="card border-0 shadow-sm mb-4 rounded-4">
-                    <div class="card-body p-4">
-                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
-                            <div>
-                            <h2 class="h5 mb-1 fw-bold text-dark">Abrir carro</h2>
-                            <p class="text-muted mb-0">Ajuste, emergência ou alta. Para emergência e alta, informe a saída do veículo.</p>
-                            </div>
-                        </div>
+                <div class="modal fade" id="abrirCarroModal" tabindex="-1" aria-labelledby="abrirCarroTitulo" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content border-0 shadow">
                         <form method="post" th:action="@{/agendamentos/carros/veiculos}"
-                              class="row g-3 align-items-end"
                               th:attr="data-carro-disponivel=${carroQuatroLugares != null}">
+                            <div class="modal-header">
+                                <h2 class="modal-title fs-5" id="abrirCarroTitulo">Abrir carro</h2>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                            </div>
+                            <div class="modal-body">
+                            <p class="text-muted">Escolha o motivo. Para emergência e alta, informe a saída do veículo.</p>
                             <input type="hidden" name="data" th:value="${data}">
                             <input th:if="${carroQuatroLugares != null}" type="hidden" name="idTipoVeiculo"
                                    th:value="${carroQuatroLugares.id()}">
                             <input type="hidden" name="idListaAbertura">
                             <span th:each="lista : ${listas}" th:if="${lista.finalidadeEspecial() != null}"
                                   th:attr="data-lista-finalidade=${lista.finalidadeEspecial()},data-lista-id=${lista.id()}" hidden></span>
-                            <div class="col-12 col-md-4">
+                            <div class="mb-3">
                                 <label class="form-label fw-semibold" for="finalidadeAberturaCarro">Motivo da abertura</label>
                                 <select class="form-select" id="finalidadeAberturaCarro" name="finalidadeAbertura"
                                         data-finalidade-abertura>
@@ -25,21 +25,21 @@
                                     <option value="ALTA">Alta hospitalar</option>
                                 </select>
                             </div>
-                            <div class="col-12 col-md-2" data-finalidade-horario hidden>
+                            <div class="mb-3" data-finalidade-horario hidden>
                                 <label class="form-label fw-semibold" for="horarioSaidaCarro">Saída do veículo</label>
                                 <input class="form-control" type="time" id="horarioSaidaCarro" name="horarioSaida">
                             </div>
-                            <div class="col-12 col-md-2">
-                                <button class="btn btn-primary shadow-sm w-100" type="submit" data-abrir-carro
+                            <div class="text-danger" data-finalidade-lista-status role="alert" hidden></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Cancelar</button>
+                                <button class="btn btn-primary" type="submit" data-abrir-carro
                                         th:disabled="${carroQuatroLugares == null}">
                                     <i class="bi bi-plus-lg me-1"></i>Abrir carro
                                 </button>
                             </div>
-                            <div class="col-12 text-danger" data-finalidade-lista-status role="alert" hidden></div>
                         </form>
+                        </div>
                     </div>
-                    <div th:if="${carroQuatroLugares == null}" class="alert alert-warning mx-4">
-                        Cadastre ou reative o tipo Carro com 4 lugares para abrir um carro.
-                    </div>
-                </section>
+                </div>
 </th:block>

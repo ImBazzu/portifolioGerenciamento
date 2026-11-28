@@ -81,4 +81,15 @@ class AgendamentoCommandAbrirVeiculoHandlerTest {
         assertThrows(DadosInvalidosException.class, () -> handler.handler(new AgendamentoCommandAbrirVeiculo(
                 data, tipoId, null, null, FinalidadeAberturaVeiculo.ALTA, null)));
     }
+
+    @Test
+    void rejeitaCarroEspecialComCapacidadeDiferenteDeQuatro() {
+        var tipoId = UUID.randomUUID();
+        var data = LocalDate.of(2026, 11, 27);
+        when(consultas.diaAberto(data)).thenReturn(true);
+        when(consultas.buscarTipoVeiculo(tipoId)).thenReturn(new TipoVeiculoAgendaDados(tipoId, "Carro", 5, true));
+
+        assertThrows(DadosInvalidosException.class, () -> handler.handler(new AgendamentoCommandAbrirVeiculo(
+                data, tipoId, null, LocalTime.NOON, FinalidadeAberturaVeiculo.ALTA, UUID.randomUUID())));
+    }
 }

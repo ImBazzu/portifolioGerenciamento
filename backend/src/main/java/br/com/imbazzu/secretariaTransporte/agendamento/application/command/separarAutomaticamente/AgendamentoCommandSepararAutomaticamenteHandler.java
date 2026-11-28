@@ -67,6 +67,8 @@ public class AgendamentoCommandSepararAutomaticamenteHandler {
             }
             var veiculoEscolhido = veiculos.stream()
                     .filter(veiculo -> VeiculoAberto.tipoCalculaHorarioSaida(veiculo.nomeTipoVeiculo()))
+                    .filter(veiculo -> veiculo.idListaAbertura() == null
+                            || veiculo.idListaAbertura().equals(slot.agendamento().getIdLista()))
                     .filter(veiculo -> tolerancias.containsKey(veiculo.idTipoVeiculo()))
                     .filter(v -> CompatibilidadeVeiculoAgendamento.compativelCidade(
                             destinosPorCidadeId,

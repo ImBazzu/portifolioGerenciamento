@@ -1,6 +1,7 @@
 package br.com.imbazzu.secretariaTransporte.veiculo.application.command.atualizar;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -8,6 +9,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -18,6 +23,8 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import br.com.imbazzu.secretariaTransporte.agendamento.core.domain.Agendamento;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.model.DestinoAgendaDados;
@@ -28,6 +35,8 @@ import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.Agendament
 import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.AgendamentoQueryPorta;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.DadosInvalidosException;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.OperacaoNaoPermitidaException;
+import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.handler.GlobalExceptionHandler;
+import br.com.imbazzu.secretariaTransporte.veiculo.adpter.in.VeiculoController;
 import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 
 class AgendamentoCommandAtualizarHandlerTest {
@@ -55,12 +64,86 @@ class AgendamentoCommandAtualizarHandlerTest {
     }
 
     @Test
-    void rejeitaAlteracaoDaBuscaNaResidencia() {
-        when(consultas.buscarAgendamento(atual.getId())).thenReturn(Optional.of(atual));
-        when(consultas.diaAberto(atual.getData())).thenReturn(true);
+    void permiteDesmarcarBuscaNaResidencia() {
+        prepararConsultas(3);
+        handler.handler(comando(false, 2));
+        var captor = ArgumentCaptor.forClass(Agendamento.class);
+        verify(comandos).salvar(captor.capture());
+        assertFalse(captor.getValue().isBuscarNaResidencia());
+    }
 
-        assertThrows(DadosInvalidosException.class, () -> handler.handler(comando(false, 2)));
+    @Test
+    void permiteMarcarBuscaQuandoHabilitadaNoCadastro() {
+        prepararConsultas(3);
+        var anterior = Agendamento.recriar(atual.getId(), atual.getData(), atual.getIdPessoa(),
+                atual.getIdLista(), atual.getIdRegraCadastro(), tipoId, destinoId, Duration.ZERO,
+                Duration.ZERO, atual.getHorarioChegada(), false, 2, null);
+        when(consultas.buscarAgendamento(atual.getId())).thenReturn(Optional.of(anterior));
+
+        handler.handler(comando(true, 2));
+        var captor = ArgumentCaptor.forClass(Agendamento.class);
+        verify(comandos).salvar(captor.capture());
+        assertTrue(captor.getValue().isBuscarNaResidencia());
+    }
+
+    @Test
+    void exigeBuscaHabilitadaNoCadastroParaMarcar() {
+        prepararConsultas(3);
+        var anterior = Agendamento.recriar(atual.getId(), atual.getData(), atual.getIdPessoa(),
+                atual.getIdLista(), atual.getIdRegraCadastro(), tipoId, destinoId, Duration.ZERO,
+                Duration.ZERO, atual.getHorarioChegada(), false, 2, null);
+        when(consultas.buscarAgendamento(atual.getId())).thenReturn(Optional.of(anterior));
+        when(consultas.buscarPessoa(atual.getIdPessoa()))
+                .thenReturn(new PessoaAgendaDados(prioridadeId, true, true, false, 2));
+        var erro = assertThrows(DadosInvalidosException.class, () -> handler.handler(comando(true, 2)));
+        assertTrue(erro.getMessage().contains("cadastro da pessoa"));
         verify(comandos, never()).salvar(any(Agendamento.class));
+    }
+
+    @Test
+    void buscaNaoHabilitadaRetornaErroDeValidacaoNaApi() throws Exception {
+        prepararConsultas(3);
+        var anterior = Agendamento.recriar(atual.getId(), atual.getData(), atual.getIdPessoa(),
+                atual.getIdLista(), atual.getIdRegraCadastro(), tipoId, destinoId, Duration.ZERO,
+                Duration.ZERO, atual.getHorarioChegada(), false, 2, null);
+        when(consultas.buscarAgendamento(atual.getId())).thenReturn(Optional.of(anterior));
+        when(consultas.buscarPessoa(atual.getIdPessoa()))
+                .thenReturn(new PessoaAgendaDados(prioridadeId, true, true, false, 2));
+        var controller = new VeiculoController(null, null, null, null, handler, null, null, null, consultas);
+        var mvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new GlobalExceptionHandler()).build();
+
+        mvc.perform(put("/agendamentos/{id}", atual.getId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"idTipoVeiculo":"%s","idDestino":"%s","horarioChegada":"11:00",
+                                 "buscarNaResidencia":true,"acompanhantes":2}
+                                """.formatted(tipoId, destinoId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("cadastro da pessoa")));
+        verify(comandos, never()).salvar(any(Agendamento.class));
+    }
+
+    @Test
+    void editaDadosMesmoQuandoRegrasDaListaNaoAprovamMais() {
+        prepararConsultas(3);
+        when(consultas.listaAtiva(atual.getIdLista())).thenReturn(false);
+        when(consultas.listarRegrasCadastro(atual.getIdLista())).thenReturn(List.of());
+        when(consultas.buscarToleranciaSeparacao(atual.getIdLista(), tipoId)).thenReturn(Optional.empty());
+        var novoDestino = UUID.randomUUID();
+        when(consultas.buscarDestino(novoDestino))
+                .thenReturn(new DestinoAgendaDados(UUID.randomUUID(), Duration.ofMinutes(30), true));
+
+        handler.handler(new AgendamentoCommandAtualizar(atual.getId(), tipoId, novoDestino,
+                LocalTime.of(11, 0), true, 1, null));
+
+        var captor = ArgumentCaptor.forClass(Agendamento.class);
+        verify(comandos).salvar(captor.capture());
+        assertEquals(atual.getIdRegraCadastro(), captor.getValue().getIdRegraCadastro());
+        assertEquals(atual.getToleranciaSeparacao(), captor.getValue().getToleranciaSeparacao());
+        assertEquals(novoDestino, captor.getValue().getIdDestino());
+        assertEquals(1, captor.getValue().getAcompanhantes());
+        assertEquals(LocalTime.of(11, 0), captor.getValue().getHorarioChegada());
     }
 
     @Test

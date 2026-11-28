@@ -26,6 +26,8 @@ import org.springframework.web.client.HttpServerErrorException;
 import br.com.imbazzu.frontSpring.autenticacao.core.exception.RefreshTokenInvalidoException;
 import br.com.imbazzu.frontSpring.autenticacao.core.porta.out.SessionAuthPorta;
 import br.com.imbazzu.frontSpring.prioridade.PrioridadeApi;
+import br.com.imbazzu.frontSpring.localidade.core.dto.DestinoRequestDto;
+import br.com.imbazzu.frontSpring.localidade.core.porta.in.LocalidadeApplicationPorta;
 import br.com.imbazzu.frontSpring.relatorio.controller.InvestigacaoApi;
 
 @SpringBootTest
@@ -36,12 +38,52 @@ class SegurancaWebTest {
     @MockitoBean private SessionAuthPorta sessao;
     @MockitoBean private PrioridadeApi prioridades;
     @MockitoBean private InvestigacaoApi investigacao;
+    @MockitoBean private LocalidadeApplicationPorta localidades;
     private final UUID id = UUID.randomUUID();
 
     @BeforeEach
     void preparar() {
         when(sessao.access()).thenReturn("token");
         when(prioridades.listar()).thenReturn(List.of());
+    }
+
+    @Test
+    void recursosDeInstalacaoSaoPublicosMesmoSemSessao() throws Exception {
+        when(sessao.access()).thenReturn(null);
+        for (String caminho : List.of("/manifest.webmanifest", "/service-worker.js",
+                "/icons/icon-192.png", "/icons/icon-512.png", "/js/pwa.js")) {
+            mvc.perform(get(caminho)).andExpect(status().isOk());
+        }
+        mvc.perform(get("/login")).andExpect(status().isOk())
+                .andExpect(content().string(containsString("/manifest.webmanifest")))
+                .andExpect(content().string(containsString("/js/pwa.js")))
+                .andExpect(content().string(containsString("/icons/icon-192.png")));
+        mvc.perform(get("/agendamentos")).andExpect(redirectedUrl("/login"));
+    }
+
+    @Test
+    void agendamentoPodeAbrirECadastrarDestinoSemGerenciarLocalidades() throws Exception {
+        when(usuarios.proprio()).thenReturn(new UsuarioApi.Usuario(id, "Ana", "AGENDAMENTO"));
+        mvc.perform(get("/localidade/{id}/destinos/abrirFormulario", id)
+                        .param("contextoAgendamento", "true").header("HX-Request", "true"))
+                .andExpect(status().isOk());
+        mvc.perform(get("/localidade/limpar-modal").header("HX-Request", "true"))
+                .andExpect(status().isOk());
+        mvc.perform(post("/localidade/destinos").with(csrf()).header("HX-Request", "true")
+                        .param("idCidade", id.toString()).param("nome", "")
+                        .param("contextoAgendamento", "true"))
+                .andExpect(status().isOk());
+        var destino = UUID.randomUUID();
+        when(localidades.salvarDestino(new DestinoRequestDto(id, "Hospital"))).thenReturn(destino);
+        mvc.perform(post("/localidade/destinos").with(csrf()).header("HX-Request", "true")
+                        .param("idCidade", id.toString()).param("nome", "Hospital")
+                        .param("contextoAgendamento", "true"))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header()
+                        .string("HX-Trigger-After-Settle", containsString(destino.toString())));
+        mvc.perform(get("/localidade")).andExpect(status().isForbidden());
+        mvc.perform(patch("/localidade/destinos/arquivar/{id}", id).with(csrf()))
+                .andExpect(status().isForbidden());
     }
 
     @Test

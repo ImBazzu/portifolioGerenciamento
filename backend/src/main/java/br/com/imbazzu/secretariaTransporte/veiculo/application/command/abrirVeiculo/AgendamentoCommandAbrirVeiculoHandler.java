@@ -33,7 +33,7 @@ public class AgendamentoCommandAbrirVeiculoHandler {
                 : command.finalidadeAbertura();
         boolean carro = VeiculoAberto.tipoCalculaHorarioSaida(tipo.nome());
         boolean atendimentoEspecial = finalidade != FinalidadeAberturaVeiculo.AJUSTE;
-        if (atendimentoEspecial && !carro) {
+        if (atendimentoEspecial && (!carro || tipo.capacidade() != 4)) {
             throw new DadosInvalidosException("Emergência e alta devem ser abertas como carro de quatro lugares");
         }
         if (!atendimentoEspecial && command.idListaAbertura() != null) {

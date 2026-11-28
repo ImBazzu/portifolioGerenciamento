@@ -1,0 +1,29 @@
+<th:block th:fragment="resultados" xmlns:th="http://www.thymeleaf.org">
+    <p th:if="${#lists.isEmpty(resultado.conteudo())}" class="text-muted">Nenhuma especificação encontrada.</p>
+    <div th:unless="${#lists.isEmpty(resultado.conteudo())}" class="list-group mb-3">
+        <button th:each="especificacao : ${resultado.conteudo()}" type="button"
+                class="list-group-item list-group-item-action"
+                data-selecionar-especificacao
+                th:data-id="${especificacao.id()}"
+                th:data-label="${especificacao.nome() + ' (' + especificacao.prioridadeNome() + ')'}">
+            <span class="fw-semibold" th:text="${especificacao.nome()}"></span>
+            <span class="text-muted" th:text="${' · ' + especificacao.prioridadeNome()}"></span>
+        </button>
+    </div>
+    <nav th:if="${resultado.totalPaginas() > 1}" class="d-flex justify-content-between align-items-center gap-2"
+         aria-label="Páginas de especificações">
+        <button type="button" class="btn btn-outline-secondary btn-sm"
+                th:disabled="${resultado.paginaAtual() == 0}"
+                th:attr="hx-get=@{/pessoas/catalogo-especificacoes(pagina=${resultado.paginaAtual() - 1})}"
+                hx-include="#catalogoEspecificacaoFiltro" hx-target="#catalogoEspecificacaoResultados"
+                hx-sync="#catalogoEspecificacao:replace"
+                hx-swap="innerHTML">Anterior</button>
+        <span class="small" th:text="${'Página ' + (resultado.paginaAtual() + 1) + ' de ' + resultado.totalPaginas()}"></span>
+        <button type="button" class="btn btn-outline-secondary btn-sm"
+                th:disabled="${resultado.paginaAtual() + 1 >= resultado.totalPaginas()}"
+                th:attr="hx-get=@{/pessoas/catalogo-especificacoes(pagina=${resultado.paginaAtual() + 1})}"
+                hx-include="#catalogoEspecificacaoFiltro" hx-target="#catalogoEspecificacaoResultados"
+                hx-sync="#catalogoEspecificacao:replace"
+                hx-swap="innerHTML">Próxima</button>
+    </nav>
+</th:block>

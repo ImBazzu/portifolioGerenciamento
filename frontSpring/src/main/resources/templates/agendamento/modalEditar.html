@@ -255,15 +255,14 @@
                                         <div class="form-check form-switch">
                                             <input class="form-check-input" type="checkbox" role="switch"
                                                    th:id="'editarBusca-' + ${passageiro.id()}"
-                                                   th:checked="${passageiro.buscarNaResidencia()}" disabled>
-                                            <input type="hidden" name="buscarNaResidencia"
-                                                   th:value="${passageiro.buscarNaResidencia()}">
+                                                   name="buscarNaResidencia" value="true"
+                                                   th:checked="${passageiro.buscarNaResidencia()}">
                                             <label class="form-check-label text-secondary small fw-semibold"
                                                    th:for="'editarBusca-' + ${passageiro.id()}">
                                                 Buscar passageiro na residência
                                             </label>
                                         </div>
-                                        <div class="form-text">A busca na residência é mantida conforme o agendamento original.</div>
+                                        <div class="form-text">Para marcar, a busca na residência deve estar habilitada no cadastro da pessoa.</div>
                                     </div>
 
                                 </div>
@@ -275,6 +274,9 @@
 
                 <!-- RODAPÉ -->
                 <div class="modal-footer bg-white border-top px-4 py-3 gap-2">
+                    <a class="btn btn-outline-secondary"
+                       th:href="@{/agendamentos/pdf/comprovante/{id}(id=${passageiro.id()},data=${data})}"
+                       target="_blank" rel="noopener"><i class="bi bi-printer me-1"></i>Comprovante</a>
                     <!-- Só pendente. Abre o modal de confirmação que já existe (troca de modal nativa do Bootstrap). -->
                     <button th:if="${passageiro.idVeiculoAberto() == null}"
                             type="button"

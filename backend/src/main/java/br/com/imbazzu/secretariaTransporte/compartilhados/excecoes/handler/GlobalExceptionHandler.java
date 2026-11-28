@@ -45,7 +45,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DadosInvalidosException.class)
     public ResponseEntity<ErroDto> dadosInvalidos(Exception e, HttpServletRequest request) {
-        var retorno = ErroMapper.toErroDto(HttpStatus.UNAUTHORIZED, e, request); // 401
+        var retorno = ErroMapper.toErroDto(HttpStatus.BAD_REQUEST, e, request); // 400
         return ResponseEntity.status(retorno.status()).body(retorno);
     }
 

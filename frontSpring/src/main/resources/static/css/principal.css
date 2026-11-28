@@ -468,6 +468,19 @@ body.htmx-request #global-loader,
     overflow-y: auto;
 }
 
+.catalogo-especificacao {
+    width: min(94vw, 36rem);
+    max-height: 85vh;
+    border: 0;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, .35);
+}
+
+.catalogo-especificacao::backdrop {
+    background: rgba(15, 23, 42, .65);
+}
+
 .custom-modal-card.custom-modal-pessoa {
     overflow-y: auto;
 }

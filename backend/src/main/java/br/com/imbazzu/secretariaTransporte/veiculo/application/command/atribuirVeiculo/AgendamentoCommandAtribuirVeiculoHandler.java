@@ -12,6 +12,7 @@ import br.com.imbazzu.secretariaTransporte.agendamento.core.service.Compatibilid
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.DadosInvalidosException;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.EntidadeNaoEncontradoException;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.OperacaoNaoPermitidaException;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.FinalidadeAberturaVeiculo;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -34,12 +35,22 @@ public class AgendamentoCommandAtribuirVeiculoHandler {
             throw new OperacaoNaoPermitidaException(
                     "O agendamento já está atribuído a um veículo físico");
         }
+        if (!CompatibilidadeVeiculoAgendamento.listaCompativel(veiculo, agendamento)) {
+            throw new OperacaoNaoPermitidaException(
+                    "O passageiro deve pertencer à lista vinculada ao veículo");
+        }
         var ocupantes = consultas.listarAgendamentos(agendamento.getData()).stream()
                 .filter(item -> command.idVeiculo().equals(item.getIdVeiculoAberto()))
                 .toList();
         if (!CompatibilidadeVeiculoAgendamento.capacidadeDisponivel(veiculo, ocupantes, agendamento)) {
             throw new OperacaoNaoPermitidaException(
                     "O veículo não possui assentos suficientes para este passageiro e seus acompanhantes");
+        }
+        if (veiculo.finalidadeAbertura() != FinalidadeAberturaVeiculo.AJUSTE
+                && veiculo.horarioSaida().isAfter(
+                        CompatibilidadeVeiculoAgendamento.horarioSaidaNecessario(agendamento))) {
+            throw new OperacaoNaoPermitidaException(
+                    "O horário de saída do veículo não atende ao horário de chegada do passageiro");
         }
         var tolerancia = veiculo.calculaHorarioSaida()
                 ? consultas.buscarToleranciaSeparacao(agendamento.getIdLista(), veiculo.idTipoVeiculo())

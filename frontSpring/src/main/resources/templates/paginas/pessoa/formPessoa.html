@@ -43,6 +43,7 @@
                     </div>
                     <div class="col-md-6 position-relative js-especificacao-grupo">
                         <label for="especificacaoBusca" class="form-label fw-bold">Especificação</label>
+                        <div class="input-group">
                         <input id="especificacaoBusca" type="search" name="termoEspecificacao"
                                class="form-control js-especificacao-busca"
                                th:classappend="${#fields.hasErrors('especificacaoId')} ? 'is-invalid'"
@@ -56,6 +57,16 @@
                                hx-sync="this:replace"
                                aria-controls="especificacaoResultados"
                                aria-autocomplete="list">
+                        <button type="button" class="btn btn-outline-secondary" aria-label="Consultar catálogo de especificações"
+                                data-abrir-catalogo-especificacoes
+                                hx:get="@{/pessoas/catalogo-especificacoes}" hx-target="#catalogoEspecificacaoResultados"
+                                hx-include="#catalogoEspecificacaoFiltro" hx-sync="#catalogoEspecificacao:replace"
+                                hx-swap="innerHTML">
+                            <i class="bi bi-search" aria-hidden="true"></i>
+                        </button>
+                        <div class="invalid-feedback" th:if="${#fields.hasErrors('especificacaoId')}"
+                             th:errors="*{especificacaoId}"></div>
+                        </div>
                         <input type="hidden" id="especificacaoId" th:field="*{especificacaoId}">
                         <div id="especificacaoResultados"
                              class="list-group position-absolute w-100 shadow rounded-3"
@@ -64,8 +75,6 @@
                         <div id="especificacaoBuscaMensagem" class="form-text" aria-live="polite">
                             Digite e selecione uma especificação da lista.
                         </div>
-                        <div class="invalid-feedback" th:if="${#fields.hasErrors('especificacaoId')}"
-                             th:errors="*{especificacaoId}"></div>
                     </div>
                     <div class="col-12">
                         <label class="form-check">
@@ -82,6 +91,23 @@
                              th:errors="*{observacao}"></div>
                     </div>
                 </div>
+
+                <dialog id="catalogoEspecificacao" class="catalogo-especificacao" aria-labelledby="catalogoEspecificacaoTitulo">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
+                        <h2 class="h5 fw-bold mb-0" id="catalogoEspecificacaoTitulo">Selecionar especificação</h2>
+                        <button type="button" class="btn-close" aria-label="Fechar" data-fechar-catalogo-especificacoes></button>
+                    </div>
+                    <label class="form-label fw-semibold" for="catalogoEspecificacaoFiltro">Buscar pelo nome</label>
+                    <input id="catalogoEspecificacaoFiltro" name="nomeCatalogo" type="search" class="form-control mb-3"
+                           placeholder="Digite para filtrar" autocomplete="off"
+                           hx:get="@{/pessoas/catalogo-especificacoes}"
+                           hx-trigger="input changed delay:300ms, search"
+                           hx-target="#catalogoEspecificacaoResultados" hx-swap="innerHTML"
+                           hx-sync="#catalogoEspecificacao:replace">
+                    <div id="catalogoEspecificacaoResultados" aria-live="polite">
+                        <p class="text-muted">Carregando especificações...</p>
+                    </div>
+                </dialog>
 
                 <div th:if="${erroGlobal != null}" class="alert alert-danger mt-3 mb-0"
                      role="alert" th:text="${erroGlobal}"></div>

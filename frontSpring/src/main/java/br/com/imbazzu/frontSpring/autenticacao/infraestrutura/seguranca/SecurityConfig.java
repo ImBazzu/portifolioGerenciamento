@@ -26,13 +26,17 @@ public class SecurityConfig {
 
         http
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login","/error","/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/login", "/error", "/css/**", "/js/**", "/images/**", "/icons/**",
+                                "/manifest.webmanifest", "/service-worker.js").permitAll()
                         .requestMatchers("/usuarios/listas-agendamento", "/usuarios/listas-agendamento/**")
                                 .hasRole("GESTAO")
                         .requestMatchers(HttpMethod.GET, "/usuarios").hasRole("GESTAO")
                         .requestMatchers("/usuarios/**").hasRole("ADMIN")
                         .requestMatchers("/motoristas/**").hasRole("MOTORISTA")
                         .requestMatchers(HttpMethod.PATCH, "/pessoas/*/validar", "/pessoas/*/retirar-validacao").hasRole("GESTAO")
+                        .requestMatchers(HttpMethod.GET, "/localidade/*/destinos/abrirFormulario",
+                                "/localidade/limpar-modal").hasRole("AGENDAMENTO")
+                        .requestMatchers(HttpMethod.POST, "/localidade/destinos").hasRole("AGENDAMENTO")
                         .requestMatchers("/relatorios/**", "/api/relatorios/**", "/prioridades/**",
                                 "/localidade/**", "/cidade/**", "/listas/**", "/veiculo/**").hasRole("GESTAO")
                         .anyRequest().authenticated())

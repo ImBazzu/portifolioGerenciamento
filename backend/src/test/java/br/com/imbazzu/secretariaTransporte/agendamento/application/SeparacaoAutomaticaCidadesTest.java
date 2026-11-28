@@ -26,6 +26,7 @@ import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.Agendament
 import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.AgendamentoQueryPorta;
 import br.com.imbazzu.secretariaTransporte.agendamento.core.service.CompatibilidadeVeiculoAgendamento;
 import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.FinalidadeAberturaVeiculo;
 
 class SeparacaoAutomaticaCidadesTest {
     private final LocalDate data = LocalDate.of(2030, 1, 2);
@@ -60,6 +61,35 @@ class SeparacaoAutomaticaCidadesTest {
         verificarAlocacao(0, 10, false, false);
         verificarAlocacao(3, 10, true, false);
         verificarAlocacao(0, 11, true, false);
+    }
+
+    @Test
+    void separacaoAutomaticaRespeitaListaDoCarroEspecial() {
+        for (var finalidade : List.of(FinalidadeAberturaVeiculo.ALTA, FinalidadeAberturaVeiculo.EMERGENCIA)) {
+            verificarCarroEspecial(true, finalidade);
+            verificarCarroEspecial(false, finalidade);
+        }
+    }
+
+    private void verificarCarroEspecial(boolean mesmaLista, FinalidadeAberturaVeiculo finalidade) {
+        var consultas = mock(AgendamentoQueryPorta.class);
+        var comandos = mock(AgendamentoCommandPorta.class);
+        var passageiro = agendamento(destinoA, 10);
+        var lista = mesmaLista ? passageiro.getIdLista() : UUID.randomUUID();
+        var especial = new VeiculoAberto(UUID.randomUUID(), data, tipo, "Carro", 4,
+                null, LocalTime.of(10, 0), false, null, finalidade, lista);
+        when(consultas.diaAberto(data)).thenReturn(true);
+        when(consultas.listarAgendamentos(data)).thenReturn(List.of(passageiro));
+        when(consultas.listarVeiculos(data)).thenReturn(List.of(especial));
+        when(consultas.buscarTipoVeiculo(tipo)).thenReturn(new TipoVeiculoAgendaDados(tipo, "Carro", 4, true));
+        when(consultas.buscarDestinosPorCidadeId(data)).thenReturn(destinos);
+        when(consultas.buscarCidadesCompativeisAnteriores(data)).thenReturn(Map.of());
+        when(comandos.salvar(any(VeiculoAberto.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        new AgendamentoCommandSepararAutomaticamenteHandler(comandos, consultas)
+                .handler(new AgendamentoCommandSepararAutomaticamente(data));
+
+        assertEquals(mesmaLista, especial.id().equals(passageiro.getIdVeiculoAberto()));
     }
 
     private void verificarAlocacao(

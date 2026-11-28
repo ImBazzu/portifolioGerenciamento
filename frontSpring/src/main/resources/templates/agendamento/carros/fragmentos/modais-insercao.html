@@ -14,7 +14,7 @@
                                     </div>
                                     <div class="modal-body">
                                         <label class="form-label fw-semibold" th:for="'buscaPassageiroInput-' + ${veiculo.id()}">
-                                            Filtrar qualquer passageiro pendente
+                                            Filtrar passageiro pendente
                                         </label>
                                         <input type="search" class="form-control mb-2 busca-passageiro-input"
                                             th:id="'buscaPassageiroInput-' + ${veiculo.id()}"
@@ -23,7 +23,7 @@
 
                                         <div class="list-group border rounded-3 overflow-auto" style="max-height: 320px;">
                                             <label class="list-group-item list-group-item-action item-passageiro py-2 d-flex justify-content-between align-items-center"
-                                                th:each="p : ${agenda.passageirosPendentes()}"
+                                                th:each="p : ${passageirosPendentesPorVeiculo.get(veiculo.id())}"
                                                 th:data-busca="${detalhesPassageiros.get(p.idPessoa()).nome() + ' ' + detalhesPassageiros.get(p.idPessoa()).cidade() + ' ' + detalhesPassageiros.get(p.idPessoa()).destino()}">
                                                 <div>
                                                     <input class="form-check-input me-2" type="radio" name="idAgendamento"
@@ -39,6 +39,10 @@
                                             </label>
                                         </div>
 
+                                        <div th:if="${#lists.isEmpty(passageirosPendentesPorVeiculo.get(veiculo.id()))}"
+                                             class="text-muted small mt-2">
+                                            Nenhum passageiro pendente para este carro.
+                                        </div>
                                         <div class="text-muted small mt-2 d-none sem-resultados">
                                             Nenhum passageiro pendente encontrado.
                                         </div>
@@ -56,7 +60,7 @@
                                     <div class="modal-footer bg-light">
                                         <button class="btn btn-secondary btn-sm" type="button" data-bs-dismiss="modal">Cancelar</button>
                                         <button class="btn btn-primary btn-sm js-atribuir-passageiro" type="submit"
-                                                th:disabled="${#lists.isEmpty(agenda.passageirosPendentes())}">Atribuir ao carro</button>
+                                                th:disabled="${#lists.isEmpty(passageirosPendentesPorVeiculo.get(veiculo.id()))}">Atribuir ao carro</button>
                                     </div>
                                 </form>
                             </div>
