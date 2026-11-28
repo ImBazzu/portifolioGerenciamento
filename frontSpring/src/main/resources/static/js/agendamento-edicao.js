@@ -24,6 +24,19 @@
     window.__agendamentoModalInit = true;
 
     const $ = (id) => document.getElementById(id);
+    const chaveRolagemCarros = "agendamentos-carros-rolagem";
+    const paginaCarros = window.location.pathname.endsWith("/agendamentos/carros");
+
+    if (paginaCarros) {
+        const rolagemSalva = sessionStorage.getItem(chaveRolagemCarros);
+        if (rolagemSalva !== null) {
+            sessionStorage.removeItem(chaveRolagemCarros);
+            const posicao = Number(rolagemSalva);
+            if (Number.isFinite(posicao)) {
+                requestAnimationFrame(() => window.scrollTo(0, posicao));
+            }
+        }
+    }
 
     const ehElemento = (e, seletor) =>
         e.target instanceof Element && e.target.matches(seletor);
@@ -754,7 +767,20 @@
         }
     });
 
+    document.addEventListener("click", (e) => {
+        if (
+            paginaCarros &&
+            e.target instanceof Element &&
+            e.target.closest("[data-preservar-rolagem-carros]")
+        ) {
+            sessionStorage.setItem(chaveRolagemCarros, String(window.scrollY));
+        }
+    });
+
     document.addEventListener("submit", (e) => {
+        if (paginaCarros && e.target instanceof HTMLFormElement && e.target.method === "post") {
+            sessionStorage.setItem(chaveRolagemCarros, String(window.scrollY));
+        }
         if (!ehElemento(e, "#formPdfPassageiros")) return;
         const ids = $("idsPdfPassageiros");
         const linhas = document.querySelectorAll(".linha-passageiro:not(.d-none)");

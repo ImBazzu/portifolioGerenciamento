@@ -177,9 +177,11 @@ public class AgendamentoPassageiroController {
             redirect.addFlashAttribute("sucesso", idVeiculo == null
                     ? "Passageiro de carro agendado para separação."
                     : "Passageiro agendado e atribuído ao veículo físico.");
-            if (idVeiculo == null && origemCarros && veiculoOrigem != null) {
-                redirect.addFlashAttribute("veiculoParaInsercao", veiculoOrigem);
-                redirect.addFlashAttribute("pessoaParaInsercao", idPessoa);
+            if (origemCarros && veiculoOrigem != null) {
+                if (idVeiculo == null) {
+                    redirect.addFlashAttribute("veiculoParaInsercao", veiculoOrigem);
+                    redirect.addFlashAttribute("pessoaParaInsercao", idPessoa);
+                }
                 return AgendamentoRedirect.carros(data);
             }
         } catch (RestClientResponseException e) {

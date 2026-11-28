@@ -48,11 +48,13 @@
                                         </div>
                                         <a th:if="${veiculo.finalidadeAbertura().name() == 'AJUSTE'}"
                                            class="btn btn-sm btn-outline-primary mt-3"
+                                           data-preservar-rolagem-carros="true"
                                            th:href="@{/agendamentos(data=${data}, novoPassageiro=true, veiculoOrigem=${veiculo.id()}, origemCarros=true)}">
                                             <i class="bi bi-person-plus me-1"></i>Cadastrar passageiro
                                         </a>
                                         <a th:if="${veiculo.finalidadeAbertura().name() != 'AJUSTE' and veiculo.idListaAbertura() != null}"
                                            class="btn btn-sm btn-outline-primary mt-3"
+                                           data-preservar-rolagem-carros="true"
                                            th:href="@{/agendamentos(data=${data}, novoPassageiro=true, veiculoOrigem=${veiculo.id()}, origemCarros=true, idLista=${veiculo.idListaAbertura()}, horarioSaidaVeiculo=${veiculo.horarioSaida()}, informarHorarioSaida=true)}">
                                             <i class="bi bi-person-plus me-1"></i>Cadastrar passageiro
                                         </a>

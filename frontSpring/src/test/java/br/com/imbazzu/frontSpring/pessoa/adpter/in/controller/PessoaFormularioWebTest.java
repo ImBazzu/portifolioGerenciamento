@@ -1006,6 +1006,31 @@ class PessoaFormularioWebTest {
     }
 
     @Test
+    void cadastroDePassageiroAtribuidoNaPaginaCarrosRetornaParaCarros() throws Exception {
+        var data = LocalDate.of(2026, 11, 23);
+        var idTipo = UUID.randomUUID();
+        var idLista = UUID.randomUUID();
+        var idDestino = UUID.randomUUID();
+        var idVeiculo = UUID.randomUUID();
+        when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(
+                new VeiculoAbertoResponseDto(idVeiculo, data, idTipo, "Carro", 4,
+                        null, null, 0, List.of())), List.of()));
+
+        mvc.perform(post("/agendamentos/passageiros").param("data", data.toString())
+                        .param("idPessoa", PESSOA_ID.toString()).param("idLista", idLista.toString())
+                        .param("idTipoVeiculo", idTipo.toString()).param("idDestino", idDestino.toString())
+                        .param("horarioChegada", "09:00").param("veiculoOrigem", idVeiculo.toString())
+                        .param("idVeiculo", idVeiculo.toString()).param("origemCarros", "true"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/agendamentos/carros?data=" + data))
+                .andExpect(flash().attribute("pessoaComprovante", PESSOA_ID))
+                .andExpect(result -> assertFalse(result.getFlashMap().containsKey("veiculoParaInsercao")))
+                .andExpect(result -> assertFalse(result.getFlashMap().containsKey("pessoaParaInsercao")));
+        verify(agendamentos).criar(data, new AgendamentoRequestDto(PESSOA_ID, idLista, idTipo,
+                idDestino, LocalTime.of(9, 0), false, 0, idVeiculo));
+    }
+
+    @Test
     void historicoAbreEAtualizaBuscaEPaginacaoNoMesmoContainer() throws Exception {
         var pessoa = new PessoaResponseDto(PESSOA_ID, "Ana Souza", "", ESPECIFICACAO_ID, "Padrão",
                 "Alta", PRIORIDADE_ID, 2, true, 2, false, null, "", "52998224725", "11987654321");
