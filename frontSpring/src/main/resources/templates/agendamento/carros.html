@@ -21,8 +21,14 @@
                 <th:block th:replace="~{agendamento/carros/fragmentos/modais-exclusao :: modaisExclusao}"></th:block>
                 <th:block th:replace="~{agendamento/carros/fragmentos/carros-atribuidos :: carrosAtribuidos}"></th:block>
                 <th:block th:replace="~{agendamento/carros/fragmentos/modais-insercao :: modaisInsercao}"></th:block>
-                <span th:if="${veiculoParaInsercao != null}" id="abrirInsercaoAposCriacao"
-                      th:attr="data-modal-id='atribuirPassageiroCarroModal-' + ${veiculoParaInsercao}" hidden></span>
+                <th:block th:each="veiculo : ${veiculosCarro}" th:if="${veiculoParaInsercao != null and veiculo.id() == veiculoParaInsercao}">
+                    <span th:if="${veiculo.finalidadeAbertura().name() == 'AJUSTE'}" id="abrirInsercaoAposCriacao"
+                          th:attr="data-modal-id='atribuirPassageiroCarroModal-' + ${veiculo.id()}" hidden></span>
+                    <span th:unless="${veiculo.finalidadeAbertura().name() == 'AJUSTE'}" id="abrirAgendamentoCarroAposCriacao"
+                          th:attr="data-url=@{/agendamentos/carros/veiculos/{id}/modal-agendamento(id=${veiculo.id()},data=${data})}" hidden></span>
+                </th:block>
+                <div id="modal-agendamento-carro"></div>
+                <div id="modal-motorista-carro"></div>
             </th:block>
 
         </div>

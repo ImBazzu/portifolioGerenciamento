@@ -11,6 +11,7 @@
                             <div class="col-12">
 
                                 <h2 class="h5 mb-0 fw-bold text-dark">Passageiros Cadastrados</h2>
+                                <p th:if="${!#lists.isEmpty(passageirosCadastrados)}" class="small text-muted mb-0">Se necessário, role horizontalmente para ver todas as colunas.</p>
 
                             </div>
 
@@ -106,7 +107,8 @@
 
 
 
-                    <div th:if="${!#lists.isEmpty(passageirosCadastrados)}" class="table-responsive tabela-passageiros-responsiva">
+                    <div th:if="${!#lists.isEmpty(passageirosCadastrados)}" class="table-responsive tabela-passageiros-responsiva"
+                         tabindex="0" role="region" aria-label="Tabela de passageiros cadastrados, com rolagem horizontal">
 
                         <div class="d-flex justify-content-end px-3 py-2">
                             <label class="form-check mb-0">

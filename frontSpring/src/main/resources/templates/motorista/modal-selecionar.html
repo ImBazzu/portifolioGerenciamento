@@ -1,0 +1,15 @@
+<div xmlns:th="http://www.thymeleaf.org" th:fragment="modal"
+     class="modal fade" id="selecionarMotoristaModal" tabindex="-1" aria-labelledby="selecionarMotoristaTitulo" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title fs-5" id="selecionarMotoristaTitulo">Selecionar motorista</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="erro-modal-motorista" class="alert alert-danger" role="alert" hidden></div>
+                <th:block th:replace="~{motorista/selecionar :: selecao}"></th:block>
+            </div>
+        </div>
+    </div>
+</div>

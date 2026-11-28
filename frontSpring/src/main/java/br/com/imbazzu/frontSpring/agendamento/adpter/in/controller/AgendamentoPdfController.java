@@ -2,12 +2,14 @@ package br.com.imbazzu.frontSpring.agendamento.adpter.in.controller;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -38,6 +40,7 @@ import br.com.imbazzu.frontSpring.agendamento.adpter.out.api.AgendamentoApi;
 import br.com.imbazzu.frontSpring.agendamento.adpter.out.pdf.AgendamentoPdfService;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.AgendamentoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoAbertoResponseDto;
+import br.com.imbazzu.frontSpring.motorista.MotoristaApi;
 import br.com.imbazzu.frontSpring.veiculo.core.TipoVeiculoUtil;
 
 /** Relatórios em PDF. */
@@ -53,16 +56,19 @@ public class AgendamentoPdfController {
     private final CarregadorOpcoesAgendamento carregadorOpcoes;
     private final MontadorDetalhesPassageiros montadorDetalhes;
     private final MensagemErroApi mensagemErro;
+    private final MotoristaApi motoristaApi;
 
     public AgendamentoPdfController(
             AgendamentoApi agendamentoApi,
             CarregadorOpcoesAgendamento carregadorOpcoes,
             MontadorDetalhesPassageiros montadorDetalhes,
-            MensagemErroApi mensagemErro) {
+            MensagemErroApi mensagemErro,
+            MotoristaApi motoristaApi) {
         this.agendamentoApi = agendamentoApi;
         this.carregadorOpcoes = carregadorOpcoes;
         this.montadorDetalhes = montadorDetalhes;
         this.mensagemErro = mensagemErro;
+        this.motoristaApi = motoristaApi;
     }
 
     @PostMapping("/passageiros")
@@ -97,7 +103,9 @@ public class AgendamentoPdfController {
                 return new PassageiroRelatorioView(
                         passageiro, detalhes.get(passageiro.id()), nomesListas.get(passageiro.idLista()), veiculo);
             }).toList();
-            var pdf = AgendamentoPdfService.gerarPassageiros(data, linhas);
+            var motoristas = linhas.stream().anyMatch(linha -> linha.veiculo() != null)
+                    ? motoristas(data) : Map.<UUID, String>of();
+            var pdf = AgendamentoPdfService.gerarPassageiros(data, linhas, motoristas);
             String nomeArquivo = "passageiros-" + data + ".pdf";
             UUID id = UUID.randomUUID();
             HttpSession sessao = request.getSession(true);
@@ -180,7 +188,8 @@ public class AgendamentoPdfController {
             var opcoes = carregadorOpcoes.incluirDestinosHistoricos(
                     carregadorOpcoes.carregar(), List.of(passageiro));
             var detalhes = montadorDetalhes.montarPorAgendamento(List.of(passageiro), opcoes).get(id);
-            var pdf = AgendamentoPdfService.gerarComprovante(passageiro, detalhes, veiculo);
+            var motorista = veiculo == null ? null : motoristas(data).get(veiculo.id());
+            var pdf = AgendamentoPdfService.gerarComprovante(passageiro, detalhes, veiculo, motorista);
             return ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_PDF)
                     .header(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -210,7 +219,8 @@ public class AgendamentoPdfController {
                     opcoes, Stream.concat(noVeiculo.stream(), semVeiculo.stream()).toList());
             var detalhes = montadorDetalhes.montarPorAgendamento(
                     Stream.concat(noVeiculo.stream(), semVeiculo.stream()).toList(), opcoesComHistorico);
-            var pdf = AgendamentoPdfService.gerar(data, "Relatório geral de carros", veiculos, semVeiculo, detalhes);
+            var motoristas = veiculos.isEmpty() ? Map.<UUID, String>of() : motoristas(data);
+            var pdf = AgendamentoPdfService.gerar(data, "Relatório geral de carros", veiculos, semVeiculo, detalhes, motoristas);
             return pdfInline(pdf, "agenda-carros-" + data + ".pdf");
         } catch (RestClientResponseException e) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, mensagemErro.de(e), e);
@@ -229,13 +239,22 @@ public class AgendamentoPdfController {
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatus.NOT_FOUND, "Veículo não encontrado nesta agenda."));
 
-            var detalhes = montadorDetalhes.montar(
-                    veiculo.passageiros(), List.<AgendamentoResponseDto>of(), opcoes);
-            var pdf = AgendamentoPdfService.gerarIndividual(data, veiculo, detalhes);
+            var opcoesComHistorico = carregadorOpcoes.incluirDestinosHistoricos(opcoes, veiculo.passageiros());
+            var detalhes = montadorDetalhes.montarPorAgendamento(veiculo.passageiros(), opcoesComHistorico);
+            var pdf = AgendamentoPdfService.gerarIndividual(data, veiculo, detalhes, motoristas(data).get(veiculo.id()));
             return pdfInline(pdf, "veiculo-" + idVeiculo + "-" + data + ".pdf");
+        } catch (AgendamentoPdfService.ConteudoExtensoException e) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .contentType(new MediaType("text", "plain", StandardCharsets.UTF_8))
+                    .body(e.getMessage().getBytes(StandardCharsets.UTF_8));
         } catch (RestClientResponseException e) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, mensagemErro.de(e), e);
         }
+    }
+
+    private Map<UUID, String> motoristas(LocalDate data) {
+        return motoristaApi.atribuicoes(data).stream()
+                .collect(Collectors.toMap(MotoristaApi.Atribuicao::veiculoId, MotoristaApi.Atribuicao::nome));
     }
 
     private static ResponseEntity<byte[]> pdfInline(byte[] pdf, String nomeArquivo) {

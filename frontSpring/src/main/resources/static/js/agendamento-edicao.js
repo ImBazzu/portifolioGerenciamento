@@ -859,7 +859,49 @@
         if (e.detail?.target?.id === "resultadoVerificacao") {
             sincronizarVerificacao();
         }
+        if (e.detail?.target?.id === "modal-motorista-carro") {
+            const modal = $("selecionarMotoristaModal");
+            if (modal) window.bootstrap.Modal.getOrCreateInstance(modal).show();
+        }
     });
+
+    function atualizarCartaoCarro(e, modalId) {
+        const modal = (modalId && $(modalId)) || document.querySelector(".modal.show");
+        const id = e.detail.veiculo;
+        const data = e.detail.data;
+        const atualizar = () => window.htmx.ajax("GET",
+            `/agendamentos/carros/veiculos/${encodeURIComponent(id)}/cartao?data=${encodeURIComponent(data)}`,
+            { target: `#carro-${id}`, swap: "outerHTML" });
+        if (modal && modal.classList.contains("show")) {
+            modal.addEventListener("hidden.bs.modal", atualizar, { once: true });
+            window.bootstrap.Modal.getOrCreateInstance(modal).hide();
+        } else {
+            atualizar();
+        }
+    }
+    document.addEventListener("motorista-atualizado", (e) => atualizarCartaoCarro(e, "selecionarMotoristaModal"));
+    document.addEventListener("passageiro-agendado-carro", (e) => atualizarCartaoCarro(e, "agendamentoModal"));
+    document.addEventListener("carro-atualizado", (e) => atualizarCartaoCarro(e));
+
+    function informarFalhaModalCarro(e) {
+        const elemento = e.detail?.elt;
+        const erro = $("erro-modal-motorista");
+        if (erro && elemento?.closest?.("#selecionarMotoristaModal")) {
+            erro.hidden = false;
+            erro.textContent = "Não foi possível concluir a operação. Verifique os dados e tente novamente.";
+        } else if (elemento?.closest?.("#agendamentoModal") && $("erro-agendamento-carro")) {
+            const erroAgendamento = $("erro-agendamento-carro");
+            erroAgendamento.hidden = false;
+            erroAgendamento.textContent = "Não foi possível concluir o agendamento. Verifique os dados e tente novamente.";
+        } else if (paginaCarros && (e.detail?.target?.id === "modal-agendamento-carro"
+                || e.detail?.target?.id === "modal-motorista-carro"
+                || e.detail?.target?.id?.startsWith("carro-")
+                || elemento?.closest?.("[id^='carro-']"))) {
+            window.alert("Não foi possível atualizar o carro. Tente novamente.");
+        }
+    }
+    document.addEventListener("htmx:responseError", informarFalhaModalCarro);
+    document.addEventListener("htmx:sendError", informarFalhaModalCarro);
 
     document.addEventListener("htmx:afterSwap", atualizarMensagemBusca);
 
@@ -894,6 +936,11 @@
     /* ------------------------------------------------------------------ */
 
     function iniciarPagina(raiz) {
+        const agendamentoCarro = $("abrirAgendamentoCarroAposCriacao");
+        if (agendamentoCarro && raiz?.contains?.(agendamentoCarro) && window.htmx) {
+            agendamentoCarro.remove();
+            window.htmx.ajax("GET", agendamentoCarro.dataset.url, { target: "#modal-agendamento-carro", swap: "innerHTML" });
+        }
         const abertura = $("abrirInsercaoAposCriacao");
         if (abertura && raiz?.contains?.(abertura) && window.bootstrap) {
             const modalInsercao = $(abertura.dataset.modalId);
@@ -938,6 +985,7 @@
         }
 
         sincronizarVerificacao();
+        $("listaAgendamento")?.dispatchEvent(new Event("change", { bubbles: true }));
 
         const resultado = $("resultadoVerificacao");
 
@@ -948,9 +996,13 @@
             (resultado && !resultado.hidden);
 
         if (temEstado && window.bootstrap) {
-            window.bootstrap.Modal
-                .getOrCreateInstance(modal)
-                .show();
+            const anterior = document.querySelector(".modal.show");
+            if (anterior && anterior !== modal) {
+                anterior.addEventListener("hidden.bs.modal", () => window.bootstrap.Modal.getOrCreateInstance(modal).show(), { once: true });
+                window.bootstrap.Modal.getOrCreateInstance(anterior).hide();
+            } else {
+                window.bootstrap.Modal.getOrCreateInstance(modal).show();
+            }
         }
     }
 

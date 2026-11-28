@@ -11,9 +11,12 @@ import java.util.stream.Stream;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.CarregadorOpcoesAgendamento;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.MensagemErroApi;
@@ -30,6 +33,7 @@ import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificacaoVeiculosRespon
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
 import br.com.imbazzu.frontSpring.motorista.MotoristaApi;
+import br.com.imbazzu.frontSpring.veiculo.core.TipoVeiculoUtil;
 
 /** Renderiza as duas páginas de agendamento: /agendamentos e /agendamentos/carros. */
 @Controller
@@ -139,6 +143,49 @@ public class AgendamentoPaginaController {
         return "agendamento/carros";
     }
 
+    @GetMapping("/carros/veiculos/{id}/modal-agendamento")
+    public String modalAgendamentoCarro(@PathVariable UUID id, @RequestParam LocalDate data, Model model) {
+        var veiculo = agendamentoApi.buscarDia(data).veiculos().stream()
+                .filter(item -> item.id().equals(id))
+                .filter(item -> TipoVeiculoUtil.ehCarro(item.nomeTipoVeiculo()))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Carro não encontrado nesta data."));
+        var opcoes = carregadorOpcoes.carregarParaUsuario();
+        carregadorOpcoes.adicionarAoModel(model, opcoes);
+        model.addAttribute("data", data);
+        model.addAttribute("veiculoOrigem", id);
+        model.addAttribute("origemCarros", true);
+        model.addAttribute("novoPassageiro", true);
+        if (veiculo.idListaAbertura() != null) {
+            model.addAttribute("idListaSelecionada", veiculo.idListaAbertura());
+            model.addAttribute("horarioChegadaSelecionado", veiculo.horarioSaida());
+            model.addAttribute("informarHorarioSaida", true);
+        }
+        return "agendamento/fragmentos/modal-agendamento :: modalAgendamento";
+    }
+
+    @GetMapping("/carros/veiculos/{id}/cartao")
+    public String cartaoCarro(@PathVariable UUID id, @RequestParam LocalDate data, Model model) {
+        var agenda = agendamentoApi.buscarDia(data);
+        var veiculo = agenda.veiculos().stream()
+                .filter(item -> item.id().equals(id) && TipoVeiculoUtil.ehCarro(item.nomeTipoVeiculo()))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Carro não encontrado nesta data."));
+        var opcoes = carregadorOpcoes.incluirDestinosHistoricos(
+                carregadorOpcoes.carregarParaUsuario(), agenda.passageirosPendentes());
+        opcoes = carregadorOpcoes.incluirDestinosHistoricosCancelados(opcoes, agenda.passageirosCancelados());
+        carregadorOpcoes.adicionarAoModel(model, opcoes);
+        model.addAttribute("data", data);
+        model.addAttribute("paginaCarros", true);
+        model.addAttribute("agenda", agenda);
+        model.addAttribute("veiculo", veiculo);
+        model.addAttribute("detalhesPassageiros", montadorDetalhes.montar(
+                new AgendaDiaResponseDto(data, List.of(veiculo), List.of()), opcoes));
+        model.addAttribute("motoristasPorVeiculo", motoristas.atribuicoes(data).stream()
+                .collect(Collectors.toMap(MotoristaApi.Atribuicao::veiculoId, MotoristaApi.Atribuicao::nome)));
+        return "agendamento/carros/fragmentos/carros-atribuidos :: carro";
+    }
+
     private void adicionarAgenda(Model model, AgendaDiaResponseDto agenda, OpcoesAgendamento opcoes) {
         var opcoesComHistorico = carregadorOpcoes.incluirDestinosHistoricos(
                 opcoes, agenda.passageirosPendentes());
@@ -174,7 +221,8 @@ public class AgendamentoPaginaController {
                     ? numero.intValue()
                     : 0;
             model.addAttribute("veiculosDisponiveis",
-                    VeiculoDisponivelView.disponiveis(verificacao, agenda, acompanhantes));
+                    VeiculoDisponivelView.disponiveis(verificacao, agenda, acompanhantes,
+                            model.getAttribute("veiculoOrigem") instanceof UUID id ? id : null));
         }
     }
 

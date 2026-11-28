@@ -201,7 +201,12 @@ function atualizarCamposAberturaCarro(finalidade) {
     const correspondente = Array.from(form.querySelectorAll('[data-lista-finalidade]'))
         .find(opcao => opcao.dataset.listaFinalidade === finalidade.value);
     lista.value = especial && correspondente ? correspondente.dataset.listaId : '';
-    if (!especial) horario.value = '';
+    if (!especial) {
+        horario.value = '';
+    } else if (!horario.value) {
+        const agora = new Date();
+        horario.value = `${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}`;
+    }
     const indisponivel = especial && !correspondente;
     botao.disabled = form.dataset.carroDisponivel !== 'true' || indisponivel;
     status.hidden = !indisponivel;

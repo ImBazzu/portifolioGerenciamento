@@ -18,7 +18,7 @@
                                 <hr class="flex-grow-1 border-primary border-2 opacity-50">
                             </div>
                         </div>
-                        <div class="col-12 col-md-6">
+                        <div class="col-12 col-md-6" th:fragment="carro" th:id="'carro-' + ${veiculo.id()}">
                             <article class="card border shadow h-100 rounded-4"
                                      th:classappend="${(motoristasPorVeiculo == null ? 'border-secondary' : (motoristasPorVeiculo.containsKey(veiculo.id()) ? 'border-success border-2' : 'border-warning border-2')) + (veiculo.saidaConfirmadaEm() != null ? ' bg-success-subtle' : '')}">
                                 <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-start py-3 border-bottom border-primary"
@@ -63,7 +63,9 @@
                                             </button>
                                             <div class="dropdown-menu dropdown-menu-end shadow">
                                                 <a th:if="${podeGerenciarMotoristas}" class="dropdown-item py-2"
-                                                   th:href="@{/motoristas/selecionar/{id}(id=${veiculo.id()},data=${data},carros=true)}">
+                                                   th:href="@{/motoristas/selecionar/{id}(id=${veiculo.id()},data=${data},carros=true)}"
+                                                   th:attr="hx-get=@{/motoristas/selecionar/{id}(id=${veiculo.id()},data=${data},carros=true)}"
+                                                   hx-target="#modal-motorista-carro" hx-swap="innerHTML">
                                                     <i class="bi bi-person-badge me-2"></i>Motorista
                                                 </a>
                                                 <a class="dropdown-item py-2"
@@ -72,7 +74,8 @@
                                                     <i class="bi bi-file-earmark-pdf me-2"></i>PDF
                                                 </a>
                                                 <form th:if="${veiculo.saidaConfirmadaEm() == null}" method="post"
-                                                      th:action="@{/agendamentos/veiculos/{id}/confirmar-saida(id=${veiculo.id()})}">
+                                                      th:action="@{/agendamentos/veiculos/{id}/confirmar-saida(id=${veiculo.id()})}"
+                                                      th:attr="hx-post=@{/agendamentos/veiculos/{id}/confirmar-saida(id=${veiculo.id()})}" hx-swap="none">
                                                     <input type="hidden" name="data" th:value="${data}">
                                                     <input type="hidden" name="paginaCarros" value="true">
                                                     <button class="dropdown-item py-2" type="submit">
@@ -80,7 +83,8 @@
                                                     </button>
                                                 </form>
                                                 <form th:if="${veiculo.saidaConfirmadaEm() != null}" method="post"
-                                                      th:action="@{/agendamentos/veiculos/{id}/desfazer-confirmacao-saida(id=${veiculo.id()})}">
+                                                      th:action="@{/agendamentos/veiculos/{id}/desfazer-confirmacao-saida(id=${veiculo.id()})}"
+                                                      th:attr="hx-post=@{/agendamentos/veiculos/{id}/desfazer-confirmacao-saida(id=${veiculo.id()})}" hx-swap="none">
                                                     <input type="hidden" name="data" th:value="${data}">
                                                     <input type="hidden" name="paginaCarros" value="true">
                                                     <button class="dropdown-item py-2" type="submit">

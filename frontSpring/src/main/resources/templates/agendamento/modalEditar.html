@@ -13,6 +13,7 @@
             <!-- d-flex flex-column overflow-hidden: o <form> fica entre .modal-content e .modal-body/.modal-footer.
                  Sem isso o Bootstrap não consegue rolar só o corpo e o rodapé pode ficar cortado em telas baixas. -->
             <form method="post" th:action="@{/agendamentos/{id}/editar(id=${passageiro.id()})}"
+                  th:attr="hx-post=${emCarros and passageiro.idVeiculoAberto() != null} ? @{/agendamentos/{id}/editar(id=${passageiro.id()})} : null,hx-swap=${emCarros and passageiro.idVeiculoAberto() != null ? 'none' : null}"
                   class="js-editar-agendamento-form d-flex flex-column overflow-hidden">
                 <input type="hidden" name="data" th:value="${data}">
                 <!-- ADICIONADO: Envia o tipo de veículo atual para o backend não falhar -->

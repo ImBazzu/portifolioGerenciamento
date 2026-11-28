@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.server.ResponseStatusException;
+import jakarta.servlet.http.HttpServletResponse;
 
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.AgendamentoRedirect;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.MensagemErroApi;
@@ -107,6 +109,34 @@ public class AgendamentoVeiculoController {
                 "Confirmação de saída desfeita.",
                 AgendamentoRedirect.retorno(paginaCarros, data),
                 () -> agendamentoApi.desfazerConfirmacaoSaida(idVeiculo));
+    }
+
+    @PostMapping(value = "/veiculos/{idVeiculo}/confirmar-saida", headers = "HX-Request=true")
+    public void confirmarSaidaParcial(@PathVariable UUID idVeiculo, @RequestParam LocalDate data,
+            HttpServletResponse response) {
+        atualizarSaidaParcial(idVeiculo, data, true, response);
+    }
+
+    @PostMapping(value = "/veiculos/{idVeiculo}/desfazer-confirmacao-saida", headers = "HX-Request=true")
+    public void desfazerSaidaParcial(@PathVariable UUID idVeiculo, @RequestParam LocalDate data,
+            HttpServletResponse response) {
+        atualizarSaidaParcial(idVeiculo, data, false, response);
+    }
+
+    private void atualizarSaidaParcial(UUID idVeiculo, LocalDate data, boolean confirmar,
+            HttpServletResponse response) {
+        try {
+            if (confirmar) {
+                agendamentoApi.confirmarSaida(idVeiculo);
+            } else {
+                agendamentoApi.desfazerConfirmacaoSaida(idVeiculo);
+            }
+            response.setHeader("HX-Trigger", "{\"carro-atualizado\":{\"veiculo\":\""
+                    + idVeiculo + "\",\"data\":\"" + data + "\"}}");
+            response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+        } catch (RestClientResponseException e) {
+            throw new ResponseStatusException(e.getStatusCode(), mensagemErro.de(e), e);
+        }
     }
 
     @PostMapping("/veiculos/{idVeiculo}/excluir")

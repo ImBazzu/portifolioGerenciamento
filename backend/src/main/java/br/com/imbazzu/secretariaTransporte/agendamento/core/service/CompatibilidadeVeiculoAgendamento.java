@@ -55,13 +55,8 @@ public final class CompatibilidadeVeiculoAgendamento {
             List<Agendamento> ocupantes,
             Slot novo,
             Map<UUID, Slot> slotsConhecidos) {
-        return listaCompativel(veiculo, novo.agendamento())
-                && capacidadeDisponivel(veiculo, ocupantes, novo.agendamento())
+        return capacidadeDisponivel(veiculo, ocupantes, novo.agendamento())
                 && compativelComHorario(veiculo, ocupantes, novo, slotsConhecidos);
-    }
-
-    public static boolean listaCompativel(VeiculoAberto veiculo, Agendamento agendamento) {
-        return veiculo.idListaAbertura() == null || veiculo.idListaAbertura().equals(agendamento.getIdLista());
     }
 
     public static boolean capacidadeDisponivel(

@@ -19,7 +19,7 @@ import br.com.imbazzu.frontSpring.veiculo.core.FinalidadeAberturaVeiculo;
 
 class MontadorAgendaDiaTest {
     @Test
-    void limitaPendentesDeCarrosEspeciaisAListaVinculada() {
+    void apresentaPendentesDeQualquerListaParaCarrosEspeciais() {
         var data = LocalDate.of(2026, 12, 1);
         var lista = UUID.randomUUID();
         var outro = UUID.randomUUID();
@@ -37,7 +37,7 @@ class MontadorAgendaDiaTest {
                 new OpcoesAgendamento(List.of(), List.of(), List.of(), List.of()));
 
         var pendentes = (Map<?, ?>) model.get("passageirosPendentesPorVeiculo");
-        assertEquals(List.of(permitido), pendentes.get(especial.id()));
+        assertEquals(List.of(permitido, diferente), pendentes.get(especial.id()));
         assertEquals(List.of(permitido, diferente), pendentes.get(ajuste.id()));
     }
 

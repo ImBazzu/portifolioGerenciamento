@@ -16,6 +16,7 @@ import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.Entida
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.EntidadeNaoEncontradoException;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.OperacaoNaoPermitidaException;
 import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.FinalidadeAberturaVeiculo;
 import lombok.RequiredArgsConstructor;
 
 import java.util.HashMap;
@@ -101,11 +102,7 @@ public class AgendamentoCommandCriarHandler {
                 pessoa.buscarNaResidencia(),
                 command.acompanhantes(),
                 java.util.Objects.requireNonNull(command.autorId(), "Autor é obrigatório"));
-        if (tipoCarro && command.idVeiculo() != null) {
-            throw new OperacaoNaoPermitidaException(
-                    "Passageiros de carro devem ser atribuídos pela página de carros");
-        }
-        if (!tipoCarro) {
+        if (!tipoCarro || command.idVeiculo() != null) {
             if (command.idVeiculo() == null) {
                 throw new OperacaoNaoPermitidaException(
                         "Selecione o veículo físico para ônibus, van ou outro tipo não carro");
@@ -118,6 +115,14 @@ public class AgendamentoCommandCriarHandler {
             if (!veiculo.idTipoVeiculo().equals(command.idTipoVeiculo())) {
                 throw new DadosInvalidosException(
                         "O veículo físico selecionado não corresponde ao tipo aprovado");
+            }
+            if (tipoCarro && veiculo.finalidadeAbertura() == FinalidadeAberturaVeiculo.AJUSTE) {
+                throw new OperacaoNaoPermitidaException(
+                        "Passageiros de carros de ajuste devem ser atribuídos pela página de carros");
+            }
+            if (tipoCarro && !command.idLista().equals(veiculo.idListaAbertura())) {
+                throw new OperacaoNaoPermitidaException(
+                        "O agendamento deve usar a lista vinculada à abertura do carro");
             }
             var agendamentosDoDia = consultas.listarAgendamentos(command.data());
             var ocupantes = agendamentosDoDia.stream()

@@ -7,12 +7,15 @@
     <main th:replace="~{layout/principal :: principal(~{::conteudo})}">
         <div th:fragment="conteudo" class="app-page">
             <h1 class="h3">Selecionar motorista</h1>
+            <div th:fragment="selecao" id="motorista-selecao">
             <p class="text-muted">Busque por nome e categoria. Um motorista pode ser selecionado para mais de um veículo.</p>
-            <a class="btn btn-outline-secondary mb-3"
+            <a th:unless="${modalMotorista == true}" class="btn btn-outline-secondary mb-3"
                th:href="${carros ? '/agendamentos/carros?data=' + data : '/agendamentos?data=' + data}">Voltar</a>
-            <form method="get" th:action="@{/motoristas/selecionar/{id}(id=${veiculo})}" class="row g-2 mb-3">
+            <form method="get" th:action="@{/motoristas/selecionar/{id}(id=${veiculo})}" class="row g-2 mb-3"
+                  th:attr="hx-get=${modalMotorista == true} ? @{/motoristas/selecionar/{id}(id=${veiculo})} : null,hx-target=${modalMotorista == true ? '#motorista-selecao' : null},hx-swap=${modalMotorista == true ? 'outerHTML' : null}">
                 <input type="hidden" name="data" th:value="${data}">
                 <input type="hidden" name="carros" th:value="${carros}">
+                <input th:if="${modalMotorista == true}" type="hidden" name="modalConteudo" value="true">
                 <div class="col-md-5"><label for="nomeBusca" class="form-label">Nome</label>
                     <input id="nomeBusca" name="nome" th:value="${nome}" class="form-control"></div>
                 <div class="col-md-5"><label for="categoriaBusca" class="form-label">Categoria</label>
@@ -26,7 +29,8 @@
             <div th:each="m : ${resultado.content()}" class="card mb-2">
                 <div class="card-body d-flex justify-content-between align-items-center gap-2">
                     <div><strong th:text="${m.nome()}"></strong><div th:text="${m.categoriaNome() + ' · ' + m.telefone()}"></div></div>
-                    <form method="post" th:action="@{/motoristas/selecionar/{id}(id=${veiculo})}">
+                    <form method="post" th:action="@{/motoristas/selecionar/{id}(id=${veiculo})}"
+                          th:attr="hx-post=${modalMotorista == true} ? @{/motoristas/selecionar/{id}(id=${veiculo})} : null,hx-swap=${modalMotorista == true ? 'none' : null}">
                         <input type="hidden" name="data" th:value="${data}">
                         <input type="hidden" name="carros" th:value="${carros}">
                         <input type="hidden" name="motoristaId" th:value="${m.id()}">
@@ -37,13 +41,16 @@
             <nav th:if="${resultado.totalPages() > 1}" aria-label="Páginas de motoristas" class="d-flex flex-wrap gap-1 mb-3">
                 <a th:each="p : ${#numbers.sequence(0, resultado.totalPages() - 1)}"
                    class="btn btn-sm" th:classappend="${p == resultado.number() ? 'btn-primary' : 'btn-outline-primary'}"
-                   th:href="@{/motoristas/selecionar/{id}(id=${veiculo},data=${data},carros=${carros},nome=${nome},categoria=${categoriaSelecionada},pagina=${p})}" th:text="${p + 1}"></a>
+                   th:href="@{/motoristas/selecionar/{id}(id=${veiculo},data=${data},carros=${carros},nome=${nome},categoria=${categoriaSelecionada},pagina=${p})}"
+                   th:attr="hx-get=${modalMotorista == true} ? @{/motoristas/selecionar/{id}(id=${veiculo},data=${data},carros=true,nome=${nome},categoria=${categoriaSelecionada},pagina=${p},modalConteudo=true)} : null,hx-target=${modalMotorista == true ? '#motorista-selecao' : null},hx-swap=${modalMotorista == true ? 'outerHTML' : null}" th:text="${p + 1}"></a>
             </nav>
-            <form method="post" th:action="@{/motoristas/selecionar/{id}(id=${veiculo})}">
+            <form method="post" th:action="@{/motoristas/selecionar/{id}(id=${veiculo})}"
+                  th:attr="hx-post=${modalMotorista == true} ? @{/motoristas/selecionar/{id}(id=${veiculo})} : null,hx-swap=${modalMotorista == true ? 'none' : null}">
                 <input type="hidden" name="data" th:value="${data}">
                 <input type="hidden" name="carros" th:value="${carros}">
                 <button class="btn btn-outline-danger">Retirar motorista</button>
             </form>
+            </div>
         </div>
     </main>
 </div>

@@ -32,6 +32,7 @@ import br.com.imbazzu.frontSpring.pessoa.core.porta.in.PessoaApplicationPorta;
 import br.com.imbazzu.frontSpring.pessoa.core.dto.PessoaResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.TipoVeiculoUtil;
 import br.com.imbazzu.frontSpring.veiculo.core.porta.in.VeiculoApplicationPorta;
+import jakarta.servlet.http.HttpServletResponse;
 
 /** Ciclo de vida do passageiro agendado: verificar, criar, editar, atribuir a veículo e excluir. */
 @Controller
@@ -115,7 +116,7 @@ public class AgendamentoPassageiroController {
             model.addAttribute("verificacao", resposta);
             model.addAttribute("erroVerificacao", erro);
             model.addAttribute("veiculosDisponiveis",
-                    VeiculoDisponivelView.disponiveis(resposta, null, acompanhantes));
+                    VeiculoDisponivelView.disponiveis(resposta, null, acompanhantes, veiculoOrigem));
 
             var opcoes = carregadorOpcoes.carregarParaUsuario();
             carregadorOpcoes.adicionarAoModel(model, opcoes);
@@ -124,7 +125,7 @@ public class AgendamentoPassageiroController {
                 model.addAttribute("agenda", agenda);
                 montadorAgenda.dividirPorTipo(model, agenda, opcoes);
                 model.addAttribute("veiculosDisponiveis",
-                        VeiculoDisponivelView.disponiveis(resposta, agenda, acompanhantes));
+                        VeiculoDisponivelView.disponiveis(resposta, agenda, acompanhantes, veiculoOrigem));
 
                 if (pessoa != null) {
                     model.addAttribute("passageiroVerificado", PassageiroVerificadoView.de(
@@ -205,6 +206,37 @@ public class AgendamentoPassageiroController {
         return AgendamentoRedirect.dia(data);
     }
 
+    @PostMapping(value = "/passageiros", headers = "HX-Request=true")
+    public void criarNoCarro(
+            @RequestParam LocalDate data,
+            @RequestParam UUID idPessoa,
+            @RequestParam UUID idLista,
+            @RequestParam UUID idTipoVeiculo,
+            @RequestParam UUID idDestino,
+            @RequestParam LocalTime horarioChegada,
+            @RequestParam(defaultValue = "false") boolean buscarNaResidencia,
+            @RequestParam(defaultValue = "false") boolean informarHorarioSaida,
+            @RequestParam(defaultValue = "0") int acompanhantes,
+            @RequestParam UUID idVeiculo,
+            @RequestParam UUID veiculoOrigem,
+            @RequestParam boolean origemCarros,
+            HttpServletResponse response) {
+        if (!origemCarros) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Origem de carro obrigatória.");
+        }
+        try {
+            validarListaDoVeiculoOrigem(data, veiculoOrigem, idLista);
+            agendamentoApi.criar(data, new AgendamentoRequestDto(
+                    idPessoa, idLista, idTipoVeiculo, idDestino, horarioChegada,
+                    buscarNaResidencia, acompanhantes, idVeiculo, informarHorarioSaida));
+            response.setHeader("HX-Trigger", "{\"passageiro-agendado-carro\":{\"veiculo\":\""
+                    + idVeiculo + "\",\"data\":\"" + data + "\"}}");
+            response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+        } catch (RestClientResponseException e) {
+            throw new ResponseStatusException(e.getStatusCode(), mensagemErro.de(e), e);
+        }
+    }
+
     private void validarListaDoVeiculoOrigem(LocalDate data, UUID veiculoOrigem, UUID idLista) {
         if (veiculoOrigem == null) {
             return;
@@ -248,6 +280,26 @@ public class AgendamentoPassageiroController {
             redirect.addFlashAttribute("erro", mensagemErro.de(e));
         }
         return AgendamentoRedirect.retorno(paginaCarros, data);
+    }
+
+    @PostMapping(value = "/{idAgendamento}/editar", headers = "HX-Request=true")
+    public void editarNoCarro(
+            @PathVariable UUID idAgendamento, @RequestParam LocalDate data,
+            @RequestParam UUID idTipoVeiculo, @RequestParam(required = false) UUID idDestino,
+            @RequestParam LocalTime horarioChegada,
+            @RequestParam(defaultValue = "false") boolean buscarNaResidencia,
+            @RequestParam(defaultValue = "0") int acompanhantes,
+            @RequestParam UUID idVeiculo, HttpServletResponse response) {
+        try {
+            UUID destino = idDestino == null ? agendamentoApi.buscarPorId(idAgendamento).idDestino() : idDestino;
+            agendamentoApi.atualizar(idAgendamento, new AgendamentoAtualizarRequestDto(
+                    idTipoVeiculo, destino, horarioChegada, buscarNaResidencia, acompanhantes, idVeiculo));
+            response.setHeader("HX-Trigger", "{\"carro-atualizado\":{\"veiculo\":\""
+                    + idVeiculo + "\",\"data\":\"" + data + "\"}}");
+            response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+        } catch (RestClientResponseException e) {
+            throw new ResponseStatusException(e.getStatusCode(), mensagemErro.de(e), e);
+        }
     }
 
     // OBS: /atribuir-direto e /{id}/veiculo fazem a mesma coisa. Veja qual template usa cada um e elimine um.

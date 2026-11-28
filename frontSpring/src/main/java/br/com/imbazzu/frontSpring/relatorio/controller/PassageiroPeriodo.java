@@ -9,7 +9,8 @@ public record PassageiroPeriodo(
         LocalDate data, UUID idLista, String lista, UUID idCidade, String cidade,
         UUID idDestino, String destino, UUID idTipoVeiculo, String tipoVeiculo,
         LocalTime horarioChegada, long tempoViagemSegundos, int tempoViagemNanos, int acompanhantes,
-        UUID idVeiculo, LocalTime horarioSaida, Boolean horarioSaidaCalculado, Boolean cancelado) {
+        UUID idVeiculo, LocalTime horarioSaida, Boolean horarioSaidaCalculado, Boolean cancelado,
+        String motorista) {
 
     public PassageiroPeriodo(
             UUID idPessoa, String nome, String cpf, String telefone, String especificacao,
@@ -19,6 +20,6 @@ public record PassageiroPeriodo(
             UUID idVeiculo, LocalTime horarioSaida, Boolean horarioSaidaCalculado) {
         this(idPessoa, nome, cpf, telefone, especificacao, data, idLista, lista, idCidade, cidade,
                 idDestino, destino, idTipoVeiculo, tipoVeiculo, horarioChegada, tempoViagemSegundos,
-                tempoViagemNanos, acompanhantes, idVeiculo, horarioSaida, horarioSaidaCalculado, false);
+                tempoViagemNanos, acompanhantes, idVeiculo, horarioSaida, horarioSaidaCalculado, false, null);
     }
 }

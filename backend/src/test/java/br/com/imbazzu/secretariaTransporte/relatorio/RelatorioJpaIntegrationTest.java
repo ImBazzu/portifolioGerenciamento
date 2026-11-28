@@ -77,6 +77,12 @@ class RelatorioJpaIntegrationTest {
         String base = "/api/relatorios/investigacao";
         String pessoa = "00000000-0000-0000-0000-000000000021";
         String motorista = "00000000-0000-0000-0000-000000000024";
+        mvc.perform(get("/api/relatorios/passageiros-periodo").contextPath("/api")
+                        .param("dataInicio", "2030-01-01").param("dataFim", "2030-01-02"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].motorista").value("Motorista Ana"))
+                .andExpect(jsonPath("$[0].horarioSaida").value("07:00:00"))
+                .andExpect(jsonPath("$[1].motorista").doesNotExist());
         mvc.perform(get(base + "/pessoas").contextPath("/api").param("nome", "12345678901"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].arquivadaEm").value("2030-01-03"));

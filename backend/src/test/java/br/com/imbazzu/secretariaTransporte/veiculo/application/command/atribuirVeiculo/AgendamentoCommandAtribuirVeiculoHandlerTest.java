@@ -1,6 +1,7 @@
 package br.com.imbazzu.secretariaTransporte.veiculo.application.command.atribuirVeiculo;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -22,7 +23,7 @@ import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 
 class AgendamentoCommandAtribuirVeiculoHandlerTest {
     @Test
-    void veiculoEspecialNaoAceitaPassageiroDeOutraLista() {
+    void veiculoEspecialAceitaPassageiroDeOutraLista() {
         var consultas = mock(AgendamentoQueryPorta.class);
         var comandos = mock(AgendamentoCommandPorta.class);
         var data = LocalDate.of(2026, 12, 1);
@@ -34,10 +35,11 @@ class AgendamentoCommandAtribuirVeiculoHandlerTest {
         when(consultas.buscarAgendamento(passageiro.getId())).thenReturn(Optional.of(passageiro));
         when(consultas.buscarVeiculo(veiculo.id())).thenReturn(Optional.of(veiculo));
 
-        assertThrows(OperacaoNaoPermitidaException.class, () ->
-                new AgendamentoCommandAtribuirVeiculoHandler(comandos, consultas)
-                        .handler(new AgendamentoCommandAtribuirVeiculo(passageiro.getId(), veiculo.id())));
-        verify(comandos, never()).salvar(any(Agendamento.class));
+        when(consultas.listarAgendamentos(data)).thenReturn(List.of(passageiro));
+        new AgendamentoCommandAtribuirVeiculoHandler(comandos, consultas)
+                .handler(new AgendamentoCommandAtribuirVeiculo(passageiro.getId(), veiculo.id()));
+        assertEquals(veiculo.id(), passageiro.getIdVeiculoAberto());
+        verify(comandos).salvar(passageiro);
     }
 
     @Test

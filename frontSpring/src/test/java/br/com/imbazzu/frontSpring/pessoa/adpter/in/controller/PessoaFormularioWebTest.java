@@ -130,7 +130,7 @@ class PessoaFormularioWebTest {
         var linhas = java.util.stream.IntStream.range(0, 40).mapToObj(numero -> new PassageiroRelatorioView(
                 agendamento, new PassageiroDetalheView("Pessoa " + numero, "123", "456", "", "",
                         "Cidade", "Destino", 0, "Padrão", false), "Lista", null)).toList();
-        var reader = new PdfReader(AgendamentoPdfService.gerarPassageiros(data, linhas));
+        var reader = new PdfReader(AgendamentoPdfService.gerarPassageiros(data, linhas, java.util.Map.of()));
         assertTrue(reader.getNumberOfPages() > 1);
         var texto = new StringBuilder();
         var extractor = new PdfTextExtractor(reader);
@@ -162,6 +162,8 @@ class PessoaFormularioWebTest {
                 UUID.randomUUID(), tipoId, destinoId, LocalTime.of(11, 0), null, false, 0, null, List.of());
         var veiculo = new VeiculoAbertoResponseDto(veiculoId, data, tipoId, "Van", 8,
                 "VAN-01", LocalTime.of(7, 30), 2, List.of(atribuido));
+        when(motoristas.atribuicoes(data)).thenReturn(List.of(
+                new MotoristaApi.Atribuicao(veiculoId, UUID.randomUUID(), "Motorista Ana")));
         when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(veiculo), List.of(pendente, excluido)));
         when(pessoas.buscar(PESSOA_ID)).thenReturn(new PessoaResponseDto(PESSOA_ID, "Ana Souza", "",
                 ESPECIFICACAO_ID, "Gestante", "Alta", PRIORIDADE_ID, 2, true, 2, false,
@@ -229,9 +231,21 @@ class PessoaFormularioWebTest {
         var leitorAtribuido = new PdfReader(comprovanteAtribuido);
         String textoAtribuido = new PdfTextExtractor(leitorAtribuido).getTextFromPage(1);
         leitorAtribuido.close();
-        for (String esperado : List.of("Ana Souza", "VAN-01", "Van", "07:30", "Rua Principal 12")) {
+        for (String esperado : List.of("Ana Souza", "VAN-01", "Van", "07:30", "Rua Principal 12", "Motorista Ana")) {
             assertTrue(textoAtribuido.contains(esperado), esperado + " ausente em: " + textoAtribuido);
         }
+        byte[] pdfVeiculo = mvc.perform(get("/agendamentos/pdf/veiculos/{id}", veiculoId)
+                        .param("data", data.toString()))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
+        var leitorVeiculo = new PdfReader(pdfVeiculo);
+        assertTrue(new PdfTextExtractor(leitorVeiculo).getTextFromPage(1).contains("Hospital Central"));
+        assertTrue(new PdfTextExtractor(leitorVeiculo).getTextFromPage(1).contains("Motorista Ana"));
+        leitorVeiculo.close();
+        byte[] pdfGeral = mvc.perform(get("/agendamentos/pdf/carros").param("data", data.toString()))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsByteArray();
+        var leitorGeral = new PdfReader(pdfGeral);
+        assertTrue(new PdfTextExtractor(leitorGeral).getTextFromPage(1).contains("Motorista Ana"));
+        leitorGeral.close();
         mvc.perform(get("/agendamentos/pdf/comprovante/{id}", cancelado.id()).param("data", data.toString()))
                 .andExpect(status().isNotFound());
 
@@ -273,7 +287,7 @@ class PessoaFormularioWebTest {
                 "Acompanhantes: 1", "Rua Principal 12", "Lista histórica", "Salvador",
                 "Hospital Central", "Horário de chegada: 10:00", "VEÍCULO ATRIBUÍDO",
                 "VEÍCULO PENDENTE", "09:00", "Van", "Saída: 07:30", "Pendente",
-                "TOTAL DE PASSAGEIROS", "Passageiros cadastrados")) {
+                "TOTAL DE PASSAGEIROS", "Passageiros cadastrados", "Motorista Ana")) {
             assertTrue(conteudo.contains(esperado), esperado + " ausente em: " + conteudo);
         }
         assertFalse(conteudo.contains("Carlos Excluido"));
@@ -298,6 +312,25 @@ class PessoaFormularioWebTest {
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition",
                         "inline; filename=\"passageiros-2026-11-23.pdf\""));
+        var carro = new VeiculoAbertoResponseDto(veiculoId, data, tipoId, "Carro", 4,
+                "01", LocalTime.of(7, 30), 2, List.of(atribuido));
+        when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(carro), List.of()));
+        when(pessoas.buscar(PESSOA_ID)).thenReturn(new PessoaResponseDto(PESSOA_ID, "Ana Souza", "",
+                ESPECIFICACAO_ID, "Gestante", "Alta", PRIORIDADE_ID, 2, true, 2, false,
+                null, "Endereço ".repeat(1000), "52998224725", "11987654321"));
+        mvc.perform(get("/agendamentos/pdf/veiculos/{id}", veiculoId).param("data", data.toString()))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(content().string(containsString("dados são extensos demais")));
+        when(motoristas.atribuicoes(data)).thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
+        mvc.perform(get("/agendamentos/pdf/veiculos/{id}", veiculoId).param("data", data.toString()))
+                .andExpect(status().isBadGateway());
+        mvc.perform(get("/agendamentos/pdf/carros").param("data", data.toString()))
+                .andExpect(status().isBadGateway());
+        mvc.perform(get("/agendamentos/pdf/comprovante/{id}", atribuido.id()).param("data", data.toString()))
+                .andExpect(status().isBadGateway());
+        mvc.perform(post("/agendamentos/pdf/passageiros").param("data", data.toString())
+                        .param("ids", atribuido.id().toString()))
+                .andExpect(status().isBadGateway());
     }
 
     @Test
@@ -722,8 +755,7 @@ class PessoaFormularioWebTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("data-modal-id=\"atribuirPassageiroCarroModal-" + idVeiculo + "\"")))
                 .andExpect(content().string(containsString("Cadastrar passageiro")))
-                .andExpect(content().string(containsString("veiculoOrigem=" + idVeiculo)))
-                .andExpect(content().string(containsString("origemCarros=true")))
+                .andExpect(content().string(containsString("/agendamentos/carros/veiculos/" + idVeiculo + "/modal-agendamento")))
                 .andExpect(content().string(containsString("Sem motorista")))
                 .andExpect(content().string(containsString("border-warning border-2")))
                 .andExpect(content().string(containsString("Carro 01")))
@@ -748,6 +780,13 @@ class PessoaFormularioWebTest {
                 .andExpect(content().string(containsString("name=\"buscarNaResidencia\" value=\"true\"")))
                 .andExpect(content().string(not(containsString("Retirar este passageiro do carro?"))))
                 .andExpect(content().string(not(containsString(">Retirar</button>"))));
+
+        mvc.perform(get("/agendamentos/carros/veiculos/{id}/cartao", idVeiculo)
+                        .param("data", data.toString()).header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Ana Souza")))
+                .andExpect(content().string(containsString("id=\"carro-" + idVeiculo + "\"")))
+                .andExpect(content().string(not(containsString("id=\"carro-" + semIdentificacao.id() + "\""))));
 
         when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(
                 new VeiculoAbertoResponseDto(idVeiculo, data, idTipo, "Carro", 4,
@@ -822,22 +861,108 @@ class PessoaFormularioWebTest {
                 List.of(new TipoVeiculoResponseDto(tipo, "Carro", 4)), 0, 10, 1, 1));
         when(localidades.listarCidades("", 0)).thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
 
-        mvc.perform(get("/agendamentos/carros").param("data", data.toString()))
+        mvc.perform(get("/agendamentos/carros").param("data", data.toString())
+                        .flashAttr("veiculoParaInsercao", id))
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("idLista=" + lista)))
-                .andExpect(content().string(containsString("horarioSaidaVeiculo=20:00")))
-                .andExpect(content().string(containsString("informarHorarioSaida=true")));
-        mvc.perform(get("/agendamentos").param("data", data.toString())
-                        .param("novoPassageiro", "true").param("veiculoOrigem", id.toString())
-                        .param("origemCarros", "true").param("idLista", lista.toString())
-                        .param("horarioSaidaVeiculo", "20:00").param("informarHorarioSaida", "true"))
+                .andExpect(content().string(containsString("id=\"abrirAgendamentoCarroAposCriacao\"")))
+                .andExpect(content().string(containsString("id=\"atribuirPassageiroCarroModal-" + id + "\"")))
+                .andExpect(content().string(containsString("data-bs-target=\"#atribuirPassageiroCarroModal-" + id + "\"")));
+        mvc.perform(get("/agendamentos/carros/veiculos/{id}/modal-agendamento", id)
+                        .param("data", data.toString()).header("HX-Request", "true"))
                 .andExpect(status().isOk())
+                .andExpect(content().string(containsString("id=\"agendamentoModal\"")))
                 .andExpect(content().string(containsString("data-origem-especial=\"true\"")))
                 .andExpect(content().string(containsString("value=\"20:00\"")))
                 .andExpect(content().string(matchesPattern("(?s).*id=\"listaAgendamento\"[^>]*disabled=\"disabled\".*")))
                 .andExpect(content().string(containsString("name=\"idLista\" value=\"" + lista + "\"")))
                 .andExpect(content().string(matchesPattern("(?s).*<option value=\"" + lista
                         + "\"\\s+data-list-name=\"Atendimento\" selected=\"selected\">.*")));
+        var destino = UUID.randomUUID();
+        when(pessoas.buscar(PESSOA_ID)).thenReturn(new PessoaResponseDto(PESSOA_ID, "Ana Souza", "",
+                ESPECIFICACAO_ID, "Padrão", "Alta", PRIORIDADE_ID, 2, true, 2, false, null,
+                "", "52998224725", "11987654321"));
+        when(agendamentos.verificarVeiculos(eq(data), any())).thenReturn(new VerificacaoVeiculosResponseDto(
+                List.of(new VeiculoPermitidoDto(tipo, "Carro", 4, List.of())), List.of()));
+        mvc.perform(post("/agendamentos/verificar-veiculos").header("HX-Request", "true")
+                        .param("data", data.toString()).param("idPessoa", PESSOA_ID.toString())
+                        .param("idLista", lista.toString()).param("idDestino", destino.toString())
+                        .param("horarioChegada", "20:00").param("veiculoOrigem", id.toString())
+                        .param("origemCarros", "true").param("informarHorarioSaida", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("name=\"idVeiculo\" value=\"" + id + "\"")))
+                .andExpect(content().string(containsString("hx-post=\"/agendamentos/passageiros\"")))
+                .andExpect(content().string(not(containsString("Agendar como carro"))));
+        mvc.perform(get("/agendamentos/carros/veiculos/{id}/cartao", id)
+                        .param("data", data.toString()).header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("id=\"carro-" + id + "\"")))
+                .andExpect(content().string(not(containsString("<html"))));
+        mvc.perform(post("/agendamentos/veiculos/{id}/confirmar-saida", id)
+                        .param("data", data.toString()).header("HX-Request", "true"))
+                .andExpect(status().isNoContent())
+                .andExpect(header().string("HX-Trigger", containsString(id.toString())));
+        verify(agendamentos).confirmarSaida(id);
+        mvc.perform(post("/agendamentos/passageiros").param("data", data.toString())
+                        .param("idPessoa", PESSOA_ID.toString()).param("idLista", lista.toString())
+                        .param("idTipoVeiculo", tipo.toString()).param("idDestino", destino.toString())
+                        .param("horarioChegada", "20:00").param("idVeiculo", id.toString())
+                        .param("veiculoOrigem", id.toString()).param("origemCarros", "true")
+                        .param("informarHorarioSaida", "true").header("HX-Request", "true"))
+                .andExpect(status().isNoContent())
+                .andExpect(header().string("HX-Trigger", containsString(id.toString())));
+        verify(agendamentos).criar(data, new AgendamentoRequestDto(PESSOA_ID, lista, tipo, destino,
+                LocalTime.of(20, 0), false, 0, id, true));
+        var agendamentoId = UUID.randomUUID();
+        mvc.perform(post("/agendamentos/{id}/editar", agendamentoId)
+                        .param("data", data.toString()).param("idTipoVeiculo", tipo.toString())
+                        .param("idDestino", destino.toString()).param("horarioChegada", "20:00")
+                        .param("idVeiculo", id.toString()).param("paginaCarros", "true")
+                        .header("HX-Request", "true"))
+                .andExpect(status().isNoContent())
+                .andExpect(header().string("HX-Trigger", containsString(id.toString())));
+        verify(agendamentos).atualizar(eq(agendamentoId), any());
+        mvc.perform(get("/agendamentos/carros/veiculos/{id}/modal-agendamento", UUID.randomUUID())
+                        .param("data", data.toString()).header("HX-Request", "true"))
+                .andExpect(status().isNotFound());
+
+        var pendente = new AgendamentoResponseDto(UUID.randomUUID(), data, PESSOA_ID, UUID.randomUUID(),
+                UUID.randomUUID(), tipo, destino, LocalTime.of(21, 0), LocalTime.of(20, 0),
+                false, 0, null, List.of());
+        when(localidades.listarCidadesArquivadas("", 0))
+                .thenReturn(new ResultadoPaginado<>(List.of(), 0, 10, 0, 0));
+        when(agendamentos.buscarDia(data)).thenReturn(new AgendaDiaResponseDto(data, List.of(veiculo), List.of(pendente)));
+        mvc.perform(get("/agendamentos/carros").param("data", data.toString()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(matchesPattern("(?s).*id=\"atribuirPassageiroCarroModal-" + id
+                        + "\".*name=\"idAgendamento\"\\s+value=\"" + pendente.id() + "\".*")));
+    }
+
+    @Test
+    @WithMockUser(roles = {"AGENDAMENTO", "MOTORISTA"})
+    void selecaoMotoristaRetornaModalEPreservaPagina() throws Exception {
+        var id = UUID.randomUUID();
+        var motoristaId = UUID.randomUUID();
+        var data = LocalDate.of(2026, 11, 23);
+        when(motoristas.categorias()).thenReturn(List.of());
+        when(motoristas.buscar("", null, 0)).thenReturn(new MotoristaApi.Pagina(
+                List.of(new MotoristaApi.Motorista(motoristaId, "Ana", "123", UUID.randomUUID(), "B")), 1, 0));
+        mvc.perform(get("/motoristas/selecionar/{id}", id).param("data", data.toString())
+                        .param("carros", "true").header("HX-Request", "true"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("id=\"selecionarMotoristaModal\"")))
+                .andExpect(content().string(containsString("hx-post=\"/motoristas/selecionar/" + id + "\"")));
+        mvc.perform(post("/motoristas/selecionar/{id}", id).param("data", data.toString())
+                        .param("carros", "true").param("motoristaId", motoristaId.toString())
+                        .header("HX-Request", "true"))
+                .andExpect(status().isNoContent())
+                .andExpect(header().string("HX-Trigger", containsString(id.toString())));
+        verify(motoristas).atribuir(id, motoristaId);
+        doThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR))
+                .when(motoristas).atribuir(id, null);
+        mvc.perform(post("/motoristas/selecionar/{id}", id).param("data", data.toString())
+                        .param("carros", "true").header("HX-Request", "true"))
+                .andExpect(status().is5xxServerError())
+                .andExpect(header().doesNotExist("HX-Trigger"));
     }
 
     @Test

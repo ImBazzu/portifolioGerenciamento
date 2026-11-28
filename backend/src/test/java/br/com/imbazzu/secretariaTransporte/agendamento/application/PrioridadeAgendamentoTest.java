@@ -33,6 +33,8 @@ import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.Agendament
 import br.com.imbazzu.secretariaTransporte.agendamento.core.porta.out.AgendamentoQueryPorta;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.DadosInvalidosException;
 import br.com.imbazzu.secretariaTransporte.compartilhados.excecoes.gerais.OperacaoNaoPermitidaException;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.FinalidadeAberturaVeiculo;
+import br.com.imbazzu.secretariaTransporte.veiculo.core.domain.VeiculoAberto;
 
 class PrioridadeAgendamentoTest {
     private final AgendamentoQueryPorta consultas = mock(AgendamentoQueryPorta.class);
@@ -105,6 +107,51 @@ class PrioridadeAgendamentoTest {
         var captor = ArgumentCaptor.forClass(Agendamento.class);
         verify(comandos).salvar(captor.capture());
         assertEquals(LocalTime.of(9, 45), captor.getValue().getHorarioChegada());
+    }
+
+    @Test
+    void criaAgendamentoJaAtribuidoAoCarroEspecial() {
+        preparar(4, prioridade);
+        when(consultas.buscarDestino(destino))
+                .thenReturn(new DestinoAgendaDados(UUID.randomUUID(), Duration.ofMinutes(45), true));
+        var veiculo = new VeiculoAberto(UUID.randomUUID(), data, tipo, "Carro", 4, null,
+                LocalTime.of(9, 0), false, null, FinalidadeAberturaVeiculo.EMERGENCIA, lista);
+        when(consultas.listarVeiculos(data)).thenReturn(List.of(veiculo));
+
+        new AgendamentoCommandCriarHandler(comandos, consultas).handler(new AgendamentoCommandCriar(
+                data, pessoa, lista, null, tipo, destino, LocalTime.of(9, 0), true, 1, veiculo.id(), autor, true));
+
+        var captor = ArgumentCaptor.forClass(Agendamento.class);
+        verify(comandos).salvar(captor.capture());
+        assertEquals(veiculo.id(), captor.getValue().getIdVeiculoAberto());
+        assertEquals(LocalTime.of(9, 45), captor.getValue().getHorarioChegada());
+    }
+
+    @Test
+    void criacaoNoCarroEspecialRespeitaCapacidadeHorarioELista() {
+        preparar(4, prioridade);
+        var id = UUID.randomUUID();
+        var veiculo = new VeiculoAberto(id, data, tipo, "Carro", 4, null,
+                LocalTime.of(9, 0), false, null, FinalidadeAberturaVeiculo.ALTA, lista);
+        when(consultas.listarVeiculos(data)).thenReturn(List.of(veiculo));
+        var ocupante = Agendamento.criar(data, UUID.randomUUID(), lista, UUID.randomUUID(), tipo,
+                destino, Duration.ZERO, Duration.ZERO, LocalTime.of(10, 0), false, 2);
+        ocupante.atribuirVeiculo(id);
+        when(consultas.listarAgendamentos(data)).thenReturn(List.of(ocupante));
+        var handler = new AgendamentoCommandCriarHandler(comandos, consultas);
+        assertThrows(OperacaoNaoPermitidaException.class, () -> handler.handler(new AgendamentoCommandCriar(
+                data, pessoa, lista, null, tipo, destino, horario, true, 1, id, autor)));
+
+        when(consultas.listarAgendamentos(data)).thenReturn(List.of());
+        assertThrows(OperacaoNaoPermitidaException.class, () -> handler.handler(new AgendamentoCommandCriar(
+                data, pessoa, lista, null, tipo, destino, LocalTime.of(8, 0), true, 0, id, autor)));
+
+        var outraLista = new VeiculoAberto(id, data, tipo, "Carro", 4, null, LocalTime.of(9, 0), false,
+                null, FinalidadeAberturaVeiculo.ALTA, UUID.randomUUID());
+        when(consultas.listarVeiculos(data)).thenReturn(List.of(outraLista));
+        assertThrows(OperacaoNaoPermitidaException.class, () -> handler.handler(new AgendamentoCommandCriar(
+                data, pessoa, lista, null, tipo, destino, horario, true, 0, id, autor)));
+        verify(comandos, never()).salvar(any(Agendamento.class));
     }
 
     @Test

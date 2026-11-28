@@ -35,6 +35,7 @@
 
                 <!-- CORPO -->
                 <div class="modal-body p-4">
+                    <div class="alert alert-danger" id="erro-agendamento-carro" role="alert" hidden></div>
 
                     <!-- FORMULÁRIO DE VERIFICAÇÃO -->
                     <form id="verificarAgendamentoForm"
@@ -477,6 +478,7 @@
                                                 </p>
                                                 <form method="post"
                                                       th:action="@{/agendamentos/passageiros}"
+                                                      th:attr="hx-post=${origemCarros == true and veiculo.idVeiculo() != null} ? @{/agendamentos/passageiros} : null,hx-swap=${origemCarros == true and veiculo.idVeiculo() != null ? 'none' : null}"
                                                       class="mt-auto">
                                                     <input type="hidden" name="data" th:value="${data}">
                                                     <input th:if="${veiculoOrigem != null}" type="hidden" name="veiculoOrigem" th:value="${veiculoOrigem}">

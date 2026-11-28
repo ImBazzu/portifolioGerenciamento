@@ -52,7 +52,8 @@ class PassageirosPeriodoControllerTest {
                 "data":"2030-01-%s","idLista":"%s","lista":"Saude","idCidade":"%s","cidade":"Cidade",
                 "idDestino":"%s","destino":"Hospital","idTipoVeiculo":"%s","tipoVeiculo":"Carro",
                 "horarioChegada":"10:00:00","tempoViagemSegundos":3600,"tempoViagemNanos":0,"acompanhantes":1,
-                "horarioSaida":"07:30:00"}
+                "horarioSaida":"07:30:00","idVeiculo":"00000000-0000-0000-0000-000000000006",
+                "motorista":"Motorista Carlos"}
                 """;
         String json = "[" + linha.formatted(PESSOA, "01", LISTA, CIDADE, DESTINO, TIPO) + ","
                 + linha.formatted(PESSOA, "02", LISTA, CIDADE, DESTINO, TIPO) + "]";
@@ -105,6 +106,7 @@ class PassageirosPeriodoControllerTest {
         assertTrue(texto.contains("123"));
         assertTrue(texto.contains("456"));
         assertTrue(texto.contains("Especial"));
+        assertTrue(texto.contains("Motorista Carlos"));
         assertEquals(texto.indexOf("Ana"), texto.lastIndexOf("Ana"));
         assertTrue(reader.getPageN(1).getAsDict(PdfName.RESOURCES).getAsDict(PdfName.XOBJECT).size() > 0);
         reader.close();

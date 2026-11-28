@@ -9,6 +9,7 @@ import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoAbertoResponseDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VeiculoPermitidoDto;
 import br.com.imbazzu.frontSpring.agendamento.core.dto.VerificacaoVeiculosResponseDto;
 import br.com.imbazzu.frontSpring.veiculo.core.TipoVeiculoUtil;
+import br.com.imbazzu.frontSpring.veiculo.core.FinalidadeAberturaVeiculo;
 
 public record VeiculoDisponivelView(
         UUID idTipoVeiculo,
@@ -28,6 +29,36 @@ public record VeiculoDisponivelView(
         return verificacao.veiculosPermitidos().stream()
                 .flatMap(tipo -> veiculosDoTipo(tipo, agenda, acompanhantes))
                 .toList();
+    }
+
+    public static List<VeiculoDisponivelView> disponiveis(
+            VerificacaoVeiculosResponseDto verificacao,
+            AgendaDiaResponseDto agenda,
+            int acompanhantes,
+            UUID veiculoOrigem) {
+        if (veiculoOrigem == null) {
+            return disponiveis(verificacao, agenda, acompanhantes);
+        }
+        if (agenda == null) {
+            return List.of();
+        }
+        var origem = agenda.veiculos().stream()
+                .filter(veiculo -> veiculo.id().equals(veiculoOrigem))
+                .findFirst();
+        if (origem.isEmpty()) {
+            return List.of();
+        }
+        var veiculo = origem.get();
+        if (veiculo.finalidadeAbertura() == FinalidadeAberturaVeiculo.AJUSTE) {
+            return disponiveis(verificacao, agenda, acompanhantes);
+        }
+        if (verificacao == null || verificacao.veiculosPermitidos() == null
+                || verificacao.veiculosPermitidos().stream()
+                        .noneMatch(tipo -> tipo.idTipoVeiculo().equals(veiculo.idTipoVeiculo()))
+                || (long) acompanhantes + 1 > veiculo.capacidade() - veiculo.assentosOcupados()) {
+            return List.of();
+        }
+        return List.of(de(veiculo));
     }
 
     private static Stream<VeiculoDisponivelView> veiculosDoTipo(

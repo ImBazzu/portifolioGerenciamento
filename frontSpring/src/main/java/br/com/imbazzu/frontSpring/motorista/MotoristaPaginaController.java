@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.AgendamentoRedirect;
 import br.com.imbazzu.frontSpring.agendamento.adpter.in.controller.apoio.MensagemErroApi;
+import jakarta.servlet.http.HttpServletResponse;
 
 @Controller
 @RequestMapping("/motoristas")
@@ -42,11 +44,17 @@ public class MotoristaPaginaController {
             @RequestParam(defaultValue = "false") boolean carros,
             @RequestParam(defaultValue = "") String nome,
             @RequestParam(required = false) UUID categoria,
-            @RequestParam(defaultValue = "0") int pagina, Model model) {
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "false") boolean modalConteudo,
+            @RequestHeader(value = "HX-Request", required = false) String hxRequest, Model model) {
         preencher(model, nome, categoria, pagina, false);
         model.addAttribute("veiculo", veiculo);
         model.addAttribute("data", data);
         model.addAttribute("carros", carros);
+        if (carros && "true".equalsIgnoreCase(hxRequest)) {
+            model.addAttribute("modalMotorista", true);
+            return modalConteudo ? "motorista/selecionar :: selecao" : "motorista/modal-selecionar :: modal";
+        }
         return "motorista/selecionar";
     }
 
@@ -109,11 +117,21 @@ public class MotoristaPaginaController {
     @PostMapping("/selecionar/{veiculo}")
     public String atribuir(@PathVariable UUID veiculo, @RequestParam LocalDate data,
             @RequestParam(defaultValue = "false") boolean carros,
-            @RequestParam(required = false) UUID motoristaId, RedirectAttributes redirect) {
+            @RequestParam(required = false) UUID motoristaId,
+            @RequestHeader(value = "HX-Request", required = false) String hxRequest,
+            HttpServletResponse response, RedirectAttributes redirect) {
         try {
             api.atribuir(veiculo, motoristaId);
+            if (carros && "true".equalsIgnoreCase(hxRequest)) {
+                response.setHeader("HX-Trigger", "{\"motorista-atualizado\":{\"veiculo\":\"" + veiculo + "\",\"data\":\"" + data + "\"}}");
+                response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                return null;
+            }
             redirect.addFlashAttribute("sucesso", motoristaId == null ? "Motorista retirado." : "Motorista selecionado.");
         } catch (RestClientResponseException e) {
+            if (carros && "true".equalsIgnoreCase(hxRequest)) {
+                throw new ResponseStatusException(e.getStatusCode(), erro.de(e), e);
+            }
             redirect.addFlashAttribute("erro", erro.de(e));
         }
         return AgendamentoRedirect.retorno(carros, data);

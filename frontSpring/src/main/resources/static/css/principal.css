@@ -177,6 +177,10 @@ html, body {
    CONTEÚDO PRINCIPAL & HTMX
    ========================================================= */
 
+.app-main {
+    min-width: 0;
+}
+
 #conteudo-principal {
     flex: 1;
     min-width: 0;

@@ -35,10 +35,6 @@ public class AgendamentoCommandAtribuirVeiculoHandler {
             throw new OperacaoNaoPermitidaException(
                     "O agendamento já está atribuído a um veículo físico");
         }
-        if (!CompatibilidadeVeiculoAgendamento.listaCompativel(veiculo, agendamento)) {
-            throw new OperacaoNaoPermitidaException(
-                    "O passageiro deve pertencer à lista vinculada ao veículo");
-        }
         var ocupantes = consultas.listarAgendamentos(agendamento.getData()).stream()
                 .filter(item -> command.idVeiculo().equals(item.getIdVeiculoAberto()))
                 .toList();

@@ -51,7 +51,7 @@ final class PassageirosPeriodoPdf {
             periodo.setSpacingAfter(5);
             documento.add(periodo);
             var aviso = new Paragraph("Agendamentos não representam confirmação de viagem realizada. "
-                    + "A saída é o horário programado do veículo na agenda.", NORMAL);
+                    + "A saída e o motorista são os atualmente atribuídos ao veículo na agenda.", NORMAL);
             aviso.setSpacingAfter(7);
             documento.add(aviso);
 
@@ -92,7 +92,7 @@ final class PassageirosPeriodoPdf {
     private static void adicionarPassageiro(Document documento, List<PassageiroPeriodo> grupo)
             throws DocumentException {
         var pessoa = grupo.getFirst();
-        var tabela = new PdfPTable(new float[] {1.0f, 1.35f, 1.25f, 1.5f, 1.15f, 0.8f, 1.0f, 0.7f});
+        var tabela = new PdfPTable(new float[] {1.0f, 1.2f, 1.1f, 1.3f, 1.1f, 1.3f, 0.8f, 1.4f, 0.7f});
         tabela.setWidthPercentage(100);
         tabela.setSpacingBefore(4);
         tabela.setSpacingAfter(14);
@@ -100,7 +100,7 @@ final class PassageirosPeriodoPdf {
         tabela.setSplitLate(false);
 
         var nome = celula(texto(pessoa.nome()), SECAO, VERDE_CLARO);
-        nome.setColspan(8);
+        nome.setColspan(9);
         nome.setPadding(9);
         tabela.addCell(nome);
 
@@ -113,13 +113,13 @@ final class PassageirosPeriodoPdf {
         detalhes.add(new Phrase("Especificação: ", ROTULO));
         detalhes.add(new Phrase(texto(pessoa.especificacao()), NORMAL));
         var dados = new PdfPCell(detalhes);
-        dados.setColspan(8);
+        dados.setColspan(9);
         dados.setBorderColor(BORDA);
         dados.setPadding(9);
         dados.setPaddingBottom(11);
         tabela.addCell(dados);
 
-        for (String titulo : List.of("Data", "Lista", "Cidade", "Destino", "Veículo", "Chegada", "Saída programada", "Acomp.")) {
+        for (String titulo : List.of("Data", "Lista", "Cidade", "Destino", "Veículo", "Motorista", "Chegada", "Saída programada", "Acomp.")) {
             var cabecalho = celula(titulo, CABECALHO, VERDE);
             cabecalho.setBorderColor(VERDE);
             tabela.addCell(cabecalho);
@@ -129,7 +129,9 @@ final class PassageirosPeriodoPdf {
             var fundo = indice++ % 2 == 0 ? Color.WHITE : new Color(247, 250, 248);
             String saida = viagem.horarioSaida() == null ? "Não informado" : HORA.format(viagem.horarioSaida());
             for (String valor : List.of(DATA.format(viagem.data()), texto(viagem.lista()), texto(viagem.cidade()),
-                    texto(viagem.destino()), texto(viagem.tipoVeiculo()), HORA.format(viagem.horarioChegada()),
+                    texto(viagem.destino()), texto(viagem.tipoVeiculo()),
+                    viagem.idVeiculo() == null ? "Veículo pendente" : motorista(viagem.motorista()),
+                    HORA.format(viagem.horarioChegada()),
                     saida, Integer.toString(viagem.acompanhantes()))) {
                 tabela.addCell(celula(valor, NORMAL, fundo));
             }
@@ -148,5 +150,9 @@ final class PassageirosPeriodoPdf {
 
     private static String texto(String valor) {
         return valor == null || valor.isBlank() ? "Não informado" : valor;
+    }
+
+    private static String motorista(String valor) {
+        return valor == null || valor.isBlank() ? "Não atribuído" : valor;
     }
 }

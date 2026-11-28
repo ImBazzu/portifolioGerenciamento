@@ -43,11 +43,7 @@ public class MontadorAgendaDia {
                 .filter(p -> TipoVeiculoUtil.ehCarro(nomesPorTipo.get(p.idTipoVeiculo())))
                 .toList());
         model.addAttribute("passageirosPendentesPorVeiculo", veiculosCarro.stream()
-                .collect(Collectors.toMap(VeiculoAbertoResponseDto::id, veiculo ->
-                        agenda.passageirosPendentes().stream()
-                                .filter(p -> veiculo.idListaAbertura() == null
-                                        || veiculo.idListaAbertura().equals(p.idLista()))
-                                .toList())));
+                .collect(Collectors.toMap(VeiculoAbertoResponseDto::id, veiculo -> agenda.passageirosPendentes())));
         model.addAttribute("veiculosDisponiveisParaAtribuicaoManual", agenda.passageirosPendentes().stream()
                 .collect(Collectors.toMap(
                         AgendamentoResponseDto::id,
