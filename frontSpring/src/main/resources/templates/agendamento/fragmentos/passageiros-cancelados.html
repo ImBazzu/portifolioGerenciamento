@@ -20,7 +20,7 @@
                     <td>
                         <strong th:text="${detalhesCancelados.get(passageiro.id()).nome()}"></strong>
                         <div class="small text-muted" th:text="${detalhesCancelados.get(passageiro.id()).telefone()}"></div>
-                        <div th:if="${passageiro.buscarNaResidencia()}" class="small text-warning-emphasis">
+                        <div th:if="${passageiro.buscarNaResidencia()}" class="endereco-busca small text-warning-emphasis">
                             Buscar na residência:
                             <span th:text="${#strings.isEmpty(detalhesCancelados.get(passageiro.id()).endereco())
                                     ? 'Endereço não informado' : detalhesCancelados.get(passageiro.id()).endereco()}"></span>

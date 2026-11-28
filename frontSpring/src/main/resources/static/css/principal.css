@@ -281,6 +281,12 @@ html, body {
     white-space: nowrap;
 }
 
+.endereco-busca {
+    max-width: 20rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
 .table th {
     font-size: 0.75rem;
     text-transform: uppercase;

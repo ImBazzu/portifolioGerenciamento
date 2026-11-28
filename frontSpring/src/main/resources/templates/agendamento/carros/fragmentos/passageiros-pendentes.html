@@ -26,7 +26,7 @@
                                 <td>
                                     <strong class="fw-semibold text-dark"
                                             th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></strong>
-                                    <div th:if="${passageiro.buscarNaResidencia()}" class="small text-warning-emphasis fw-semibold">
+                                    <div th:if="${passageiro.buscarNaResidencia()}" class="endereco-busca small text-warning-emphasis fw-semibold">
                                         <i class="bi bi-house-door-fill me-1"></i>Local de busca:
                                         <span th:text="${#strings.isEmpty(detalhesPassageiros.get(passageiro.idPessoa()).endereco())
                                                 ? 'Endereço não informado' : detalhesPassageiros.get(passageiro.idPessoa()).endereco()}"></span>

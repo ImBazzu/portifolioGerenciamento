@@ -173,7 +173,7 @@
                                     <strong class="text-dark" th:text="${detalhesAgendamentos.get(passageiro.id()).nome()}"></strong>
 
                                     <div class="small text-muted" th:text="${detalhesAgendamentos.get(passageiro.id()).telefone()}"></div>
-                                    <div th:if="${passageiro.buscarNaResidencia()}" class="small text-warning-emphasis fw-semibold">
+                                    <div th:if="${passageiro.buscarNaResidencia()}" class="endereco-busca small text-warning-emphasis fw-semibold">
                                         <i class="bi bi-house-door-fill me-1"></i>Buscar na residência:
                                         <span th:text="${#strings.isEmpty(detalhesAgendamentos.get(passageiro.id()).endereco())
                                                 ? 'Endereço não informado' : detalhesAgendamentos.get(passageiro.id()).endereco()}"></span>

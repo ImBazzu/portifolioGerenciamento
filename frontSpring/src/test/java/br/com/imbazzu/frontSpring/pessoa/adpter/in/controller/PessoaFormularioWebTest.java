@@ -201,6 +201,7 @@ class PessoaFormularioWebTest {
                 .andExpect(content().string(containsString("Mostrar buscas na residência")))
                 .andExpect(content().string(containsString("data-residencia-item=\"true\"")))
                 .andExpect(content().string(containsString("Buscar na residência:")))
+                .andExpect(content().string(containsString("class=\"endereco-busca small text-warning-emphasis fw-semibold\"")))
                 .andExpect(content().string(containsString("Rua Principal 12")))
                 .andExpect(content().string(containsString("Passageiro cancelou a viagem")))
                 .andExpect(content().string(containsString("Excluir passageiro")))
@@ -804,7 +805,9 @@ class PessoaFormularioWebTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("data-abrir-ao-carregar=\"true\"")))
                 .andExpect(content().string(containsString("name=\"veiculoOrigem\" value=\"" + idVeiculo + "\"")))
-                .andExpect(content().string(containsString("Buscar histórico do passageiro")));
+                .andExpect(content().string(containsString("Buscar histórico do passageiro")))
+                .andExpect(content().string(matchesPattern("(?s).*id=\"abrirCadastroPessoa\"\\s+tabindex=\"-1\".*")))
+                .andExpect(content().string(matchesPattern("(?s).*id=\"buscarHistoricoPassageiro\"\\s+tabindex=\"-1\".*")));
 
         var idListaEmergencia = UUID.randomUUID();
         when(listas.listarAtivas("", 0)).thenReturn(new ResultadoPaginado<>(List.of(

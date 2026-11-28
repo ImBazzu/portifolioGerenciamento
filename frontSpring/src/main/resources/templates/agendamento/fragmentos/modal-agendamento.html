@@ -106,12 +106,13 @@
                             <div id="pessoaBuscaMensagem"
                                  class="form-text"
                                  aria-live="polite">
-                                Digite para pesquisar e selecione uma pessoa nos resultados.
+                                Digite pelo menos 3 caracteres e selecione uma pessoa nos resultados.
                             </div>
 
                             <button type="button"
                                     class="btn btn-sm btn-outline-secondary mt-2"
                                     id="abrirCadastroPessoa"
+                                    tabindex="-1"
                                     hx:get="@{/pessoas/abrirFormulario(contextoAgendamento=true)}"
                                     hx-target="#modal"
                                     hx-swap="innerHTML">
@@ -121,6 +122,7 @@
                             <button type="button"
                                     class="btn btn-sm btn-outline-primary mt-2"
                                     id="buscarHistoricoPassageiro"
+                                    tabindex="-1"
                                     th:attr="data-pessoas-url=@{/pessoas}"
                                     th:disabled="${idPessoaSelecionada == null}">
                                 <i class="bi bi-clock-history me-1"></i>

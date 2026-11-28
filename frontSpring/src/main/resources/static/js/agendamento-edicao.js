@@ -298,10 +298,11 @@
 
     function aoDigitarPessoa() {
         limparSelecaoPessoa();
+        limpar("pessoaResultados");
 
         mensagem(
             "pessoaBuscaMensagem",
-            "Pesquise e selecione uma pessoa para continuar."
+            "Digite pelo menos 3 caracteres e selecione uma pessoa nos resultados."
         );
     }
 
@@ -834,6 +835,13 @@
     /* 9. Eventos HTMX                                                    */
     /* ------------------------------------------------------------------ */
 
+    document.addEventListener("htmx:beforeRequest", (e) => {
+        if (e.detail?.elt?.id === "pessoaBusca" &&
+            (e.detail.elt.value.trim().length < 3 || $("idPessoaAgendamento")?.value)) {
+            e.preventDefault();
+        }
+    });
+
     function historicoDaPessoaAtual(e) {
         const id = $("idPessoaAgendamento")?.value;
         const caminho = e.detail?.requestConfig?.path;
@@ -842,6 +850,13 @@
     }
 
     document.addEventListener("htmx:beforeSwap", (e) => {
+        if (e.detail?.target?.id === "pessoaResultados") {
+            const busca = $("pessoaBusca");
+            if (!busca || busca.value.trim().length < 3 || $("idPessoaAgendamento")?.value ||
+                e.detail.requestConfig?.parameters?.termo !== busca.value) {
+                e.preventDefault();
+            }
+        }
         if (e.detail?.target?.id === "historico-agendamento-container" && !historicoDaPessoaAtual(e)) {
             e.preventDefault();
         }

@@ -111,11 +111,11 @@
                                          data-residencia-item="true"
                                          th:classappend="${passageiro.buscarNaResidencia() ? 'bg-warning-subtle rounded px-2' : ''}"
                                          th:data-residencia="${passageiro.buscarNaResidencia()}">
-                                        <div class="small">
+                                        <div class="small" style="min-width: 0;">
                                             <strong class="text-dark" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).nome()}"></strong>
                                             <div class="text-muted" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).telefone()}"></div>
                                             <div class="text-muted" th:text="${detalhesPassageiros.get(passageiro.idPessoa()).cidade() + ' · ' + detalhesPassageiros.get(passageiro.idPessoa()).destino()}"></div>
-                                            <div th:if="${passageiro.buscarNaResidencia()}" class="small text-warning-emphasis fw-semibold">
+                                            <div th:if="${passageiro.buscarNaResidencia()}" class="endereco-busca small text-warning-emphasis fw-semibold">
                                                 <i class="bi bi-house-door-fill me-1"></i>Local de busca:
                                                 <span th:text="${#strings.isEmpty(detalhesPassageiros.get(passageiro.idPessoa()).endereco())
                                                         ? 'Endereço não informado' : detalhesPassageiros.get(passageiro.idPessoa()).endereco()}"></span>
